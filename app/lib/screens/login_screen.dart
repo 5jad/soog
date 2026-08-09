@@ -72,6 +72,35 @@ class _LoginScreenState extends State<LoginScreen> {
     Navigator.of(context).pushReplacement(MaterialPageRoute(builder: (_) => const Shell()));
   }
 
+  Future<void> _changeServer() async {
+    final ctrl = TextEditingController(text: Api.base);
+    final url = await showDialog<String>(
+      context: context,
+      builder: (_) => AlertDialog(
+        title: const Text('عنوان الخادم (Server URL)'),
+        content: TextField(
+          controller: ctrl,
+          keyboardType: TextInputType.url,
+          decoration: const InputDecoration(hintText: 'https://اسم-النفق.trycloudflare.com'),
+        ),
+        actions: [
+          TextButton(onPressed: () => Navigator.pop(context), child: const Text('إلغاء')),
+          TextButton(
+            onPressed: () => Navigator.pop(context, ctrl.text.trim()),
+            child: const Text('حفظ'),
+          ),
+        ],
+      ),
+    );
+    if (url == null || url.isEmpty) return;
+    try {
+      await Api.setBase(url);
+      toast(context, 'تم الحفظ ✓ — جرب الدخول');
+    } on Exception {
+      toast(context, 'خطأ بالحفظ', error: true);
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -172,7 +201,16 @@ class _LoginScreenState extends State<LoginScreen> {
                           borderRadius: BorderRadius.circular(14),
                           border: Border.all(color: Colors.white.withOpacity(0.15)),
                         ),
-                        child: const Column(crossAxisAlignment: CrossAxisAlignment.stretch, children: [
+                        child: Column(crossAxisAlignment: CrossAxisAlignment.stretch, children: [
+                          GestureDetector(
+                            onTap: _changeServer,
+                            child: Row(mainAxisAlignment: MainAxisAlignment.center, children: [
+                              const Icon(Icons.dns_rounded, size: 15, color: Colors.white70),
+                              const SizedBox(width: 6),
+                              Text('تغيير عنوان الخادم (الرابط الحالي: ${Api.base.contains('trycloudflare') ? 'عام ☁️' : 'محلي'})',
+                                  style: A.t(10.5, c: Colors.white70, w: FontWeight.w700)),
+                            ]),
+                          ),
                           Text('حسابات تجريبية', style: TextStyle(color: Colors.white70, fontSize: 11)),
                           SizedBox(height: 6),
                           Text('زبون: 000000000200 · 123456', style: TextStyle(color: Colors.white, fontSize: 12, fontWeight: FontWeight.w700)),

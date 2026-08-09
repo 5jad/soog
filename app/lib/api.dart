@@ -7,7 +7,7 @@ import 'package:shared_preferences/shared_preferences.dart';
 
 /// عميل الـ API — كله يمر من هنا (base URL سهل التغيير)
 class Api {
-  static String base = 'http://192.168.1.137:4000'; // IP الجهاز على الشبكة المحلية أو رابط خارجي
+  static String base = 'https://petite-included-spanking-sciences.trycloudflare.com'; // الرابط الخارجي الافتراضي (قابل للتغيير من شاشة الدخول)
 
   static String? _token;
   static Map<String, dynamic>? me;
@@ -16,6 +16,8 @@ class Api {
 
   static Future<void> load() async {
     final p = await SharedPreferences.getInstance();
+    final saved = p.getString('zaboon_base');
+    if (saved != null && saved.isNotEmpty) base = saved;
     _token = p.getString('zaboon_token');
     if (_token != null) {
       try {
@@ -26,6 +28,16 @@ class Api {
         await clear();
       }
     }
+  }
+
+  static Future<void> setBase(String url) async {
+    var u = url.trim();
+    if (u.isEmpty) return;
+    if (!u.startsWith('http')) u = 'http://$u';
+    u = u.replaceAll(RegExp(r'/+$'), '');
+    base = u;
+    final p = await SharedPreferences.getInstance();
+    await p.setString('zaboon_base', u);
   }
 
   static Future<void> saveToken(String t) async {

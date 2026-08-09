@@ -1,0 +1,23 @@
+# قاعدة البيانات المحلية
+infra/pgdata/
+infra/*.log
+*.pid
+
+# باك إند
+backend/node_modules/
+backend/.env
+backend/src/public/uploads/*.png
+
+# تطبيق Flutter
+app/build/
+app/.dart_tool/
+app/.flutter-plugins*
+app/android/.gradle/
+app/android/local.properties
+app/android/app/debug/
+app/ios/Pods/
+app/ios/.symlinks/
+
+# عام
+.DS_Store
+*.log

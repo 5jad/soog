@@ -1,0 +1,616 @@
+import 'dart:async';
+import 'package:flutter/material.dart';
+import '../api.dart';
+import '../map_screen.dart';
+import '../models.dart';
+import '../theme.dart';
+import '../widgets.dart';
+
+/// قائمة الطلبات — تدعم أدوار متعددة
+/// customer: طلباتي | vendor: طلبات المتجر | delivery: طلبات متاحة/رحلة
+class OrderListScreen extends StatefulWidget {
+  final String role;
+  final String? initialCode;
+  final bool embedded;
+  const OrderListScreen({super.key, this.role = 'customer', this.initialCode, this.embedded = false});
+
+  @override
+  State<OrderListScreen> createState() => _OrderListScreenState();
+}
+
+class _OrderListScreenState extends State<OrderListScreen> {
+  List orders = [];
+  bool loading = true;
+  String filter = 'all';
+  Timer? _t;
+
+  @override
+  void initState() {
+    super.initState();
+    _load();
+    // تحديث تلقائي كل 10 ثواني — الحالة تتغير بدون ما تحدث يدوياً
+    _t = Timer.periodic(const Duration(seconds: 10), (_) {
+      if (mounted) _load();
+    });
+  }
+
+  @override
+  void dispose() {
+    _t?.cancel();
+    super.dispose();
+  }
+
+  Future<void> _load() async {
+    try {
+      final ep = widget.role == 'customer' ? '/api/customer/orders' : widget.role == 'vendor' ? '/api/vendor/orders' : '/api/delivery/orders';
+      final d = await Api.get(ep);
+      orders = (d['orders'] ?? []) as List;
+      if (widget.initialCode != null && mounted) {
+        final o = orders.where((x) => x['code'] == widget.initialCode).toList();
+        if (o.isNotEmpty) _open(o.first);
+      }
+    } catch (_) {} finally {
+      if (mounted) setState(() => loading = false);
+    }
+  }
+
+  void _open(dynamic o) {
+    Navigator.push(context, MaterialPageRoute(
+      builder: (_) => OrderDetailScreen(orderId: o['id'], role: widget.role, onChanged: _load),
+    ));
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    List list = orders;
+    if (widget.role == 'customer' && filter != 'all') list = orders.where((o) => o['status'] == filter).toList();
+    final tabs = [
+      (Icons.swap_vert_rounded, 'الكل'),
+      (Icons.hourglass_top_rounded, 'قيد الانتظار'),
+      (Icons.check_circle_rounded, 'مقبول/جاهز'),
+      (Icons.local_shipping_rounded, 'بالتوصيل'),
+      (Icons.task_alt_rounded, 'تم/ملغي'),
+    ];
+
+    Widget body;
+    if (loading) {
+      body = const Loader();
+    } else if (list.isEmpty) {
+      body = EmptyState(
+        icon: widget.role == 'vendor' ? '🗃' : '🧾',
+        title: widget.role == 'vendor' ? 'لا طلبات على متجرك' : 'ماكو طلبات',
+        sub: 'رح تظهر الطلبات هنا',
+      );
+    } else {
+      body = RefreshIndicator(
+        onRefresh: _load,
+        color: A.primary,
+        child: ListView.separated(
+          padding: const EdgeInsets.fromLTRB(16, 6, 16, 24),
+          itemCount: list.length,
+          separatorBuilder: (_, __) => const SizedBox(height: 10),
+          itemBuilder: (_, i) {
+            final o = Map<String, dynamic>.from(list[i] as Map);
+            final order = Order.fromJson(o);
+            final items = (o['items'] ?? []) as List;
+            return GestureDetector(
+              onTap: () => _open(o),
+              child: AnimatedContainer(
+                duration: const Duration(milliseconds: 140),
+                padding: const EdgeInsets.all(13),
+                decoration: A.glass(radius: 20),
+                child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+                  Row(children: [
+                    if (order.storeName.isNotEmpty) storeLogo(order.storeLogo, size: 34, radius: 10),
+                    if (order.storeName.isNotEmpty) const SizedBox(width: 8),
+                    Expanded(
+                      child: Text(order.storeName.isEmpty ? '#${order.code}' : order.storeName, style: A.t(13, w: FontWeight.w900), maxLines: 1, overflow: TextOverflow.ellipsis),
+                    ),
+                    Text('#${order.code}', style: A.t(10.5, c: A.muted, w: FontWeight.w700)),
+                  ]),
+                  const SizedBox(height: 10),
+                  Row(children: [
+                    for (final it in items.take(3)) ...[
+                      productImage(it['image'], size: 30, radius: 9),
+                      const SizedBox(width: 6),
+                    ],
+                    if (items.length > 3)
+                      Container(
+                        padding: const EdgeInsets.symmetric(horizontal: 9, vertical: 6),
+                        decoration: BoxDecoration(color: A.bg, borderRadius: BorderRadius.circular(999)),
+                        child: Text('+${items.length - 3} صنف', style: A.t(10, c: A.muted, w: FontWeight.w800)),
+                      )
+                    else if (items.isNotEmpty)
+                      Text('${items.length} صنف', style: A.t(10, c: A.muted, w: FontWeight.w700)),
+                    const Spacer(),
+                    Text(timeAgo(order.createdAt), style: A.t(10, c: A.muted)),
+                  ]),
+                  const SizedBox(height: 10),
+                  Row(children: [
+                    Text(money(order.total), style: A.t(16, c: A.accent, w: FontWeight.w900)),
+                    const Spacer(),
+                    StatusChip(order.status),
+                  ]),
+                ]),
+              ),
+            );
+          },
+        ),
+      );
+    }
+
+    if (widget.embedded) return body;
+
+    return Scaffold(
+      appBar: AppBar(title: const Text('طلباتي 📦')),
+      body: Column(children: [
+        if (widget.role == 'customer') _filterBar(tabs),
+        Expanded(child: body),
+      ]),
+    );
+  }
+
+  Widget _filterBar(List<(IconData, String)> tabs) {
+    return SizedBox(
+      height: 44,
+      child: ListView(
+        scrollDirection: Axis.horizontal,
+        padding: const EdgeInsets.symmetric(horizontal: 16),
+        children: [
+          for (final t in tabs)
+            Padding(
+              padding: const EdgeInsets.only(left: 8),
+              child: ChipG(
+                label: t.$2,
+                active: filter == t.$2,
+                onTap: () => setState(() => filter = t.$2),
+              ),
+            ),
+        ],
+      ),
+    );
+  }
+}
+
+/// تفاصيل الطلب مع خطوات الحالة وإجراءات حسب الدور
+class OrderDetailScreen extends StatefulWidget {
+  final int orderId;
+  final String role;
+  final VoidCallback? onChanged;
+  const OrderDetailScreen({super.key, required this.orderId, required this.role, this.onChanged});
+
+  @override
+  State<OrderDetailScreen> createState() => _OrderDetailScreenState();
+}
+
+class _OrderDetailScreenState extends State<OrderDetailScreen> {
+  dynamic o;
+  Map<String, dynamic>? _trip;
+  bool loading = true;
+
+  static const steps = ['new', 'preparing', 'ready', 'delivering', 'delivered'];
+
+  @override
+  void initState() {
+    super.initState();
+    _load();
+  }
+
+  Future<void> _load() async {
+    try {
+      final ep = widget.role == 'customer'
+          ? '/api/customer/orders/${widget.orderId}'
+          : widget.role == 'vendor'
+              ? '/api/vendor/orders/${widget.orderId}'
+              : '/api/delivery/trip/${widget.orderId}';
+      final d = await Api.get(ep);
+      o = d['order'];
+      if (widget.role == 'delivery') _loadTrip();
+    } catch (_) {
+      // يحاول نقطة أخرى
+    } finally {
+      if (mounted) setState(() => loading = false);
+    }
+  }
+
+  // رحلة المندوب لهذا الطلب (قد تضم طلبات من محلات أخرى)
+  Future<void> _loadTrip() async {
+    try {
+      final d = await Api.get('/api/delivery/orders/${widget.orderId}/trip');
+      final t = d['trip'];
+      if (mounted && t != null) setState(() => _trip = Map<String, dynamic>.from(t as Map));
+    } catch (_) {}
+  }
+
+  Future<void> _act(String ep, Map<String, dynamic> body, String msg) async {
+    try {
+      await Api.post(ep, body);
+      toast(context, msg);
+      widget.onChanged?.call();
+      _load();
+    } on ApiException catch (e) {
+      toast(context, e.message, error: true);
+    }
+  }
+
+  int get stepIdx {
+    final s = (o?['status'] ?? 'pending') as String;
+    final i = steps.indexOf(s);
+    return i < 0 ? -1 : i;
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    if (loading) return const Scaffold(body: Loader());
+    if (o == null) return const Scaffold(body: EmptyState(icon: '🧾', title: 'الطلب غير موجود'));
+    final order = Order.fromJson(Map<String, dynamic>.from(o as Map));
+    final status = order.status;
+    final items = (o['items'] ?? []) as List;
+    final idx = stepIdx;
+    final cancelled = status == 'cancelled' || status == 'returned';
+    final trip = _trip == null ? null : Map<String, dynamic>.from(_trip!);
+
+    return Scaffold(
+      appBar: AppBar(title: Text('#${order.code}')),
+      body: ListView(
+        padding: const EdgeInsets.fromLTRB(16, 6, 16, 30),
+        children: [
+          // خط الحالة
+          if (!cancelled)
+            GlassCard(
+              child: Column(children: [
+                Row(children: List.generate(5, (i) {
+                  final done = i <= idx;
+                  return Expanded(
+                    child: Column(children: [
+                      Container(
+                        padding: const EdgeInsets.all(7),
+                        decoration: BoxDecoration(
+                          color: done ? A.primary : Colors.white,
+                          shape: BoxShape.circle,
+                          border: Border.all(color: done ? A.primary : A.line),
+                        ),
+                        child: Icon(done ? Icons.check_rounded : Icons.circle_outlined, size: 13, color: done ? Colors.white : A.muted),
+                      ),
+                      Text(steps[i] == 'new' ? 'جديد' : steps[i] == 'preparing' ? 'تجهيز' : steps[i] == 'ready' ? 'جاهز' : steps[i] == 'delivering' ? 'استلام' : 'تسليم',
+                          style: A.t(9, c: done ? A.primary : A.muted, w: FontWeight.w800)),
+                    ]),
+                  );
+                })),
+                const SizedBox(height: 10),
+                Text(statusAr(status), style: A.t(14, c: statusColor(status), w: FontWeight.w900)),
+                Text('${timeAgo(order.createdAt)} · ${order.itemsCount} صنف', style: A.t(11, c: A.muted)),
+              ]),
+            )
+          else
+            GlassCard(child: Center(child: Text('الطلب ${statusAr(status)}', style: A.t(15, c: statusColor(status), w: FontWeight.w900)))),
+          const SizedBox(height: 14),
+          // المنتجات
+          GlassCard(
+            child: Column(children: [
+              for (final it in items) ...[
+                Row(children: [
+                  productImage(it['image'], size: 42, radius: 10),
+                  const SizedBox(width: 10),
+                  Expanded(child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+                    Text(it['product_name'] ?? '', style: A.t(13), maxLines: 1, overflow: TextOverflow.ellipsis),
+                    Text('${it['qty']} × ${money(it['price'] ?? 0)}${it['variant'] != null ? ' · ${it['variant']}' : ''}', style: A.t(10.5, c: A.muted)),
+                  ])),
+                  Text(money(((it['price'] ?? 0) * (it['qty'] ?? 1)) as num), style: A.t(12.5, w: FontWeight.w900)),
+                ]),
+                const Divider(height: 18),
+              ],
+              Row(children: [
+                const Text('المجموع', style: TextStyle(color: A.muted, fontSize: 12)),
+                const Spacer(),
+                Text(money(order.total), style: A.t(17, c: A.accent, w: FontWeight.w900)),
+              ]),
+              const SizedBox(height: 4),
+              const Row(children: [
+                Text('الدفع: كاش عند الاستلام 💵', style: TextStyle(color: A.success, fontSize: 11.5, fontWeight: FontWeight.w700)),
+              ]),
+            ]),
+          ),
+          const SizedBox(height: 14),
+          // العنوان
+          GlassCard(
+            child: Row(children: [
+              const Icon(Icons.location_on_rounded, color: A.primary),
+              const SizedBox(width: 10),
+              Expanded(child: Text(order.address.isEmpty ? 'الشارع العام — الكوت' : order.address, style: A.t(12.5))),
+            ]),
+          ),
+          const SizedBox(height: 14),
+          if (order.courierName.isNotEmpty)
+            GlassCard(
+              child: Row(children: [
+                const Icon(Icons.delivery_dining_rounded, color: A.primaryLight),
+                const SizedBox(width: 10),
+                Expanded(child: Text('المندوب: ${order.courierName}', style: A.t(12.5))),
+                const Icon(Icons.phone_rounded, size: 17, color: A.muted),
+              ]),
+            ),
+          const SizedBox(height: 20),
+          // إجراءات الزبون
+          if (widget.role == 'customer') ...[
+            // الخريطة الحية تظهر أوتوماتيك: من قبول المندوب إلى التسليم
+            if (status == 'delivering' || status == 'picked' || status == 'delivered')
+              LiveTrackCard(orderId: widget.orderId),
+            const SizedBox(height: 14),
+            if (status == 'delivering' || status == 'picked')
+              SolidBtn(
+                label: 'شاهد المندوب على الخريطة 🗺',
+                color: const Color(0xFF22C55E),
+                onTap: () => Navigator.push(context, MaterialPageRoute(builder: (_) => LiveTrackMapScreen(orderId: widget.orderId))),
+              ),
+            const SizedBox(height: 10),
+            if (status == 'pending' || status == 'accepted')
+              SolidBtn(
+                label: 'إلغاء الطلب',
+                color: A.danger,
+                onTap: () async {
+                  final ok = await showDialog<bool>(
+                    context: context,
+                    builder: (_) => AlertDialog(
+                      title: const Text('إلغاء الطلب؟'),
+                      content: const Text('متأكد؟ بيمشي للتاجر مباشرة'),
+                      actions: [
+                        TextButton(onPressed: () => Navigator.pop(context, false), child: const Text('لا')),
+                        TextButton(onPressed: () => Navigator.pop(context, true), child: const Text('نعم، ألغِ')),
+                      ],
+                    ),
+                  );
+                  if (ok == true) _act('/api/customer/orders/${widget.orderId}/cancel', {}, 'انلغى الطلب');
+                },
+              ),
+            const SizedBox(height: 10),
+            if (status == 'delivered') ...[
+              if (o['refund'] != null) _RefundChip(refund: Map<String, dynamic>.from(o['refund'] as Map)),
+              if (o['refund'] == null && o['withdrawn'] == true)
+                GlassCard(child: Center(child: Text('انتهت مهلة الاسترجاع/الاستبدال ⏳', style: A.t(11.5, c: A.muted, w: FontWeight.w700)))),
+              if (o['refund'] == null && o['withdrawn'] != true)
+                SolidBtn(
+                  label: 'طلب إرجاع أو استبدال ↩️🔁',
+                  color: A.danger,
+                  onTap: () => _requestReturn(),
+                ),
+              const SizedBox(height: 10),
+              SolidBtn(
+                label: 'ممتاز؟ قيّم المتجر ⭐',
+                color: A.primaryLight,
+                onTap: () => _rate(),
+              ),
+              if (o['refund'] == null && o['withdrawn'] != true && o['deadline'] != null) ...[
+                const SizedBox(height: 8),
+                Center(child: Text('⏳ آخر مهلة: ${_fmtDeadline(o['deadline'])}', style: A.t(11, c: A.warning, w: FontWeight.w800))),
+              ],
+            ],
+          ],
+          // إجراءات التاجر
+          if (widget.role == 'vendor') ...[
+            if (status == 'new')
+              Row(children: [
+                Expanded(child: SolidBtn(label: 'تجهيز الطلب ✅', onTap: () => _act('/api/vendor/orders/${widget.orderId}/status', {'status': 'accept'}, 'الطلب قيد التجهيز'))),
+                const SizedBox(width: 10),
+                Expanded(child: SolidBtn(label: 'رفض', color: A.danger, onTap: () => _act('/api/vendor/orders/${widget.orderId}/status', {'status': 'reject'}, 'انرفض الطلب'))),
+              ]),
+            if (status == 'preparing')
+              SolidBtn(label: 'جاهز للتسليم 🎒', onTap: () => _act('/api/vendor/orders/${widget.orderId}/status', {'status': 'ready'}, 'في انتظار المندوب')),
+          ],
+          // إجراءات المندوب — تخص الرحلة كلها (لو الطلب من أكثر من محل: الأزرار مرة واحدة للرحلة)
+          if (widget.role == 'delivery') ...[
+            if (trip == null)
+              SolidBtn(label: 'الطلبات تأخذها من تبويب "متاح" 🛵', onTap: () => _loadTrip()),
+            if (trip != null) ...[
+              if ((trip['orders'] as List).length > 1) ...[
+                GlassCard(
+                  padding: const EdgeInsets.all(12),
+                  child: Row(children: [
+                    const Icon(Icons.storefront_rounded, color: A.primary, size: 20),
+                    const SizedBox(width: 8),
+                    Expanded(child: Text('هذه الرحلة تضم ${(trip['orders'] as List).length} طلبات من ${(trip['orders'] as List).length} محلات — الزر يسري على الرحلة كلها 🛍', style: A.t(11.5))),
+                  ]),
+                ),
+                const SizedBox(height: 10),
+              ],
+              if (trip['picked_at'] == null)
+                SolidBtn(label: 'استلمت الطلب من المتجر 📦', onTap: () async {
+                  await _act('/api/delivery/pickup', {'trip_id': (trip['id'] as num).toInt()}, 'انطلقت بالتوصيل');
+                  _loadTrip();
+                }),
+              if (trip['picked_at'] != null && status != 'delivered')
+                SolidBtn(label: 'تم التسليم + قبض الكاش 💵', onTap: () async {
+                  await _act('/api/delivery/delivered', {'trip_id': (trip['id'] as num).toInt()}, 'تم التسليم! عاشت إيدك 🎉');
+                  _loadTrip();
+                }),
+              const SizedBox(height: 10),
+              SolidBtn(
+                label: 'خريطة التوصيل الحية 🗺️',
+                color: A.primaryLight,
+                onTap: () => Navigator.push(context, MaterialPageRoute(builder: (_) => CourierMapScreen(trip: trip))),
+              ),
+            ],
+          ],
+        ],
+      ),
+    );
+  }
+
+  Future<void> _rate() async {
+    int stars = 5;
+    String? comment;
+    await showSheet(context, StatefulBuilder(
+      builder: (context, setS) => Column(mainAxisSize: MainAxisSize.min, children: [
+        const SheetTitle('تقييم المتجر ⭐'),
+        Row(mainAxisAlignment: MainAxisAlignment.center, children: List.generate(5, (i) {
+          final s = i < stars;
+          return IconButton(
+            onPressed: () => setS(() => stars = i + 1),
+            icon: Icon(s ? Icons.star_rounded : Icons.star_outline_rounded, color: A.warning, size: 34),
+          );
+        })),
+        Padding(
+          padding: const EdgeInsets.all(16),
+          child: Column(crossAxisAlignment: CrossAxisAlignment.stretch, children: [
+            TextField(decoration: const InputDecoration(hintText: 'شلون كانت تجربتك؟ (اختياري)'), onChanged: (v) => comment = v),
+            const SizedBox(height: 12),
+            SolidBtn(label: 'إرسال التقييم', onTap: () {
+              Navigator.pop(context);
+              _act('/api/customer/orders/${widget.orderId}/rate', {'rating': stars, if (comment != null && comment!.isNotEmpty) 'comment': comment}, 'شكراً لتقييمك ⭐');
+            }),
+          ]),
+        ),
+      ]),
+    ));
+  }
+
+  Future<void> _requestReturn() async {
+    String type = 'return';
+    String reason = '';
+    int? exVariantId;
+    String exLabel = '';
+    final items = (o?['items'] ?? []) as List;
+    // كل البدائل المتوفرة (بمخزون) من منتجات الطلب
+    final alt = <Map>[];
+    for (final it in items) {
+      for (final v in (it['variants'] ?? <Map>[]).cast<Map>()) {
+        if (((v['stock'] as num?)?.toInt() ?? 0) > 0) {
+          alt.add({
+            'variant_id': (v['id'] as num).toInt(),
+            'label': '${v['color'] ?? ''}${(v['color'] ?? '').isNotEmpty ? ' · ' : ''}${v['name']}',
+            'product': it['product_name'] ?? '',
+          });
+        }
+      }
+    }
+    await showSheet(context, StatefulBuilder(
+      builder: (context, setS) => Column(mainAxisSize: MainAxisSize.min, crossAxisAlignment: CrossAxisAlignment.stretch, children: [
+        const SheetTitle('إرجاع أو استبدال 🔁'),
+        Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 16),
+          child: Row(children: [
+            Expanded(child: _typeBtn(setS, 'return', type, () => type = 'return', '↩️ إرجاع', 'أعيد القطعة للمحل')),
+            const SizedBox(width: 10),
+            Expanded(child: _typeBtn(setS, 'exchange', type, () => type = 'exchange', '🔁 استبدال', 'أستبدلها بمقاس/لون آخر')),
+          ]),
+        ),
+        if (type == 'exchange')
+          Padding(
+            padding: const EdgeInsets.fromLTRB(16, 14, 16, 0),
+            child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+              Text('اختار البديل المتوفر بالمخزون:', style: A.t(12, w: FontWeight.w800)),
+              const SizedBox(height: 8),
+              for (final v in alt)
+                Padding(
+                  padding: const EdgeInsets.only(bottom: 6),
+                  child: GestureDetector(
+                    onTap: () => setS(() {
+                      exVariantId = v['variant_id'] as int;
+                      exLabel = '${v['product']} — ${v['label']}';
+                    }),
+                    child: Container(
+                      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+                      decoration: BoxDecoration(
+                        color: exVariantId == v['variant_id'] ? A.primary.withOpacity(0.12) : A.bg,
+                        borderRadius: BorderRadius.circular(10),
+                        border: Border.all(color: exVariantId == v['variant_id'] ? A.primary : A.line, width: 1.2),
+                      ),
+                      child: Row(children: [
+                        Icon(Icons.check_circle_rounded, size: 17, color: exVariantId == v['variant_id'] ? A.primary : A.line),
+                        const SizedBox(width: 8),
+                        Expanded(child: Text('${v['product']} — ${v['label']}', style: A.t(11.5, w: FontWeight.w700))),
+                      ]),
+                    ),
+                  ),
+                ),
+              if (alt.isEmpty) Text('ماكو بديل متوفر بالمخزون حالياً — جرب الإرجاع', style: A.t(11, c: A.danger)),
+            ]),
+          ),
+        Padding(
+          padding: const EdgeInsets.all(16),
+          child: Column(crossAxisAlignment: CrossAxisAlignment.stretch, children: [
+            TextField(decoration: const InputDecoration(hintText: 'السبب (اختياري)...'), onChanged: (v) => reason = v),
+            const SizedBox(height: 12),
+            SolidBtn(label: 'إرسال الطلب', onTap: () {
+              if (type == 'exchange') {
+                if (exVariantId == null) return toast(context, 'اختار البديل أولاً');
+              }
+              Navigator.pop(context);
+              _act('/api/customer/orders/${widget.orderId}/return', {
+                'type': type,
+                'reason': reason,
+                if (type == 'exchange') 'variant_id': exVariantId,
+                if (type == 'exchange') 'desired': exLabel,
+              }, type == 'exchange' ? 'انرسل طلب الاستبدال للتاجر 🔁' : 'انرسل طلب الإرجاع للتاجر ↩️');
+            }),
+          ]),
+        ),
+      ]),
+    ));
+  }
+
+  Widget _typeBtn(StateSetter setS, String val, String cur, VoidCallback setter, String icon, String title) {
+    return GestureDetector(
+      onTap: () => setS(setter),
+      child: Container(
+        padding: const EdgeInsets.symmetric(vertical: 12),
+        decoration: BoxDecoration(
+          color: cur == val ? A.primary : Colors.white,
+          borderRadius: BorderRadius.circular(12),
+          border: Border.all(color: cur == val ? A.primary : A.line, width: 1.2),
+        ),
+        child: Column(children: [
+          Text(icon, style: const TextStyle(fontSize: 17)),
+          const SizedBox(height: 4),
+          Text(title, style: A.t(12, c: cur == val ? Colors.white : A.ink, w: FontWeight.w800)),
+        ]),
+      ),
+    );
+  }
+
+  String _fmtDeadline(dynamic iso) {
+    try {
+      final d = DateTime.parse('$iso').toLocal();
+      final now = DateTime.now();
+      final rem = d.difference(now);
+      if (rem.isNegative) return 'انتهت';
+      if (rem.inHours < 24) return 'بعد ${rem.inHours} ساعة و ${rem.inMinutes % 60} دقيقة';
+      return 'بعد ${rem.inDays} يوم (${d.day}/${d.month})';
+    } catch (_) {
+      return '';
+    }
+  }
+}
+
+/// حبة حالة طلب الإرجاع/الاستبدال
+class _RefundChip extends StatelessWidget {
+  final Map<String, dynamic> refund;
+  const _RefundChip({required this.refund});
+
+  @override
+  Widget build(BuildContext context) {
+    final st = '${refund['status'] ?? 'pending'}';
+    final isEx = refund['type'] == 'exchange';
+    final (color, label) = switch (st) {
+      'accepted' => (A.success, '${isEx ? 'الاستبدال' : 'الإرجاع'} مقبول ✓'),
+      'rejected' => (A.danger, '${isEx ? 'الاستبدال' : 'الإرجاع'} مرفوض'),
+      _ => (A.warning, '${isEx ? 'الاستبدال' : 'الإرجاع'} قيد المراجعة ⏳'),
+    };
+    final desired = refund['desired'] ?? '';
+    return GlassCard(
+      padding: const EdgeInsets.all(12),
+      child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+        Row(children: [
+          Icon(isEx ? Icons.swap_horiz_rounded : Icons.replay_rounded, size: 18, color: color),
+          const SizedBox(width: 8),
+          Text(label, style: A.t(12.5, c: color, w: FontWeight.w900)),
+        ]),
+        if (desired != null && desired.toString().isNotEmpty)
+          Padding(
+            padding: const EdgeInsets.only(top: 6),
+            child: Text('البديل المطلوب: $desired', style: A.t(11.5, c: A.muted, w: FontWeight.w700)),
+          ),
+      ]),
+    );
+  }
+}

@@ -1,0 +1,502 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>زبون — هوية «أفق» — العرض الحي</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
+<style>
+/* ═══════════════════════════════════════════════════════════
+   زبون — هوية «أفق» Horizon (النسخة ٢.٠)
+   نيلي ملكي + سماوي كهربائي + برتقالي دافئ — زجاجية Apple كاملة
+   كل تباين محسوب برمجياً (WCAG 2.2)
+   ═══════════════════════════════════════════════════════════ */
+:root{
+  /* ── هوية أفق ── */
+  --primary:#1D4ED8;
+  --primary-deep:#1E3A8A;
+  --primary-light:#38BDF8;
+  --cyan:#06B6D4;
+  --accent:#F97316;
+  --accent-deep:#EA580C;
+  --ink:#0A1120;
+  /* ── سطوح ── */
+  --bg:#FAF9F6;
+  --text:#101828;
+  --muted:#475467;
+  /* ── وظيفة ── */
+  --success:#15803D;
+  --warning:#B45309;
+  --danger:#DC2626;
+  --info:#0284C7;
+  --star:#F5A623;
+  /* ── الزجاج ── */
+  --glass-l1:rgba(238,244,255,.55);
+  --glass-l2:rgba(255,255,255,.62);
+  --glass-l3:rgba(255,255,255,.72);
+  --glass-border:rgba(255,255,255,.4);
+  --glass-border-dark:rgba(255,255,255,.12);
+  /* ── حركة ── */
+  --quick:140ms;--base:260ms;--slow:420ms;
+  --ease:cubic-bezier(.33,1,.68,1);
+  --spring:cubic-bezier(.34,1.56,.64,1);
+  /* ── هندسة ── */
+  --rd-lg:20px;
+  --shadow-glass:0 8px 24px rgba(29,78,216,.16);
+  --font:'Cairo',system-ui,sans-serif;
+}
+html[data-theme="dark"]{
+  --bg:#0A1120;
+  --text:#E6EDF7;
+  --muted:#8FA3BF;
+  --glass-l1:rgba(26,37,64,.68);
+  --glass-l2:rgba(17,26,46,.72);
+  --glass-l3:rgba(26,37,64,.78);
+  --glass-border:var(--glass-border-dark);
+  --shadow-glass:0 8px 24px rgba(0,0,0,.5);
+}
+*{margin:0;padding:0;box-sizing:border-box}
+body{
+  font-family:var(--font);background:var(--bg);color:var(--text);
+  transition:background var(--slow) var(--ease),color var(--slow) var(--ease);
+  line-height:1.6;padding-bottom:80px;
+}
+.container{max-width:1040px;margin:0 auto;padding:0 20px}
+
+/* ── توهجات أفق (خلف الزجاج فقط) ── */
+.orbs{position:fixed;inset:0;z-index:-1;overflow:hidden;pointer-events:none}
+.orb{position:absolute;border-radius:50%;filter:blur(60px);animation:float 16s ease-in-out infinite}
+.orb1{width:440px;height:440px;background:#38BDF855;top:-120px;right:-100px}
+.orb2{width:400px;height:400px;background:#F9731644;bottom:-140px;left:-80px;animation-delay:-8s}
+.orb3{width:300px;height:300px;background:#1E3A8A66;top:40%;left:30%;animation-delay:-4s}
+@keyframes float{0%,100%{transform:translateY(0) scale(1)}50%{transform:translateY(30px) scale(1.06)}}
+
+/* ── الرأس ── */
+.hero{padding:48px 0 24px}
+.kicker{color:var(--primary);font-weight:800;font-size:14px;letter-spacing:.5px}
+html[data-theme="dark"] .kicker{color:var(--primary-light)}
+h1{font-size:34px;font-weight:900;margin:6px 0 4px}
+.sub{color:var(--muted);font-size:16px;font-weight:500;max-width:660px}
+.theme-toggle{
+  position:fixed;top:16px;left:16px;z-index:50;border:none;cursor:pointer;
+  background:var(--glass-l3);backdrop-filter:blur(24px);-webkit-backdrop-filter:blur(24px);
+  border:1px solid var(--glass-border);border-radius:999px;padding:10px 18px;
+  font-family:var(--font);font-weight:700;font-size:14px;color:var(--text);
+  box-shadow:var(--shadow-glass);transition:transform var(--quick) var(--ease);
+}
+.theme-toggle:active{transform:scale(.96)}
+
+.sec{margin-top:56px}
+.sec h2{font-size:24px;font-weight:800;margin-bottom:4px}
+.sec .sec-sub{color:var(--muted);font-size:14px;font-weight:500;margin-bottom:20px}
+.badge{display:inline-block;padding:2px 10px;border-radius:999px;font-size:11px;font-weight:700}
+.badge-ok{background:var(--primary);color:#fff}
+.badge-fail{background:var(--danger);color:#fff}
+.badge-warn{background:var(--warning);color:#fff}
+
+/* ── لوحة الألوان ── */
+.swatches{display:grid;grid-template-columns:repeat(auto-fill,minmax(225px,1fr));gap:14px}
+.swatch{
+  background:var(--glass-l2);backdrop-filter:blur(20px);-webkit-backdrop-filter:blur(20px);
+  border:1px solid var(--glass-border);border-radius:var(--rd-lg);overflow:hidden;
+  box-shadow:var(--shadow-glass);transition:transform var(--base) var(--spring);
+}
+.swatch:hover{transform:translateY(-3px)}
+.swatch .color{height:72px;display:flex;align-items:center;padding:0 14px;font-size:12px;font-weight:800;direction:ltr}
+.swatch .meta{padding:10px 14px}
+.swatch .meta .name{font-weight:800;font-size:14px}
+.swatch .meta .role{font-size:12px;color:var(--muted);font-weight:500}
+.swatch .meta .cr{display:flex;justify-content:space-between;align-items:center;margin-top:8px;font-size:12px;font-weight:700}
+
+/* ── طبقات الزجاج ── */
+.layers{display:grid;grid-template-columns:repeat(auto-fit,minmax(230px,1fr));gap:16px}
+.layer-card{border-radius:var(--rd-lg);padding:20px;border:1px solid var(--glass-border);transition:transform var(--base) var(--spring)}
+.layer-card:hover{transform:translateY(-3px)}
+.layer-card .l-title{font-weight:800;font-size:15px;margin-bottom:4px}
+.layer-card .l-spec{font-size:12px;color:var(--muted);font-weight:600;direction:ltr;text-align:right}
+.layer-card .l-txt{margin-top:12px;font-size:14px;font-weight:600}
+.layer-card .l-txt small{display:block;color:var(--muted);font-weight:500;font-size:12px}
+.layer-l1{background:var(--glass-l1);backdrop-filter:blur(16px) saturate(1.4);-webkit-backdrop-filter:blur(16px) saturate(1.4)}
+.layer-l2{background:var(--glass-l2);backdrop-filter:blur(20px) saturate(1.4);-webkit-backdrop-filter:blur(20px) saturate(1.4)}
+.layer-l3{background:var(--glass-l3);backdrop-filter:blur(24px) saturate(1.4);-webkit-backdrop-filter:blur(24px) saturate(1.4);box-shadow:var(--shadow-glass)}
+.layer-l4{background:var(--bg);border:2px solid var(--primary);box-shadow:0 8px 24px rgba(0,0,0,.08)}
+
+/* ── أزرار ── */
+.btns{display:flex;flex-wrap:wrap;gap:12px;align-items:center}
+.btn{
+  border:none;cursor:pointer;font-family:var(--font);font-weight:800;font-size:15px;
+  padding:14px 26px;border-radius:14px;min-height:48px;
+  transition:transform var(--quick) var(--ease),filter var(--quick) var(--ease);
+}
+.btn:active{transform:scale(.96)}
+.btn-primary{background:var(--primary-deep);color:#fff;box-shadow:0 6px 16px rgba(30,58,138,.4)}
+.btn-primary:hover{filter:brightness(1.1)}
+.btn-cta{background:var(--accent);color:var(--ink);box-shadow:0 6px 16px rgba(249,115,22,.4)}
+.btn-cta:hover{filter:brightness(1.05)}
+.btn-success{background:var(--success);color:#fff}
+.btn-ghost{border:2px solid var(--danger);background:transparent;color:var(--danger)}
+.btn .note{display:block;font-size:10px;font-weight:600;opacity:.85}
+.cr-note{font-size:11px;color:var(--muted);font-weight:600}
+
+/* ── الطباعة ── */
+.type-demo{
+  display:grid;gap:6px;background:var(--glass-l2);backdrop-filter:blur(20px);
+  border:1px solid var(--glass-border);border-radius:var(--rd-lg);padding:24px;
+}
+.type-demo .t{display:flex;align-items:baseline;gap:14px}
+.type-demo .t .sample{flex:1;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.type-demo .t .spec{color:var(--muted);font-size:11px;font-weight:700;direction:ltr;min-width:110px;text-align:left}
+
+/* ── الحركة ── */
+.motion-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:14px}
+.motion-item{
+  background:var(--glass-l2);backdrop-filter:blur(20px);border:1px solid var(--glass-border);
+  border-radius:var(--rd-lg);padding:18px;display:flex;flex-direction:column;gap:10px;align-items:center;
+}
+.motion-item .demo-box{
+  width:64px;height:64px;border-radius:16px;
+  background:linear-gradient(135deg,var(--cyan),var(--primary-deep));
+  box-shadow:0 8px 20px rgba(6,182,212,.4);
+  transition:transform var(--quick) var(--ease);
+}
+.motion-item.press:active .demo-box{transform:scale(.92)}
+.motion-item .btn-demo{
+  border:none;cursor:pointer;font-family:var(--font);background:var(--glass-l3);
+  backdrop-filter:blur(24px);border:1px solid var(--glass-border);border-radius:12px;
+  padding:10px 18px;font-weight:700;font-size:13px;color:var(--text);
+}
+.motion-item .label{font-size:13px;font-weight:700;text-align:center}
+.motion-item .spec{font-size:11px;color:var(--muted);font-weight:600;direction:ltr}
+@keyframes tick{from{transform:scale(1)}30%{transform:scale(1.25)}to{transform:scale(1)}}
+.tick{animation:tick var(--base) var(--spring)}
+
+/* ── حالات الطلب ── */
+.status-row{display:flex;flex-wrap:wrap;gap:10px}
+.status{display:inline-flex;align-items:center;gap:8px;padding:8px 16px;border-radius:999px;font-weight:800;font-size:13px}
+.status .dot{width:8px;height:8px;border-radius:50%;background:currentColor}
+.st-preparing{background:var(--primary);color:#fff}
+.st-ready{background:var(--primary-deep);color:#fff}
+.st-delivering{background:var(--info);color:#fff}
+.st-delivered{background:var(--success);color:#fff}
+
+/* ── حكم المال ── */
+.money-compare{display:grid;grid-template-columns:1fr 1fr;gap:16px}
+.money-box{border-radius:var(--rd-lg);padding:20px}
+.money-box .t{font-size:12px;font-weight:700;color:var(--muted);margin-bottom:10px}
+.money-box .row{display:flex;justify-content:space-between;font-size:14px;font-weight:600;padding:5px 0}
+.money-box .total{border-top:2px solid var(--text);margin-top:8px;padding-top:10px;display:flex;justify-content:space-between;font-weight:900;font-size:22px}
+.money-glass{background:var(--glass-l2);backdrop-filter:blur(20px);border:1px solid var(--glass-border)}
+.money-solid{background:var(--bg);border:2px solid var(--primary)}
+
+/* ── هاتف مصغّر ── */
+.phone-wrap{display:flex;justify-content:center;margin-top:24px}
+.phone{
+  width:320px;border-radius:36px;overflow:hidden;border:6px solid var(--text);
+  background:var(--bg);box-shadow:0 24px 60px rgba(0,0,0,.3);position:relative;
+}
+.phone .statusbar{display:flex;justify-content:space-between;padding:12px 18px 4px;font-size:11px;font-weight:700;color:var(--muted)}
+.phone .screen{padding:0 14px 120px}
+.phone .greet{font-weight:900;font-size:20px}
+.phone .search{
+  margin:12px 0;display:flex;align-items:center;gap:8px;background:var(--glass-l2);
+  backdrop-filter:blur(20px);border:1px solid var(--glass-border);border-radius:14px;
+  padding:11px 14px;font-size:13px;color:var(--muted);font-weight:600;
+}
+.phone .search .kbd{margin-inline-start:auto;background:var(--primary);color:#fff;border-radius:8px;padding:1px 8px;font-size:10px}
+.phone .stores{display:flex;gap:10px;overflow:hidden;margin:14px 0}
+.phone .store{
+  min-width:96px;border-radius:16px;padding:10px;background:var(--glass-l1);
+  backdrop-filter:blur(16px) saturate(1.4);border:1px solid var(--glass-border);text-align:center;
+}
+.phone .store .logo{
+  width:44px;height:44px;border-radius:12px;margin:0 auto 6px;
+  background:linear-gradient(135deg,var(--primary),var(--cyan));
+}
+.phone .store .n{font-size:10px;font-weight:800}
+.phone .store .v{display:flex;align-items:center;justify-content:center;gap:3px;font-size:9px;color:var(--cyan);font-weight:800}
+html[data-theme="dark"] .phone .store .v{color:var(--primary-light)}
+.phone .grid{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.phone .prod{
+  border-radius:16px;overflow:hidden;background:var(--glass-l2);
+  backdrop-filter:blur(20px);border:1px solid var(--glass-border);
+}
+.phone .prod .img{height:84px;background:linear-gradient(135deg,#06B6D455,#F9731655)}
+.phone .prod .info{padding:8px}
+.phone .prod .pn{font-size:11px;font-weight:800}
+.phone .prod .pr{font-size:12px;font-weight:900;display:flex;justify-content:space-between;align-items:center;margin-top:4px}
+.phone .prod .add{
+  width:24px;height:24px;border-radius:8px;border:none;cursor:pointer;
+  background:var(--primary-deep);color:#fff;font-weight:900;font-size:14px;line-height:1;
+}
+.phone .soldout{position:relative}
+.phone .soldout::after{
+  content:"نفد";position:absolute;top:6px;right:6px;background:var(--danger);color:#fff;
+  font-size:9px;font-weight:800;padding:2px 8px;border-radius:999px;
+}
+.phone .fabs{position:absolute;bottom:84px;right:14px;left:14px;z-index:5}
+.phone .fab{
+  display:flex;align-items:center;justify-content:space-between;background:var(--glass-l3);
+  backdrop-filter:blur(24px) saturate(1.4);border:1px solid var(--glass-border);
+  border-radius:16px;padding:12px 16px;box-shadow:var(--shadow-glass);font-weight:900;font-size:14px;
+  transition:transform var(--quick) var(--ease);
+}
+.phone .fab .cnt{
+  background:var(--accent);color:var(--ink);border-radius:999px;min-width:22px;height:22px;
+  display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:900;padding:0 6px;
+}
+.phone .nav{
+  position:absolute;bottom:0;right:0;left:0;z-index:6;display:flex;justify-content:space-around;
+  padding:10px 6px 16px;background:var(--glass-l3);backdrop-filter:blur(24px) saturate(1.4);
+  border-top:1px solid var(--glass-border);
+}
+.phone .nav .ni{display:flex;flex-direction:column;align-items:center;gap:2px;font-size:9px;font-weight:700;color:var(--muted)}
+.phone .nav .ni.active{color:var(--primary)}
+html[data-theme="dark"] .phone .nav .ni.active{color:var(--primary-light)}
+.phone .nav .ic{font-size:18px;line-height:1}
+
+.note-box{
+  background:var(--glass-l2);backdrop-filter:blur(20px);border:1px solid var(--glass-border);
+  border-radius:var(--rd-lg);padding:18px 20px;margin-top:14px;font-size:14px;font-weight:600;
+}
+.note-box .lead{color:var(--primary);font-weight:900}
+html[data-theme="dark"] .note-box .lead{color:var(--primary-light)}
+@media(max-width:640px){.money-compare{grid-template-columns:1fr}}
+@media (prefers-reduced-motion: reduce){
+  .orb{animation:none}
+  *{transition-duration:.01ms!important;animation-duration:.01ms!important}
+}
+</style>
+</head>
+<body>
+
+<div class="orbs" aria-hidden="true">
+  <div class="orb orb1"></div>
+  <div class="orb orb2"></div>
+  <div class="orb orb3"></div>
+</div>
+
+<button class="theme-toggle" onclick="toggleTheme()" id="toggleBtn">الوضع الليلي 🌙</button>
+
+<div class="container">
+
+  <header class="hero">
+    <div class="kicker">هوية «أفق» Horizon — النسخة ٢.٠</div>
+    <h1>نيلي + سماوي + برتقالي — بالزجاج</h1>
+    <p class="sub">
+      أزرق تثق به بفلوسك (المال) • سماوي يقول لك إنها حديثة وسريعة (التقنية) •
+      برتقالي يدعوك للأكل والشراء (الشهية) — كلها خلف زجاج نقي. وكل لون برقم مقاس.
+    </p>
+  </header>
+
+  <!-- الألوان -->
+  <section class="sec">
+    <h2>١. لوحة «أفق» — كل تباين محسوب</h2>
+    <p class="sec-sub">النص البرتقالي حار — لذلك نص الأزرار البرتقالية كحلي داكن (6.73:1) مو أبيض (2.80:1 فشل). هذا هو القرار العلمي بالحساب.</p>
+    <div class="swatches" id="swatches"></div>
+  </section>
+
+  <!-- الطبقات -->
+  <section class="sec">
+    <h2>٢. الزجاج — 4 طبقات بأسلوب Apple</h2>
+    <p class="sec-sub">الليلي أزرق عميق عمدًا: الزجاج يحتاج خلفية ملوّنة تُرى من خلاله — والسماوي والبرتقالي يتوهجان عليها طبيعيًا.</p>
+    <div class="layers">
+      <div class="layer-card layer-l1">
+        <div class="l-title">L1 — زجاج خلفي</div>
+        <div class="l-spec">blur 16px · sat 1.4 · .55</div>
+        <div class="l-txt">بطاقات المحلات فوق الصور <small>يترك الخلفية تُرى</small></div>
+      </div>
+      <div class="layer-card layer-l2">
+        <div class="l-title">L2 — زجاج أمامي</div>
+        <div class="l-spec">blur 20px · sat 1.4 · .62</div>
+        <div class="l-txt">بطاقات المحتوى التفاعلي <small>≥4.5:1 مضمون</small></div>
+      </div>
+      <div class="layer-card layer-l3">
+        <div class="l-title">L3 — عائم</div>
+        <div class="l-spec">blur 24px · sat 1.4 · .72</div>
+        <div class="l-txt">شريط التنقل والسلة والمودالات <small>أعلى عتامة لأن فوقه أهم النصوص</small></div>
+      </div>
+      <div class="layer-card layer-l4">
+        <div class="l-title">L4 — صلب (استثناء المال)</div>
+        <div class="l-spec">blur 0 · opacity 100%</div>
+        <div class="l-txt">ملخص الدفع والجداول والحقول <small>الأرقام المالية فوق زجاج = قراءة متقلبة</small></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- الأزرار -->
+  <section class="sec">
+    <h2>٣. الأزرار — لون الحشوة يحدد لون النص</h2>
+    <p class="sec-sub">مبدأ واحد ثابت: أزرار `accent` برتقالية بنص كحلي `#0A1120` (6.73:1 AAA لنص كبير) — أبيض على برتقالي ممنوع بالحساب.</p>
+    <div class="btns">
+      <button class="btn btn-primary">اكمل التسوق <span class="note">أبيض على نيلي عميق · 10.36:1 AAA</span></button>
+      <button class="btn btn-cta">أكيد، أطلب — كاش عند الاستلام <span class="note">كحلي على برتقالي · 6.73:1 AA</span></button>
+      <button class="btn btn-success">استلمت ✓ <span class="note">أبيض على نجاح · 5.02:1 AA</span></button>
+      <button class="btn btn-ghost">إلغاء الطلب <span class="note">أحمر على الفاتح · 4.83:1 AA</span></button>
+    </div>
+    <p class="cr-note" style="margin-top:12px">كل الأزرار ≥48px (حد اللمس 44px — قانون Fitts).</p>
+  </section>
+
+  <!-- الطباعة -->
+  <section class="sec">
+    <h2>٤. الطباعة — Cairo المُقنن</h2>
+    <p class="sec-sub">ارتفاع 1.5 للعربية، وأرقام المبالغ LTR embedded كي لا تنقلب.</p>
+    <div class="type-demo">
+      <div class="t"><span class="sample" style="font-size:34px;font-weight:900">١٢٥,٠٠٠ د.ع — رصيدك</span><span class="spec">display 34 / 900</span></div>
+      <div class="t"><span class="sample" style="font-size:28px;font-weight:800">المطاعم القريبة منك</span><span class="spec">title1 28 / 800</span></div>
+      <div class="t"><span class="sample" style="font-size:22px;font-weight:800">عروض اليوم</span><span class="spec">title2 22 / 800</span></div>
+      <div class="t"><span class="sample" style="font-size:18px;font-weight:700">بيتزا الكوت — متجر موثق ✓</span><span class="spec">headline 18 / 700</span></div>
+      <div class="t"><span class="sample" style="font-size:16px;font-weight:500">الدفع كاش عند الاستلام، توصيل سريع داخل المحافظة.</span><span class="spec">body 16 / 500</span></div>
+      <div class="t"><span class="sample" style="font-size:14px;font-weight:600;color:var(--muted)">سعر المنتج: 5,000 د.ع</span><span class="spec">subhead 14 / 600</span></div>
+      <div class="t"><span class="sample" style="font-size:12px;font-weight:600;color:var(--muted)">وصلك قبل قليل • قبل 5 دقائق</span><span class="spec">caption 12 / 600</span></div>
+    </div>
+  </section>
+
+  <!-- الحركة -->
+  <section class="sec">
+    <h2>٥. الحركة — توقيتات عصبية</h2>
+    <p class="sec-sub">0.1s إدراك / 1s إكمال (Nielsen). جرّب:</p>
+    <div class="motion-grid">
+      <div class="motion-item press">
+        <div class="demo-box"></div>
+        <button class="btn-demo" onclick="this.blur()">اضغطني</button>
+        <div class="label">ضغط فوري</div>
+        <div class="spec">140ms easeOutCubic · 0.96</div>
+      </div>
+      <div class="motion-item">
+        <button class="btn-demo" onclick="tick(this)">+ إضافة للسلة</button>
+        <div class="label">تأكيد انبثاقي</div>
+        <div class="spec">260ms spring · + → ✓</div>
+      </div>
+      <div class="motion-item">
+        <button class="btn-demo" onclick="tick2(this)">ظهور البطاقة</button>
+        <div class="label">ظهور متتابع</div>
+        <div class="spec">420ms easeOutBack · 55ms بين العناصر</div>
+      </div>
+    </div>
+  </section>
+
+  <!-- حالات الطلب -->
+  <section class="sec">
+    <h2>٦. حالة الطلب — تمييز الأزرق الدقيق</h2>
+    <p class="sec-sub">الزرق ثلاث مستويات دون صراع: ملكي ← نيلي ← سماوي أعمق، والتسليم أخضر خارج العائلة كلها.</p>
+    <div class="status-row">
+      <span class="status st-preparing"><span class="dot"></span>قيد التحضير · ملكي #1D4ED8</span>
+      <span class="status st-ready"><span class="dot"></span>جاهز · نيلي #1E3A8A</span>
+      <span class="status st-delivering"><span class="dot"></span>مع المندوب · #0284C7</span>
+      <span class="status st-delivered"><span class="dot"></span>تم التسليم · أخضر 151°</span>
+    </div>
+  </section>
+
+  <!-- حكم المال -->
+  <section class="sec">
+    <h2>٧. القاعدة: المال صلب، الجمال زجاج</h2>
+    <p class="sec-sub">نفس الأرقام — بس زجاجي مقابل صلب. الملخص المالي L4 دائمًا.</p>
+    <div class="money-compare">
+      <div class="money-box money-glass">
+        <div class="t">✗ زجاجي — يتقلب أثناء التمرير</div>
+        <div class="row"><span>المجموع الفرعي</span><span>23,500 د.ع</span></div>
+        <div class="row"><span>التوصيل</span><span>2,000 د.ع</span></div>
+        <div class="total"><span>الإجمالي</span><span>25,500 د.ع</span></div>
+      </div>
+      <div class="money-box money-solid">
+        <div class="t">✓ صلب — الأرقام ثابتة فوق أي خلفية</div>
+        <div class="row"><span>المجموع الفرعي</span><span>23,500 د.ع</span></div>
+        <div class="row"><span>التوصيل</span><span>2,000 د.ع</span></div>
+        <div class="total"><span>الإجمالي</span><span>25,500 د.ع</span></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- المشهد المتكامل -->
+  <section class="sec">
+    <h2>٨. المشهد المتكامل — الرئيسية بهوية أفق</h2>
+    <p class="sec-sub">الموثوقية سماوية ✓ • السلة برتقالية • التنقل زجاج L3 • «نفد» حمراء — كل القوانين بطبقة واحدة.</p>
+    <div class="phone-wrap">
+      <div class="phone">
+        <div class="statusbar"><span>٩:٤١</span><span>📶 4G 🔋</span></div>
+        <div class="screen">
+          <div class="greet">أهلاً بيك حجي، نورتنا</div>
+          <div class="search">ابحث عن مطعم أو وجبة... <span class="kbd">⌕</span></div>
+          <div class="stores">
+            <div class="store"><div class="logo"></div><div class="n">بيتزا الكوت</div><div class="v">✓ موثق</div></div>
+            <div class="store"><div class="logo"></div><div class="n">بقالة الأمانة</div><div class="v">✓ موثق</div></div>
+            <div class="store"><div class="logo"></div><div class="n">صيدلية العروبة</div><div class="v">✓ موثق</div></div>
+          </div>
+          <div class="grid">
+            <div class="prod"><div class="img"></div><div class="info"><div class="pn">بيتزا وسط</div><div class="pr">8,000 د.ع<button class="add">+</button></div></div></div>
+            <div class="prod"><div class="img"></div><div class="info"><div class="pn">همبرغر عراقي</div><div class="pr">6,500 د.ع<button class="add">+</button></div></div></div>
+            <div class="prod soldout"><div class="img"></div><div class="info"><div class="pn">دجاج مشوي</div><div class="pr">12,000 د.ع<button class="add" disabled style="opacity:.4">+</button></div></div></div>
+            <div class="prod"><div class="img"></div><div class="info"><div class="pn">فلافل</div><div class="pr">3,000 د.ع<button class="add">+</button></div></div></div>
+          </div>
+        </div>
+        <div class="fabs">
+          <div class="fab">عرض السلة <span class="cnt">3</span></div>
+        </div>
+        <div class="nav">
+          <div class="ni active"><span class="ic">🏠</span>التسوق</div>
+          <div class="ni"><span class="ic">🧾</span>طلباتي</div>
+          <div class="ni"><span class="ic">❤️</span>المفضلة</div>
+          <div class="ni"><span class="ic">👤</span>حسابي</div>
+        </div>
+      </div>
+    </div>
+    <div class="note-box">
+      <span class="lead">رسالة «أفق» اللاواعية:</span> أزرق تثق به بفلوسك، سماوي يعدك بالسرعة، برتقالي يشتهيك للطلب — خلف زجاج نقي
+      يليق بعصر أبل. وكل رقم هنا قابل للفحص، وكل فحص قابل لاختبار مستخدم في الكوت.
+    </div>
+  </section>
+
+</div>
+
+<script>
+/* لوحة أفق المولدة بالتباينات المحسوبة */
+const TOKENS=[
+  {name:'primary',hex:'#1D4ED8',role:'الملكي — نصوص/أيقونات تفاعلية',cr:'6.37:1 على الكريمي (AA+)',on:'#FAF9F6',lvl:'AA'},
+  {name:'primaryDeep',hex:'#1E3A8A',role:'النيلي — حشوة الأزرار',cr:'10.36:1 مع الأبيض (AAA)',on:'#FFFFFF',lvl:'AAA'},
+  {name:'primaryLight',hex:'#38BDF8',role:'السماوي الفاتح — النشط بالليلي',cr:'8.80:1 على #0A1120 (AAA)',on:'#0A1120',lvl:'AAA'},
+  {name:'cyan',hex:'#06B6D4',role:'السماوي الكهربائي — الموثوقية والتقنية',cr:'7.76:1 على الليلي (AAA)',on:'#0A1120',lvl:'AAA'},
+  {name:'accent',hex:'#F97316',role:'البرتقالي — أزرار الشراء (نص كحلي)',cr:'6.73:1 مع الكحلي / 2.80:1 مع الأبيض ❌',on:'#0A1120',lvl:'AA'},
+  {name:'text',hex:'#101828',role:'النص الرئيسي',cr:'16.86:1 (AAA)',on:'#FAF9F6',lvl:'AAA'},
+  {name:'muted',hex:'#475467',role:'النص الثانوي',cr:'7.30:1 (AAA)',on:'#FAF9F6',lvl:'AAA'},
+  {name:'success',hex:'#15803D',role:'تم التسليم / رصيد موجب',cr:'5.02:1 على الأبيض (AA)',on:'#FFFFFF',lvl:'AA'},
+  {name:'warning',hex:'#B45309',role:'مخزون منخفض / تنبيهات',cr:'5.02:1 على الأبيض (AA)',on:'#FFFFFF',lvl:'AA'},
+  {name:'danger',hex:'#DC2626',role:'أخطاء / إلغاء / نفد',cr:'4.83:1 على الأبيض (AA)',on:'#FFFFFF',lvl:'AA'},
+  {name:'info',hex:'#0284C7',role:'مع المندوب (نص كبير فقط)',cr:'4.10:1 — كبير ≥18pt',on:'#FFFFFF',lvl:'L'},
+  {name:'darkText',hex:'#E6EDF7',role:'النص في الليلي',cr:'16.00:1 على #0A1120 (AAA)',on:'#0A1120',lvl:'AAA'},
+];
+const grid=document.getElementById('swatches');
+TOKENS.forEach(t=>{
+  const card=document.createElement('div');
+  card.className='swatch';
+  const ok=t.lvl==='AA'||t.lvl==='AAA';
+  card.innerHTML=`
+    <div class="color" style="background:${t.hex};color:${t.on}">${t.hex} <span style="margin-inline-start:auto;font-weight:700;opacity:.9">${t.name}</span></div>
+    <div class="meta">
+      <div class="name">${t.name}</div>
+      <div class="role">${t.role}</div>
+      <div class="cr"><span>تباين: ${t.cr}</span><span class="badge badge-${ok?'ok':'warn'}">${t.lvl}</span></div>
+    </div>`;
+  grid.appendChild(card);
+});
+
+function toggleTheme(){
+  const html=document.documentElement;
+  const dark=html.getAttribute('data-theme')==='dark';
+  html.setAttribute('data-theme',dark?'':'dark');
+  document.getElementById('toggleBtn').textContent=dark?'الوضع الليلي 🌙':'الوضع النهاري ☀️';
+}
+function tick(btn){
+  btn.classList.remove('tick');void btn.offsetWidth;btn.classList.add('tick');
+  btn.textContent=btn.textContent.startsWith('+')?'✓ أُضيف':'+ إضافة للسلة';
+  setTimeout(()=>btn.textContent=btn.textContent==='+ إضافة للسلة'?'✓ أُضيف':'+ إضافة للسلة',600);
+}
+function tick2(btn){
+  const box=btn.closest('.motion-item').querySelector('.demo-box');
+  box.style.transform='scale(1.15)';
+  box.style.transition='transform 420ms cubic-bezier(.34,1.56,.64,1)';
+  setTimeout(()=>{box.style.transform='scale(1)';},420);
+}
+</script>
+</body>
+</html>

@@ -1,0 +1,669 @@
+import 'dart:convert';
+import 'dart:math' as math;
+import 'dart:typed_data';
+import 'dart:ui' as ui;
+import 'package:flutter/material.dart';
+import 'theme.dart';
+import 'api.dart';
+import 'screens/cart_screen.dart';
+
+/// هل القيمة غلاف صورة حقيقي (رابط/بايت) وليس بانر CSS قديم؟
+bool isUrlCover(String v) =>
+    v.startsWith('http') || v.startsWith('/uploads') || v.startsWith('data:') || v.startsWith('/9j');
+
+/// صورة من base64 أو رابط أو إيموجي أول حرف
+Widget storeLogo(String logo, {double size = 52, double radius = 14}) {
+  if (logo.isEmpty) {
+    return Container(
+      width: size, height: size,
+      decoration: BoxDecoration(
+        gradient: const LinearGradient(colors: [Color(0xFFE0E7FF), Color(0xFFCFFAFE)]),
+        borderRadius: BorderRadius.circular(radius),
+      ),
+      alignment: Alignment.center,
+      child: Text('🏪', style: A.t(size * 0.45)),
+    );
+  }
+  return ClipRRect(
+    borderRadius: BorderRadius.circular(radius),
+    child: SizedBox(
+      width: size, height: size,
+      child: productImageBox(
+        logo.startsWith('http')
+            ? logo
+            : logo.startsWith('/uploads')
+                ? Api.base + logo
+                : logo,
+      ),
+    ),
+  );
+}
+
+Widget productImage(String? image, {double size = 80, double radius = 14}) {
+  if (image != null && (image.startsWith('data:') || image.startsWith('/9j'))) {
+    try {
+      final bytes = base64Decode(image.replaceFirst(RegExp('^data:image/[a-z]+;base64,'), ''));
+      return ClipRRect(
+        borderRadius: BorderRadius.circular(radius),
+        child: Image.memory(bytes, width: size, height: size, fit: BoxFit.cover),
+      );
+    } catch (_) {}
+  }
+  return Container(
+    width: size,
+    height: size,
+    decoration: BoxDecoration(
+      gradient: const LinearGradient(colors: [Color(0xFFFFF7ED), Color(0xFFF0FDFA)]),
+      borderRadius: BorderRadius.circular(radius),
+    ),
+    alignment: Alignment.center,
+    child: Text('🛍', style: A.t(size * 0.45)),
+  );
+}
+
+/// صورة منتج تعبّئ مساحة الأب بالكامل (مربعة) — أسلوب Shein للبطاقات
+/// يدعم: base64 / روابط رفع (/uploads) / إيموجي المنتجات
+Widget productImageBox(String? image, {String? base}) {
+  final url = (image ?? '').trim();
+  Widget ph(String emoji) => Container(
+        decoration: const BoxDecoration(
+          gradient: LinearGradient(colors: [Color(0xFFFFF7ED), Color(0xFFF0FDFA)]),
+        ),
+        alignment: Alignment.center,
+        child: Text(emoji, style: A.t(48)),
+      );
+  if (url.isEmpty) return ph('🛍');
+  if (url.startsWith('data:') || url.startsWith('/9j')) {
+    try {
+      final bytes = base64Decode(url.replaceFirst(RegExp('^data:image/[a-z]+;base64,'), ''));
+      return Image.memory(bytes, fit: BoxFit.cover);
+    } catch (_) {}
+  }
+  if (url.startsWith('http')) {
+    return Image.network(url, fit: BoxFit.cover, errorBuilder: (_, __, ___) => ph('🛍'));
+  }
+  if (url.startsWith('/')) {
+    return Image.network('${base ?? Api.base}$url', fit: BoxFit.cover, errorBuilder: (_, __, ___) => ph('🛍'));
+  }
+  return ph(url.length > 6 ? url.substring(0, 4) : url);
+}
+
+/// بطاقة زجاجية
+class GlassCard extends StatelessWidget {
+  final Widget child;
+  final EdgeInsets padding;
+  final double radius;
+  final bool solid;
+  final VoidCallback? onTap;
+  const GlassCard({super.key, required this.child, this.padding = const EdgeInsets.all(16), this.radius = 18, this.solid = false, this.onTap});
+
+  @override
+  Widget build(BuildContext context) {
+    return GestureDetector(
+      onTap: onTap,
+      child: Container(
+        padding: padding,
+        decoration: solid ? A.glassSolid(radius: radius) : A.glass(radius: radius),
+        child: child,
+      ),
+    );
+  }
+}
+
+/// أزرار الحالة (Chip)
+class StatusChip extends StatelessWidget {
+  final String status;
+  const StatusChip(this.status, {super.key});
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+      decoration: BoxDecoration(
+        color: statusColor(status).withOpacity(0.12),
+        borderRadius: BorderRadius.circular(20),
+        border: Border.all(color: statusColor(status).withOpacity(0.35)),
+      ),
+      child: Text('${orderIcon(status)} ${statusAr(status)}',
+          style: A.t(11, c: statusColor(status), w: FontWeight.w800)),
+    );
+  }
+}
+
+class MoneyBox extends StatelessWidget {
+  final String label;
+  final String value;
+  final IconData icon;
+  final Color color;
+  const MoneyBox({super.key, required this.label, required this.value, required this.icon, required this.color});
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.all(14),
+      decoration: BoxDecoration(
+        gradient: LinearGradient(colors: [color.withOpacity(0.12), color.withOpacity(0.05)]),
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: color.withOpacity(0.25)),
+      ),
+      child: Row(children: [
+        Container(
+          padding: const EdgeInsets.all(8),
+          decoration: BoxDecoration(color: color, borderRadius: BorderRadius.circular(10)),
+          child: Icon(icon, color: Colors.white, size: 18),
+        ),
+        const SizedBox(width: 10),
+        Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+          Text(label, style: A.t(11, c: A.muted)),
+          Text(value, style: A.t(15, c: color, w: FontWeight.w900)),
+        ]),
+      ]),
+    );
+  }
+}
+
+/// زر كتفي (قفا) بظل — «المال صلب»
+class SolidBtn extends StatelessWidget {
+  final String label;
+  final VoidCallback onTap;
+  final bool loading;
+  final Color? color;
+  const SolidBtn({super.key, required this.label, required this.onTap, this.loading = false, this.color});
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      decoration: BoxDecoration(
+        gradient: LinearGradient(colors: [color ?? A.primaryDeep, color ?? A.primary]),
+        borderRadius: BorderRadius.circular(14),
+        boxShadow: [
+          BoxShadow(color: (color ?? A.primary).withOpacity(0.35), blurRadius: 16, offset: const Offset(0, 6)),
+        ],
+      ),
+      child: Material(
+        color: Colors.transparent,
+        child: InkWell(
+          borderRadius: BorderRadius.circular(14),
+          onTap: loading ? null : onTap,
+          child: Container(
+            height: 50,
+            alignment: Alignment.center,
+            child: loading
+                ? const SizedBox(width: 22, height: 22, child: CircularProgressIndicator(color: Colors.white, strokeWidth: 2.5))
+                : Text(label, style: A.t(15, c: Colors.white, w: FontWeight.w800)),
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+class EmptyState extends StatelessWidget {
+  final String icon;
+  final String title;
+  final String? sub;
+  const EmptyState({super.key, required this.icon, required this.title, this.sub});
+
+  @override
+  Widget build(BuildContext context) {
+    return Center(
+      child: Column(mainAxisAlignment: MainAxisAlignment.center, children: [
+        Text(icon, style: A.t(52)),
+        const SizedBox(height: 12),
+        Text(title, style: A.t(17)),
+        if (sub != null) ...[
+          const SizedBox(height: 6),
+          Text(sub!, style: A.t(12.5, c: A.muted)),
+        ],
+      ]),
+    );
+  }
+}
+
+class SectionTitle extends StatelessWidget {
+  final String title;
+  final VoidCallback? onMore;
+  const SectionTitle(this.title, {super.key, this.onMore});
+
+  @override
+  Widget build(BuildContext context) {
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(4, 18, 4, 10),
+      child: Row(children: [
+        Text(title, style: A.t(16, w: FontWeight.w900)),
+        const Spacer(),
+        if (onMore != null)
+          GestureDetector(onTap: onMore, child: Text('عرض الكل ←', style: A.t(11.5, c: A.primary))),
+      ]),
+    );
+  }
+}
+
+class Loader extends StatelessWidget {
+  const Loader({super.key});
+  @override
+  Widget build(BuildContext context) {
+    return const Center(
+      child: Padding(
+        padding: EdgeInsets.all(40),
+        child: CircularProgressIndicator(color: A.primary),
+      ),
+    );
+  }
+}
+
+class CountBadge extends StatelessWidget {
+  final int count;
+  const CountBadge(this.count, {super.key});
+  @override
+  Widget build(BuildContext context) {
+    if (count <= 0) return const SizedBox.shrink();
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 5, vertical: 1),
+      decoration: BoxDecoration(color: A.accent, borderRadius: BorderRadius.circular(10)),
+      child: Text('$count', style: A.t(10, c: Colors.white, w: FontWeight.w900)),
+    );
+  }
+}
+
+/// إطار زجاجي حقيقي فوق شريط السفلي — مع حركة قفز للأيقونة النشطة وخط مؤشر
+class GlassBottomNav extends StatelessWidget {
+  final int index;
+  final List<(IconData, String)> items;
+  final ValueChanged<int> onTap;
+
+  /// فهرس عنصر «السلة» — يظهر عليه عدّاد أصناف السلة فقط
+  final int? badgeIndex;
+
+  /// عدد أصناف السلة — يُعرض فوق زر السلة في الشريط
+  final int badgeCount;
+  const GlassBottomNav({
+    super.key,
+    required this.index,
+    required this.items,
+    required this.onTap,
+    this.badgeIndex,
+    this.badgeCount = 0,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return ClipRRect(
+      borderRadius: const BorderRadius.vertical(top: Radius.circular(22)),
+      child: BackdropFilter(
+        filter: ui.ImageFilter.blur(sigmaX: 18, sigmaY: 18),
+        child: Container(
+          decoration: BoxDecoration(
+            color: Colors.white.withOpacity(0.75),
+            border: Border(top: BorderSide(color: Colors.white.withOpacity(0.9), width: 1.2)),
+          ),
+          child: SafeArea(
+            top: false,
+            child: Padding(
+              padding: const EdgeInsets.symmetric(vertical: 6),
+              child: Row(
+                children: List.generate(items.length, (i) {
+                  final selected = i == index;
+                  final showBadge = badgeCount > 0 && i == badgeIndex;
+                  return Expanded(
+                    child: InkWell(
+                      onTap: () => onTap(i),
+                      child: Column(mainAxisSize: MainAxisSize.min, children: [
+                        Stack(
+                          clipBehavior: Clip.none,
+                          children: [
+                            AnimatedContainer(
+                              duration: const Duration(milliseconds: 250),
+                              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 5),
+                              decoration: BoxDecoration(
+                                color: selected ? A.primary.withOpacity(0.12) : Colors.transparent,
+                                borderRadius: BorderRadius.circular(14),
+                              ),
+                              child: Icon(items[i].$1,
+                                  color: selected ? A.primary : A.muted, size: 22),
+                            ),
+                            if (showBadge)
+                              Positioned(
+                                right: -1,
+                                top: -3,
+                                child: Container(
+                                  padding: const EdgeInsets.symmetric(horizontal: 4.5, vertical: 1),
+                                  decoration: const BoxDecoration(color: A.danger, shape: BoxShape.circle),
+                                  child: Text('$badgeCount',
+                                      style: const TextStyle(color: Colors.white, fontSize: 8.5, fontWeight: FontWeight.w900)),
+                                ),
+                              ),
+                          ],
+                        ),
+                        Text(items[i].$2,
+                            style: A.t(10, c: selected ? A.primary : A.muted, w: FontWeight.w800)),
+                      ]),
+                    ),
+                  );
+                }),
+              ),
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+void toast(BuildContext context, String msg, {bool error = false}) {
+  ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+    content: Text(msg, style: const TextStyle(fontWeight: FontWeight.w700)),
+    backgroundColor: error ? A.danger : A.ink,
+    duration: const Duration(seconds: 2),
+  ));
+}
+
+/// مودال عام
+Future<dynamic> showSheet(BuildContext context, Widget child, {bool scroll = true}) {
+  return showModalBottomSheet(
+    context: context,
+    isScrollControlled: true,
+    backgroundColor: Colors.transparent,
+    builder: (_) => Container(
+      decoration: const BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.vertical(top: Radius.circular(26)),
+      ),
+      padding: EdgeInsets.only(bottom: MediaQuery.of(context).viewInsets.bottom),
+      child: scroll ? SingleChildScrollView(child: child) : child,
+    ),
+  );
+}
+
+class SheetTitle extends StatelessWidget {
+  final String title;
+  const SheetTitle(this.title, {super.key});
+  @override
+  Widget build(BuildContext context) {
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(20, 18, 20, 6),
+      child: Row(children: [
+        Text(title, style: A.t(17, w: FontWeight.w900)),
+        const Spacer(),
+        IconButton(onPressed: () => Navigator.pop(context), icon: const Icon(Icons.close, color: A.muted)),
+      ]),
+    );
+  }
+}
+
+/// زر السلة العائم — يظهر تلقائياً بالزاوية اليمنى السفلى بمجرد إضافة منتج،
+/// ويختفي عند فراغ السلة. يوضع داخل Stack في جسم الشاشة.
+class FloatingCartFab extends StatelessWidget {
+  final double bottom; // الارتفاع عن الحافة السفلى (فوق الشريط عند الحاجة)
+  const FloatingCartFab({super.key, this.bottom = 88});
+
+  @override
+  Widget build(BuildContext context) {
+    return ValueListenableBuilder<int>(
+      valueListenable: AppState.i.cartCount,
+      builder: (_, count, __) {
+        if (count <= 0) return const SizedBox.shrink();
+        return Positioned(
+          right: 16,
+          bottom: bottom,
+          child: Material(
+            color: Colors.transparent,
+            child: InkWell(
+              borderRadius: BorderRadius.circular(30),
+              onTap: () {
+                // فتح السلة
+                Navigator.of(context).push(MaterialPageRoute(builder: (_) => const CartScreen()));
+              },
+              child: Ink(
+                decoration: BoxDecoration(
+                  gradient: const LinearGradient(colors: [Color(0xFF1E3A8A), Color(0xFF3B82F6)]),
+                  shape: BoxShape.circle,
+                  boxShadow: const [BoxShadow(color: Colors.black38, blurRadius: 14, offset: Offset(0, 4))],
+                ),
+                width: 60,
+                height: 60,
+                child: Stack(alignment: Alignment.center, children: [
+                  const Icon(Icons.shopping_cart_rounded, color: Colors.white, size: 26),
+                  if (count > 0)
+                    Positioned(
+                      left: 6,
+                      top: 6,
+                      child: Container(
+                        padding: const EdgeInsets.symmetric(horizontal: 5, vertical: 1.5),
+                        decoration: const BoxDecoration(color: A.danger, shape: BoxShape.circle),
+                        child: Text('$count', style: const TextStyle(color: Colors.white, fontSize: 9.5, fontWeight: FontWeight.w900)),
+                      ),
+                    ),
+                ]),
+              ),
+            ),
+          ),
+        );
+      },
+    );
+  }
+}
+
+/// ← شاشة قصّ الصورة (بدون مكتبات إضافية — يعمل بجميع الأجهزة)
+/// إطار ثابت حسب النسبة (مربع/بانر) مع تحريك + تقريب/تبعيد، ويقصّ الإطار تماماً
+/// تُرجع البايتات المقصوصة أو null عند الإلغاء
+Future<Uint8List?> cropImage(BuildContext context, Uint8List bytes, {double aspect = 1, String title = 'قصّ الصورة ✂️'}) async {
+  return await Navigator.push<Uint8List>(
+    context,
+    MaterialPageRoute(builder: (_) => CropScreen(bytes: bytes, aspectRatio: aspect, title: title)),
+  );
+}
+
+/// قماش قصّ المرسوم يدوياً: الصورة داخل الإطار + تعتيم الخارج + شبكة الأثلاث
+class _CropPainter extends CustomPainter {
+  final ui.Image img;
+  final Rect frame;
+  final double scale;
+  final Offset draw;
+  final double outK;
+  final void Function(Rect src, int outW, int outH) onRegion;
+  _CropPainter({required this.img, required this.frame, required this.scale, required this.draw, required this.outK, required this.onRegion});
+
+  @override
+  void paint(Canvas canvas, Size size) {
+    final src = Rect.fromLTWH(
+      ((frame.left - draw.dx) / scale).clamp(0, img.width.toDouble()),
+      ((frame.top - draw.dy) / scale).clamp(0, img.height.toDouble()),
+      (frame.width / scale).clamp(1, img.width.toDouble()),
+      (frame.height / scale).clamp(1, img.height.toDouble()),
+    );
+    onRegion(src, (frame.width * outK).round(), (frame.height * outK).round());
+
+    // الصورة نفسها — مقصوصة على الإطار
+    canvas.save();
+    canvas.clipRect(frame);
+    canvas.drawImageRect(
+      img,
+      Rect.fromLTWH(0, 0, img.width.toDouble(), img.height.toDouble()),
+      Rect.fromLTWH(draw.dx, draw.dy, img.width * scale, img.height * scale),
+      Paint()..filterQuality = ui.FilterQuality.high,
+    );
+    canvas.restore();
+
+    // تعتيم خارج الإطار
+    final scrim = Path()
+      ..fillType = PathFillType.evenOdd
+      ..addRect(Offset.zero & size)
+      ..addRRect(RRect.fromRectAndRadius(frame, const Radius.circular(10)));
+    canvas.drawPath(scrim, Paint()..color = Colors.black.withOpacity(0.62));
+
+    // حدّ الإطار
+    final border = Paint()
+      ..style = PaintingStyle.stroke
+      ..strokeWidth = 2
+      ..color = Colors.white;
+    final rrect = RRect.fromRectAndRadius(frame, const Radius.circular(10));
+    canvas.drawRRect(rrect, border);
+
+    // شبكة الأثلاث
+    final grid = Paint()
+      ..style = PaintingStyle.stroke
+      ..strokeWidth = 0.8
+      ..color = Colors.white.withOpacity(0.35);
+    for (final t in [1 / 3, 2 / 3]) {
+      canvas.drawLine(Offset(frame.left + frame.width * t, frame.top), Offset(frame.left + frame.width * t, frame.bottom), grid);
+      canvas.drawLine(Offset(frame.left, frame.top + frame.height * t), Offset(frame.right, frame.top + frame.height * t), grid);
+    }
+  }
+
+  @override
+  bool shouldRepaint(_CropPainter old) =>
+      old.img != img || old.frame != frame || old.scale != scale || old.draw != draw;
+}
+
+class CropScreen extends StatefulWidget {
+  final Uint8List bytes;
+  final double aspectRatio; // نسبة العرض للطول (1 = مربع، 16/9 = بانر)
+  final String title;
+  const CropScreen({super.key, required this.bytes, this.aspectRatio = 1, this.title = 'قصّ الصورة ✂️'});
+
+  @override
+  State<CropScreen> createState() => _CropScreenState();
+}
+
+class _CropScreenState extends State<CropScreen> {
+  ui.Image? _img;
+  bool _loaded = false;
+  double _scale = 1; // تكبير البداية = يغطر الإطار بالكامل
+  Offset _pan = Offset.zero;
+  double _startScale = 1;
+  double _outK = 2; // دقة الحفظ (أضعاف مقاس الإطار)
+  Rect _lastSrc = Rect.zero;
+  Size _lastOut = Size.zero;
+
+  @override
+  void initState() {
+    super.initState();
+    _loadImage();
+  }
+
+  Future<void> _loadImage() async {
+    try {
+      final comp = await ui.instantiateImageCodec(widget.bytes);
+      final frame = await comp.getNextFrame();
+      setState(() { _img = frame.image; _loaded = true; });
+    } catch (_) {}
+  }
+
+  /// إطار القصّ: نسبة ثابتة، موسّط بحدود الشاشة
+  Rect _frame(Size view) {
+    final pad = 18.0;
+    var w = view.width - pad * 2;
+    var h = w / widget.aspectRatio;
+    if (h > view.height - pad * 2) {
+      h = view.height - pad * 2;
+      w = h * widget.aspectRatio;
+    }
+    return Rect.fromCenter(center: Offset(view.width / 2, view.height / 2), width: w, height: h);
+  }
+
+  Future<Uint8List?> _save() async {
+    final img = _img!;
+    final rec = ui.PictureRecorder();
+    final canvas = Canvas(rec);
+    canvas.drawImageRect(
+      img,
+      _lastSrc,
+      Rect.fromLTWH(0, 0, _lastOut.width, _lastOut.height),
+      Paint()..filterQuality = ui.FilterQuality.high,
+    );
+    final picture = rec.endRecording();
+    final bi = await picture.toImage(_lastOut.width.toInt(), _lastOut.height.toInt());
+    final by = await bi.toByteData(format: ui.ImageByteFormat.png);
+    return by?.buffer.asUint8List();
+  }
+
+  void _clampPan(Size view) {
+    final img = _img!;
+    final frame = _frame(view);
+    final base = math.max(frame.width / img.width, frame.height / img.height);
+    final s = base * _scale;
+    final dw = img.width * s, dh = img.height * s;
+    final maxX = math.max(0.0, (dw - frame.width) / 2), maxY = math.max(0.0, (dh - frame.height) / 2);
+    _pan = Offset(_pan.dx.clamp(-maxX, maxX), _pan.dy.clamp(-maxY, maxY));
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      backgroundColor: Colors.black,
+      appBar: AppBar(backgroundColor: Colors.black, foregroundColor: Colors.white, title: Text(widget.title)),
+      body: Stack(children: [
+        if (!_loaded)
+          const Center(child: CircularProgressIndicator(color: Colors.white))
+        else
+          LayoutBuilder(builder: (_, cons) {
+            final view = Size(cons.maxWidth, cons.maxHeight);
+            final img = _img!;
+            final frame = _frame(view);
+            final base = math.max(frame.width / img.width, frame.height / img.height);
+            final s = base * _scale;
+            final dx = frame.center.dx - (img.width * s) / 2 + _pan.dx;
+            final dy = frame.center.dy - (img.height * s) / 2 + _pan.dy;
+            return Column(children: [
+              Expanded(
+                child: GestureDetector(
+                  onScaleStart: (d) { _startScale = _scale; },
+                  onScaleUpdate: (d) {
+                    setState(() {
+                      _scale = (_startScale * d.scale).clamp(1.0, 5.0);
+                      _pan += Offset(d.focalPointDelta.dx, d.focalPointDelta.dy);
+                    });
+                  },
+                  onScaleEnd: (_) => setState(() => _clampPan(view)),
+                  onDoubleTap: () => setState(() {
+                    _scale = _scale > 1.4 ? 1 : 2.5;
+                    _clampPan(view);
+                  }),
+                  child: CustomPaint(
+                    size: view,
+                    painter: _CropPainter(
+                      img: img,
+                      frame: frame,
+                      scale: s,
+                      draw: Offset(dx, dy),
+                      outK: _outK,
+                      onRegion: (src, ow, oh) { _lastSrc = src; _lastOut = Size(ow.toDouble(), oh.toDouble()); },
+                    ),
+                  ),
+                ),
+              ),
+              SafeArea(top: false, child: Padding(
+                padding: const EdgeInsets.all(12),
+                child: Row(children: [
+                  OutlinedButton(
+                    style: OutlinedButton.styleFrom(foregroundColor: Colors.white, side: const BorderSide(color: Colors.white54)),
+                    onPressed: () => setState(() { _scale = 1; _pan = Offset.zero; }),
+                    child: const Text('إعادة'),
+                  ),
+                  const SizedBox(width: 8),
+                  IconButton.outlined(
+                    onPressed: () => setState(() { _scale = (_scale * 0.78).clamp(1.0, 5.0); _clampPan(view); }),
+                    icon: const Icon(Icons.zoom_out_rounded, color: Colors.white),
+                    tooltip: 'تصغير',
+                  ),
+                  IconButton.outlined(
+                    onPressed: () => setState(() { _scale = (_scale * 1.28).clamp(1.0, 5.0); _clampPan(view); }),
+                    icon: const Icon(Icons.zoom_in_rounded, color: Colors.white),
+                    tooltip: 'تقريب',
+                  ),
+                  const Spacer(),
+                  FilledButton(
+                    onPressed: () async {
+                      final out = await _save();
+                      if (out != null && mounted) Navigator.pop(context, out);
+                    },
+                    child: const Text('قصّ ✓'),
+                  ),
+                ]),
+              )),
+            ]);
+          }),
+      ]),
+    );
+  }
+}

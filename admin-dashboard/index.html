@@ -1,0 +1,80 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>لوحة الإدارة — زبون 👑</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+
+<div class="orbs" aria-hidden="true">
+  <div class="orb orb1"></div>
+  <div class="orb orb2"></div>
+  <div class="orb orb3"></div>
+</div>
+
+<!-- ═══ شاشة الدخول ═══ -->
+<div class="login-wrap" id="loginView">
+  <div class="glass login-card">
+    <div class="login-logo">👑</div>
+    <h1>لوحة الإدارة</h1>
+    <p class="login-sub">زبون — منصة متاجر الكوت (واسط)</p>
+    <label class="f-label">رقم الهاتف</label>
+    <input class="f-input" id="loginPhone" placeholder="07900000000" dir="ltr" style="text-align:center">
+    <label class="f-label">كلمة السر</label>
+    <input class="f-input" id="loginPass" type="password" placeholder="••••••••" dir="ltr" style="text-align:center">
+    <button class="btn btn-navy" id="loginBtn" onclick="doLogin()">دخول 👑</button>
+    <div class="login-hint" id="loginHint">تجريبي: 07900000000 / admin123</div>
+  </div>
+</div>
+
+<!-- ═══ التطبيق ═══ -->
+<div class="shell" id="appView" style="display:none">
+
+  <aside class="sidebar" id="sidebar">
+    <div class="brand">
+      <div class="brand-logo">🛍️</div>
+      <div>
+        <div class="brand-name">زبون</div>
+        <div class="brand-sub">لوحة الإدارة</div>
+      </div>
+    </div>
+    <nav class="menu" id="menu"></nav>
+    <div class="sidebar-foot">
+      <div class="admin-chip"><span class="dot"></span><span id="adminName">الأدمن</span></div>
+      <button class="btn btn-ghost btn-sm" style="width:100%;margin-top:8px" onclick="logout()">تسجيل الخروج</button>
+    </div>
+  </aside>
+
+  <main class="main">
+    <header class="topbar">
+      <button class="burger" onclick="document.body.classList.toggle('menu-open')">☰</button>
+      <h2 id="pageTitle">نظرة عامة</h2>
+      <div class="topbar-date" id="todayDate"></div>
+    </header>
+    <div class="content" id="content"></div>
+  </main>
+
+</div>
+
+<div class="toast-wrap" id="toastWrap"></div>
+
+<script src="js/api.js"></script>
+<script src="js/ui.js"></script>
+<script src="js/views/login.js"></script>
+<script src="js/views/overview.js"></script>
+<script src="js/views/stores.js"></script>
+<script src="js/views/orders.js"></script>
+<script src="js/views/ads.js"></script>
+<script src="js/views/cash.js"></script>
+<script src="js/views/users.js"></script>
+<script src="js/views/geo.js"></script>
+<script src="js/views/notify.js"></script>
+<script src="js/views/settings.js"></script>
+<script src="js/views/audit.js"></script>
+<script src="js/app.js"></script>
+</body>
+</html>

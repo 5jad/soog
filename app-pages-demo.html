@@ -1,0 +1,2163 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>زبون — مول الأزياء — كل صفحات التطبيق (زبون + تاجر + مندوب + مشرف)</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
+<style>
+/* ════════════════════════════════════════════════════════════
+   زبون — هوية «أفق» Horizon
+   مول أزياء: رجالي • نسائي • أطفال • ألعاب • مكياج • إكسسوارات • أحذية • شنط
+   زجاجية Apple • نيلي + سماوي + برتقالي • RTL
+   ════════════════════════════════════════════════════════════ */
+:root{
+  --primary:#1D4ED8; --primary-deep:#1E3A8A; --primary-light:#38BDF8;
+  --cyan:#06B6D4; --accent:#F97316; --accent-deep:#EA580C; --ink:#0A1120;
+  --bg:#FAF9F6; --text:#101828; --muted:#475467;
+  --success:#15803D; --warning:#B45309; --danger:#DC2626; --info:#0284C7; --star:#F5A623;
+  --glass-l1:rgba(238,244,255,.55); --glass-l2:rgba(255,255,255,.62); --glass-l3:rgba(255,255,255,.74);
+  --glass-border:rgba(255,255,255,.45); --glass-border-dark:rgba(255,255,255,.12);
+  --quick:140ms; --base:260ms; --slow:420ms;
+  --ease:cubic-bezier(.33,1,.68,1); --spring:cubic-bezier(.34,1.56,.64,1);
+  --rd:20px; --shadow-glass:0 8px 24px rgba(29,78,216,.16);
+  --font:'Cairo',system-ui,sans-serif;
+}
+html[data-theme="dark"]{
+  --bg:#0A1120; --text:#E6EDF7; --muted:#8FA3BF;
+  --glass-l1:rgba(26,37,64,.68); --glass-l2:rgba(17,26,46,.72); --glass-l3:rgba(26,37,64,.8);
+  --glass-border:var(--glass-border-dark); --shadow-glass:0 8px 24px rgba(0,0,0,.5);
+}
+*{margin:0;padding:0;box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+body{
+  font-family:var(--font);background:var(--bg);color:var(--text);
+  transition:background var(--slow) var(--ease),color var(--slow) var(--ease);
+  line-height:1.55;min-height:100vh;display:flex;flex-direction:column;align-items:center;
+  padding:24px 12px 60px;overflow-x:hidden;
+}
+.orbs{position:fixed;inset:0;z-index:-1;overflow:hidden;pointer-events:none}
+.orb{position:absolute;border-radius:50%;filter:blur(60px);animation:float 16s ease-in-out infinite}
+.orb1{width:460px;height:460px;background:#38BDF84d;top:-140px;right:-100px}
+.orb2{width:420px;height:420px;background:#F9731640;bottom:-160px;left:-90px;animation-delay:-8s}
+.orb3{width:320px;height:320px;background:#1E3A8A59;top:30%;left:35%;animation-delay:-4s}
+@keyframes float{0%,100%{transform:translateY(0) scale(1)}50%{transform:translateY(26px) scale(1.05)}}
+.page-title{font-size:16px;font-weight:800;color:var(--muted);margin:0 0 14px;text-align:center;max-width:420px}
+.page-title b{color:var(--primary)}
+html[data-theme="dark"] .page-title b{color:var(--primary-light)}
+
+.phone{
+  width:375px;max-width:100%;height:780px;max-height:92vh;border-radius:40px;
+  border:7px solid var(--text);background:var(--bg);position:relative;overflow:hidden;
+  box-shadow:0 30px 80px rgba(0,0,0,.35);display:flex;flex-direction:column;
+}
+.statusbar{display:flex;justify-content:space-between;padding:14px 22px 6px;font-size:12px;font-weight:800;color:var(--muted);flex:none}
+.statusbar .notch{position:absolute;top:10px;right:50%;transform:translateX(50%);width:110px;height:26px;border-radius:999px;background:var(--text);opacity:.9}
+.screens{flex:1;overflow-y:auto;scrollbar-width:none;position:relative}
+.screens::-webkit-scrollbar{display:none}
+.screen{display:none;padding:6px 16px 130px;animation:fadein var(--base) var(--ease)}
+.screen.active{display:block}
+@keyframes fadein{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:none}}
+.screen.login-screen{padding-bottom:40px}
+
+.appbar{display:flex;align-items:center;gap:10px;margin:4px 0 14px}
+.appbar .icon-btn{
+  width:40px;height:40px;flex:none;display:flex;align-items:center;justify-content:center;
+  background:var(--glass-l3);backdrop-filter:blur(24px);border:1px solid var(--glass-border);
+  border-radius:14px;font-size:17px;cursor:pointer;color:var(--text);transition:transform var(--quick) var(--ease);
+}
+.appbar .icon-btn:active{transform:scale(.9)}
+.appbar h2{font-size:20px;font-weight:900;flex:1}
+.appbar .sub{font-size:12px;color:var(--muted);font-weight:600}
+
+.glass{
+  background:var(--glass-l2);backdrop-filter:blur(20px) saturate(1.4);-webkit-backdrop-filter:blur(20px) saturate(1.4);
+  border:1px solid var(--glass-border);border-radius:var(--rd);box-shadow:var(--shadow-glass);
+}
+.chip{
+  display:inline-flex;align-items:center;gap:5px;padding:7px 14px;border-radius:999px;
+  background:var(--glass-l2);backdrop-filter:blur(20px);border:1px solid var(--glass-border);
+  font-size:12px;font-weight:800;color:var(--muted);cursor:pointer;white-space:nowrap;transition:all var(--quick) var(--ease);
+}
+.chip.active{background:var(--primary-deep);color:#fff;border-color:transparent}
+html[data-theme="dark"] .chip.active{background:var(--primary)}
+.search{
+  display:flex;align-items:center;gap:8px;background:var(--glass-l3);
+  backdrop-filter:blur(24px);border:1px solid var(--glass-border);border-radius:16px;
+  padding:12px 16px;font-size:13px;color:var(--muted);font-weight:600;
+}
+.btn{
+  display:flex;align-items:center;justify-content:center;gap:8px;width:100%;
+  border:none;cursor:pointer;font-family:var(--font);font-weight:800;font-size:15px;
+  padding:15px;border-radius:16px;min-height:50px;transition:transform var(--quick) var(--ease),filter var(--quick) var(--ease);
+}
+.btn:active{transform:scale(.97)}
+.btn-navy{background:var(--primary-deep);color:#fff;box-shadow:0 8px 20px rgba(30,58,138,.4)}
+html[data-theme="dark"] .btn-navy{background:var(--primary)}
+.btn-navy:hover{filter:brightness(1.1)}
+.btn-cta{background:var(--accent);color:var(--ink);box-shadow:0 8px 20px rgba(249,115,22,.4)}
+.btn-cta:hover{filter:brightness(1.06)}
+.btn-ghost{border:2px solid var(--glass-border);background:var(--glass-l2);backdrop-filter:blur(20px);color:var(--text)}
+.btn-success{background:var(--success);color:#fff}
+.btn-danger{background:var(--danger);color:#fff}
+.btn-sm{width:auto;padding:10px 18px;font-size:13px;min-height:42px;border-radius:12px}
+.verified{display:inline-flex;align-items:center;gap:3px;color:var(--cyan);font-size:10px;font-weight:900}
+html[data-theme="dark"] .verified{color:var(--primary-light)}
+.stars{color:var(--star);font-size:11px;letter-spacing:1px}
+.price{font-weight:900;font-size:15px}
+.old-price{color:var(--muted);text-decoration:line-through;font-size:11px;font-weight:600}
+.soldout-badge{position:absolute;top:6px;right:6px;background:var(--danger);color:#fff;font-size:9px;font-weight:800;padding:2px 9px;border-radius:999px}
+.sale-badge{position:absolute;top:6px;left:6px;background:var(--accent);color:var(--ink);font-size:9px;font-weight:900;padding:2px 9px;border-radius:999px}
+.open-chip{background:var(--success);color:#fff;font-size:10px;font-weight:800;padding:2px 10px;border-radius:999px}
+.closed-chip{background:var(--muted);color:#fff;font-size:10px;font-weight:800;padding:2px 10px;border-radius:999px}
+.empty{text-align:center;padding:40px 10px;color:var(--muted);font-weight:700;font-size:14px}
+.empty .ic{font-size:40px;display:block;margin-bottom:10px;opacity:.7}
+
+/* ── الرئيسية ── */
+.greet-row{display:flex;align-items:center;gap:10px;margin:6px 0 12px}
+.greet-row .g{flex:1}
+.greet-row .g .hi{font-size:13px;color:var(--muted);font-weight:700}
+.greet-row .g h1{font-size:20px;font-weight:900;line-height:1.3}
+.greet-row .loc{
+  display:flex;align-items:center;gap:4px;font-size:11px;font-weight:800;color:var(--primary);
+  background:var(--glass-l2);backdrop-filter:blur(20px);border:1px solid var(--glass-border);
+  padding:7px 12px;border-radius:999px;
+}
+html[data-theme="dark"] .greet-row .loc{color:var(--primary-light)}
+.greet-row .bell{position:relative;width:40px;height:40px;flex:none;display:flex;align-items:center;justify-content:center;font-size:18px;background:var(--glass-l3);backdrop-filter:blur(24px);border:1px solid var(--glass-border);border-radius:14px;cursor:pointer}
+.greet-row .bell .rd{position:absolute;top:8px;left:9px;width:8px;height:8px;border-radius:50%;background:var(--danger)}
+.cats{display:flex;gap:8px;overflow-x:auto;scrollbar-width:none;margin:14px 0;padding-bottom:2px}
+.cats::-webkit-scrollbar{display:none}
+.hero-banner{
+  position:relative;border-radius:24px;overflow:hidden;margin:4px 0 18px;cursor:pointer;
+  background:linear-gradient(120deg,var(--primary-deep),var(--primary) 55%,var(--cyan));
+  color:#fff;box-shadow:0 14px 34px rgba(29,78,216,.4);
+}
+.hero-banner .inner{position:relative;padding:18px;z-index:2}
+.hero-banner .tag{display:inline-block;background:var(--accent);color:var(--ink);font-size:11px;font-weight:900;padding:3px 12px;border-radius:999px;margin-bottom:8px}
+.hero-banner h3{font-size:20px;font-weight:900;margin-bottom:4px}
+.hero-banner p{font-size:12px;font-weight:600;opacity:.92;margin-bottom:10px}
+.hero-banner .go{font-size:12px;font-weight:900;display:inline-flex;align-items:center;gap:4px;background:rgba(255,255,255,.2);backdrop-filter:blur(8px);padding:7px 14px;border-radius:999px}
+.hero-banner .art{position:absolute;left:-20px;bottom:-24px;font-size:110px;opacity:.35;transform:rotate(-12deg);z-index:1}
+.sec-head{display:flex;align-items:center;justify-content:space-between;margin:18px 0 10px}
+.sec-head h3{font-size:16px;font-weight:900}
+.sec-head .more{font-size:11px;font-weight:800;color:var(--primary);cursor:pointer}
+html[data-theme="dark"] .sec-head .more{color:var(--primary-light)}
+.h-scroll{display:flex;gap:12px;overflow-x:auto;scrollbar-width:none;padding-bottom:4px}
+.h-scroll::-webkit-scrollbar{display:none}
+.store-card{
+  min-width:150px;border-radius:20px;overflow:hidden;position:relative;cursor:pointer;
+  background:var(--glass-l2);backdrop-filter:blur(20px) saturate(1.4);border:1px solid var(--glass-border);
+  box-shadow:var(--shadow-glass);transition:transform var(--base) var(--spring);
+}
+.store-card:active{transform:scale(.97)}
+.store-card .cover{height:64px}
+.store-card .body{padding:8px 10px 10px}
+.store-card .logo{
+  width:44px;height:44px;border-radius:14px;margin-top:-26px;position:relative;z-index:2;
+  border:3px solid var(--bg);display:flex;align-items:center;justify-content:center;font-size:20px;
+  background:linear-gradient(135deg,var(--primary),var(--cyan));
+}
+.store-card .nm{font-size:12px;font-weight:900;margin-top:4px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.store-card .meta{display:flex;align-items:center;gap:4px;font-size:10px;color:var(--muted);font-weight:700;margin-top:2px}
+.grid2{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+.prod-card{
+  border-radius:20px;overflow:hidden;position:relative;background:var(--glass-l2);
+  backdrop-filter:blur(20px) saturate(1.4);border:1px solid var(--glass-border);
+  box-shadow:var(--shadow-glass);cursor:pointer;transition:transform var(--base) var(--spring);
+}
+.prod-card:active{transform:scale(.97)}
+.prod-card .img{height:110px;display:flex;align-items:center;justify-content:center;font-size:46px}
+.prod-card .info{padding:8px 10px 10px}
+.prod-card .pn{font-size:12px;font-weight:900;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.prod-card .sc{font-size:10px;color:var(--muted);font-weight:700}
+.prod-card .pr{display:flex;align-items:center;justify-content:space-between;margin-top:6px}
+.add-btn{
+  width:28px;height:28px;border-radius:10px;border:none;cursor:pointer;font-size:16px;font-weight:900;
+  background:var(--primary-deep);color:#fff;transition:all var(--base) var(--spring);line-height:1;
+}
+html[data-theme="dark"] .add-btn{background:var(--primary)}
+.add-btn:active{transform:scale(1.25)}
+.add-btn.done{background:var(--success)}
+
+/* ── المحلات ── */
+.store-row{
+  display:flex;align-items:center;gap:12px;padding:12px;margin-bottom:10px;cursor:pointer;
+  background:var(--glass-l2);backdrop-filter:blur(20px);border:1px solid var(--glass-border);
+  border-radius:18px;box-shadow:var(--shadow-glass);transition:transform var(--base) var(--spring);
+}
+.store-row:active{transform:scale(.98)}
+.store-row .logo{width:52px;height:52px;border-radius:16px;flex:none;display:flex;align-items:center;justify-content:center;font-size:24px;background:linear-gradient(135deg,var(--primary),var(--cyan))}
+.store-row .info{flex:1;min-width:0}
+.store-row .nm{font-size:13px;font-weight:900}
+.store-row .meta{display:flex;align-items:center;gap:6px;font-size:10px;color:var(--muted);font-weight:700;margin-top:2px}
+
+/* ── صفحة المحل ── */
+.store-cover{height:130px;border-radius:0 0 28px 28px;margin:-6px -16px 0;display:flex;align-items:flex-end;justify-content:center;position:relative}
+.store-cover .logo{width:76px;height:76px;border-radius:22px;border:4px solid var(--bg);transform:translateY(38px);display:flex;align-items:center;justify-content:center;font-size:34px;background:linear-gradient(135deg,var(--primary),var(--cyan));box-shadow:0 10px 24px rgba(0,0,0,.25)}
+.store-head{text-align:center;margin-top:44px;margin-bottom:12px}
+.store-head .nm{font-size:18px;font-weight:900}
+.store-head .meta{display:flex;justify-content:center;align-items:center;gap:8px;font-size:11px;color:var(--muted);font-weight:700;margin-top:4px}
+.pcat{display:flex;gap:8px;overflow-x:auto;scrollbar-width:none;margin-bottom:16px}
+.pcat::-webkit-scrollbar{display:none}
+.prod-row{
+  display:flex;gap:12px;padding:10px;margin-bottom:10px;cursor:pointer;
+  background:var(--glass-l2);backdrop-filter:blur(20px);border:1px solid var(--glass-border);border-radius:18px;
+}
+.prod-row .img{width:64px;height:64px;border-radius:14px;flex:none;display:flex;align-items:center;justify-content:center;font-size:30px}
+.prod-row .info{flex:1;min-width:0}
+.prod-row .pn{font-size:13px;font-weight:900}
+.prod-row .ds{font-size:10px;color:var(--muted);font-weight:600;margin-top:2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.prod-row .pr{display:flex;align-items:center;justify-content:space-between;margin-top:6px}
+
+/* ── المنتج ── */
+.prod-img{height:240px;border-radius:24px;display:flex;align-items:center;justify-content:center;font-size:96px;position:relative;margin-bottom:14px;background:linear-gradient(135deg,#06B6D42e,#F9731633)}
+.fav-btn{position:absolute;top:12px;left:12px;width:38px;height:38px;border-radius:12px;display:flex;align-items:center;justify-content:center;font-size:17px;cursor:pointer}
+.size-row{display:flex;gap:8px;margin:10px 0 14px}
+.size-chip{
+  min-width:46px;height:42px;display:flex;align-items:center;justify-content:center;border-radius:12px;
+  background:var(--glass-l2);backdrop-filter:blur(20px);border:2px solid var(--glass-border);
+  font-size:13px;font-weight:900;color:var(--muted);cursor:pointer;transition:all var(--base) var(--spring);
+}
+.size-chip.sel{background:var(--primary-deep);border-color:var(--primary-deep);color:#fff;transform:scale(1.06)}
+html[data-theme="dark"] .size-chip.sel{background:var(--primary)}
+.size-chip.no{opacity:.3;text-decoration:line-through;cursor:not-allowed}
+.qty{display:flex;align-items:center;gap:14px;background:var(--glass-l2);backdrop-filter:blur(20px);border:1px solid var(--glass-border);border-radius:14px;padding:8px 10px;width:fit-content}
+.qty button{width:34px;height:34px;border-radius:10px;border:none;cursor:pointer;font-size:17px;font-weight:900;background:var(--glass-l3);color:var(--text)}
+.qty .n{font-weight:900;font-size:15px;min-width:24px;text-align:center}
+
+/* ── السلة ── */
+.cart-group{margin-bottom:14px}
+.cart-group .ghead{display:flex;align-items:center;gap:8px;padding:10px 12px;font-size:13px;font-weight:900;background:var(--glass-l2);backdrop-filter:blur(20px);border:1px solid var(--glass-border);border-radius:16px;margin-bottom:8px}
+.cart-item{display:flex;align-items:center;gap:10px;padding:10px;margin-bottom:8px;background:var(--glass-l2);backdrop-filter:blur(20px);border:1px solid var(--glass-border);border-radius:16px}
+.cart-item .img{width:48px;height:48px;border-radius:12px;flex:none;display:flex;align-items:center;justify-content:center;font-size:22px}
+.cart-item .info{flex:1;min-width:0}
+.cart-item .pn{font-size:12px;font-weight:900}
+.cart-item .up{font-size:13px;font-weight:900;margin-top:2px}
+.cart-item .sz{font-size:10px;color:var(--primary);font-weight:800;background:var(--glass-l1);border:1px solid var(--glass-border);border-radius:8px;padding:1px 8px;margin-inline-start:6px}
+.money-box{background:var(--bg);border:2px solid var(--primary);border-radius:20px;padding:14px;margin:14px 0}
+html[data-theme="dark"] .money-box{border-color:var(--primary-light)}
+.money-box .row{display:flex;justify-content:space-between;font-size:13px;font-weight:700;color:var(--muted);padding:3px 0}
+.money-box .row b{color:var(--text)}
+.money-box .total{border-top:2px solid var(--text);margin-top:8px;padding-top:10px;display:flex;justify-content:space-between;font-size:20px;font-weight:900}
+
+/* ── الطلبات ── */
+.order-card{padding:14px;margin-bottom:12px;cursor:pointer;position:relative;transition:transform var(--base) var(--spring)}
+.order-card:active{transform:scale(.98)}
+.order-card .top{display:flex;justify-content:space-between;align-items:center;margin-bottom:8px}
+.order-card .store{font-size:14px;font-weight:900}
+.order-card .id{font-size:10px;color:var(--muted);font-weight:700}
+.order-card .items{display:flex;align-items:center;gap:8px;margin-bottom:8px}
+.order-card .th{width:34px;height:34px;border-radius:10px;display:flex;align-items:center;justify-content:center;font-size:16px;background:var(--glass-l3)}
+.order-card .it{font-size:11px;color:var(--muted);font-weight:700}
+.order-card .bot{display:flex;justify-content:space-between;align-items:center}
+.order-card .amt{font-size:15px;font-weight:900}
+.status{display:inline-flex;align-items:center;gap:5px;padding:4px 12px;border-radius:999px;font-size:10px;font-weight:800;color:#fff}
+.status .dot{width:6px;height:6px;border-radius:50%;background:currentColor}
+.st-prep{background:var(--primary)} .st-ready{background:var(--primary-deep)} .st-deliv{background:var(--info)} .st-done{background:var(--success)} .st-cancel{background:var(--muted)}
+.st-new{background:var(--accent);color:var(--ink)}
+
+/* ── التتبع ── */
+.track-steps{display:flex;justify-content:space-between;margin:18px 0 26px;position:relative}
+.track-steps::before{content:"";position:absolute;top:17px;right:18px;left:18px;height:3px;background:var(--glass-l3);border-radius:99px}
+.track-steps .ts{position:relative;z-index:2;display:flex;flex-direction:column;align-items:center;gap:6px;width:25%}
+.track-steps .c{width:36px;height:36px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:15px;background:var(--glass-l3);border:2px solid var(--glass-border);color:var(--muted);font-weight:900}
+.track-steps .ts.on .c{background:var(--primary);border-color:var(--primary);color:#fff;box-shadow:0 0 0 6px rgba(29,78,216,.15)}
+.track-steps .ts.done .c{background:var(--success);border-color:var(--success);color:#fff}
+.track-steps .lbl{font-size:9px;font-weight:800;color:var(--muted);text-align:center}
+.track-steps .ts.on .lbl{color:var(--primary)}
+html[data-theme="dark"] .track-steps .ts.on .lbl{color:var(--primary-light)}
+
+/* ── الحساب ── */
+.acc-card{display:flex;align-items:center;gap:12px;padding:16px;margin-bottom:14px}
+.acc-card .av{width:56px;height:56px;border-radius:18px;background:linear-gradient(135deg,var(--primary),var(--cyan));display:flex;align-items:center;justify-content:center;font-size:24px;color:#fff}
+.setting-row{display:flex;align-items:center;gap:12px;padding:14px;margin-bottom:10px;cursor:pointer;transition:transform var(--quick) var(--ease)}
+.setting-row:active{transform:scale(.98)}
+.setting-row .ic{width:38px;height:38px;border-radius:12px;display:flex;align-items:center;justify-content:center;font-size:17px;background:var(--glass-l3)}
+.setting-row .t{flex:1;font-size:13px;font-weight:800}
+.setting-row .ar{color:var(--muted);font-size:13px}
+.switch{width:46px;height:26px;border-radius:99px;background:var(--glass-l3);border:1px solid var(--glass-border);position:relative;cursor:pointer;transition:all var(--base) var(--ease)}
+.switch::after{content:"";position:absolute;top:2px;left:2px;width:20px;height:20px;border-radius:50%;background:var(--muted);transition:all var(--base) var(--spring)}
+.switch.on{background:var(--primary)}
+.switch.on::after{background:#fff;transform:translateX(-20px)}
+
+/* ═══════ التاجر ═══════ */
+.v-stat-row{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-bottom:14px}
+.v-stat{padding:12px;text-align:center}
+.v-stat .n{font-size:22px;font-weight:900;background:linear-gradient(120deg,var(--primary),var(--cyan));-webkit-background-clip:text;background-clip:text;-webkit-text-fill-color:transparent}
+.v-stat .l{font-size:10px;color:var(--muted);font-weight:700;margin-top:2px}
+.v-order{padding:14px;margin-bottom:12px}
+.v-order .head{display:flex;justify-content:space-between;align-items:center;margin-bottom:6px}
+.v-order .cust{font-size:13px;font-weight:900}
+.v-order .addr{font-size:11px;color:var(--muted);font-weight:700}
+.v-order .items{font-size:11px;color:var(--muted);font-weight:700;margin:6px 0 10px;line-height:1.9}
+.v-order .actions{display:flex;gap:8px}
+.v-order .actions .btn{flex:1}
+.var-tag{display:inline-flex;align-items:center;gap:4px;background:var(--glass-l1);border:1px solid var(--glass-border);border-radius:8px;padding:1px 7px;font-size:10px;font-weight:800;color:var(--text)}
+.p-switch{display:flex;align-items:center;justify-content:space-between;padding:12px;margin-bottom:10px;background:var(--glass-l2);backdrop-filter:blur(20px);border:1px solid var(--glass-border);border-radius:16px}
+.p-switch .pn{font-size:13px;font-weight:900}
+.p-switch .pr{font-size:12px;color:var(--muted);font-weight:700}
+.size-mini{display:flex;gap:4px;margin-top:5px;flex-wrap:wrap}
+.size-mini span{font-size:9px;font-weight:900;background:var(--glass-l3);border:1px solid var(--glass-border);border-radius:6px;padding:1px 6px}
+.size-mini span.z{background:var(--danger);color:#fff}
+.size-mini span.w{background:var(--warning);color:#fff}
+.wallet-bal{text-align:center;padding:22px 16px;margin-bottom:14px}
+.wallet-bal .lbl{font-size:12px;color:var(--muted);font-weight:700}
+.wallet-bal .amt{font-size:38px;font-weight:900;margin:6px 0 2px;background:linear-gradient(120deg,var(--primary),var(--cyan));-webkit-background-clip:text;background-clip:text;-webkit-text-fill-color:transparent}
+.wallet-bal .sub{font-size:11px;color:var(--muted);font-weight:700}
+
+/* ═══════ المندوب ═══════ */
+.d-online-row{display:flex;align-items:center;gap:12px;padding:14px;margin-bottom:14px}
+.d-online-row .st{width:10px;height:10px;border-radius:50%;background:var(--muted);transition:all var(--base) var(--ease)}
+.d-online-row.on .st{background:var(--success);box-shadow:0 0 0 5px rgba(21,128,61,.18)}
+.d-online-row .t{flex:1}
+.d-online-row .t .a{font-size:13px;font-weight:900}
+.d-online-row .t .b{font-size:10px;color:var(--muted);font-weight:700}
+.d-off{opacity:.55}
+.d-avail{border:2px solid var(--cyan)}
+.d-card{padding:14px;margin-bottom:12px;cursor:pointer;transition:transform var(--base) var(--spring);position:relative}
+.d-card:active{transform:scale(.98)}
+.d-card .head{display:flex;justify-content:space-between;align-items:center;margin-bottom:8px}
+.d-card .store{font-size:14px;font-weight:900}
+.d-card .id{font-size:10px;color:var(--muted);font-weight:700}
+.d-leg{display:flex;align-items:flex-start;gap:10px;margin:6px 0}
+.d-leg .pin{width:26px;height:26px;border-radius:50%;flex:none;display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:900;color:#fff;margin-top:2px}
+.d-leg .pin.a{background:var(--primary)}
+.d-leg .pin.b{background:var(--success)}
+.d-leg .who{font-size:12px;font-weight:900}
+.d-leg .addr{font-size:10px;color:var(--muted);font-weight:700}
+.cash-note{display:flex;align-items:center;gap:8px;background:var(--glass-l1);border:1px dashed var(--primary);border-radius:12px;padding:9px 12px;font-size:12px;font-weight:900;margin:8px 0}
+.route-steps{margin:6px 0 16px}
+.route-steps .rs{display:flex;gap:12px;position:relative}
+.route-steps .rs .bar{position:absolute;top:36px;right:15px;width:3px;height:calc(100% - 4px);border-radius:99px;background:var(--glass-l3);z-index:0}
+.route-steps .rs:last-child .bar{display:none}
+.route-steps .c{width:34px;height:34px;border-radius:50%;flex:none;display:flex;align-items:center;justify-content:center;font-size:14px;font-weight:900;background:var(--glass-l3);border:2px solid var(--glass-border);color:var(--muted);z-index:2;position:relative}
+.route-steps .rs.done .c{background:var(--success);border-color:var(--success);color:#fff}
+.route-steps .rs.on .c{background:var(--primary);border-color:var(--primary);color:#fff;box-shadow:0 0 0 6px rgba(29,78,216,.15)}
+.route-steps .body{padding-bottom:18px;flex:1}
+.route-steps .who{font-size:13px;font-weight:900}
+.route-steps .addr{font-size:11px;color:var(--muted);font-weight:700;margin-top:2px}
+.route-steps .act{margin-top:10px}
+.cod-box{text-align:center;padding:18px;margin-bottom:14px}
+.cod-box .l{font-size:11px;color:var(--muted);font-weight:700}
+.cod-box .amt{font-size:32px;font-weight:900;margin:4px 0;background:linear-gradient(120deg,var(--primary),var(--cyan));-webkit-background-clip:text;background-clip:text;-webkit-text-fill-color:transparent}
+.cod-box .s{font-size:11px;color:var(--muted);font-weight:700}
+
+/* ═══════ الإعلانات والعروض ═══════ */
+.ad-carousel{position:relative;height:150px;border-radius:22px;overflow:hidden;margin-bottom:14px;cursor:pointer;box-shadow:var(--shadow-glass)}
+.ad-track{display:flex;height:100%;transition:transform .55s cubic-bezier(.33,1,.68,1)}
+.ad-slide{flex:none;width:100%;height:100%;display:flex;align-items:center;gap:12px;padding:16px 18px;color:#fff;position:relative;overflow:hidden}
+.ad-slide .art{font-size:46px;filter:drop-shadow(0 8px 16px rgba(0,0,0,.3));z-index:1}
+.ad-slide .inner{flex:1;z-index:1}
+.ad-slide .tag{display:inline-block;font-size:10px;font-weight:900;background:rgba(255,255,255,.22);backdrop-filter:blur(8px);padding:4px 11px;border-radius:99px;margin-bottom:6px}
+.ad-slide h3{font-size:16px;font-weight:900;line-height:1.4}
+.ad-slide p{font-size:10px;font-weight:700;opacity:.93;margin-top:3px}
+.ad-slide .go{display:inline-block;margin-top:8px;font-size:11px;font-weight:900;background:#fff;color:var(--ink);padding:5px 14px;border-radius:99px}
+.ad-slide .paid{position:absolute;top:10px;left:10px;font-size:9px;font-weight:900;background:rgba(10,17,32,.6);backdrop-filter:blur(6px);padding:3px 10px;border-radius:99px;z-index:2}
+.ad-slide .blob{position:absolute;border-radius:50%;filter:blur(32px);opacity:.5}
+.ad-dots{position:absolute;bottom:9px;right:50%;transform:translateX(50%);display:flex;gap:5px;z-index:3}
+.ad-dot{width:6px;height:6px;border-radius:99px;background:rgba(255,255,255,.55);transition:all .3s}
+.ad-dot.on{width:18px;background:#fff}
+.offer-badge{position:absolute;top:8px;right:8px;background:var(--accent);color:var(--ink);font-size:9px;font-weight:900;padding:3px 8px;border-radius:99px;z-index:2}
+.new-badge{position:absolute;top:8px;right:8px;background:var(--primary);color:#fff;font-size:9px;font-weight:900;padding:3px 8px;border-radius:99px;z-index:2}
+.skel{position:relative;overflow:hidden;background:var(--glass-l2);border:1px solid var(--glass-border);border-radius:16px}
+.skel::after{content:'';position:absolute;inset:0;transform:translateX(-100%);background:linear-gradient(90deg,transparent,rgba(255,255,255,.55),transparent);animation:skel 1.2s infinite}
+html[data-theme="dark"] .skel::after{background:linear-gradient(90deg,transparent,rgba(56,189,248,.18),transparent)}
+@keyframes skel{to{transform:translateX(100%)}}
+
+/* ═══════ شيت المقاسات ═══════ */
+.sg-tabs{display:flex;gap:8px;margin-bottom:12px}
+.sg-tabs .chip{flex:1;justify-content:center}
+.sg-tab{display:none}.sg-tab.on{display:block;animation:fadein var(--base) var(--ease)}
+.sg-table{width:100%;border-collapse:collapse;font-size:12px}
+.sg-table th{background:var(--primary-deep);color:#fff;padding:10px;font-weight:800;font-size:11px}
+html[data-theme="dark"] .sg-table th{background:var(--primary)}
+.sg-table td{padding:10px;text-align:center;font-weight:700;border-bottom:1px solid var(--glass-border-dark)}
+.sg-table tr:nth-child(even) td{background:rgba(56,189,248,.07)}
+
+/* ═══════ الإشعارات ═══════ */
+.notif-item{display:flex;gap:12px;padding:13px;margin-bottom:10px;align-items:flex-start;cursor:pointer;transition:transform var(--quick) var(--ease)}
+.notif-item:active{transform:scale(.98)}
+.notif-item .nic{width:40px;height:40px;flex:none;border-radius:14px;display:flex;align-items:center;justify-content:center;font-size:18px;background:linear-gradient(135deg,#1D4ED81f,#06B6D41f)}
+.notif-item .nt{flex:1}
+.notif-item .nt .a{font-size:12.5px;font-weight:900}
+.notif-item .nt .b{font-size:10.5px;color:var(--muted);font-weight:700;margin-top:2px}
+.notif-item .nt .c{font-size:9.5px;color:var(--primary);font-weight:800;margin-top:4px}
+.notif-item .un{width:9px;height:9px;border-radius:50%;background:var(--accent);flex:none;margin-top:6px}
+
+/* ═══════ OTP ═══════ */
+.otp-row{display:flex;gap:10px;justify-content:center;margin:18px 0 14px}
+.otp-box{width:54px;height:60px;border-radius:14px;background:var(--glass-l3);border:2px solid var(--glass-border);font-size:24px;font-weight:900;text-align:center;font-family:var(--font);color:var(--text);transition:all var(--quick);caret-color:var(--primary)}
+.otp-box:focus{border-color:var(--primary);outline:none;box-shadow:0 0 0 4px rgba(29,78,216,.15)}
+
+/* ═══════ التقييم ═══════ */
+.stars-in{display:flex;gap:6px;justify-content:center;font-size:30px;margin:10px 0;cursor:pointer}
+.stars-in span{opacity:.22;filter:grayscale(1);transition:all var(--quick)}
+.stars-in span.on{opacity:1;filter:none}
+.review-row{display:flex;gap:10px;padding:12px 0;border-bottom:1px solid var(--glass-border-dark)}
+.review-row:last-child{border-bottom:none}
+.review-row .av{width:36px;height:36px;border-radius:50%;background:linear-gradient(135deg,var(--primary),var(--cyan));color:#fff;display:flex;align-items:center;justify-content:center;font-weight:900;font-size:13px;flex:none}
+
+/* ═══════ QR ═══════ */
+.qr-box{width:170px;height:170px;margin:16px auto;border-radius:18px;background:
+  repeating-linear-gradient(90deg,#0A1120 0 4px,transparent 4px 10px),
+  repeating-linear-gradient(0deg,#0A1120 0 4px,transparent 4px 10px);position:relative;padding:18px}
+.qr-box::before,.qr-box::after{content:'';position:absolute;width:52px;height:52px;background:var(--bg)}
+.qr-box::before{top:-4px;right:-4px;border-radius:0 0 0 18px}
+.qr-box::after{bottom:-4px;left:-4px;border-radius:0 18px 0 0}
+.qr-in{position:absolute;inset:18px;background:var(--bg);border-radius:12px;display:flex;align-items:center;justify-content:center;font-size:28px}
+
+/* ═══════ تقرير نهاية اليوم ═══════ */
+.report-row{display:flex;justify-content:space-between;font-size:12px;font-weight:800;padding:8px 0;border-bottom:1px solid var(--glass-border-dark)}
+
+/* ═══════ بطاقات المشرف ═══════ */
+.adm-card{display:flex;gap:12px;align-items:center;padding:14px;margin-bottom:10px}
+.adm-card .ic{width:44px;height:44px;flex:none;border-radius:16px;display:flex;align-items:center;justify-content:center;font-size:20px;background:var(--glass-l3)}
+.adm-actions{display:flex;gap:8px;margin-top:10px}
+.adm-actions .btn{min-height:40px;font-size:12.5px;padding:10px}
+.pending-chip{font-size:10px;font-weight:900;color:var(--warning);background:rgba(180,83,9,.13);padding:3px 10px;border-radius:99px}
+.live-chip{font-size:10px;font-weight:900;color:var(--success);background:rgba(21,128,61,.13);padding:3px 10px;border-radius:99px}
+.rej-chip{font-size:10px;font-weight:900;color:var(--danger);background:rgba(220,38,38,.1);padding:3px 10px;border-radius:99px}
+
+/* ═══════ عروض التاجر ═══════ */
+.p-offer{display:flex;align-items:center;gap:8px;margin-top:8px}
+.p-offer .of{font-size:10px;font-weight:900;color:var(--accent-deep);background:rgba(249,115,22,.15);padding:3px 10px;border-radius:99px}
+.v-tabs{display:flex;gap:8px;margin:0 0 14px}
+.v-tabs .chip{flex:1;justify-content:center}
+
+/* ═══════ داشبورد المشرف ═══════ */
+.kpi-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:14px}
+.kpi{padding:14px;position:relative;overflow:hidden}
+.kpi::after{content:'';position:absolute;top:-24px;left:-24px;width:70px;height:70px;border-radius:50%;background:linear-gradient(135deg,#1D4ED81a,#06B6D40d);filter:blur(6px)}
+.kpi .kic{width:38px;height:38px;border-radius:13px;display:flex;align-items:center;justify-content:center;font-size:17px;background:linear-gradient(135deg,#1D4ED81f,#06B6D41f);margin-bottom:8px}
+.kpi .kn{font-size:21px;font-weight:900;line-height:1.2;letter-spacing:-.5px}
+.kpi .kl{font-size:10.5px;color:var(--muted);font-weight:800;margin-top:2px}
+.kpi .kd{font-size:9px;font-weight:900;margin-top:5px}
+.kd.up{color:var(--success)}
+.kd.down{color:var(--danger)}
+.chart{display:flex;align-items:flex-end;gap:7px;height:130px}
+.chart .bar{flex:1;border-radius:9px 9px 5px 5px;position:relative;background:linear-gradient(180deg,var(--primary),var(--cyan));min-height:5%;opacity:.88;transition:height 1.1s var(--ease);cursor:pointer}
+.chart .bar.today{background:linear-gradient(180deg,var(--accent),#F97316);opacity:1}
+.chart .bar .val{position:absolute;top:-17px;right:0;left:0;text-align:center;font-size:8.5px;font-weight:900;color:var(--muted);opacity:0;transition:opacity .3s}
+.chart .bar:hover .val{opacity:1}
+.chart-lbls{display:flex;gap:7px;margin-top:9px}
+.chart-lbls span{flex:1;text-align:center;font-size:9px;font-weight:800;color:var(--muted)}
+.chart-lbls span.today{color:var(--accent-deep)}
+.cat-row{display:flex;align-items:center;gap:10px;padding:7.5px 0}
+.cat-row .cn{width:36px;font-size:10px;font-weight:900;color:var(--muted);flex:none}
+.cat-row .ct{flex:1;height:9px;border-radius:99px;background:var(--glass-l3);overflow:hidden}
+.cat-row .cf{height:100%;border-radius:99px;background:linear-gradient(90deg,var(--primary),var(--cyan));width:0;transition:width 1.1s var(--ease)}
+.cat-row:nth-child(2) .cf{background:linear-gradient(90deg,#9D174D,#F97316)}
+.cat-row:nth-child(3) .cf{background:linear-gradient(90deg,#15803D,#38BDF8)}
+.cat-row:nth-child(4) .cf{background:linear-gradient(90deg,#B45309,#F5A623)}
+.cat-row:nth-child(5) .cf{background:linear-gradient(90deg,#0284C7,#06B6D4)}
+.cat-row:nth-child(6) .cf{background:linear-gradient(90deg,#475569,#94A3B8)}
+.cat-row .cv{width:56px;text-align:left;font-size:10px;font-weight:900;flex:none}
+.lb-row{display:flex;align-items:center;gap:10px;padding:11px 13px;margin-bottom:8px}
+.lb-row .rank{width:26px;height:26px;border-radius:9px;display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:900;background:var(--glass-l3);flex:none;color:var(--muted)}
+.lb-row:nth-child(1) .rank{background:linear-gradient(135deg,#F5A623,#EA580C);color:#fff}
+.lb-row:nth-child(2) .rank{background:linear-gradient(135deg,#94A3B8,#475569);color:#fff}
+.lb-row:nth-child(3) .rank{background:linear-gradient(135deg,#C2410C,#9A3412);color:#fff}
+.lb-row .lic{width:34px;height:34px;border-radius:12px;display:flex;align-items:center;justify-content:center;font-size:16px;background:linear-gradient(135deg,#1D4ED81f,#06B6D41f);flex:none}
+.lb-row .lt{flex:1}
+.lb-row .lt .a{font-size:12px;font-weight:900}
+.lb-row .lt .b{font-size:9.5px;color:var(--muted);font-weight:700}
+.lb-row .lv{text-align:left}
+.lb-row .lv .a{font-size:12px;font-weight:900}
+.lb-row .lv .b{font-size:9px;font-weight:900}
+
+/* ── الفلوتر والشريط ── */
+.fab{
+  position:absolute;bottom:86px;right:16px;left:16px;z-index:20;display:none;
+  align-items:center;justify-content:space-between;padding:13px 18px;
+  background:var(--glass-l3);backdrop-filter:blur(24px) saturate(1.4);border:1px solid var(--glass-border);
+  border-radius:18px;box-shadow:var(--shadow-glass);font-weight:900;font-size:14px;cursor:pointer;
+  transition:transform var(--quick) var(--ease);
+}
+.fab.show{display:flex}
+.fab:active{transform:scale(.98)}
+.fab .cnt{background:var(--accent);color:var(--ink);border-radius:99px;min-width:24px;height:24px;display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:900;padding:0 7px}
+.nav{
+  position:absolute;bottom:0;right:0;left:0;z-index:21;display:none;
+  justify-content:space-around;padding:8px 4px 16px;
+  background:var(--glass-l3);backdrop-filter:blur(24px) saturate(1.4);border-top:1px solid var(--glass-border);
+}
+.nav.show{display:flex}
+.nav .ni{display:flex;flex-direction:column;align-items:center;gap:2px;font-size:9px;font-weight:800;color:var(--muted);cursor:pointer;padding:4px 10px;border-radius:12px;transition:all var(--quick) var(--ease)}
+.nav .ni .ic{font-size:19px;line-height:1;filter:grayscale(1);opacity:.65;transition:all var(--quick) var(--ease)}
+.nav .ni.active{color:var(--primary)}
+html[data-theme="dark"] .nav .ni.active{color:var(--primary-light)}
+.nav .ni.active .ic{filter:none;opacity:1}
+
+.overlay{
+  position:absolute;inset:0;z-index:40;display:none;align-items:center;justify-content:center;
+  background:rgba(10,17,32,.45);backdrop-filter:blur(6px);padding:20px;
+}
+.overlay.show{display:flex}
+.modal{
+  background:var(--glass-l3);backdrop-filter:blur(24px) saturate(1.4);border:1px solid var(--glass-border);
+  border-radius:24px;padding:22px;width:100%;box-shadow:0 24px 60px rgba(0,0,0,.4);
+  animation:pop var(--base) var(--spring);
+}
+@keyframes pop{from{transform:scale(.92);opacity:0}to{transform:scale(1);opacity:1}}
+.modal .mt{font-size:17px;font-weight:900;text-align:center;margin-bottom:12px}
+.modal .mrow{display:flex;justify-content:space-between;font-size:13px;font-weight:700;color:var(--muted);padding:4px 0}
+.modal .mtotal{border-top:2px solid var(--text);margin-top:8px;padding-top:10px;display:flex;justify-content:space-between;font-size:19px;font-weight:900}
+.modal .cod{display:flex;align-items:center;gap:8px;background:var(--glass-l2);border:1px solid var(--glass-border);border-radius:14px;padding:10px 12px;font-size:12px;font-weight:800;margin:12px 0}
+.modal .success-ic{font-size:52px;text-align:center;animation:pop var(--slow) var(--spring)}
+
+.controls{display:flex;gap:10px;margin-top:16px;flex-wrap:wrap;justify-content:center}
+.ctl{
+  border:none;cursor:pointer;font-family:var(--font);font-weight:800;font-size:13px;
+  background:var(--glass-l3);backdrop-filter:blur(24px);border:1px solid var(--glass-border);
+  color:var(--text);padding:11px 20px;border-radius:14px;box-shadow:var(--shadow-glass);
+  transition:transform var(--quick) var(--ease);
+}
+.ctl:active{transform:scale(.96)}
+.ctl.role{background:var(--primary-deep);color:#fff}
+html[data-theme="dark"] .ctl.role{background:var(--primary)}
+.legend{max-width:375px;text-align:center;font-size:11px;color:var(--muted);font-weight:600;margin-top:14px;line-height:1.8}
+@media (prefers-reduced-motion: reduce){.orb{animation:none}*{transition-duration:.01ms!important;animation-duration:.01ms!important}}
+</style>
+</head>
+<body>
+
+<div class="orbs" aria-hidden="true"><div class="orb orb1"></div><div class="orb orb2"></div><div class="orb orb3"></div></div>
+
+<div class="page-title">زبون — <b>مول الأزياء</b> (زبون • تاجر • مندوب • مشرف 👑) — كل صفحات التطبيق بهوية «أفق» + إعلانات وعروض</div>
+
+<div class="phone" id="phone">
+  <div class="statusbar"><span>٩:٤١</span><div class="notch"></div><span>📶 4G 🔋</span></div>
+
+  <div class="screens">
+
+    <!-- ═══ تسجيل الدخول ═══ -->
+    <section class="screen login-screen active" id="login">
+      <div style="text-align:center;padding-top:40px">
+        <div style="width:84px;height:84px;margin:0 auto 14px;border-radius:26px;display:flex;align-items:center;justify-content:center;font-size:40px;background:linear-gradient(135deg,var(--primary),var(--cyan));box-shadow:0 16px 34px rgba(29,78,216,.4)">🛍️</div>
+        <div style="font-size:30px;font-weight:900">زبون</div>
+        <div style="font-size:13px;color:var(--muted);font-weight:700;margin:4px 0 26px">كل ما تتمناه — لرجالك ونسائك وأطفالك — بمكان واحد 👌</div>
+      </div>
+      <div class="glass" style="padding:18px">
+        <div id="loginStepPhone">
+          <div style="font-weight:900;font-size:14px;margin-bottom:4px">تسجيل الدخول</div>
+          <div style="font-size:10.5px;color:var(--muted);font-weight:700;margin-bottom:12px">برقمك — من رسلنا كود تأكيد، وكله بثواني</div>
+          <div style="display:flex;gap:8px;background:var(--bg);border:2px solid var(--primary);border-radius:14px;padding:12px 14px;margin-bottom:10px;align-items:center">
+            <span style="color:var(--muted);font-weight:800;font-size:13px">+964</span>
+            <span style="width:1px;height:20px;background:var(--glass-border-dark)"></span>
+            <span style="flex:1;font-size:13px;color:var(--muted);font-weight:600">770 123 4567</span>
+          </div>
+          <button class="btn btn-navy" onclick="otpSend()">أرسل رمز التأكيد 📲</button>
+          <button class="btn btn-ghost" style="margin-top:8px" onclick="toast('تسجيل تاجر جديد: أسمك + رقمك + بيانات المحل — يفتح بالنسخة الكاملة')">إنشاء حساب جديد</button>
+        </div>
+        <div id="loginStepOtp" style="display:none">
+          <div style="font-weight:900;font-size:14px;margin-bottom:4px">رمز التأكيد 🔐</div>
+          <div style="font-size:10.5px;color:var(--muted);font-weight:700;margin-bottom:12px">انرسل واتساب لرقمك +964 770 123 4567 — الكود: 4821</div>
+          <div class="otp-row">
+            <input class="otp-box" maxlength="1" value="4">
+            <input class="otp-box" maxlength="1" value="8">
+            <input class="otp-box" maxlength="1" value="2">
+            <input class="otp-box" maxlength="1" value="1">
+          </div>
+          <button class="btn btn-navy" onclick="otpVerify()">تأكيد الرمز ✓</button>
+          <button class="btn btn-ghost" style="margin-top:8px" onclick="otpBack()">تغيير الرقم ←</button>
+        </div>
+      </div>
+      <div style="display:flex;gap:10px;justify-content:center;margin-top:16px">
+        <span class="chip" style="cursor:default">💵 كاش عند الاستلام</span>
+        <span class="chip" style="cursor:default">🚚 توصيل داخل الكوت</span>
+        <span class="chip" style="cursor:default">↩️ إرجاع خلال 7 أيام</span>
+      </div>
+    </section>
+
+    <!-- ═══ الرئيسية ═══ -->
+    <section class="screen" id="home">
+      <div class="greet-row">
+        <div class="g">
+          <div class="hi">أهلاً بيك حجي،</div>
+          <h1>نورتنا 🌟 شكو تريد اليوم؟</h1>
+        </div>
+        <div class="loc">📍 الكوت</div>
+        <div class="bell" onclick="navTo('notifications')">🔔<span class="rd"></span></div>
+      </div>
+
+      <div class="search" onclick="toast('البحث يفتح من النسخة الكاملة — هسه سكتة')">ابحث عن قميص، فستان، شنطة، مكياج... 🔍</div>
+
+      <div class="cats">
+        <span class="chip active">الكل</span>
+        <span class="chip">👔 رجالي</span>
+        <span class="chip">👗 نسائي</span>
+        <span class="chip">🧒 أطفال</span>
+        <span class="chip">🧸 ألعاب</span>
+        <span class="chip">💄 مكياج</span>
+        <span class="chip">👜 شنط</span>
+        <span class="chip">👟 أحذية</span>
+        <span class="chip">⌚ إكسسوارات</span>
+      </div>
+
+      <div class="skel" id="homeSkel" style="height:150px;border-radius:22px;margin-bottom:14px"></div>
+      <div class="ad-carousel" id="adCarousel" onmouseenter="adStop()" onmouseleave="adStart()">
+        <div class="ad-track" id="adTrack"></div>
+        <div class="ad-dots" id="adDots"></div>
+      </div>
+
+      <div class="sec-head" id="offersHead" style="display:none"><h3>⚡ العروض</h3><span class="more" onclick="navTo('stores')">الكل ←</span></div>
+      <div class="h-scroll" id="offersRow"></div>
+
+      <div class="sec-head"><h3>🆕 وصل حديثًا</h3><span class="more" onclick="navTo('stores')">الكل ←</span></div>
+      <div class="h-scroll" id="newRow"></div>
+
+      <div class="sec-head"><h3>محلات مميزة</h3><span class="more" onclick="navTo('stores')">الكل ←</span></div>
+      <div class="h-scroll">
+        <div class="store-card" onclick="navTo('store')">
+          <div class="cover" style="background:linear-gradient(120deg,#1D4ED8,#38BDF8)"></div>
+          <div class="body">
+            <div class="logo">👔</div>
+            <div class="nm">الأصيل — رجالي</div>
+            <div class="meta"><span class="verified">✓ موثق</span><span class="stars">★ 4.8</span></div>
+          </div>
+        </div>
+        <div class="store-card" onclick="navTo('store')">
+          <div class="cover" style="background:linear-gradient(120deg,#F97316,#EA580C)"></div>
+          <div class="body">
+            <div class="logo">👗</div>
+            <div class="nm">بوتيك النور — نسائي</div>
+            <div class="meta"><span class="verified">✓ موثق</span><span class="stars">★ 4.9</span></div>
+          </div>
+        </div>
+        <div class="store-card" onclick="navTo('store')">
+          <div class="cover" style="background:linear-gradient(120deg,#15803D,#06B6D4)"></div>
+          <div class="body">
+            <div class="logo">🧸</div>
+            <div class="nm">طفولة — أطفال وألعاب</div>
+            <div class="meta"><span class="verified">✓ موثق</span><span class="stars">★ 4.7</span></div>
+          </div>
+        </div>
+        <div class="store-card" onclick="navTo('store')">
+          <div class="cover" style="background:linear-gradient(120deg,#B45309,#F5A623)"></div>
+          <div class="body">
+            <div class="logo">💄</div>
+            <div class="nm">لمسة — مكياج وعناية</div>
+            <div class="meta"><span class="verified">✓ موثق</span><span class="stars">★ 4.6</span></div>
+          </div>
+        </div>
+      </div>
+
+      <div class="sec-head"><h3>🔥 الأكثر مبيعاً اليوم</h3><span class="more">الكل ←</span></div>
+      <div class="grid2">
+        <div class="prod-card" onclick="navTo('product')">
+          <div class="img">👕</div>
+          <span class="sale-badge">-30%</span>
+          <div class="info">
+            <div class="pn">قميص رجالي قطني</div><div class="sc">الأصيل — رجالي</div>
+            <div class="pr"><span><span class="price">18,000</span> <span class="old-price">25,000</span> د.ع</span><button class="add-btn" onclick="event.stopPropagation();addCart('قميص رجالي قطني',18000,'👕','M')">+</button></div>
+          </div>
+        </div>
+        <div class="prod-card" onclick="navTo('product')">
+          <div class="img">👗</div>
+          <span class="sale-badge">-25%</span>
+          <div class="info">
+            <div class="pn">فستان سهرة أنيق</div><div class="sc">بوتيك النور — نسائي</div>
+            <div class="pr"><span><span class="price">45,000</span> <span class="old-price">60,000</span> د.ع</span><button class="add-btn" onclick="event.stopPropagation();addCart('فستان سهرة أنيق',45000,'👗','M')">+</button></div>
+          </div>
+        </div>
+        <div class="prod-card" onclick="navTo('product')">
+          <div class="img" style="filter:grayscale(.4)">👟</div>
+          <div class="info">
+            <div class="pn">حذاء رياضي أزرق</div><div class="sc">ستايل — أحذية</div>
+            <div class="pr"><span><span class="price">35,000</span> د.ع</span><button class="add-btn" disabled style="opacity:.35;cursor:not-allowed">+</button></div>
+          </div>
+          <span class="soldout-badge">نفد</span>
+        </div>
+        <div class="prod-card" onclick="navTo('product')">
+          <div class="img">👜</div>
+          <div class="info">
+            <div class="pn">شنطة يد جلد</div><div class="sc">بوتيك النور — نسائي</div>
+            <div class="pr"><span><span class="price">38,000</span> د.ع</span><button class="add-btn" onclick="event.stopPropagation();addCart('شنطة يد جلد',38000,'👜')">+</button></div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ═══ الإشعارات ═══ -->
+    <section class="screen" id="notifications">
+      <div class="appbar"><div class="icon-btn" onclick="navTo('home')">→</div><h2>الإشعارات 🔔</h2></div>
+      <div id="notifList"></div>
+      <div class="empty" id="notifEmpty" style="display:none"><span class="ic">🔕</span>ما عندك إشعارات هسه — نرجع نسولف 😴</div>
+    </section>
+
+    <!-- ═══ المحلات ═══ -->
+    <section class="screen" id="stores">
+      <div class="appbar"><div class="icon-btn" onclick="navTo('home')">→</div><h2>المحلات</h2></div>
+      <div class="search" style="margin-bottom:14px">ابحث عن محل... 🔍</div>
+      <div class="cats" style="margin-top:0">
+        <span class="chip active">الكل</span><span class="chip">👔 رجالي</span><span class="chip">👗 نسائي</span><span class="chip">🧸 ألعاب</span><span class="chip">💄 مكياج</span>
+      </div>
+      <div class="store-row" onclick="navTo('store')">
+        <div class="logo">👔</div>
+        <div class="info">
+          <div class="nm">الأصيل — رجالي <span class="verified">✓ موثق</span></div>
+          <div class="meta"><span class="stars">★ 4.8</span><span>قمصان • سراويل • جاكيتات</span></div>
+        </div>
+        <span class="open-chip">مفتوح</span>
+      </div>
+      <div class="store-row" onclick="navTo('store')">
+        <div class="logo">👗</div>
+        <div class="info">
+          <div class="nm">بوتيك النور — نسائي <span class="verified">✓ موثق</span></div>
+          <div class="meta"><span class="stars">★ 4.9</span><span>فساتين • شنط • إكسسوارات</span></div>
+        </div>
+        <span class="open-chip">مفتوح</span>
+      </div>
+      <div class="store-row" onclick="navTo('store')">
+        <div class="logo">🧸</div>
+        <div class="info">
+          <div class="nm">طفولة — أطفال وألعاب <span class="verified">✓ موثق</span></div>
+          <div class="meta"><span class="stars">★ 4.7</span><span>ملابس أطفال • ألعاب</span></div>
+        </div>
+        <span class="open-chip">مفتوح</span>
+      </div>
+      <div class="store-row" onclick="navTo('store')">
+        <div class="logo">💄</div>
+        <div class="info">
+          <div class="nm">لمسة — مكياج وعناية <span class="verified">✓ موثق</span></div>
+          <div class="meta"><span class="stars">★ 4.6</span><span>مكياج • عطور • عناية بالبشرة</span></div>
+        </div>
+        <span class="closed-chip">مغلق</span>
+      </div>
+      <div class="store-row" onclick="navTo('store')">
+        <div class="logo">👟</div>
+        <div class="info">
+          <div class="nm">ستايل — أحذية <span class="verified">✓ موثق</span></div>
+          <div class="meta"><span class="stars">★ 4.5</span><span>أحذية رجالية ونسائية</span></div>
+        </div>
+        <span class="open-chip">مفتوح</span>
+      </div>
+    </section>
+
+    <!-- ═══ صفحة المحل ═══ -->
+    <section class="screen" id="store">
+      <div class="store-cover" style="background:linear-gradient(120deg,#1D4ED8,#38BDF8)">
+        <div class="logo">👔</div>
+      </div>
+      <div style="display:flex;justify-content:space-between;margin-top:14px;align-items:center">
+        <div class="icon-btn" style="width:40px;height:40px;display:flex;align-items:center;justify-content:center;background:var(--glass-l3);border:1px solid var(--glass-border);border-radius:14px;cursor:pointer" onclick="navTo('stores')">→</div>
+        <div class="icon-btn" style="width:40px;height:40px;display:flex;align-items:center;justify-content:center;background:var(--glass-l3);border:1px solid var(--glass-border);border-radius:14px;cursor:pointer" onclick="toast('أضيف للمفضلة ❤️')">🤍</div>
+      </div>
+      <div class="store-head">
+        <div class="nm">الأصيل — ملابس رجالي <span class="verified">✓ موثق</span></div>
+        <div class="meta"><span class="stars">★ 4.8 (180 تقييم)</span><span>•</span><span>الكوت، سوق المدينة</span><span>•</span><span class="open-chip">مفتوح</span></div>
+      </div>
+      <div class="glass" style="padding:14px;margin-bottom:14px">
+        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px">
+          <span style="font-weight:900;font-size:14px">تقييمات الزبائن ⭐</span>
+          <span class="live-chip">4.8 من 180 تقييم</span>
+        </div>
+        <div class="review-row">
+          <div class="av">ع</div>
+          <div style="flex:1"><div style="font-size:12px;font-weight:900">علي <span class="stars">★★★★★</span></div><div style="font-size:10.5px;color:var(--muted);font-weight:700">"خامة القميص فخمة — والتوصيل وصلني خلال ساعة، كاش واستلمت من المندوب بكل أريحية"</div></div>
+        </div>
+        <div class="review-row">
+          <div class="av">ز</div>
+          <div style="flex:1"><div style="font-size:12px;font-weight:900">زينب <span class="stars">★★★★☆</span></div><div style="font-size:10.5px;color:var(--muted);font-weight:700">"الجاكيت كشخة بس المقاس صغر شوية — رجّعته بنفس اليوم بدون أي تعقيد"</div></div>
+        </div>
+        <span style="font-size:11px;color:var(--primary);font-weight:800;cursor:pointer" onclick="toast('كل التقييمات + إضافة تقييمك — نسخة كاملة')">عرض كل التقييمات ←</span>
+      </div>
+      <div class="pcat">
+        <span class="chip active">الكل</span><span class="chip">👕 قمصان</span><span class="chip">👖 سراويل</span><span class="chip">🧥 جاكيتات</span><span class="chip">🧦 إكسسوارات</span>
+      </div>
+      <div class="prod-row" onclick="navTo('product')">
+        <div class="img" style="background:linear-gradient(135deg,#1D4ED840,#38BDF840)">👕</div>
+        <div class="info">
+          <div class="pn">قميص رجالي قطني</div>
+          <div class="ds">قطن مصري • مقاسات S–XXL • لون أزرق</div>
+          <div class="pr"><span><span class="price">18,000</span> <span class="old-price">25,000</span> د.ع</span><button class="add-btn" onclick="event.stopPropagation();addCart('قميص رجالي قطني',18000,'👕','M')">+</button></div>
+        </div>
+      </div>
+      <div class="prod-row" onclick="navTo('product')">
+        <div class="img" style="background:linear-gradient(135deg,#B4530940,#F5A62340)">🧥</div>
+        <div class="info">
+          <div class="pn">جاكيت شتوي فاخر</div>
+          <div class="ds">مقاوم للماء • مقاسات M–XXL</div>
+          <div class="pr"><span><span class="price">55,000</span> د.ع</span><button class="add-btn" onclick="event.stopPropagation();addCart('جاكيت شتوي فاخر',55000,'🧥','L')">+</button></div>
+        </div>
+      </div>
+      <div class="prod-row" onclick="navTo('product')">
+        <div class="img" style="background:linear-gradient(135deg,#15803D40,#06B6D440)">👖</div>
+        <div class="info">
+          <div class="pn">سروال جينز كلاسيك</div>
+          <div class="ds">مقاس 30–42 • قطن دنيم</div>
+          <div class="pr"><span><span class="price">28,000</span> د.ع</span><button class="add-btn" onclick="event.stopPropagation();addCart('سروال جينز كلاسيك',28000,'👖','32')">+</button></div>
+        </div>
+      </div>
+      <div class="prod-row" onclick="navTo('product')">
+        <div class="img" style="background:linear-gradient(135deg,#C2410C40,#EA580C40)">⌚</div>
+        <div class="info">
+          <div class="pn">ساعة يد رياضية</div>
+          <div class="ds">ستيل + جلد • هدية مثالية</div>
+          <div class="pr"><span><span class="price">42,000</span> د.ع</span><button class="add-btn" onclick="event.stopPropagation();addCart('ساعة يد رياضية',42000,'⌚')">+</button></div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ═══ تفاصيل المنتج ═══ -->
+    <section class="screen" id="product">
+      <div class="prod-img">
+        👕
+        <div class="fav-btn glass" onclick="toast('أضيف للمفضلة ❤️')">🤍</div>
+      </div>
+      <div style="display:flex;align-items:center;gap:10px">
+        <div class="icon-btn" onclick="navTo('store')">→</div>
+        <div style="flex:1;font-weight:900;font-size:18px">قميص رجالي قطني</div>
+        <span class="sale-badge" style="position:static">-30%</span>
+      </div>
+      <div style="display:flex;align-items:center;gap:8px;margin:8px 0 14px">
+        <span class="stars">★★★★★</span><span style="font-size:11px;font-weight:800">4.8</span>
+        <span class="verified">✓ من الأصيل الموثق</span>
+      </div>
+      <div class="glass" style="padding:14px;margin-bottom:14px">
+        <div style="font-size:24px;font-weight:900">18,000 <span style="font-size:13px;font-weight:800;color:var(--muted)">د.ع</span> <span class="old-price">25,000 د.ع</span></div>
+        <div style="font-size:12px;color:var(--muted);font-weight:600;margin-top:8px;line-height:1.8">قطن مصري 100%، خياطة نظيفة، يتقبل الكي بسهولة. متوفر بألوان: أزرق، أبيض، أسود. صناعة تركية — جودة تضمن الراحة.</div>
+      </div>
+      <div style="font-size:12px;font-weight:900;margin-bottom:8px">اختر المقاس <span style="color:var(--muted);font-weight:700;font-size:10px">(مقاس L باقي 3 قطع فقط)</span> <span style="color:var(--primary);cursor:pointer;font-size:11px" onclick="navTo('sizeguide')">📏 شيت المقاسات</span></div>
+      <div class="size-row">
+        <span class="size-chip" onclick="pickSize(this)">S</span>
+        <span class="size-chip sel" onclick="pickSize(this)">M</span>
+        <span class="size-chip" onclick="pickSize(this)">L</span>
+        <span class="size-chip" onclick="pickSize(this)">XL</span>
+        <span class="size-chip no">XXL</span>
+      </div>
+      <div style="display:flex;gap:10px;align-items:center;margin-bottom:14px">
+        <div class="qty"><button onclick="qty(-1)">−</button><span class="n" id="qtyN">1</span><button onclick="qty(1)">+</button></div>
+        <span style="font-size:11px;color:var(--muted);font-weight:700">↩️ إرجاع خلال 7 أيام إذا ما ناسبك المقاس</span>
+      </div>
+      <div class="glass" style="padding:12px;margin-bottom:14px;display:flex;align-items:center;gap:10px;cursor:pointer" onclick="navTo('store')">
+        <span style="font-size:22px">👔</span>
+        <div style="flex:1"><div style="font-size:12px;font-weight:900">الأصيل — ملابس رجالي</div><div style="font-size:10px;color:var(--muted);font-weight:700">مفتوح • توصيل 2,000 د.ع</div></div>
+        <span style="color:var(--muted)">‹</span>
+      </div>
+      <button class="btn btn-cta" onclick="addCart('قميص رجالي قطني',18000,'👕',1,currentSize());this.innerHTML='✓ أُضيف للسلة';">أضف للسلة 🛒</button>
+    </section>
+
+    <!-- ═══ شيت المقاسات ═══ -->
+    <section class="screen" id="sizeguide">
+      <div class="appbar"><div class="icon-btn" onclick="navTo('product')">→</div><h2>شيت المقاسات 📏</h2></div>
+      <div class="sg-tabs">
+        <span class="chip active" onclick="sgTab(this,'sg-men')">👔 رجالي</span>
+        <span class="chip" onclick="sgTab(this,'sg-women')">👗 نسائي</span>
+        <span class="chip" onclick="sgTab(this,'sg-kids')">🧒 أطفال</span>
+      </div>
+      <div class="sg-tab on" id="sg-men">
+        <div class="glass" style="padding:8px;margin-bottom:10px"><table class="sg-table">
+          <tr><th>المقاس</th><th>الصدر (سم)</th><th>الطول (سم)</th><th>الخصر (سم)</th></tr>
+          <tr><td>S</td><td>86–91</td><td>66–68</td><td>71–76</td></tr>
+          <tr><td>M</td><td>91–96</td><td>68–71</td><td>76–81</td></tr>
+          <tr><td>L</td><td>96–101</td><td>71–74</td><td>81–86</td></tr>
+          <tr><td>XL</td><td>101–107</td><td>74–76</td><td>86–91</td></tr>
+          <tr><td>XXL</td><td>107–112</td><td>76–79</td><td>91–97</td></tr>
+        </table></div>
+      </div>
+      <div class="sg-tab" id="sg-women">
+        <div class="glass" style="padding:8px;margin-bottom:10px"><table class="sg-table">
+          <tr><th>المقاس</th><th>الصدر (سم)</th><th>الطول (سم)</th><th>الخصر (سم)</th></tr>
+          <tr><td>S</td><td>81–86</td><td>62–64</td><td>61–66</td></tr>
+          <tr><td>M</td><td>86–91</td><td>64–67</td><td>66–71</td></tr>
+          <tr><td>L</td><td>91–96</td><td>67–69</td><td>71–76</td></tr>
+          <tr><td>XL</td><td>96–101</td><td>69–71</td><td>76–81</td></tr>
+        </table></div>
+      </div>
+      <div class="sg-tab" id="sg-kids">
+        <div class="glass" style="padding:8px;margin-bottom:10px"><table class="sg-table">
+          <tr><th>المقاس</th><th>العمر تقريبًا</th><th>الطول (سم)</th><th>الوزن (كغم)</th></tr>
+          <tr><td>2Y</td><td>سنتين</td><td>86–92</td><td>11–13</td></tr>
+          <tr><td>4Y</td><td>4 سنوات</td><td>98–104</td><td>15–17</td></tr>
+          <tr><td>6Y</td><td>6 سنوات</td><td>110–116</td><td>19–22</td></tr>
+          <tr><td>8Y</td><td>8 سنوات</td><td>122–128</td><td>24–28</td></tr>
+          <tr><td>10Y</td><td>10 سنوات</td><td>134–140</td><td>30–35</td></tr>
+        </table></div>
+      </div>
+      <div class="glass" style="padding:12px;font-size:11px;color:var(--muted);font-weight:700;line-height:1.9">
+        📏 كيف تقيس؟ — قيس محيط الصدر بأوسع منطقة تحت الإبط، والطول من الكتف لنهاية القميص.<br>
+        🧐 مو متأكد؟ — سولف ويا المحل بالواتساب قبل الطلب، ولو ما ناسبك المقاس ترجعه خلال 7 أيام.
+      </div>
+    </section>
+
+    <!-- ═══ السلة ═══ -->
+    <section class="screen" id="cart">
+      <div class="appbar"><div class="icon-btn" onclick="navTo('home')">→</div><h2>السلة 🛒</h2></div>
+      <div id="cartItems"></div>
+      <div class="empty" id="cartEmpty" style="display:none"><span class="ic">🛒</span>سلة فاضية — يلا نعبيها 😉</div>
+      <div class="money-box">
+        <div class="row"><span>المجموع الفرعي</span><b id="subTotal">0 د.ع</b></div>
+        <div class="row"><span>التوصيل</span><b id="delFee">0 د.ع</b></div>
+        <div class="row"><span>الخصم (تشكيلة الشتاء)</span><b style="color:var(--danger)" id="discAmt">0 د.ع</b></div>
+        <div class="total"><span>الإجمالي — تدفعه كاش</span><span id="grandTotal">0 د.ع</span></div>
+      </div>
+      <button class="btn btn-cta" onclick="confirmOrder()">أكيد، أطلب — كاش عند الاستلام</button>
+    </section>
+
+    <!-- ═══ الطلبات ═══ -->
+    <section class="screen" id="orders">
+      <div class="appbar"><h2>طلباتي 🧾</h2><div class="icon-btn" onclick="toast('فلترة الطلبات')">⇅</div></div>
+      <div class="order-card glass" onclick="navTo('tracking')">
+        <div class="top"><span class="store">الأصيل — رجالي</span><span class="id">#ZB-1042 • اليوم ٩:١٢</span></div>
+        <div class="items"><span class="th">👕</span><span class="th">🧥</span><span class="it">+1 صنف</span></div>
+        <div class="bot"><span class="amt">73,000 د.ع</span><span class="status st-deliv"><span class="dot"></span>مع المندوب</span></div>
+      </div>
+      <div class="order-card glass" onclick="navTo('tracking')">
+        <div class="top"><span class="store">بوتيك النور — نسائي</span><span class="id">#ZB-1039 • أمس ٧:٤٥</span></div>
+        <div class="items"><span class="th">👗</span><span class="th">👜</span><span class="it">+2 أصناف</span></div>
+        <div class="bot"><span class="amt">96,500 د.ع</span><span class="status st-done"><span class="dot"></span>تم التسليم</span></div>
+      </div>
+      <div class="order-card glass" onclick="navTo('tracking')">
+        <div class="top"><span class="store">طفولة — ألعاب</span><span class="id">#ZB-1031 • قبل 3 أيام</span></div>
+        <div class="items"><span class="th">🧸</span><span class="it">لعبة تعليمية + ملابس أطفال</span></div>
+        <div class="bot"><span class="amt">27,500 د.ع</span><span class="status st-cancel"><span class="dot"></span>ملغي</span></div>
+      </div>
+      <div class="empty" style="padding:24px 10px"><span class="ic">⭐</span>قيّم طلبك السابق — المحلات تعشق رأيك</div>
+    </section>
+
+    <!-- ═══ التتبع ═══ -->
+    <section class="screen" id="tracking">
+      <div class="appbar"><div class="icon-btn" onclick="navTo('orders')">→</div><h2>تتبع الطلب</h2><span class="sub">#ZB-1042</span></div>
+      <div class="track-steps">
+        <div class="ts done"><div class="c">✓</div><div class="lbl">قيد التجهيز</div></div>
+        <div class="ts done"><div class="c">✓</div><div class="lbl">جاهز</div></div>
+        <div class="ts on"><div class="c">🛵</div><div class="lbl">مع المندوب</div></div>
+        <div class="ts"><div class="c">3</div><div class="lbl">التسليم</div></div>
+      </div>
+      <div class="glass" style="padding:14px;margin-bottom:14px">
+        <div style="font-size:12px;font-weight:900;margin-bottom:8px">🛵 المندوب: حسين — بوصلك بعد 12 دقيقة</div>
+        <div style="height:8px;border-radius:99px;background:var(--glass-l3);overflow:hidden"><div style="height:100%;width:70%;border-radius:99px;background:linear-gradient(90deg,var(--primary),var(--cyan))"></div></div>
+        <div style="font-size:10px;color:var(--muted);font-weight:700;margin-top:6px">المندوب عند شارع الجمهورية — بجيبلك الكاش 73,000 د.ع</div>
+      </div>
+      <div class="glass" style="padding:14px;margin-bottom:14px">
+        <div style="font-size:13px;font-weight:900;margin-bottom:6px">الطلبية</div>
+        <div style="font-size:11px;color:var(--muted);font-weight:700;line-height:1.9">👕 قميص رجالي قطني (M) ×1 — 18,000<br>🧥 جاكيت شتوي (L) ×1 — 55,000<br>🚚 التوصيل — 2,000<br><b style="color:var(--text);font-size:13px">الإجمالي: 73,000 د.ع (كاش)</b></div>
+      </div>
+      <div style="display:flex;gap:10px">
+        <button class="btn btn-ghost btn-sm" style="flex:1;color:var(--danger);border-color:var(--danger)" onclick="openReturn()">↩️ طلب إرجاع</button>
+        <button class="btn btn-success btn-sm" style="flex:1" onclick="openRate()">استلمت ✓ قيّم المحل</button>
+      </div>
+      <div style="font-size:10px;color:var(--muted);font-weight:700;margin-top:8px;text-align:center">الإرجاع متاح خلال 7 أيام من الاستلام — المبلغ يرجع كاش عند الاستلام منك</div>
+    </section>
+
+    <!-- ═══ المفضلة ═══ -->
+    <section class="screen" id="favs">
+      <div class="appbar"><h2>المفضلة ❤️</h2></div>
+      <div class="grid2">
+        <div class="prod-card" onclick="navTo('product')">
+          <div class="img">👗</div>
+          <div class="info">
+            <div class="pn">فستان سهرة أنيق</div><div class="sc">بوتيك النور — نسائي</div>
+            <div class="pr"><span><span class="price">45,000</span> د.ع</span><button class="add-btn" onclick="event.stopPropagation();addCart('فستان سهرة أنيق',45000,'👗','M')">+</button></div>
+          </div>
+        </div>
+        <div class="prod-card" onclick="navTo('product')">
+          <div class="img">👜</div>
+          <div class="info">
+            <div class="pn">شنطة يد جلد</div><div class="sc">بوتيك النور — نسائي</div>
+            <div class="pr"><span><span class="price">38,000</span> د.ع</span><button class="add-btn" onclick="event.stopPropagation();addCart('شنطة يد جلد',38000,'👜')">+</button></div>
+          </div>
+        </div>
+      </div>
+      <div class="empty" style="padding:24px 10px"><span class="ic">💡</span>المفضلة محفوظة على جهازك — بالتزامن مع الحساب باجر إن شاء الله</div>
+    </section>
+
+    <!-- ═══ الحساب ═══ -->
+    <section class="screen" id="account">
+      <div class="appbar"><h2>حسابي 👤</h2></div>
+      <div class="acc-card glass">
+        <div class="av">ح</div>
+        <div style="flex:1">
+          <div style="font-weight:900;font-size:15px">حجي علي</div>
+          <div style="font-size:11px;color:var(--muted);font-weight:700">0773 123 4567 • زبون منذ 2026</div>
+        </div>
+        <div class="icon-btn" onclick="toast('تعديل الملف الشخصي')">✎</div>
+      </div>
+      <div class="setting-row glass" onclick="toast('عناوين التوصيل — أضف عنوانك')">
+        <div class="ic">📍</div><div class="t">عناوين التوصيل</div><div class="ar">‹</div>
+      </div>
+      <div class="setting-row glass" onclick="toggleTheme()">
+        <div class="ic">🌙</div><div class="t">الوضع الليلي</div><div class="switch" id="darkSwitch" onclick="event.stopPropagation()"></div>
+      </div>
+      <div class="setting-row glass" onclick="switchRole()">
+        <div class="ic">🏪</div><div class="t">لوحة التاجر — عندك محل؟</div><div class="ar">‹</div>
+      </div>
+      <div class="setting-row glass" onclick="switchRole()">
+        <div class="ic">🛵</div><div class="t">وضع المندوب — توصيل الطلبات</div><div class="ar">‹</div>
+      </div>
+      <div class="setting-row glass" onclick="toast('فتح تذكرة دعم — راح يردون عليك بأسرع وقت')">
+        <div class="ic">💬</div><div class="t">الدعم الفني</div><div class="ar">‹</div>
+      </div>
+      <div class="setting-row glass" onclick="toast('حذف الحساب يحتاج تأكيد مزدوج')">
+        <div class="ic" style="background:var(--danger)22">🗑</div><div class="t" style="color:var(--danger)">حذف الحساب</div><div class="ar">‹</div>
+      </div>
+      <button class="btn btn-ghost" style="margin-top:6px" onclick="navTo('login')">تسجيل الخروج</button>
+    </section>
+
+    <!-- ════════════ لوحة التاجر ════════════ -->
+
+    <!-- ═══ التاجر: الطلبات ═══ -->
+    <section class="screen" id="v-orders">
+      <div class="appbar"><h2>طلبات المحل 🧾</h2><span class="sub">الأصيل — رجالي</span></div>
+
+      <div class="v-stat-row">
+        <div class="v-stat glass"><div class="n">14</div><div class="l">طلبات اليوم</div></div>
+        <div class="v-stat glass"><div class="n" style="-webkit-text-fill-color:var(--accent)">4</div><div class="l">جديدة 🔔</div></div>
+        <div class="v-stat glass"><div class="n" style="-webkit-text-fill-color:var(--success)">482,000</div><div class="l">مبيعات اليوم د.ع</div></div>
+      </div>
+
+      <div class="v-tabs">
+        <span class="chip active" onclick="vTab(this,'vOrdersList')">🧾 الطلبات</span>
+        <span class="chip" onclick="vTab(this,'vReturnsList')">↩️ الإرجاعات <b style="color:var(--accent)">1</b></span>
+      </div>
+
+      <div id="vOrdersList">
+        <div class="head"><span class="cust">طلب جديد 🔔</span><span class="status st-new">جديد</span></div>
+        <div style="font-size:11px;font-weight:900">علي — 0773 123 4567</div>
+        <div class="addr">الكوت، حي الجهاد، قرب مسجد النور</div>
+        <div class="items">
+          👕 قميص رجالي قطني <span class="var-tag">L • أزرق</span> ×1 — 18,000<br>
+          🧥 جاكيت شتوي <span class="var-tag">XL • أسود</span> ×1 — 55,000<br>
+          <b style="color:var(--text)">الإجمالي: 73,000 د.ع — كاش</b>
+        </div>
+        <div class="actions">
+          <button class="btn btn-success btn-sm" onclick="toast('قبلت الطلب — صار قيد التجهيز ✓')">قبول</button>
+          <button class="btn btn-danger btn-sm" onclick="toast('الرفض يتطلب كتابة سبب')">رفض</button>
+        </div>
+      </div>
+
+      <div class="v-order glass">
+        <div class="head"><span class="cust">زبون ثاني</span><span class="status st-prep">قيد التجهيز</span></div>
+        <div class="addr">الكوت، شارع الاستقلال، عمارة 12</div>
+        <div class="items">
+          👖 سروال جينز <span class="var-tag">34</span> ×2 — 56,000<br>
+          ⌚ ساعة يد <span class="var-tag">جلد بني</span> ×1 — 42,000
+        </div>
+        <div class="actions">
+          <button class="btn btn-navy btn-sm" style="flex:1" onclick="toast('صرّحت جاهز — المندوب يجي ياخذه')">جاهز للتسليم ✓</button>
+        </div>
+      </div>
+
+      <div class="v-order glass">
+        <div class="head"><span class="cust">زبون ثالث</span><span class="status st-ready">جاهز</span></div>
+        <div class="addr">الكوت، حي النصر</div>
+        <div class="items">
+          👕 قميص <span class="var-tag">M • أبيض</span> ×3 — 54,000
+        </div>
+        <div class="actions">
+          <button class="btn btn-ghost btn-sm" style="flex:1" onclick="toast('بانتظار تسليم المندوب')">بانتظار المندوب</button>
+        </div>
+      </div>
+
+      <div class="empty" style="padding:20px 10px"><span class="ic">📦</span>الطلبات القديمة تتحول تلقائياً لسجل المبيعات</div>
+      </div>
+
+      <div class="v-order glass" id="vReturnsList" style="display:none;border:2px solid var(--danger)">
+        <div class="head"><span class="cust">طلب إرجاع ⤴</span><span class="status st-cancel">قيد المعالجة</span></div>
+        <div style="font-size:11px;font-weight:900">علي — 0773 123 4567 • طلب #ZB-1042</div>
+        <div class="addr">السبب: المقاس ما ناسب — جاكيت XL</div>
+        <div class="items">
+          🧥 جاكيت شتوي <span class="var-tag">XL • أسود</span> ×1 — 55,000 د.ع<br>
+          <b style="color:var(--text)">المبلغ المسترجع: 55,000 د.ع — كاش عند استلامك الإرجاع</b>
+        </div>
+        <div style="font-size:10.5px;color:var(--warning);font-weight:800;margin-top:6px">⏰ باقي 5 أيام على انتهاء مهلة الإرجاع (7 أيام)</div>
+        <div class="actions">
+          <button class="btn btn-success btn-sm" onclick="vReturn('قبلت الإرجاع — المندوب يجيب القطعة ويسترجع 55,000 د.ع','قبلت الإرجاع ✓')">قبول الإرجاع ✓</button>
+          <button class="btn btn-danger btn-sm" onclick="toast('الرفض يتطلب سبب واضح يوصله الزبون')">رفض</button>
+        </div>
+      </div>
+    </section>
+
+    <!-- ═══ التاجر: المنتجات ═══ -->
+    <section class="screen" id="v-products">
+      <div class="appbar"><h2>المنتجات 📦</h2><button class="btn btn-navy btn-sm" onclick="toast('نموذج إضافة منتج جديد')">+ إضافة</button></div>
+      <div class="cats" style="margin-top:0">
+        <span class="chip active">الكل</span><span class="chip">👕 قمصان</span><span class="chip">👖 سراويل</span><span class="chip">🧥 جاكيتات</span><span class="chip">⌚ إكسسوارات</span>
+      </div>
+      <div class="p-switch">
+        <div>
+          <div class="pn">👕 قميص رجالي قطني</div>
+          <div class="pr">18,000 د.ع • 3 ألوان</div>
+          <div class="size-mini"><span>S 4</span><span>M 7</span><span class="w">L 3</span><span>XL 6</span></div>
+          <div class="p-offer"><span class="of" id="of0">عرض ⚡ -30%</span><div class="switch on" id="swOf0" onclick="toggleOffer('قميص رجالي قطني',30)"></div></div>
+        </div>
+        <div class="switch on"></div>
+      </div>
+      <div class="p-switch">
+        <div>
+          <div class="pn">🧥 جاكيت شتوي فاخر</div>
+          <div class="pr">55,000 د.ع • أسود/كحلي</div>
+          <div class="size-mini"><span>M 2</span><span class="z">L 0</span><span>XL 5</span><span class="z">XXL 0</span></div>
+          <div class="p-offer"><span class="of" id="of1">عرض ⚡ -20%</span><div class="switch on" id="swOf1" onclick="toggleOffer('جاكيت شتوي فاخر',20)"></div></div>
+        </div>
+        <div class="switch on"></div>
+      </div>
+      <div class="p-switch" style="border:2px solid var(--warning)">
+        <div>
+          <div class="pn">👖 سروال جينز كلاسيك</div>
+          <div class="pr" style="color:var(--warning)">28,000 د.ع • مخزون منخفض ⚠</div>
+          <div class="size-mini"><span class="w">30 2</span><span>32 8</span><span>34 5</span><span>36 4</span></div>
+          <div class="p-offer"><span class="of" id="of2" style="color:var(--muted);background:var(--glass-l3)">بدون عرض</span><div class="switch" id="swOf2" onclick="toggleOffer('سروال جينز كلاسيك',25)"></div></div>
+        </div>
+        <div class="switch on"></div>
+      </div>
+      <div class="p-switch" style="opacity:.75">
+        <div>
+          <div class="pn">⌚ ساعة يد رياضية</div>
+          <div class="pr">42,000 د.ع • 4 ألوان</div>
+          <div class="size-mini"><span class="z">الكل 0 — موقوف</span></div>
+          <div class="p-offer"><span class="of" id="of3" style="color:var(--muted);background:var(--glass-l3)">بدون عرض</span><div class="switch" id="swOf3" onclick="toggleOffer('ساعة يد رياضية',15)"></div></div>
+        </div>
+        <div class="switch"></div>
+      </div>
+      <div style="font-size:10px;color:var(--muted);font-weight:700;margin:8px 0 12px">⚡ اللي تشغله عرض ينحط بصف «العروض» بالواجهة الرئيسية — خصم العرض تحطه إنت من النسبة الكاملة للمنتج</div>
+      <button class="btn btn-ghost" style="margin-top:8px" onclick="toast('إدارة الأقسام والفئات')">إدارة الأقسام والفئات</button>
+    </section>
+
+    <!-- ═══ التاجر: المحفظة ═══ -->
+    <section class="screen" id="v-wallet">
+      <div class="appbar"><h2>المحفظة 💰</h2></div>
+      <div class="wallet-bal glass">
+        <div class="lbl">الرصيد المتاح للسحب</div>
+        <div class="amt">2,847,500 د.ع</div>
+        <div class="sub">رصيد معلّق: 486,000 د.ع — بعد تأكيد التحصيل من الزبائن</div>
+      </div>
+      <div class="glass" style="padding:14px;margin-bottom:14px">
+        <div style="font-weight:900;font-size:14px;margin-bottom:10px">مبيعات هذا الأسبوع</div>
+        <div style="display:flex;justify-content:space-between;font-size:12px;font-weight:800;padding:7px 0;border-bottom:1px solid var(--glass-border-dark)"><span>👕 قمصان</span><span style="color:var(--success)">+1,124,000 د.ع</span></div>
+        <div style="display:flex;justify-content:space-between;font-size:12px;font-weight:800;padding:7px 0;border-bottom:1px solid var(--glass-border-dark)"><span>🧥 جاكيتات</span><span style="color:var(--success)">+935,000 د.ع</span></div>
+        <div style="display:flex;justify-content:space-between;font-size:12px;font-weight:800;padding:7px 0;border-bottom:1px solid var(--glass-border-dark)"><span>👖 سراويل</span><span style="color:var(--success)">+812,500 د.ع</span></div>
+        <div style="display:flex;justify-content:space-between;font-size:12px;font-weight:800;padding:7px 0"><span>خصم عمولة المنصة (10%)</span><span style="color:var(--danger)">−287,150 د.ع</span></div>
+      </div>
+      <div class="glass" style="padding:14px;margin-bottom:14px">
+        <div style="font-weight:900;font-size:14px;margin-bottom:6px">آخر استلام نقدي</div>
+        <div style="font-size:11px;color:var(--muted);font-weight:700">استلمت 900,000 د.ع بتاريخ 5/8 — بتوقيعك الإلكتروني ✍️</div>
+      </div>
+      <button class="btn btn-cta" onclick="toast('نافذة الاستلام النقدي: المبلغ + التوقيع ✍️')">استلمت نقدًا الآن 💵</button>
+    </section>
+
+    <!-- ═══ التاجر: المحل ═══ -->
+    <section class="screen" id="v-store">
+      <div class="store-cover" style="background:linear-gradient(120deg,#1D4ED8,#38BDF8)">
+        <div class="logo">👔</div>
+      </div>
+      <div class="store-head">
+        <div class="nm">الأصيل — ملابس رجالي <span class="verified">✓ موثق</span></div>
+        <div class="meta"><span class="stars">★ 4.8</span><span>•</span><span>مفتوح 9ص–11ل</span></div>
+      </div>
+      <button class="btn btn-navy btn-sm" style="width:100%;margin-bottom:14px" onclick="toast('رفع شعار جديد بالكاميرا أو المعرض 📷')">📷 تغيير الشعار</button>
+
+      <div class="glass" style="padding:14px;margin-bottom:10px">
+        <div style="font-weight:900;font-size:14px;margin-bottom:10px">توثيق المحل</div>
+        <div style="font-size:11px;color:var(--success);font-weight:800;margin-bottom:8px">✓ رخصة العمل — مقبولة</div>
+        <div style="font-size:11px;color:var(--success);font-weight:800;margin-bottom:8px">✓ السجل التجاري — مقبولة</div>
+        <div style="font-size:11px;color:var(--warning);font-weight:800">⏳ فاتورة الكهرباء — قيد المراجعة</div>
+      </div>
+
+      <div class="glass" style="padding:14px;margin-bottom:10px">
+        <div style="font-weight:900;font-size:14px;margin-bottom:10px">أقسامي</div>
+        <div style="display:flex;gap:8px;flex-wrap:wrap">
+          <span class="chip active">👔 رجالي</span><span class="chip">🧒 أطفال</span><span class="chip" style="opacity:.5">➕ إضافة قسم</span>
+        </div>
+        <div style="font-size:10px;color:var(--muted);font-weight:700;margin-top:8px">زبائنك يشوفونك في: رجالي > قمصان، سراويل، جاكيتات</div>
+      </div>
+
+      <div class="glass" style="padding:14px;margin-bottom:10px">
+        <div style="font-weight:900;font-size:14px;margin-bottom:4px">🖼 إعلان محلّك بالواجهة الرئيسية</div>
+        <div style="font-size:10.5px;color:var(--muted);font-weight:700;margin-bottom:12px;line-height:1.8">إعلانك يظهر أعلى الصفحة الرئيسية لكل الزوار — تحط السعر وتقدم طلب، وموافقة المشرف هي اللي تشغّله. إذا صار أكثر من إعلان يدورون كل 4 ثواني.</div>
+        <div style="font-size:12px;font-weight:900;margin-bottom:6px">الإعلان عن:</div>
+        <div style="background:var(--glass-l3);border:1px solid var(--glass-border);border-radius:14px;padding:11px 14px;font-size:12px;font-weight:800;margin-bottom:10px">🧥 تشكيلة الشتاء — جاكيتات وقمصان 🔥</div>
+        <div style="font-size:12px;font-weight:900;margin-bottom:6px">مدة العرض:</div>
+        <div style="display:flex;gap:8px;flex-wrap:wrap" id="adDurations">
+          <span class="chip" onclick="adDur(this,3,15000)">3 أيام — 15,000</span>
+          <span class="chip active" onclick="adDur(this,7,25000)">7 أيام — 25,000</span>
+          <span class="chip" onclick="adDur(this,14,40000)">14 يوم — 40,000</span>
+        </div>
+        <div style="display:flex;justify-content:space-between;font-size:12px;font-weight:800;margin:12px 0 10px"><span>سعر الإعلان</span><span id="adPrice" style="color:var(--accent);font-weight:900">25,000 د.ع</span></div>
+        <div id="adSubmitBox"><button class="btn btn-navy btn-sm" style="width:100%" onclick="submitAd()">أرسل طلب الإعلان 📤</button></div>
+        <div id="adVendorStatus" style="margin-top:8px"></div>
+      </div>
+
+      <div class="glass" style="padding:14px">
+        <div style="font-weight:900;font-size:14px;margin-bottom:10px">معلومات المحل</div>
+        <div style="display:flex;justify-content:space-between;font-size:12px;font-weight:700;padding:7px 0;border-bottom:1px solid var(--glass-border-dark)"><span>العنوان</span><span style="color:var(--muted)">سوق المدينة، الكوت</span></div>
+        <div style="display:flex;justify-content:space-between;font-size:12px;font-weight:700;padding:7px 0;border-bottom:1px solid var(--glass-border-dark)"><span>ساعات العمل</span><span style="color:var(--muted)">9ص – 11ل</span></div>
+        <div style="display:flex;justify-content:space-between;font-size:12px;font-weight:700;padding:7px 0;border-bottom:1px solid var(--glass-border-dark)"><span>توصيل</span><span style="color:var(--muted)">2,000 د.ع — مجاني فوق 50 ألف</span></div>
+        <div style="display:flex;justify-content:space-between;font-size:12px;font-weight:700;padding:7px 0"><span>عمولة المنصة</span><span style="color:var(--primary)">10%</span></div>
+      </div>
+    </section>
+
+    <!-- ════════════ لوحة المندوب ════════════ -->
+
+    <!-- ═══ المندوب: الطلبات المتاحة ═══ -->
+    <section class="screen" id="d-orders">
+      <div class="appbar"><h2>طلبات التوصيل 🛵</h2></div>
+
+      <div class="d-online-row glass on" id="dOnlineRow">
+        <div class="st"></div>
+        <div class="t">
+          <div class="a" id="dOnlineTxt">متصل — جاهز أستلم طلبات</div>
+          <div class="b">طلبات جديدة تجيك بإشعار — افتح الاستقبال</div>
+        </div>
+        <div class="switch on" id="dOnlineSw" onclick="dToggle(event)"></div>
+      </div>
+
+      <div class="v-stat-row">
+        <div class="v-stat glass"><div class="n">3</div><div class="l">طلبات اليوم</div></div>
+        <div class="v-stat glass"><div class="n" style="-webkit-text-fill-color:var(--success)">2</div><div class="l">مسلمة ✓</div></div>
+        <div class="v-stat glass"><div class="n" style="-webkit-text-fill-color:var(--accent)">186,500</div><div class="l">كاش بجيبي د.ع</div></div>
+      </div>
+
+      <div class="sec-head" style="margin-top:0"><h3>طلبات جاهزة للاستلام</h3><span class="more">🔔 صوت عند كل طلب</span></div>
+
+      <div class="d-card glass d-avail">
+        <div class="head"><span class="store">الأصيل — رجالي</span><span class="id">#ZB-1044 • 3 كم</span></div>
+        <div class="d-leg"><div class="pin a">م</div><div><div class="who">استلام من: الأصيل</div><div class="addr">سوق المدينة، الكوت — الطلب مجهز</div></div></div>
+        <div class="d-leg"><div class="pin b">ز</div><div><div class="who">تسليم لـ: علي — 0773 123 4567</div><div class="addr">حي الجهاد، قرب مسجد النور</div></div></div>
+        <div class="cash-note">💵 تحصّل كاش من الزبون: 73,000 د.ع</div>
+        <button class="btn btn-navy btn-sm" style="width:100%" onclick="acceptTrip()">أستلم هذا الطلب 🛵</button>
+      </div>
+
+      <div class="d-card glass d-avail">
+        <div class="head"><span class="store">بوتيك النور — نسائي</span><span class="id">#ZB-1045 • 2.5 كم</span></div>
+        <div class="d-leg"><div class="pin a">م</div><div><div class="who">استلام من: بوتيك النور</div><div class="addr">شارع الوحدة — الطلب مجهز</div></div></div>
+        <div class="d-leg"><div class="pin b">ز</div><div><div class="who">تسليم لـ: زينب — 0772 888 9900</div><div class="addr">حي الحسين، قرب مستوصف الحسين</div></div></div>
+        <div class="cash-note">💵 تحصّل كاش من الزبون: 96,500 د.ع</div>
+        <button class="btn btn-navy btn-sm" style="width:100%" onclick="toast('مقبول — انتقل لرحلة الطلب 🛵')">أستلم هذا الطلب 🛵</button>
+      </div>
+
+      <div class="sec-head"><h3>طلبي الحالي</h3></div>
+      <div class="d-card glass" style="opacity:.9">
+        <div class="head"><span class="store">طفولة — أطفال</span><span class="status st-prep">استلمت من المحل</span></div>
+        <div class="d-leg"><div class="pin a" style="background:var(--success)">✓</div><div><div class="who">تم الاستلام من طفولة</div><div class="addr">قبل 20 دقيقة</div></div></div>
+        <div class="d-leg"><div class="pin b">ز</div><div><div class="who">تسليم لـ: أم محمد</div><div class="addr">حي السلام — راح أكلمها عند الوصول</div></div></div>
+        <div class="cash-note">💵 كاش للتحصيل: 27,500 د.ع</div>
+      </div>
+    </section>
+
+    <!-- ═══ المندوب: رحلة الطلب ═══ -->
+    <section class="screen" id="d-trip">
+      <div class="appbar"><div class="icon-btn" onclick="navTo('d-orders')">→</div><h2>رحلة الطلب</h2><span class="sub">#ZB-1044</span></div>
+
+      <div class="route-steps" id="dSteps">
+        <div class="rs on" id="dStep1">
+          <div class="c">م</div>
+          <div class="body">
+            <div class="who">استلام من الأصيل — رجالي</div>
+            <div class="addr">سوق المدينة، الكوت • المحل: 0770 111 2233</div>
+            <div class="act"><button class="btn btn-navy btn-sm" style="width:100%" onclick="dArrive()">وصلت المحل — اعرض الباركود 📷</button></div>
+          </div>
+          <div class="bar"></div>
+        </div>
+        <div class="rs" id="dStep2">
+          <div class="c">ز</div>
+          <div class="body">
+            <div class="who">تسليم لـ: علي — 0773 123 4567</div>
+            <div class="addr">حي الجهاد، قرب مسجد النور • التوصية: كلمه قبل ما توصل</div>
+          </div>
+          <div class="bar"></div>
+        </div>
+        <div class="rs" id="dStep3">
+          <div class="c">$</div>
+          <div class="body">
+            <div class="who">تحصيل الكاش + تسليم الطلبية</div>
+            <div class="addr">خلّي الزبون يعدّ القطع ويفحصها قبل ما تكمّل</div>
+          </div>
+        </div>
+      </div>
+
+      <div class="cod-box glass" id="dCodBox">
+        <div class="l">المبلغ اللي تحصّله من الزبون</div>
+        <div class="amt">73,000 د.ع</div>
+        <div class="s">كاش عند الاستلام — التحصيل يصير بإيدك إنت</div>
+      </div>
+
+      <div class="glass" style="padding:12px;margin-bottom:14px;display:flex;gap:10px">
+        <button class="btn btn-ghost btn-sm" style="flex:1" onclick="toast('اتصال بالزبون — من جهازك')">📞 اتصل بالزبون</button>
+        <button class="btn btn-ghost btn-sm" style="flex:1" onclick="toast('يفتح المسار — كوكل ماب')">🗺️ المسار</button>
+      </div>
+
+      <div id="dDeliverBtn"></div>
+    </section>
+
+    <!-- ═══ المندوب: محفظة الكاش ═══ -->
+    <section class="screen" id="d-wallet">
+      <div class="appbar"><h2>محفظة المندوب 💰</h2></div>
+      <div class="cod-box glass">
+        <div class="l">الكاش المحصّل اليوم (بجيبك)</div>
+        <div class="amt">186,500 د.ع</div>
+        <div class="s">بنهاية الدوام تسلّمه للمنصة — وكل شي مسجل</div>
+      </div>
+      <div class="glass" style="padding:14px;margin-bottom:14px">
+        <div style="font-weight:900;font-size:14px;margin-bottom:10px">جرد الكاش — اليوم</div>
+        <div style="display:flex;justify-content:space-between;font-size:12px;font-weight:800;padding:7px 0;border-bottom:1px solid var(--glass-border-dark)"><span>#ZB-1040 — طفولة</span><span style="color:var(--success)">+27,500 د.ع ✓ محصل</span></div>
+        <div style="display:flex;justify-content:space-between;font-size:12px;font-weight:800;padding:7px 0;border-bottom:1px solid var(--glass-border-dark)"><span>#ZB-1041 — بوتيك النور</span><span style="color:var(--success)">+84,000 د.ع ✓ محصل</span></div>
+        <div style="display:flex;justify-content:space-between;font-size:12px;font-weight:800;padding:7px 0;border-bottom:1px solid var(--glass-border-dark)"><span>#ZB-1042 — الأصيل</span><span style="color:var(--success)">+75,000 د.ع ✓ محصل</span></div>
+        <div style="display:flex;justify-content:space-between;font-size:12px;font-weight:800;padding:7px 0"><span>#ZB-1043 — قيد التوصيل</span><span style="color:var(--warning)">⏳ 27,500 د.ع</span></div>
+        <div style="display:flex;justify-content:space-between;font-size:13px;font-weight:900;border-top:2px solid var(--text);margin-top:8px;padding-top:10px"><span>المجموع المحصل</span><span style="color:var(--success)">186,500 د.ع</span></div>
+      </div>
+      <div class="glass" style="padding:14px;margin-bottom:14px">
+        <div style="font-weight:900;font-size:14px;margin-bottom:6px">مستحقاتي</div>
+        <div style="display:flex;justify-content:space-between;font-size:13px;font-weight:900;margin-top:6px"><span>أجر التوصيل — 5% من قيمة الطلب</span><span style="color:var(--primary)">+9,325 د.ع</span></div>
+        <div style="font-size:10px;color:var(--muted);font-weight:700;margin-top:4px">مستحقاتك تنضاف لرصيدك بعد تسليم الكاش للمنصة</div>
+      </div>
+      <button class="btn btn-navy" style="margin-bottom:10px" onclick="openReport()">تقرير نهاية اليوم 📄</button>
+      <button class="btn btn-cta" onclick="toast('إيداع الكاش: عدّ الفلوس + توقيعك ✍️ — والمنصة تصدر لك إيصال')">سجّل تسليم الكاش للمنصة 💵</button>
+    </section>
+
+    <!-- ═══ المندوب: حسابي ═══ -->
+    <section class="screen" id="d-account">
+      <div class="appbar"><h2>حساب المندوب 👤</h2></div>
+      <div class="acc-card glass">
+        <div class="av">ح</div>
+        <div style="flex:1">
+          <div style="font-weight:900;font-size:15px">حسين — المندوب</div>
+          <div style="font-size:11px;color:var(--muted);font-weight:700">0770 555 6677 • مندوب المنصة الرسمي</div>
+        </div>
+        <span class="open-chip">متصل 🛵</span>
+      </div>
+      <div class="setting-row glass" onclick="toast('تعديل منطقة العمل — حالياً: الكوت')">
+        <div class="ic">📍</div><div class="t">منطقة العمل</div><div class="ar">الكوت ‹</div>
+      </div>
+      <div class="setting-row glass" onclick="toast('تفاصيل أجرك: 5% من كل طلب + تبرعات الزبائن لك 🎁')">
+        <div class="ic">💰</div><div class="t">أجري من التوصيل</div><div class="ar">5% ‹</div>
+      </div>
+      <div class="setting-row glass" onclick="switchRole()">
+        <div class="ic">🛍</div><div class="t">بدّل للوضع الآخر (زبون/تاجر)</div><div class="ar">‹</div>
+      </div>
+      <div class="setting-row glass" onclick="toggleTheme()">
+        <div class="ic">🌙</div><div class="t">الوضع الليلي</div><div class="ar"><div class="switch" id="darkSwitchD" onclick="event.stopPropagation()"></div></div>
+      </div>
+      <div class="setting-row glass" onclick="toast('فتح تذكرة دعم')">
+        <div class="ic">💬</div><div class="t">الدعم الفني</div><div class="ar">‹</div>
+      </div>
+      <button class="btn btn-ghost" style="margin-top:6px" onclick="navTo('login')">تسجيل الخروج</button>
+    </section>
+
+    <!-- ════════════ لوحة المشرف (صاحب المنصة) ════════════ -->
+
+    <!-- ═══ المشرف: الداشبورد ═══ -->
+    <section class="screen" id="a-home">
+      <div class="appbar">
+        <h2>لوحة المشرف 👑</h2>
+        <span class="sub">الخميس 6/8/2026</span>
+        <div class="bell" onclick="navTo('notifications')">🔔<span class="rd"></span></div>
+      </div>
+
+      <div class="glass" style="padding:14px;margin-bottom:14px">
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px">
+          <span style="font-weight:900;font-size:13px">🎯 هدف اليوم</span>
+          <span style="font-size:11px;color:var(--success);font-weight:900">86%</span>
+        </div>
+        <div style="height:10px;border-radius:99px;background:var(--glass-l3);overflow:hidden">
+          <div id="goalBar" style="height:100%;width:0;border-radius:99px;background:linear-gradient(90deg,var(--primary),var(--cyan));transition:width 1.2s var(--ease)"></div>
+        </div>
+        <div style="display:flex;justify-content:space-between;font-size:10px;color:var(--muted);font-weight:700;margin-top:6px">
+          <span>4,320,000 من 5,000,000 د.ع</span><span>باقي 680,000</span>
+        </div>
+      </div>
+
+      <div class="kpi-grid">
+        <div class="kpi glass">
+          <div class="kic">🧾</div>
+          <div class="kn">42</div>
+          <div class="kl">طلبات اليوم</div>
+          <div class="kd up">▲ 12% عن أمس</div>
+        </div>
+        <div class="kpi glass">
+          <div class="kic">💰</div>
+          <div class="kn">4,320,000</div>
+          <div class="kl">مبيعات اليوم د.ع</div>
+          <div class="kd up">▲ 8% عن أمس</div>
+        </div>
+        <div class="kpi glass">
+          <div class="kic">🏦</div>
+          <div class="kn">432,000</div>
+          <div class="kl">عمولة المنصة (10%)</div>
+          <div class="kd" style="color:var(--muted)">— تلقائي</div>
+        </div>
+        <div class="kpi glass">
+          <div class="kic">🏪</div>
+          <div class="kn">12</div>
+          <div class="kl">محل نشط</div>
+          <div class="kd up">▲ 2 هذا الشهر</div>
+        </div>
+        <div class="kpi glass">
+          <div class="kic">👥</div>
+          <div class="kn">38</div>
+          <div class="kl">زبون جديد اليوم</div>
+          <div class="kd up">▲ 22% عن أمس</div>
+        </div>
+        <div class="kpi glass">
+          <div class="kic">🛵</div>
+          <div class="kn">2</div>
+          <div class="kl">مندوب نشط</div>
+          <div class="kd" style="color:var(--muted)">— كلشي تمام</div>
+        </div>
+      </div>
+
+      <div class="sec-head" style="margin-top:0"><h3>المبيعات — آخر 7 أيام</h3><span class="more">بالمليون د.ع</span></div>
+      <div class="glass" style="padding:14px 14px 10px;margin-bottom:14px">
+        <div class="chart" id="salesChart"></div>
+        <div class="chart-lbls" id="chartLbls"></div>
+      </div>
+
+      <div class="sec-head"><h3>المبيعات حسب القسم</h3><span class="more">اليوم</span></div>
+      <div class="glass" style="padding:14px;margin-bottom:14px" id="catBox"></div>
+
+      <div class="sec-head"><h3>🏆 أفضل محلات اليوم</h3><span class="more">الترتيب</span></div>
+      <div id="topStores"></div>
+
+      <div class="sec-head"><h3>⚠️ محتاج قرارك</h3><span class="more" id="queueCount">3</span></div>
+      <div id="adminQueue"></div>
+
+      <div class="sec-head"><h3>آخر الطلبات</h3></div>
+      <div class="adm-card glass">
+        <div class="ic">🛵</div>
+        <div style="flex:1"><div style="font-weight:900;font-size:13px">#ZB-1044 — الأصيل — 73,000 د.ع</div><div style="font-size:10.5px;color:var(--muted);font-weight:700">مع المندوب حسين • قيد التسليم</div></div>
+        <span class="pending-chip">مع المندوب</span>
+      </div>
+      <div class="adm-card glass">
+        <div class="ic">👗</div>
+        <div style="flex:1"><div style="font-weight:900;font-size:13px">#ZB-1045 — بوتيك النور — 96,500 د.ع</div><div style="font-size:10.5px;color:var(--muted);font-weight:700">جاهز — بانتظار مندوب</div></div>
+        <span class="live-chip">جاهز</span>
+      </div>
+      <div class="adm-card glass">
+        <div class="ic">🧸</div>
+        <div style="flex:1"><div style="font-weight:900;font-size:13px">#ZB-1043 — طفولة — 27,500 د.ع</div><div style="font-size:10.5px;color:var(--muted);font-weight:700">طلب جديد — التاجر يشوفه</div></div>
+        <span class="pending-chip">جديد</span>
+      </div>
+
+      <button class="btn btn-cta" style="margin-top:6px" onclick="navTo('a-ads')">إدارة الإعلانات 🖼</button>
+      <button class="btn btn-navy" style="margin-top:8px" onclick="navTo('a-cash')">كاش المنصة والتحصيل 💵</button>
+    </section>
+
+    <!-- ═══ المشرف: الإعلانات ═══ -->
+    <section class="screen" id="a-ads">
+      <div class="appbar"><h2>الإعلانات 🖼</h2></div>
+
+      <div class="glass" style="padding:13px;margin-bottom:14px">
+        <div style="font-weight:900;font-size:12px;margin-bottom:6px">كيف تظهر الإعلانات؟</div>
+        <div style="font-size:10.5px;color:var(--muted);font-weight:700;line-height:1.9">
+          • الإعلان المقبول يظهر أعلى الصفحة الرئيسية لكل الزوار<br>
+          • إذا صارت أكثر من إعلان — يدورون تلقائيًا كل 4 ثواني<br>
+          • الترتيب: الأطول مدة أولًا — وتقدر تغيّره إنت<br>
+          • التاجر يحط السعر اللي يريده — وأنت توافق أو ترفض
+        </div>
+      </div>
+
+      <div class="sec-head" style="margin-top:0"><h3>طلبات بانتظار موافقتك</h3></div>
+      <div id="adPending"></div>
+
+      <div class="sec-head"><h3>الإعلانات النشطة (تظهر بالرئيسية)</h3></div>
+      <div id="adActive"></div>
+    </section>
+
+    <!-- ═══ المشرف: كاش المنصة ═══ -->
+    <section class="screen" id="a-cash">
+      <div class="appbar"><h2>كاش المنصة 💵</h2></div>
+
+      <div class="cod-box glass" id="aCashBox">
+        <div class="l">تسليم كاش من المندوب — قيد المراجعة</div>
+        <div class="amt">186,500 د.ع</div>
+        <div class="s">المندوب حسين سلّم الجرد وطلب الإيصال</div>
+      </div>
+
+      <div class="adm-card glass">
+        <div class="ic">🧾</div>
+        <div style="flex:1">
+          <div style="font-weight:900;font-size:13px">جرد اليوم — المندوب حسين</div>
+          <div style="font-size:10.5px;color:var(--muted);font-weight:700">3 طلبات محصلة • 186,500 د.ع<br>أجر المندوب 5% = 9,325 د.ع • الصافي للمنصة 177,175 د.ع</div>
+        </div>
+        <div class="adm-actions" style="margin-top:0">
+          <button class="btn btn-success btn-sm" onclick="cashApprove()">تأكيد ✓</button>
+          <button class="btn btn-danger btn-sm" onclick="toast('النقصان يتسجل ضد المندوب — وينفتح تحقيق')">نقصان</button>
+        </div>
+      </div>
+
+      <div class="glass" style="padding:14px;margin-bottom:14px">
+        <div style="font-weight:900;font-size:14px;margin-bottom:8px">استلامات سابقة</div>
+        <div class="report-row"><span>5/8 — المندوب حسين</span><span style="color:var(--success)">900,000 د.ع ✓ موثق</span></div>
+        <div class="report-row" style="border-bottom:none"><span>4/8 — المندوب حسين</span><span style="color:var(--success)">1,200,000 د.ع ✓ موثق</span></div>
+      </div>
+      <div style="font-size:10.5px;color:var(--muted);font-weight:700;text-align:center">كل إيصال يطلع بتوقيع إلكتروني ✍️ — والحاسبة تطابق الكاش والمبيعات تلقائيًا</div>
+    </section>
+
+    <!-- ═══ المشرف: المحلات ═══ -->
+    <section class="screen" id="a-stores">
+      <div class="appbar"><h2>المحلات 🏪</h2></div>
+
+      <div class="v-stat-row">
+        <div class="v-stat glass"><div class="n">12</div><div class="l">محل نشط</div></div>
+        <div class="v-stat glass"><div class="n" style="-webkit-text-fill-color:var(--warning)">1</div><div class="l">قيد التوثيق</div></div>
+        <div class="v-stat glass"><div class="n" style="-webkit-text-fill-color:var(--accent)">2</div><div class="l">إعلان مدفوع</div></div>
+      </div>
+
+      <div class="adm-card glass" style="border:2px solid var(--warning)">
+        <div class="ic">📄</div>
+        <div style="flex:1">
+          <div style="font-weight:900;font-size:13px">الأصيل — توثيق المحل</div>
+          <div style="font-size:10.5px;color:var(--muted);font-weight:700">فاتورة الكهرباء قيد المراجعة • رخصة العمل والسجل مقبولين</div>
+        </div>
+        <div class="adm-actions" style="margin-top:0">
+          <button class="btn btn-success btn-sm" onclick="approveDoc()">اعتماد ✓</button>
+          <button class="btn btn-danger btn-sm" onclick="toast('الرفض يتطلب سبب يوصله التاجر')">رفض</button>
+        </div>
+      </div>
+
+      <div class="adm-card glass">
+        <div class="ic">👔</div>
+        <div style="flex:1"><div style="font-weight:900;font-size:13px">الأصيل — رجالي</div><div style="font-size:10.5px;color:var(--muted);font-weight:700">4.8 ★ • مبيعات اليوم 482,000 • عمولته 48,200</div></div>
+        <span class="live-chip">موثق ✓</span>
+      </div>
+      <div class="adm-card glass">
+        <div class="ic">👗</div>
+        <div style="flex:1"><div style="font-weight:900;font-size:13px">بوتيك النور — نسائي</div><div style="font-size:10.5px;color:var(--muted);font-weight:700">4.9 ★ • مبيعات اليوم 1,150,000 • عمولته 115,000</div></div>
+        <span class="live-chip">موثق ✓</span>
+      </div>
+      <div class="adm-card glass">
+        <div class="ic">🧸</div>
+        <div style="flex:1"><div style="font-weight:900;font-size:13px">طفولة — أطفال</div><div style="font-size:10.5px;color:var(--muted);font-weight:700">4.7 ★ • مبيعات اليوم 355,000 • عمولته 35,500</div></div>
+        <span class="live-chip">موثق ✓</span>
+      </div>
+    </section>
+
+  </div>
+
+  <!-- زر السلة العائم -->
+  <div class="fab" id="fab" onclick="navTo('cart')">عرض السلة <span class="cnt" id="fabCnt">0</span></div>
+
+  <!-- شريط الزبون -->
+  <div class="nav" id="navCustomer">
+    <div class="ni active" data-s="home" onclick="navTo('home')"><span class="ic">🏠</span>الرئيسية</div>
+    <div class="ni" data-s="orders" onclick="navTo('orders')"><span class="ic">🧾</span>طلباتي</div>
+    <div class="ni" data-s="favs" onclick="navTo('favs')"><span class="ic">❤️</span>المفضلة</div>
+    <div class="ni" data-s="account" onclick="navTo('account')"><span class="ic">👤</span>حسابي</div>
+  </div>
+
+  <!-- شريط التاجر -->
+  <div class="nav" id="navVendor">
+    <div class="ni active" data-s="v-orders" onclick="navTo('v-orders')"><span class="ic">🧾</span>الطلبات</div>
+    <div class="ni" data-s="v-products" onclick="navTo('v-products')"><span class="ic">📦</span>المنتجات</div>
+    <div class="ni" data-s="v-wallet" onclick="navTo('v-wallet')"><span class="ic">💰</span>المحفظة</div>
+    <div class="ni" data-s="v-store" onclick="navTo('v-store')"><span class="ic">🏪</span>المحل</div>
+  </div>
+
+  <!-- شريط المندوب -->
+  <div class="nav" id="navDelivery">
+    <div class="ni active" data-s="d-orders" onclick="navTo('d-orders')"><span class="ic">🧾</span>الطلبات</div>
+    <div class="ni" data-s="d-wallet" onclick="navTo('d-wallet')"><span class="ic">💰</span>محفظتي</div>
+    <div class="ni" data-s="d-account" onclick="navTo('d-account')"><span class="ic">👤</span>حسابي</div>
+  </div>
+
+  <!-- شريط المشرف -->
+  <div class="nav" id="navAdmin">
+    <div class="ni active" data-s="a-home" onclick="navTo('a-home')"><span class="ic">📊</span>اللوحة</div>
+    <div class="ni" data-s="a-ads" onclick="navTo('a-ads')"><span class="ic">🖼</span>الإعلانات</div>
+    <div class="ni" data-s="a-cash" onclick="navTo('a-cash')"><span class="ic">💵</span>الكاش</div>
+    <div class="ni" data-s="a-stores" onclick="navTo('a-stores')"><span class="ic">🏪</span>المحلات</div>
+  </div>
+
+  <!-- مودال التأكيد -->
+  <div class="overlay" id="overlay">
+    <div class="modal">
+      <div class="mt" id="modalTitle">تأكيد الطلب</div>
+      <div id="modalBody"></div>
+      <button class="btn btn-cta" style="margin-top:14px" onclick="placeOrder()">أكيد، أطلب — أدفع كاش</button>
+      <button class="btn btn-ghost btn-sm" style="width:100%;margin-top:8px" onclick="closeOverlay()">رجّعني للسلة</button>
+    </div>
+  </div>
+
+  <!-- مودال النجاح -->
+  <div class="overlay" id="successOverlay">
+    <div class="modal" style="text-align:center">
+      <div class="success-ic">✅</div>
+      <div class="mt">طلبتك انسجّلت! 🎉</div>
+      <div style="font-size:12px;color:var(--muted);font-weight:700;line-height:1.9">رقم الطلب: #ZB-1043<br>الأصيل راح يجهّز طلبك — والمندوب يوصلك<br><b style="color:var(--text)">جيب المبلغ كاش</b></div>
+      <button class="btn btn-navy" style="margin-top:16px" onclick="closeSuccess();navTo('tracking')">تابع طلبك 🛵</button>
+    </div>
+  </div>
+
+  <!-- مودال تحصيل الكاش (المندوب) -->
+  <div class="overlay" id="dCashOverlay">
+    <div class="modal">
+      <div class="mt">تحصيل الكاش 💵</div>
+      <div style="text-align:center;font-size:13px;font-weight:800;color:var(--muted)">من: علي — طلب #ZB-1044</div>
+      <div class="cod-big" style="text-align:center;font-size:30px;font-weight:900;margin:10px 0;background:linear-gradient(120deg,var(--primary),var(--cyan));-webkit-background-clip:text;background-clip:text;-webkit-text-fill-color:transparent">73,000 د.ع</div>
+      <div style="font-size:12px;font-weight:700;color:var(--muted);line-height:1.9;margin-bottom:8px">
+        ✓ الزبون عدّ القطع وفحصها<br>
+        ✓ استلمت المبلغ كامل<br>
+        ⚠ ممنوع التسليم قبل تحصيل المبلغ
+      </div>
+      <button class="btn btn-success" onclick="dDelivered()">نعم — سلمت واستلمت الكاش ✓</button>
+      <button class="btn btn-ghost btn-sm" style="width:100%;margin-top:8px" onclick="document.getElementById('dCashOverlay').classList.remove('show')">رجّعني — بعد ما يستلمني</button>
+    </div>
+  </div>
+
+  <!-- مودال باركود الاستلام (المندوب) -->
+  <div class="overlay" id="qrOverlay">
+    <div class="modal" style="text-align:center">
+      <div class="mt">باركود الاستلام 📷</div>
+      <div class="qr-box"><div class="qr-in">🛵</div></div>
+      <div style="font-size:12px;color:var(--muted);font-weight:700;line-height:1.9">خلّي الأصيل يمسح هذا الباركود<br>بيأكد استلامك الطلبية #ZB-1044</div>
+      <button class="btn btn-success" style="margin-top:10px" onclick="qrScanned()">المحل مسح الباركود ✓</button>
+      <button class="btn btn-ghost btn-sm" style="width:100%;margin-top:8px" onclick="document.getElementById('qrOverlay').classList.remove('show')">مش بعد — رجّعني</button>
+    </div>
+  </div>
+
+  <!-- مودال تقرير نهاية اليوم (المندوب) -->
+  <div class="overlay" id="reportOverlay">
+    <div class="modal">
+      <div class="mt">تقرير نهاية اليوم 📄</div>
+      <div style="text-align:center;font-size:11px;color:var(--muted);font-weight:700">الكوت — 6/8/2026 • المندوب: حسين</div>
+      <div class="glass" style="padding:12px;margin:12px 0;background:var(--glass-l1)">
+        <div class="report-row"><span>طلبات محصلة</span><span>3</span></div>
+        <div class="report-row"><span>إجمالي الكاش المحصل</span><span style="color:var(--success)">186,500 د.ع</span></div>
+        <div class="report-row"><span>أجري (5%)</span><span style="color:var(--primary)">+9,325 د.ع</span></div>
+        <div class="report-row" style="border-bottom:none"><span>الصافي للمنصة</span><span>177,175 د.ع</span></div>
+      </div>
+      <div style="text-align:center;font-size:11px;font-weight:800;color:var(--muted)">توقيع المندوب: ✍️ ______________</div>
+      <button class="btn btn-success" style="margin-top:14px" onclick="waShare('تقرير المندوب حسين — اليوم 6/8/2026: محصل 186,500 د.ع، أجري 9,325 د.ع، الصافي للمنصة 177,175 د.ع. زبون التوصيل 🛵')">شارك التقرير واتساب 📲</button>
+      <button class="btn btn-ghost btn-sm" style="width:100%;margin-top:8px" onclick="document.getElementById('reportOverlay').classList.remove('show')">إغلاق</button>
+    </div>
+  </div>
+
+  <!-- مودال التقييم (الزبون) -->
+  <div class="overlay" id="rateOverlay">
+    <div class="modal">
+      <div class="mt">قيّم المحل ⭐</div>
+      <div style="text-align:center;font-size:13px;font-weight:800;color:var(--muted)">الأصيل — ملابس رجالي • طلب #ZB-1042</div>
+      <div class="stars-in" id="starsIn" onclick="pickStar(event)">
+        <span>★</span><span>★</span><span>★</span><span>★</span><span>★</span>
+      </div>
+      <div style="background:var(--glass-l3);border:1px solid var(--glass-border);border-radius:14px;padding:11px 14px;font-size:12px;color:var(--muted);font-weight:600;margin-bottom:12px">اكتب ملاحظتك... (شو يميز المحل؟)</div>
+      <button class="btn btn-cta" onclick="submitRate()">أرسل التقييم ⭐</button>
+      <button class="btn btn-ghost btn-sm" style="width:100%;margin-top:8px" onclick="document.getElementById('rateOverlay').classList.remove('show')">سكتة — بعدين</button>
+    </div>
+  </div>
+
+  <!-- مودال طلب الإرجاع (الزبون) -->
+  <div class="overlay" id="returnOverlay">
+    <div class="modal">
+      <div class="mt">طلب إرجاع ↩️</div>
+      <div style="text-align:center;font-size:13px;font-weight:800;color:var(--muted)">ضمن مهلة 7 أيام • المبلغ يرجع كاش</div>
+      <div style="display:flex;gap:8px;flex-wrap:wrap;margin:12px 0" id="returnReasons">
+        <span class="chip" onclick="pickReason(this)">المقاس ما ناسب</span>
+        <span class="chip" onclick="pickReason(this)">اللون مختلف</span>
+        <span class="chip" onclick="pickReason(this)">الخامة مش متوقعة</span>
+        <span class="chip" onclick="pickReason(this)">تغيّر الرأي</span>
+      </div>
+      <div style="background:var(--glass-l3);border:1px solid var(--glass-border);border-radius:14px;padding:11px 14px;font-size:12px;color:var(--muted);font-weight:600;margin-bottom:12px">شرّح أكثر (اختياري)...</div>
+      <button class="btn btn-navy" onclick="submitReturn()">أرسل طلب الإرجاع ↩️</button>
+      <button class="btn btn-ghost btn-sm" style="width:100%;margin-top:8px" onclick="document.getElementById('returnOverlay').classList.remove('show')">مش بعد</button>
+    </div>
+  </div>
+</div>
+
+<div class="controls">
+  <button class="ctl role" id="roleBtn" onclick="switchRole()">👨‍💼 بدّل: التاجر</button>
+  <button class="ctl" id="themeBtn" onclick="toggleTheme()">🌙 الليلي</button>
+  <button class="ctl" onclick="navTo('home')">🏠 الرئيسية</button>
+  <button class="ctl" onclick="navTo('notifications')">🔔 الإشعارات</button>
+  <button class="ctl" onclick="navTo('stores')">🗂 المحلات</button>
+  <button class="ctl" onclick="navTo('product')">📦 المنتج</button>
+  <button class="ctl" onclick="navTo('cart')">🛒 السلة</button>
+  <button class="ctl" onclick="navTo('tracking')">🛵 التتبع</button>
+  <button class="ctl" onclick="navTo('a-ads')">👑 الإعلانات</button>
+  <button class="ctl" onclick="navTo('login')">🔐 الدخول</button>
+</div>
+<div class="legend">4 أدوار: زبون 🛍 / تاجر 🏪 / مندوب 🛵 / مشرف 👑 • الإعلانات يدوّرها المشرف (موافقة/رفض) وتظهر بالرئيسية كل 4 ثواني • العروض ⚡ يفعّلها التاجر من منتجاته • جرّب: إعلان ← موافقة ← كاروسيل، وطلب إرجاع، وتقييم، وOTP • المال صلب L4 والباقي زجاج • هوية «أفق» بنسب تباين محسوبة</div>
+
+<script>
+/* ═══════════ التنقل ═══════════ */
+let role='customer', curSize='M', qtyN=1;
+function navTo(id){
+  document.querySelectorAll('.screen').forEach(s=>s.classList.remove('active'));
+  document.getElementById(id).classList.add('active');
+  const isVendor=id.startsWith('v-'), isDelivery=id.startsWith('d-'), isAdmin=id.startsWith('a-'), isLogin=id==='login';
+  document.getElementById('navCustomer').classList.toggle('show',!isVendor&&!isDelivery&&!isAdmin&&!isLogin);
+  document.getElementById('navVendor').classList.toggle('show',isVendor);
+  document.getElementById('navDelivery').classList.toggle('show',isDelivery);
+  document.getElementById('navAdmin').classList.toggle('show',isAdmin);
+  document.querySelectorAll('.nav .ni').forEach(n=>n.classList.toggle('active',n.dataset.s===id));
+  document.getElementById('fab').classList.toggle('show',!isVendor&&!isDelivery&&!isAdmin&&!isLogin&&Object.keys(cart).length>0);
+  if(id==='notifications')renderNotifs();
+  if(id==='home'){adStart();}
+  document.querySelector('.screens').scrollTop=0;
+}
+function switchRole(){
+  const order=['customer','vendor','delivery','admin'];
+  const next=order[(order.indexOf(role)+1)%order.length];
+  setRole(next);
+}
+function setRole(r){
+  role=r;
+  const labels={'customer':'👨‍💼 بدّل: التاجر','vendor':'🛵 بدّل: المندوب','delivery':'👑 بدّل: المشرف','admin':'🛍 بدّل: الزبون'};
+  document.getElementById('roleBtn').textContent=labels[r];
+  const map={'customer':'home','vendor':'v-orders','delivery':'d-orders','admin':'a-home'};
+  navTo(map[r]);
+  const msgs={'customer':'هسه وياك بوضع الزبون','vendor':'تحولت للوحة التاجر 🏪','delivery':'تحولت للوحة المندوب 🛵','admin':'تحولت للوحة المشرف 👑 — هسه إنت صاحب المنصة'};
+  toast(msgs[r]);
+}
+function toast(msg){
+  const t=document.createElement('div');
+  t.style.cssText=`position:fixed;bottom:20px;right:50%;transform:translateX(50%);background:var(--glass-l3);backdrop-filter:blur(24px);border:1px solid var(--glass-border);color:var(--text);font-family:var(--font);font-weight:800;font-size:13px;padding:12px 22px;border-radius:14px;box-shadow:0 12px 30px rgba(0,0,0,.25);z-index:99;animation:pop .26s cubic-bezier(.34,1.56,.64,1)`;
+  t.textContent=msg;document.body.appendChild(t);
+  setTimeout(()=>{t.style.opacity='0';t.style.transition='opacity .3s';setTimeout(()=>t.remove(),300);},2200);
+}
+function pickSize(el){
+  if(el.classList.contains('no')){toast('هذا المقاس نفد 😕 — جرّب مقاس ثاني');return;}
+  document.querySelectorAll('.size-chip').forEach(c=>c.classList.remove('sel'));
+  el.classList.add('sel');curSize=el.textContent;
+  toast(`اخترت مقاس ${curSize} ✓`);
+}
+function currentSize(){return curSize;}
+function qty(d){qtyN=Math.max(1,qtyN+d);document.getElementById('qtyN').textContent=qtyN;}
+
+/* ═══════════ السلة ═══════════ */
+let cart={};
+const STORE_OF={ '👕':'الأصيل — رجالي','🧥':'الأصيل — رجالي','👖':'الأصيل — رجالي','⌚':'الأصيل — رجالي','👗':'بوتيك النور — نسائي','👜':'بوتيك النور — نسائي','👟':'ستايل — أحذية','🧸':'طفولة — أطفال','💄':'لمسة — مكياج' };
+const FEE_OF={ 'الأصيل — رجالي':2000,'بوتيك النور — نسائي':2000,'ستايل — أحذية':1500,'طفولة — أطفال':1500,'لمسة — مكياج':0 };
+function addCart(name,price,emoji,count=1,size){
+  const key=name+(size?' ['+size+']':'');
+  if(!cart[key])cart[key]={name,price,emoji,q:0,size};
+  cart[key].q+=count;
+  renderCart();updateFab();
+  const btn=event&&event.target&&event.target.classList&&event.target.classList.contains('add-btn')?event.target:null;
+  if(btn){btn.classList.add('done');btn.textContent='✓';setTimeout(()=>{btn.classList.remove('done');btn.textContent='+';},900);}
+  toast(`${name} ${size?'('+size+')':''} — انضاف للسلة ✓`);
+}
+function renderCart(){
+  const box=document.getElementById('cartItems');
+  box.innerHTML='';
+  const groups={};
+  Object.entries(cart).forEach(([k,i])=>{
+    const store=STORE_OF[i.emoji]||'محل آخر';
+    (groups[store]??=[]).push({...i});
+  });
+  let sub=0, fee=0;
+  Object.entries(groups).forEach(([store,items])=>{
+    const g=document.createElement('div');g.className='cart-group';
+    const sf=FEE_OF[store]??2000; fee+=sf;
+    g.innerHTML=`<div class="ghead">🏪 ${store} <span style="margin-inline-start:auto;color:var(--muted);font-size:10px">توصيل ${sf.toLocaleString()} د.ع</span></div>`;
+    items.forEach(it=>{
+      sub+=it.price*it.q;
+      g.innerHTML+=`<div class="cart-item"><div class="img" style="background:linear-gradient(135deg,#06B6D41f,#F973161f)">${it.emoji}</div><div class="info"><div class="pn">${it.name}${it.size?`<span class="sz">${it.size}</span>`:''}</div><div class="up">${(it.price*it.q).toLocaleString()} د.ع</div></div><div class="qty" style="padding:4px 6px"><button onclick="qtyCart('${it.name.replace(/'/g,"\\'")}','${it.size||''}',-1)">−</button><span class="n" style="font-size:13px;min-width:18px">${it.q}</span><button onclick="qtyCart('${it.name.replace(/'/g,"\\'")}','${it.size||''}',1)">+</button></div><div class="icon-btn" style="width:32px;height:32px;font-size:13px;color:var(--danger)" onclick="rmCart('${it.name.replace(/'/g,"\\'")}','${it.size||''}')">🗑</div></div>`;
+    });
+    box.appendChild(g);
+  });
+  document.getElementById('cartEmpty').style.display=Object.keys(cart).length?'none':'block';
+  const disc=sub>=50000?5000:0;
+  document.getElementById('subTotal').textContent=sub.toLocaleString()+' د.ع';
+  document.getElementById('delFee').textContent=fee.toLocaleString()+' د.ع';
+  document.getElementById('discAmt').textContent=disc?'− '+disc.toLocaleString()+' د.ع':'0 د.ع';
+  document.getElementById('grandTotal').textContent=(sub+fee-disc).toLocaleString()+' د.ع';
+}
+function findKey(name,size){return Object.keys(cart).find(k=>cart[k].name===name&&(cart[k].size||'')===(size||''));}
+function qtyCart(name,size,d){
+  const k=findKey(name,size);if(!k)return;
+  cart[k].q+=d;
+  if(cart[k].q<=0)delete cart[k];
+  renderCart();updateFab();
+}
+function rmCart(name,size){delete cart[findKey(name,size)];renderCart();updateFab();toast('انحذف من السلة');}
+function updateFab(){
+  const c=Object.values(cart).reduce((a,b)=>a+b.q,0);
+  document.getElementById('fabCnt').textContent=c;
+  const s=document.querySelector('.screen.active').id;
+  document.getElementById('fab').classList.toggle('show',c>0&&!s.startsWith('v-')&&!s.startsWith('d-')&&!s.startsWith('a-')&&s!=='login');
+}
+
+/* ═══════════ الإعلانات والعروض ═══════════ */
+const CATALOG=[
+  {n:'قميص رجالي قطني',p:18000,op:25000,e:'👕',s:'الأصيل — رجالي'},
+  {n:'فستان سهرة أنيق',p:45000,op:60000,e:'👗',s:'بوتيك النور — نسائي'},
+  {n:'حذاء رياضي أزرق',p:35000,e:'👟',s:'ستايل — أحذية'},
+  {n:'شنطة يد جلد',p:38000,e:'👜',s:'بوتيك النور — نسائي'},
+  {n:'جاكيت شتوي فاخر',p:55000,e:'🧥',s:'الأصيل — رجالي'},
+  {n:'سروال جينز كلاسيك',p:28000,e:'👖',s:'الأصيل — رجالي'},
+  {n:'ساعة يد رياضية',p:42000,e:'⌚',s:'الأصيل — رجالي'},
+  {n:'لعبة تعليمية خشبية',p:15000,e:'🧸',s:'طفولة — أطفال'},
+  {n:'طقم مكياج كامل',p:60000,e:'💄',s:'لمسة — مكياج'}
+];
+let offers={'قميص رجالي قطني':30,'جاكيت شتوي فاخر':20};
+let ads=[
+  {id:1,store:'الأصيل',title:'تشكيلة الشتاء 🔥 خصم حتى 40%',art:'🧥',grad:'linear-gradient(120deg,#1E3A8A,#06B6D4)',status:'active',days:7,left:3,price:25000},
+  {id:2,store:'بوتيك النور',title:'فساتين السهرة الجديدة ✨',art:'👗',grad:'linear-gradient(120deg,#9D174D,#F97316)',status:'active',days:7,left:5,price:35000},
+  {id:3,store:'طفولة',title:'عروض الألعاب 🧸 خصم 25%',art:'🧸',grad:'linear-gradient(120deg,#15803D,#38BDF8)',status:'pending',days:14,price:40000}
+];
+let adIdx=0, adTimer=null;
+function adGo(i){
+  const act=ads.filter(a=>a.status==='active');
+  if(!act.length)return;
+  adIdx=(i+act.length)%act.length;
+  document.getElementById('adTrack').style.transform=`translateX(-${adIdx*100}%)`;
+  document.querySelectorAll('#adDots .ad-dot').forEach((d,k)=>d.classList.toggle('on',k===adIdx));
+}
+function adNext(){adGo(adIdx+1);}
+function adStart(){adStop();if(ads.filter(a=>a.status==='active').length>1)adTimer=setInterval(adNext,4000);}
+function adStop(){clearInterval(adTimer);}
+function renderAds(){
+  const act=ads.filter(a=>a.status==='active');
+  const track=document.getElementById('adTrack'),dots=document.getElementById('adDots');
+  track.innerHTML=act.map(a=>`
+    <div class="ad-slide" style="background:${a.grad}" onclick="navTo('stores')">
+      <div class="blob" style="width:150px;height:150px;background:rgba(255,255,255,.25);top:-40px;left:-30px"></div>
+      <div class="blob" style="width:120px;height:120px;background:rgba(10,17,32,.25);bottom:-40px;right:-20px"></div>
+      <div class="art">${a.art}</div>
+      <div class="inner">
+        <span class="tag">${a.store}</span>
+        <h3>${a.title}</h3>
+        <p>إعلان ممول — يوصلك لحد دارك، كاش عند الاستلام</p>
+        <span class="go">شوف المحل ←</span>
+      </div>
+      <span class="paid">🖼 إعلان ممول</span>
+    </div>`).join('');
+  dots.innerHTML=act.map((a,k)=>`<div class="ad-dot${k===adIdx?' on':''}" onclick="adGo(${k})"></div>`).join('');
+  adGo(adIdx);
+  const pending=ads.filter(a=>a.status==='pending');
+  const pBox=document.getElementById('adPending');
+  if(pBox)pBox.innerHTML=pending.map(a=>`
+    <div class="adm-card glass" style="border:2px solid var(--accent)">
+      <div class="ic">🖼</div>
+      <div style="flex:1"><div style="font-weight:900;font-size:13px">${a.store} — ${a.title}</div><div style="font-size:10.5px;color:var(--muted);font-weight:700">عرضه: ${a.days} يوم — سعره: ${a.price.toLocaleString()} د.ع</div></div>
+      <div class="adm-actions" style="margin-top:0">
+        <button class="btn btn-success btn-sm" onclick="approveAd(${a.id})">موافقة ✓</button>
+        <button class="btn btn-danger btn-sm" onclick="rejectAd(${a.id})">رفض ✗</button>
+      </div>
+    </div>`).join('')||'<div class="empty" style="padding:16px 10px"><span class="ic">✅</span>ماكو طلبات معلقة — كلشي مصفى</div>';
+  const aBox=document.getElementById('adActive');
+  if(aBox)aBox.innerHTML=act.map((a,k)=>`
+    <div class="adm-card glass">
+      <div class="ic">${a.art}</div>
+      <div style="flex:1"><div style="font-weight:900;font-size:13px">${a.store} — ${a.title}</div><div style="font-size:10.5px;color:var(--muted);font-weight:700">متبقي ${a.left} يوم من ${a.days} • دفعه: ${a.price.toLocaleString()} د.ع</div></div>
+      <div style="display:flex;flex-direction:column;gap:5px">
+        <span class="live-chip">يعرض الآن ✓</span>
+        <span style="font-size:10px;color:var(--primary);font-weight:900;cursor:pointer" onclick="adMove(${a.id},${k})">▲ الترتيب</span>
+      </div>
+    </div>`).join('');
+  renderDashboard();
+  const st=document.getElementById('adVendorStatus');
+  if(st){
+    const mine=ads.filter(a=>a.store==='الأصيل').pop();
+    st.innerHTML=mine&&mine.status==='pending'?`<span class="pending-chip">⏳ طلبك قيد المراجعة من المشرف — ننتظر موافقته</span>`:mine&&mine.status==='rejected'?`<span class="rej-chip">✗ طلبك مرفوض — راجع سبب الرفض من الإشعارات</span>`:mine&&mine.status==='active'?`<span class="live-chip">✓ إعلانك يعرض بالواجهة الرئيسية</span>`:'';
+  }
+}
+function approveAd(id){
+  const a=ads.find(x=>x.id===id);
+  if(!a)return;
+  a.status='active';a.left=a.days;
+  renderAds();adStart();
+  toast(`موافقة ✓ — إعلان ${a.store} صار يعرض بالرئيسية 🖼`);
+}
+function rejectAd(id){
+  const a=ads.find(x=>x.id===id);
+  if(!a)return;
+  a.status='rejected';
+  renderAds();
+  toast(`رفضت إعلان ${a.store} — وصلهم إشعار بالسبب`);
+}
+function adMove(id,k){
+  const a=ads.find(x=>x.id===id);
+  if(!a)return;
+  const act=ads.filter(x=>x.status==='active');
+  const n=(k+1)%act.length;
+  [act[k],act[n]]=[act[n],act[k]];
+  ads=act.concat(ads.filter(x=>x.status!=='active'));
+  renderAds();adStart();
+  toast('تغيّر ترتيب العرض — أول خانة هي اللي تشوفها الزبون');
+}
+let adDurState={days:7,price:25000};
+function adDur(el,d,p){
+  adDurState={days:d,price:p};
+  document.querySelectorAll('#adDurations .chip').forEach(c=>c.classList.remove('active'));
+  el.classList.add('active');
+  document.getElementById('adPrice').textContent=p.toLocaleString()+' د.ع';
+}
+function submitAd(){
+  const dur=adDurState, old=ads.find(a=>a.id===1);
+  old.status='pending';old.days=dur.days;old.price=dur.price;old.title='تشكيلة الشتاء 🔥 خصم حتى 40%';
+  renderAds();
+  document.getElementById('adSubmitBox').innerHTML='<button class="btn btn-ghost btn-sm" style="width:100%" onclick="toast(\'عدّل العرض وأرسله مرة ثانية\')">عُدّل الطلب — بانتظار الموافقة</button>';
+  toast('انرسل طلب الإعلان للمشرف 📤 — بانتظار موافقته');
+}
+function renderOffers(){
+  const row=document.getElementById('offersRow'),head=document.getElementById('offersHead');
+  const list=CATALOG.filter(c=>offers[c.n]);
+  head.style.display=list.length?'':'none';
+  row.innerHTML=list.map(c=>`
+    <div class="store-card" style="width:150px;flex:none" onclick="navTo('product')">
+      <div class="cover" style="background:linear-gradient(120deg,#1D4ED8,#38BDF8);display:flex;align-items:center;justify-content:center;font-size:30px">${c.e}</div>
+      <div class="body">
+        <div class="nm">${c.n}</div>
+        <div class="meta"><span class="verified">${c.s.split(' — ')[0]}</span></div>
+        <div style="font-weight:900;font-size:12px;margin-top:4px"><span class="price">${(c.p*(100-offers[c.n])/100).toLocaleString()}</span> <span class="old-price" style="font-size:10px">${c.p.toLocaleString()}</span> د.ع</div>
+      </div>
+      <span class="offer-badge">-${offers[c.n]}% ⚡</span>
+    </div>`).join('');
+}
+function renderNew(){
+  const row=document.getElementById('newRow');
+  row.innerHTML=CATALOG.slice(-4).map(c=>`
+    <div class="store-card" style="width:150px;flex:none" onclick="navTo('product')">
+      <div class="cover" style="background:linear-gradient(120deg,#F97316,#EA580C);display:flex;align-items:center;justify-content:center;font-size:30px">${c.e}</div>
+      <div class="body">
+        <div class="nm">${c.n}</div>
+        <div class="meta"><span class="verified">${c.s.split(' — ')[0]}</span></div>
+        <div style="font-weight:900;font-size:12px;margin-top:4px">${c.p.toLocaleString()} د.ع</div>
+      </div>
+      <span class="new-badge">جديد 🆕</span>
+    </div>`).join('');
+}
+function toggleOffer(name,pct){
+  const idx=CATALOG.findIndex(c=>c.n===name);
+  const has=!!offers[name];
+  if(has)delete offers[name];else offers[name]=pct;
+  const sw=document.getElementById('swOf'+idx);
+  if(sw)sw.classList.toggle('on',!has);
+  const of=document.getElementById('of'+idx);
+  if(of){of.textContent=has?'بدون عرض':`عرض ⚡ -${pct}%`;of.style.color=has?'var(--muted)':'var(--accent-deep)';of.style.background=has?'var(--glass-l3)':'rgba(249,115,22,.15)';}
+  renderOffers();
+  toast(has?'وقّفت العرض — انحذف من صف العروض':'فعّلت العرض ⚡ — ظهر بالواجهة الرئيسية');
+}
+function skelHide(){const s=document.getElementById('homeSkel');if(s)s.remove();}
+
+/* ═══════════ داشبورد المشرف ═══════════ */
+let cashOk=false, docOk=false;
+function renderDashboard(){
+  const days=[['السبت',3.1],['الأحد',3.6],['الاثنين',2.9],['الثلاثاء',4.1],['الأربعاء',3.8],['الخميس',4.3],['اليوم',4.32]];
+  const max=4.4;
+  document.getElementById('salesChart').innerHTML=days.map(([d,v],i)=>{
+    const today=i===days.length-1;
+    return `<div class="bar${today?' today':''}" style="height:${Math.max(5,v/max*100)}%"><span class="val">${v}M</span></div>`;
+  }).join('');
+  document.getElementById('chartLbls').innerHTML=days.map(([d],i)=>`<span class="${i===days.length-1?'today':''}">${d}</span>`).join('');
+  const cats=[['👔 رجالي',38],['👗 نسائي',27],['🧒 أطفال',15],['💄 مكياج',10],['👟 أحذية',7],['⌚ أخرى',3]];
+  document.getElementById('catBox').innerHTML=cats.map(([n,v])=>`
+    <div class="cat-row"><span class="cn">${n}</span><div class="ct"><div class="cf" data-w="${v}"></div></div><span class="cv">${v}%</span></div>`).join('');
+  const tops=[['الأصيل','👔',482000,1.08],['بوتيك النور','👗',1150000,1.21],['طفولة','🧸',355000,0.94],['ستايل','👟',210000,0.87],['لمسة','💄',98000,0.72]];
+  document.getElementById('topStores').innerHTML=tops.map(([n,e,s,tr],i)=>`
+    <div class="lb-row glass">
+      <div class="rank">${i+1}</div>
+      <div class="lic">${e}</div>
+      <div class="lt"><div class="a">${n}</div><div class="b">عمولته: ${(s*.1).toLocaleString()} د.ع</div></div>
+      <div class="lv"><div class="a">${s.toLocaleString()}</div><div class="b" style="color:${tr>=1?'var(--success)':'var(--danger)'}">${tr>=1?'▲':'▼'} ${Math.abs(tr-1)*100|0}%</div></div>
+    </div>`).join('');
+  const pendingAds=ads.filter(a=>a.status==='pending');
+  const q=[];
+  pendingAds.forEach(a=>q.push({ic:'🖼',t:`إعلان ${a.store}`,s:`${a.days} أيام — ${a.price.toLocaleString()} د.ع`,btn:'اعتماد ✓',fn:`approveAd(${a.id})`,cls:'btn-success'}));
+  if(!docOk)q.push({ic:'📄',t:'توثيق الأصيل',s:'فاتورة الكهرباء قيد المراجعة',btn:'اعتماد ✓',fn:'approveDoc()',cls:'btn-success'});
+  if(!cashOk)q.push({ic:'💵',t:'تسليم كاش المندوب',s:'186,500 د.ع — حسين',btn:'تأكيد ✓',fn:'cashApprove()',cls:'btn-success'});
+  document.getElementById('adminQueue').innerHTML=q.map(x=>`
+    <div class="adm-card glass" style="border:2px solid var(--accent)">
+      <div class="ic">${x.ic}</div>
+      <div style="flex:1"><div style="font-weight:900;font-size:13px">${x.t}</div><div style="font-size:10.5px;color:var(--muted);font-weight:700">${x.s}</div></div>
+      <button class="btn ${x.cls} btn-sm" onclick="${x.fn}">${x.btn}</button>
+    </div>`).join('')||'<div class="empty" style="padding:16px 10px"><span class="ic">🎉</span>ماكو شي معلق — كلشي مصفى يا معلم</div>';
+  document.getElementById('queueCount').textContent=q.length;
+  requestAnimationFrame(()=>{
+    document.getElementById('goalBar').style.width='86%';
+    document.querySelectorAll('.cat-row .cf').forEach(b=>b.style.width=b.dataset.w+'%');
+  });
+}
+function approveDoc(){
+  docOk=true;
+  renderDashboard();
+  toast('اعتمدت توثيق الأصيل ✓ — صار رسميًا موثق');
+}
+
+/* ═══════════ الإشعارات ═══════════ */
+const NOTIFS={
+  customer:[
+    {ic:'🛵',a:'مندوبك بوصلك بعد 12 دقيقة',b:'طلب #ZB-1042 — الأصيل • الكاش 73,000 د.ع',c:'هسه'},
+    {ic:'⚡',a:'عرض جديد من الأصيل',b:'قميص قطني بخصم 30% — ينتهي بعد 3 أيام',c:'منذ ساعة'},
+    {ic:'⭐',a:'المحلات تستناك',b:'قيّم طلبك السابق #ZB-1039 — ياخذ ثواني',c:'منذ 3 ساعات'}
+  ],
+  vendor:[
+    {ic:'🔔',a:'طلب جديد وصل 🧾 #ZB-1044',b:'علي — 73,000 د.ع كاش • استلموه من الطلبات',c:'هسه'},
+    {ic:'🖼',a:'إعلانك انقبل من المشرف ✓',b:'تشكيلة الشتاء يعرض بالواجهة الرئيسية',c:'منذ ساعتين'},
+    {ic:'⭐',a:'تقييم جديد 5 نجوم',b:'علي: "خامة القميص فخمة والتوصيل سريع"',c:'أمس'}
+  ],
+  delivery:[
+    {ic:'🧾',a:'طلب توصيل جديد — الأصيل',b:'#ZB-1044 • استلام سوق المدينة • كاش 73,000 د.ع',c:'هسه'},
+    {ic:'💰',a:'تأكيد تحصيل 73,000 د.ع',b:'طلب #ZB-1042 — انحسب بجردك اليومي',c:'منذ ساعتين'}
+  ],
+  admin:[
+    {ic:'🖼',a:'طلب إعلان جديد — بوتيك النور',b:'7 أيام — 35,000 د.ع • بانتظار موافقتك',c:'منذ 10 دقايق'},
+    {ic:'💵',a:'المندوب حسين سلّم الكاش',b:'186,500 د.ع قيد المراجعة — تأكده من لوحة الكاش',c:'منذ ساعة'}
+  ]
+};
+function renderNotifs(){
+  const list=NOTIFS[role]||NOTIFS.customer;
+  document.getElementById('notifList').innerHTML=list.map(n=>`
+    <div class="notif-item glass">
+      <div class="nic">${n.ic}</div>
+      <div class="nt"><div class="a">${n.a}</div><div class="b">${n.b}</div><div class="c">${n.c}</div></div>
+      <div class="un"></div>
+    </div>`).join('');
+  document.getElementById('notifEmpty').style.display='none';
+}
+
+/* ═══════════ شيت المقاسات ═══════════ */
+function sgTab(el,id){
+  document.querySelectorAll('.sg-tabs .chip').forEach(c=>c.classList.remove('active'));
+  el.classList.add('active');
+  document.querySelectorAll('.sg-tab').forEach(t=>t.classList.remove('on'));
+  document.getElementById(id).classList.add('on');
+}
+
+/* ═══════════ التقييم والإرجاع ═══════════ */
+let rateVal=0;
+function openRate(){document.getElementById('rateOverlay').classList.add('show');}
+function pickStar(e){
+  const star=e.target,stars=[...document.querySelectorAll('#starsIn span')];
+  const i=stars.indexOf(star);
+  if(i<0)return;
+  rateVal=i+1;
+  stars.forEach((s,k)=>s.classList.toggle('on',k<=i));
+}
+function submitRate(){
+  document.getElementById('rateOverlay').classList.remove('show');
+  document.querySelectorAll('#starsIn span').forEach(s=>s.classList.remove('on'));
+  toast(rateVal>=4?`شكرًا حجي! تقييمك ${rateVal} نجوم وصل الأصيل ⭐ — يكبرون بهالشي`:rateVal?`تقييمك ${rateVal} نجوم وصل — المحل راح يشتغل على ملاحظاتك`:'اختر النجوم أول — بعدين أرسل 😉');
+}
+function openReturn(){document.getElementById('returnOverlay').classList.add('show');}
+let returnReason='';
+function pickReason(el){
+  document.querySelectorAll('#returnReasons .chip').forEach(c=>c.classList.remove('active'));
+  el.classList.add('active');
+  returnReason=el.textContent;
+}
+function submitReturn(){
+  if(!returnReason){toast('اختر سبب الإرجاع أول');return;}
+  document.getElementById('returnOverlay').classList.remove('show');
+  toast(`انرسل طلب إرجاعك (${returnReason}) — المندوب بيكلمك لتسليم القطعة ↩️`);
+}
+function vTab(el,id){
+  document.querySelectorAll('.v-tabs .chip').forEach(c=>c.classList.remove('active'));
+  el.classList.add('active');
+  document.getElementById('vOrdersList').style.display=id==='vOrdersList'?'':'none';
+  document.getElementById('vReturnsList').style.display=id==='vReturnsList'?'':'none';
+}
+function vReturn(msg,toastMsg){
+  document.getElementById('vReturnsList').style.borderColor='var(--success)';
+  document.getElementById('vReturnsList').querySelector('.status').textContent='مقبول ✓';
+  document.getElementById('vReturnsList').querySelector('.status').className='status st-done';
+  toast(toastMsg);
+}
+
+/* ═══════════ الطلب ═══════════ */
+function confirmOrder(){
+  if(!Object.keys(cart).length){toast('السلة فاضية — ضيف شي أول 😄');return;}
+  const sub=Object.values(cart).reduce((a,b)=>a+b.price*b.q,0);
+  const stores=[...new Set(Object.values(cart).map(b=>STORE_OF[b.emoji]||'محل آخر'))];
+  const fee=stores.reduce((a,s)=>a+(FEE_OF[s]??2000),0),disc=sub>=50000?5000:0,total=sub+fee-disc;
+  document.getElementById('modalBody').innerHTML=`
+    <div class="mrow"><span>عدد الأصناف</span><span>${Object.keys(cart).length} نوع</span></div>
+    <div class="mrow"><span>المجموع الفرعي</span><span>${sub.toLocaleString()} د.ع</span></div>
+    <div class="mrow"><span>التوصيل</span><span>${fee.toLocaleString()} د.ع</span></div>
+    ${disc?`<div class="mrow"><span style="color:var(--danger)">خصم تشكيلة الشتاء</span><span style="color:var(--danger)">−${disc.toLocaleString()} د.ع</span></div>`:''}
+    <div class="mtotal"><span>تدفع كاش</span><span>${total.toLocaleString()} د.ع</span></div>
+    <div class="cod">💵 الدفع كاش عند الاستلام — والمقاسات بترجع إذا ما ناسبك (7 أيام)</div>`;
+  document.getElementById('overlay').classList.add('show');
+}
+function closeOverlay(){document.getElementById('overlay').classList.remove('show');}
+function placeOrder(){
+  closeOverlay();
+  document.getElementById('successOverlay').classList.add('show');
+  cart={};renderCart();updateFab();
+}
+function closeSuccess(){document.getElementById('successOverlay').classList.remove('show');}
+
+/* ═══════════ المندوب ═══════════ */
+function dToggle(e){
+  if(e)e.stopPropagation();
+  const row=document.getElementById('dOnlineRow'),sw=document.getElementById('dOnlineSw');
+  const on=sw.classList.toggle('on');
+  row.classList.toggle('on',on);
+  document.getElementById('dOnlineTxt').textContent=on?'متصل — جاهز أستلم طلبات':'غير متصل — ما تجيك طلبات';
+  document.getElementById('d-orders').classList.toggle('d-off',!on);
+  toast(on?'فتحت الاستقبال — الطلبات تجيك 🔔':'أغلقت الاستقبال — هدية راحة');
+}
+function acceptTrip(){
+  navTo('d-trip');
+  toast('قبلت الطلب #ZB-1044 — روح استلم من المحل 🛵');
+}
+let dPicked=false, dDeliveredDone=false;
+function dArrive(){
+  document.getElementById('qrOverlay').classList.add('show');
+  toast('خلّي التاجر يمسح الباركود — يثبت استلامك');
+}
+function qrScanned(){
+  document.getElementById('qrOverlay').classList.remove('show');
+  dPickup();
+}
+function dPickup(){
+  dPicked=true;
+  document.getElementById('dStep1').classList.replace('on','done');
+  document.getElementById('dStep2').classList.add('on');
+  document.getElementById('dCodBox').querySelector('.l').textContent='خليت بجيبك 73,000 د.ع — سلمها لعلي بس بعد ما تتحصّل';
+  document.getElementById('dDeliverBtn').innerHTML=`<button class="btn btn-success" onclick="dCash()">وصلت للزبون — سلمت واستلمت الكاش 💵</button>`;
+  toast('باركود انمسح ✓ — استلمت من المحل، هسه روح للزبون');
+  document.querySelector('.screens').scrollTop=document.querySelector('.screens').scrollHeight;
+}
+function dCash(){
+  if(dDeliveredDone)return;
+  document.getElementById('dCashOverlay').classList.add('show');
+}
+function dDelivered(){
+  dDeliveredDone=true;
+  document.getElementById('dCashOverlay').classList.remove('show');
+  document.getElementById('dStep2').classList.replace('on','done');
+  document.getElementById('dStep3').classList.add('done');
+  document.getElementById('dStep3').querySelector('.c').textContent='✓';
+  document.getElementById('dDeliverBtn').innerHTML='';
+  document.getElementById('dCodBox').innerHTML=`<div class="l">تم تسليم الطلبية #ZB-1044 ✓</div><div class="amt" style="-webkit-text-fill-color:var(--success)">+73,000 د.ع محصّل</div><div class="s">انحسبت بجردك اليومي — أجر التوصيل انضاف للمحفظة</div>`;
+  toast('تسليم وتسليم الكاش — مسجل بالجرد ✓');
+}
+function openReport(){document.getElementById('reportOverlay').classList.add('show');}
+function waShare(text){window.open('https://wa.me/?text='+encodeURIComponent(text+'\n— من تطبيق زبون، الكوت 🛵'),'_blank');}
+function cashApprove(){
+  cashOk=true;
+  const box=document.getElementById('aCashBox');
+  box.innerHTML=`<div class="l">تم تأكيد تسليم الكاش ✓ — إيصال #RC-881</div><div class="amt" style="-webkit-text-fill-color:var(--success)">186,500 د.ع</div><div class="s">صافي المنصة 177,175 د.ع • أجر المندوب 9,325 د.ع — موثق بتوقيع إلكتروني ✍️</div>`;
+  renderDashboard();
+  toast('تم تأكيد الكاش — المندوب حسين انصفّر رصيده ✓');
+}
+
+/* ═══════════ OTP ═══════════ */
+function otpSend(){
+  document.getElementById('loginStepPhone').style.display='none';
+  document.getElementById('loginStepOtp').style.display='block';
+  toast('انرسل الرمز 4821 واتساب لرقمك 📲');
+}
+function otpBack(){
+  document.getElementById('loginStepPhone').style.display='block';
+  document.getElementById('loginStepOtp').style.display='none';
+}
+function otpVerify(){
+  toast('أهلاً بيك حجي علي 🌟 — رمزك اتأكد');
+  navTo('home');
+}
+
+/* ═══════════ الثيم ═══════════ */
+function toggleTheme(){
+  const h=document.documentElement,dark=h.getAttribute('data-theme')==='dark';
+  h.setAttribute('data-theme',dark?'':'dark');
+  document.getElementById('themeBtn').textContent=dark?'🌙 الليلي':'☀️ النهاري';
+  ['darkSwitch','darkSwitchD'].forEach(id=>{const sw=document.getElementById(id);if(sw)sw.classList.toggle('on',!dark);});
+}
+
+/* ═══════════ إقلاع ═══════════ */
+renderAds();
+renderDashboard();
+renderOffers();
+renderNew();
+adStart();
+setTimeout(skelHide,900);
+navTo('home');
+</script>
+</body>
+</html>

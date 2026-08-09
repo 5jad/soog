@@ -64,21 +64,37 @@ r.get('/stores/:id', async (req, res) => {
 
 // ── المنتجات ──
 r.get('/products', async (req, res) => {
-  const { store_id, category_id, q: query, offer } = req.query;
+  const { store_id, category_id, q: query, offer, sort, min_price, max_price, colors, sizes } = req.query;
   const w = [];
   const p = [];
   if (store_id) { p.push(store_id); w.push(`p.store_id=$${p.length}`); }
   if (category_id) { p.push(category_id); w.push(`p.category_id=$${p.length}`); }
   if (query) { p.push(`%${query}%`); w.push(`(p.name ILIKE $${p.length} OR p.description ILIKE $${p.length})`); }
   if (offer === 'true') w.push(`pr.active=true AND pr.percent>0`);
+  // الفلترة على السعر الفعلي (بعد الخصم)
+  if (min_price !== undefined && min_price !== '') { p.push(Number(min_price)); w.push(`(p.price*(1-COALESCE(pr.percent,0)/100.0)) >= $${p.length}`); }
+  if (max_price !== undefined && max_price !== '') { p.push(Number(max_price)); w.push(`(p.price*(1-COALESCE(pr.percent,0)/100.0)) <= $${p.length}`); }
+  // الفلترة بالألوان (تركيبات بمخزون)
+  if (colors) {
+    const list = colors.split(',').map((s) => s.trim()).filter(Boolean);
+    p.push(list); w.push(`EXISTS (SELECT 1 FROM product_variants pv WHERE pv.product_id=p.id AND pv.color=ANY($${p.length}) AND pv.stock>0)`);
+  }
+  // الفلترة بالمقاسات (اسم التركيبة)
+  if (sizes) {
+    const list = sizes.split(',').map((s) => s.trim()).filter(Boolean);
+    p.push(list); w.push(`EXISTS (SELECT 1 FROM product_variants pv WHERE pv.product_id=p.id AND pv.name=ANY($${p.length}) AND pv.stock>0)`);
+  }
   const dProduct = await demoCond('products', { o: 'p' });
   if (dProduct) w.push(dProduct);
-  const orderBy = req.query.best === 'true'
-    ? 'ORDER BY s.rating_avg DESC, p.id DESC'
+  const eff = `(p.price*(1-COALESCE(pr.percent,0)/100.0))`;
+  const orderBy = sort === 'price_asc' ? `ORDER BY ${eff} ASC, p.id DESC`
+    : sort === 'price_desc' ? `ORDER BY ${eff} DESC, p.id DESC`
+    : sort === 'discount' ? `ORDER BY COALESCE(pr.percent,0) DESC, p.id DESC`
+    : sort === 'best' || req.query.best === 'true' ? 'ORDER BY s.rating_avg DESC, p.id DESC'
     : 'ORDER BY p.id DESC';
   const sql = `SELECT p.*, s.id AS store_id, s.name AS store_name, s.logo AS store_logo, s.delivery_fee,
       pr.percent AS offer_percent, pr.active AS offer_active,
-      (pr.active AND pr.percent>0) AS has_offer, ROUND(p.price*(1-COALESCE(pr.percent,0)/100.0)) AS offer_price
+      (pr.active AND pr.percent>0) AS has_offer, ROUND(${eff}) AS offer_price
     FROM products p
     JOIN stores s ON s.id=p.store_id AND s.status='approved'
     LEFT JOIN offers pr ON pr.product_id=p.id
@@ -90,6 +106,23 @@ r.get('/products', async (req, res) => {
     for (const prod of products) prod.variants = vars.filter((v) => v.product_id === prod.id);
   }
   res.json({ products });
+});
+
+// ── ألوان ومقاسات متوفرة للفلترة (شي إن/إيباي) ──
+r.get('/products/meta', async (req, res) => {
+  const { store_id, category_id } = req.query;
+  const w = [];
+  const p = [];
+  if (store_id) { p.push(store_id); w.push(`p.store_id=$${p.length}`); }
+  if (category_id) { p.push(category_id); w.push(`p.category_id=$${p.length}`); }
+  const ww = w.join(' AND ') || 'true';
+  const colors = await q(`SELECT DISTINCT pv.color FROM product_variants pv JOIN products p ON p.id=pv.product_id
+    JOIN stores s ON s.id=p.store_id AND s.status='approved'
+    WHERE pv.stock>0 AND pv.color<>'' AND ${ww} ORDER BY pv.color`, p);
+  const sizes = await q(`SELECT DISTINCT pv.name FROM product_variants pv JOIN products p ON p.id=pv.product_id
+    JOIN stores s ON s.id=p.store_id AND s.status='approved'
+    WHERE pv.stock>0 AND ${ww} ORDER BY pv.name`, p);
+  res.json({ colors: colors.map((c) => c.color), sizes: sizes.map((s) => s.name) });
 });
 
 r.get('/products/:id', async (req, res) => {

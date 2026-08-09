@@ -20,4 +20,4 @@ app/ios/.symlinks/
 
 # عام
 .DS_Store
-*.log
+*.loglanding/downloads/*.apk

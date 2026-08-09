@@ -109,26 +109,26 @@ async function seed() {
 
   const dCenter = 1, dSouq = 2, dJihad = 3, dNasr = 4, dSalam = 5, dJomhoria = 6, dIstiqlal = 7, dHussein = 8;
 
-  const alAsil = await store(vendorAli, 'الأصيل — ملابس رجالي', 'ملابس رجالي', '👔',
+  const alAsil = await store(vendorAli, 'الأصيل — ملابس رجالي', 'ملابس رجالي', '/uploads/stores/s1.jpg',
     'linear-gradient(120deg,#1D4ED8,#38BDF8)', 'سوق المدينة، الكوت', dSouq,
     'ملابس رجالية راقية: قمصان، سراويل، جاكيتات. جودة تضمن الراحة.', 2000, '9ص', true, 'approved');
   await q(`UPDATE stores SET rating_avg=$1, rating_count=$2 WHERE id=$3`, [4.8, 180, alAsil]);
 
-  const boutikNoor = await store(vendorNoor, 'بوتيك النور — نسائي', 'ملابس نسائي', '👗',
+  const boutikNoor = await store(vendorNoor, 'بوتيك النور — نسائي', 'ملابس نسائي', '/uploads/stores/s2.jpg',
     'linear-gradient(120deg,#9D174D,#F97316)', 'شارع الوحدة، الكوت', dCenter,
     'فساتين سهرة، شنط، إكسسوارات — أحدث الأزياء.', 2000, '10ص', true, 'approved');
   await q(`UPDATE stores SET rating_avg=$1, rating_count=$2 WHERE id=$3`, [4.9, 210, boutikNoor]);
 
-  const tofola = await store(vendorTofola, 'طفولة — أطفال وألعاب', 'أطفال وألعاب', '🧸',
+  const tofola = await store(vendorTofola, 'طفولة — أطفال وألعاب', 'أطفال وألعاب', '/uploads/stores/s3.jpg',
     'linear-gradient(120deg,#15803D,#06B6D4)', 'حي النصر، الكوت', dNasr,
     'ملابس أطفال وألعاب تعليمية آمنة.', 1500, '9ص', true, 'approved');
   await q(`UPDATE stores SET rating_avg=$1, rating_count=$2 WHERE id=$3`, [4.7, 95, tofola]);
 
-  const lamsa = await store(vendorLamsa, 'لمسة — مكياج وعناية', 'مكياج وعناية', '💄',
+  const lamsa = await store(vendorLamsa, 'لمسة — مكياج وعناية', 'مكياج وعناية', '/uploads/stores/s4.jpg',
     'linear-gradient(120deg,#B45309,#F5A623)', 'شارع الجمهورية، الكوت', dJomhoria,
     'مكياج وعطور ومنتجات عناية بالبشرة أصلية.', 0, '10ص', false, 'pending');
 
-  const style = await store(vendorAli, 'ستايل — أحذية', 'أحذية', '👟',
+  const style = await store(vendorAli, 'ستايل — أحذية', 'أحذية', '/uploads/stores/s5.jpg',
     'linear-gradient(120deg,#B45309,#F5A623)', 'سوق المدينة، الكوت', dSouq,
     'أحذية رجالية ونسائية أصلية.', 1500, '9ص', true, 'approved');
   await q(`UPDATE stores SET rating_avg=$1, rating_count=$2 WHERE id=$3`, [4.5, 66, style]);
@@ -143,36 +143,36 @@ async function seed() {
     (await q(`INSERT INTO product_variants (product_id, name, stock) VALUES ($1,$2,$3) RETURNING id`, [pid, name, stock]))[0].id;
 
   // الأصيل
-  let p = await prod(alAsil, 'ملابس رجالي', 'قميص رجالي قطني', 18000, 25000, '👕', 'قطن مصري 100%، مقاسات S–XXL');
+  let p = await prod(alAsil, 'ملابس رجالي', 'قميص رجالي قطني', 18000, 25000, '/uploads/products/p01.jpg', 'قطن مصري 100%، مقاسات S–XXL');
   await variant(p, 'S', 4); await variant(p, 'M', 7); await variant(p, 'L', 3); await variant(p, 'XL', 6);
   await q(`INSERT INTO offers (product_id, percent, active) VALUES ($1,30,true)`, [p]);
-  p = await prod(alAsil, 'ملابس رجالي', 'جاكيت شتوي فاخر', 55000, 65000, '🧥', 'مقاوم للماء، مقاسات M–XXL');
+  p = await prod(alAsil, 'ملابس رجالي', 'جاكيت شتوي فاخر', 55000, 65000, '/uploads/products/p02.jpg', 'مقاوم للماء، مقاسات M–XXL');
   await variant(p, 'M', 2); await variant(p, 'L', 0); await variant(p, 'XL', 5);
   await q(`INSERT INTO offers (product_id, percent, active) VALUES ($1,20,true)`, [p]);
-  p = await prod(alAsil, 'ملابس رجالي', 'سروال جينز كلاسيك', 28000, null, '👖', 'مقاس 30–42');
+  p = await prod(alAsil, 'ملابس رجالي', 'سروال جينز كلاسيك', 28000, null, '/uploads/products/p03.jpg', 'مقاس 30–42');
   await variant(p, '30', 2); await variant(p, '32', 8); await variant(p, '34', 5); await variant(p, '36', 4);
-  p = await prod(alAsil, 'ملابس رجالي', 'ساعة يد رياضية', 42000, null, '⌚', 'ستيل + جلد');
+  p = await prod(alAsil, 'ملابس رجالي', 'ساعة يد رياضية', 42000, null, '/uploads/products/p04.jpg', 'ستيل + جلد');
   await variant(p, 'قياسي', 0);
 
   // بوتيك النور
-  p = await prod(boutikNoor, 'ملابس نسائي', 'فستان سهرة أنيق', 45000, 60000, '👗', 'فستان سهرة فخم');
+  p = await prod(boutikNoor, 'ملابس نسائي', 'فستان سهرة أنيق', 45000, 60000, '/uploads/products/p05.jpg', 'فستان سهرة فخم');
   await variant(p, 'S', 5); await variant(p, 'M', 8); await variant(p, 'L', 4);
-  p = await prod(boutikNoor, 'ملابس نسائي', 'شنطة يد جلد', 38000, null, '👜', 'جلد طبيعي');
-  p = await prod(boutikNoor, 'ملابس نسائي', 'بلوزة حرير', 22000, null, '👚', 'حرير ناعم');
+  p = await prod(boutikNoor, 'ملابس نسائي', 'شنطة يد جلد', 38000, null, '/uploads/products/p06.jpg', 'جلد طبيعي');
+  p = await prod(boutikNoor, 'ملابس نسائي', 'بلوزة حرير', 22000, null, '/uploads/products/p07.jpg', 'حرير ناعم');
   await variant(p, 'S', 6); await variant(p, 'M', 6); await variant(p, 'L', 3);
 
   // طفولة
-  p = await prod(tofola, 'أطفال وألعاب', 'لعبة تعليمية خشبية', 15000, null, '🧸', 'تعليمية وآمنة');
-  p = await prod(tofola, 'أطفال وألعاب', 'طقم ملابس أطفال', 12000, null, '🧒', 'قطن');
+  p = await prod(tofola, 'أطفال وألعاب', 'لعبة تعليمية خشبية', 15000, null, '/uploads/products/p08.jpg', 'تعليمية وآمنة');
+  p = await prod(tofola, 'أطفال وألعاب', 'طقم ملابس أطفال', 12000, null, '/uploads/products/p09.jpg', 'قطن');
   await variant(p, '2Y', 4); await variant(p, '4Y', 5);
 
   // لمسة
-  p = await prod(lamsa, 'مكياج وعناية', 'طقم مكياج كامل', 60000, null, '💄', 'بالتقسيط المريح');
-  p = await prod(lamsa, 'مكياج وعناية', 'عطر فرنسي', 45000, 55000, '🌸', 'عطر أصلي');
+  p = await prod(lamsa, 'مكياج وعناية', 'طقم مكياج كامل', 60000, null, '/uploads/products/p10.jpg', 'بالتقسيط المريح');
+  p = await prod(lamsa, 'مكياج وعناية', 'عطر فرنسي', 45000, 55000, '/uploads/products/p11.jpg', 'عطر أصلي');
 
   // ستايل
-  p = await prod(style, 'أحذية', 'حذاء رياضي أزرق', 35000, null, '👟', 'مريح للجري', false);
-  p = await prod(style, 'أحذية', 'صندل جلد', 18000, null, '🩴', 'جلد طبيعي');
+  p = await prod(style, 'أحذية', 'حذاء رياضي أزرق', 35000, null, '/uploads/products/p12.jpg', 'مريح للجري', false);
+  p = await prod(style, 'أحذية', 'صندل جلد', 18000, null, '/uploads/products/p13.jpg', 'جلد طبيعي');
   await variant(p, '40', 4); await variant(p, '41', 5); await variant(p, '42', 3);
 
   // ── مستندات التوثيق ──

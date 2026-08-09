@@ -64,6 +64,7 @@ class _CustomerShellState extends State<CustomerShell> {
           onTap: (i) => setState(() {
             tab = i;
             if (i == 2) cartReload++;
+            if (i == 3) AppState.i.favsReload.value++;
           }),
         ),
       ),
@@ -147,29 +148,28 @@ class _HomeScreenState extends State<HomeScreen> {
     }
   }
 
-/// شريط تمرير أفقي للمنتجات — صفّان من البوكسات الكبيرة المتلاصقة (مثل شبكة عرض الكل)
+/// شريط تمرير أفقي للمنتجات — صفّان مرتبان صفاً ثم عموداً (لو فئة فيها 2 منتج يكونن بنفس الصف)
   Widget _prodStrip(List products) {
     final w = (MediaQuery.of(context).size.width - 43) / 2;
     const textH = 112.0;
     final rowH = w * 4 / 3 + textH;
+    Widget cell(int idx) => idx < products.length
+        ? Expanded(child: _stripCard(Map<String, dynamic>.from(products[idx] as Map), w))
+        : const Expanded(child: SizedBox());
     return SizedBox(
       height: rowH * 2,
       child: ListView.separated(
         scrollDirection: Axis.horizontal,
         padding: const EdgeInsets.symmetric(horizontal: 16),
-        itemCount: (products.length + 1) ~/ 2,
+        itemCount: (products.length + 3) ~/ 4,
         separatorBuilder: (_, __) => const SizedBox.shrink(),
         itemBuilder: (_, i) {
-          final i1 = i * 2;
-          final i2 = i * 2 + 1;
+          final base = i * 4;
           return SizedBox(
-            width: w,
+            width: w * 2,
             child: Column(children: [
-              Expanded(child: _stripCard(Map<String, dynamic>.from(products[i1] as Map), w)),
-              if (i2 < products.length)
-                Expanded(child: _stripCard(Map<String, dynamic>.from(products[i2] as Map), w))
-              else
-                const Expanded(child: SizedBox()),
+              Expanded(child: Row(children: [cell(base), cell(base + 1)])),
+              Expanded(child: Row(children: [cell(base + 2), cell(base + 3)])),
             ]),
           );
         },
@@ -898,9 +898,6 @@ class _HeroCarouselState extends State<_HeroCarousel> {
         clipBehavior: Clip.antiAlias,
         decoration: BoxDecoration(
           borderRadius: BorderRadius.circular(22),
-          boxShadow: const [
-            BoxShadow(color: Color(0x120A1120), blurRadius: 18, offset: Offset(0, 8)),
-          ],
         ),
         child: Stack(fit: StackFit.expand, children: [
           // الخلفية: صورة الإعلان / غلاف المتجر / التدرج
@@ -1323,6 +1320,7 @@ class _ProductScreenState extends State<ProductScreen> {
   List reviews = [];
   List related = [];
   List same = [];
+  bool isFav = false;
 
   @override
   void initState() {
@@ -1338,6 +1336,14 @@ class _ProductScreenState extends State<ProductScreen> {
       store = d['store'];
       reviews = (d['reviews'] ?? []).cast<Map>();
       same = products.where((x) => x['id'] != widget.productId).toList();
+      // حالة المفضلة الحالية
+      if (Api.logged) {
+        try {
+          final f = await Api.get('/api/customer/favorites');
+          final ids = ((f['products'] ?? []) as List).map((x) => (x is Map ? x['id'] : null)).toSet();
+          isFav = ids.contains(widget.productId);
+        } catch (_) {}
+      }
       final catId = p?['category_id'];
       if (catId != null) {
         final rel = await Api.get('/api/products?category_id=$catId');
@@ -1836,7 +1842,7 @@ class _ProductScreenState extends State<ProductScreen> {
           const SizedBox(width: 8),
           _barBtn(icon: Icons.share_rounded, onTap: _share),
           const SizedBox(width: 8),
-          _barBtn(icon: Icons.favorite_border_rounded, onTap: _toggleFav),
+          _barBtn(icon: isFav ? Icons.favorite_rounded : Icons.favorite_border_rounded, iconColor: isFav ? A.danger : null, onTap: _toggleFav),
           const SizedBox(width: 10),
           Expanded(
             child: SolidBtn(
@@ -1867,13 +1873,15 @@ class _ProductScreenState extends State<ProductScreen> {
     }
     try {
       final d = await Api.post('/api/customer/favorites', {'product_id': widget.productId});
-      toast(context, d['favorite'] == false ? 'انحذف من المفضلة' : 'انضاف للمفضلة ❤️');
+      setState(() => isFav = d['favorite'] == true);
+      toast(context, d['favorite'] == true ? 'انضاف للمفضلة ❤️' : 'انحذف من المفضلة');
+      AppState.i.favsReload.value++;
     } catch (e) {
       toast(context, '$e', error: true);
     }
   }
 
-  Widget _barBtn({required IconData icon, required VoidCallback onTap}) {
+  Widget _barBtn({required IconData icon, VoidCallback? onTap, Color? iconColor}) {
     return GestureDetector(
       onTap: onTap,
       child: Container(
@@ -1881,7 +1889,7 @@ class _ProductScreenState extends State<ProductScreen> {
         height: 48,
         alignment: Alignment.center,
         decoration: BoxDecoration(color: A.bg, borderRadius: BorderRadius.circular(14), border: Border.all(color: A.line)),
-        child: Icon(icon, size: 21, color: A.ink),
+        child: Icon(icon, size: 21, color: iconColor ?? A.ink),
       ),
     );
   }

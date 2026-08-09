@@ -138,6 +138,7 @@ class AppState extends ChangeNotifier {
   int unreadNotifs = 0;
   List<Map<String, dynamic>> guestCart = []; // السلة المحلية للضيوف
   final ValueNotifier<int> cartCount = ValueNotifier(0); // عداد السلة — يحرك الشارات والزر العائم
+  final ValueNotifier<int> favsReload = ValueNotifier(0); // إشارة لتحديث تبويب المفضلة
   static const _cartKey = 'zaboon_cart_count';
 
   /// تحديث العداد وحفظه — الرقم يبقى حتى بعد إغلاق التطبيق

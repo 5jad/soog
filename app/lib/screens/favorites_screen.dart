@@ -20,6 +20,13 @@ class _FavoritesScreenState extends State<FavoritesScreen> {
   void initState() {
     super.initState();
     _load();
+    AppState.i.favsReload.addListener(_load);
+  }
+
+  @override
+  void dispose() {
+    AppState.i.favsReload.removeListener(_load);
+    super.dispose();
   }
 
   Future<void> _load() async {
@@ -73,7 +80,7 @@ class _FavoritesScreenState extends State<FavoritesScreen> {
                                   right: 8,
                                   child: GestureDetector(
                                     onTap: () async {
-                                      await Api.post('/api/customer/favorites', {'product_id': prod.id});
+                                      await Api.del('/api/customer/favorites/${prod.id}');
                                       _load();
                                     },
                                     child: Container(

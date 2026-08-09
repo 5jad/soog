@@ -411,8 +411,13 @@ r.get('/favorites', async (req, res) => {
   res.json({ products: rows });
 });
 r.post('/favorites', async (req, res) => {
+  const ex = await one(`SELECT id FROM favorites WHERE user_id=$1 AND product_id=$2`, [req.user.id, req.body.product_id]);
+  if (ex) {
+    await q(`DELETE FROM favorites WHERE id=$1`, [ex.id]);
+    return res.json({ favorite: false });
+  }
   await q(`INSERT INTO favorites (user_id, product_id) VALUES ($1,$2) ON CONFLICT DO NOTHING`, [req.user.id, req.body.product_id]);
-  res.json({ ok: true });
+  res.json({ favorite: true });
 });
 r.delete('/favorites/:product_id', async (req, res) => {
   await q('DELETE FROM favorites WHERE user_id=$1 AND product_id=$2', [req.user.id, req.params.product_id]);

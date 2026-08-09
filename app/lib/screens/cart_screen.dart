@@ -309,6 +309,40 @@ class _CartScreenState extends State<CartScreen> {
     );
   }
 
+  /// بطاقة خيار صغيرة في شريط السلة
+  Widget _optTile({required IconData icon, required Color color, required String title, required String sub, VoidCallback? onTap, Widget? trailing}) {
+    return Material(
+      color: Colors.transparent,
+      child: InkWell(
+        borderRadius: BorderRadius.circular(14),
+        onTap: onTap,
+        child: Ink(
+          padding: const EdgeInsets.all(9),
+          decoration: BoxDecoration(
+            color: color.withOpacity(0.06),
+            borderRadius: BorderRadius.circular(14),
+            border: Border.all(color: color.withOpacity(0.16)),
+          ),
+          child: Row(children: [
+            Container(
+              padding: const EdgeInsets.all(7),
+              decoration: BoxDecoration(color: color.withOpacity(0.13), borderRadius: BorderRadius.circular(9)),
+              child: Icon(icon, color: color, size: 18),
+            ),
+            const SizedBox(width: 8),
+            Expanded(
+              child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+                Text(title, style: A.t(10.5, c: A.ink, w: FontWeight.w900), maxLines: 1, overflow: TextOverflow.ellipsis),
+                Text(sub, style: A.t(9, c: A.muted, w: FontWeight.w600), maxLines: 1, overflow: TextOverflow.ellipsis),
+              ]),
+            ),
+            if (trailing != null) trailing,
+          ]),
+        ),
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     // تجميع حسب المتجر
@@ -323,6 +357,11 @@ class _CartScreenState extends State<CartScreen> {
     double total = 0;
     for (final it in cart) {
       total += (double.tryParse('${it['price'] ?? 0}') ?? 0.0) * (double.tryParse('${it['qty'] ?? 1}') ?? 1.0);
+    }
+    double deliveryTotal = 0;
+    for (final g in groupList) {
+      final items = (g['items'] as List);
+      if (items.isNotEmpty) deliveryTotal += ((items.first['delivery_fee'] ?? 0) as num).toDouble();
     }
 
     final bodyWidget = loading
@@ -369,24 +408,56 @@ class _CartScreenState extends State<CartScreen> {
         ? null
         : Container(
             decoration: BoxDecoration(
-              color: Colors.white.withOpacity(0.92),
-              borderRadius: const BorderRadius.vertical(top: Radius.circular(24)),
+              color: Colors.white.withOpacity(0.94),
+              borderRadius: const BorderRadius.vertical(top: Radius.circular(26)),
               border: Border(top: BorderSide(color: Colors.white.withOpacity(0.9), width: 1)),
-              boxShadow: const [BoxShadow(color: Color(0x14000000), blurRadius: 20, offset: Offset(0, -4))],
+              boxShadow: const [BoxShadow(color: Color(0x16000000), blurRadius: 22, offset: Offset(0, -4))],
             ),
             child: SafeArea(
               top: false,
               child: Padding(
-                padding: const EdgeInsets.fromLTRB(16, 10, 16, 10),
+                padding: const EdgeInsets.fromLTRB(16, 12, 16, 10),
                 child: Column(mainAxisSize: MainAxisSize.min, children: [
+                  // خيارات: جدولة + نقاط
+                  Row(children: [
+                    Expanded(
+                      child: _optTile(
+                        icon: Icons.schedule_rounded,
+                        color: A.cyan,
+                        title: 'جدولة التوصيل',
+                        sub: scheduled == null ? 'الآن (عاجل)' : '${scheduled!.day}/${scheduled!.month} ${scheduled!.hour}:${scheduled!.minute.toString().padLeft(2, '0')}',
+                        onTap: _pickSchedule,
+                      ),
+                    ),
+                    if (Api.me != null && (Api.me?['points'] ?? 0) >= 100) ...[
+                      const SizedBox(width: 8),
+                      Expanded(
+                        child: _optTile(
+                          icon: Icons.star_rounded,
+                          color: A.warning,
+                          title: 'نقاطي (${Api.me?['points']})',
+                          sub: 'توفر ${money((((Api.me?['points'] ?? 0) ~/ 100) * 1000).toDouble())}',
+                          trailing: Switch(
+                            value: usePoints,
+                            activeColor: A.warning,
+                            activeTrackColor: A.warning.withOpacity(0.35),
+                            materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                            onChanged: (v) => setState(() => usePoints = v),
+                          ),
+                        ),
+                      ),
+                    ],
+                  ]),
+                  const SizedBox(height: 10),
+                  // الكوبون
                   Row(children: [
                     Expanded(
                       child: TextField(
                         controller: couponCtrl,
                         onSubmitted: (v) => v.isNotEmpty ? _applyCoupon(groupList.isEmpty ? 0 : (groupList.first['store_id'] as num).toInt(), total) : null,
                         decoration: InputDecoration(
-                          hintText: appliedCoupon.isEmpty ? '🎟️ عندك كود كوبون للسلة كلها؟' : 'كوبون ${appliedCoupon} مطبق ✓',
-                          hintStyle: A.t(10.5, c: appliedCoupon.isEmpty ? A.muted : A.success, w: FontWeight.w700),
+                          hintText: appliedCoupon.isEmpty ? '🎟️ كود كوبون؟' : 'كوبون ${appliedCoupon} مطبق ✓',
+                          hintStyle: A.t(11, c: appliedCoupon.isEmpty ? A.muted : A.success, w: FontWeight.w700),
                           isDense: true,
                           filled: true,
                           fillColor: Colors.white.withOpacity(0.8),
@@ -402,16 +473,15 @@ class _CartScreenState extends State<CartScreen> {
                         borderRadius: BorderRadius.circular(13),
                         onTap: () => couponCtrl.text.isNotEmpty ? _applyCoupon(groupList.isEmpty ? 0 : (groupList.first['store_id'] as num).toInt(), total) : null,
                         child: Ink(
-                          width: 100,
-                          height: 47,
+                          width: 92,
+                          height: 44,
                           decoration: BoxDecoration(
                             gradient: const LinearGradient(colors: [A.primaryDeep, A.primary]),
                             borderRadius: BorderRadius.circular(13),
-                            boxShadow: [BoxShadow(color: A.primary.withOpacity(0.3), blurRadius: 12, offset: const Offset(0, 4))],
                           ),
                           child: Center(
                             child: Text(appliedCoupon.isEmpty ? 'تطبيق' : '✓',
-                                style: A.t(14.5, c: Colors.white, w: FontWeight.w900)),
+                                style: A.t(14, c: Colors.white, w: FontWeight.w900)),
                           ),
                         ),
                       ),
@@ -422,72 +492,70 @@ class _CartScreenState extends State<CartScreen> {
                     Align(
                       alignment: AlignmentDirectional.centerStart,
                       child: Row(children: [
-                        const Icon(Icons.check_circle_rounded, size: 15, color: A.success),
+                        const Icon(Icons.check_circle_rounded, size: 14, color: A.success),
                         const SizedBox(width: 5),
-                        Text('خصم ${money(appliedCouponDiscount)} من إجمالي السلة', style: A.t(10, c: A.success, w: FontWeight.w800)),
+                        Text('خصم ${money(appliedCouponDiscount)} من السلة', style: A.t(10, c: A.success, w: FontWeight.w800)),
                       ]),
                     ),
                   ],
-                  if (Api.me != null && (Api.me?['points'] ?? 0) >= 100) ...[
-                    const SizedBox(height: 6),
-                    Row(children: [
-                      const Icon(Icons.star_rounded, size: 15, color: A.warning),
-                      const SizedBox(width: 6),
-                      Expanded(
-                        child: Text('استخدم نقاطي (${Api.me?['points']}) — يوفر ${money((((Api.me?['points'] ?? 0) ~/ 100) * 1000).toDouble())}',
-                            style: A.t(10, c: A.muted, w: FontWeight.w700)),
-                      ),
-                      Switch(
-                        value: usePoints,
-                        activeColor: A.warning,
-                        activeTrackColor: A.warning.withOpacity(0.35),
-                        materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
-                        onChanged: (v) => setState(() => usePoints = v),
-                      ),
-                    ]),
-                  ],
-                  const SizedBox(height: 8),
-                  Row(children: [
-                    Expanded(
-                      child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-                        Text('الإجمالي', style: A.t(10.5, c: A.muted, w: FontWeight.w700)),
+                  const SizedBox(height: 9),
+                  // الخلاصة النهائية
+                  Container(
+                    padding: const EdgeInsets.fromLTRB(11, 9, 11, 9),
+                    decoration: BoxDecoration(color: A.bg.withOpacity(0.75), borderRadius: BorderRadius.circular(14), border: Border.all(color: A.line)),
+                    child: Column(children: [
+                      Row(children: [
+                        Text('المجموع الفرعي', style: A.t(10.5, c: A.muted, w: FontWeight.w700)),
+                        const Spacer(),
+                        Text(money(total), style: A.t(11.5, c: A.ink, w: FontWeight.w800)),
+                      ]),
+                      const SizedBox(height: 4),
+                      Row(children: [
+                        Text('التوصيل (${groupList.length} متجر)', style: A.t(10.5, c: A.muted, w: FontWeight.w700)),
+                        const Spacer(),
+                        Text(deliveryTotal <= 0 ? 'مجاني 🎉' : money(deliveryTotal),
+                            style: A.t(11.5, c: deliveryTotal <= 0 ? A.success : A.ink, w: FontWeight.w800)),
+                      ]),
+                      if (appliedCoupon.isNotEmpty) ...[
+                        const SizedBox(height: 4),
                         Row(children: [
-                          Text(money(total), style: A.t(19, c: A.ink, w: FontWeight.w900)),
-                          const SizedBox(width: 8),
-                          Container(
-                            padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 2),
-                            decoration: BoxDecoration(color: A.warning.withOpacity(0.12), borderRadius: BorderRadius.circular(8)),
-                            child: Text('${cart.length} صنف', style: A.t(10, c: A.warning, w: FontWeight.w800)),
-                          ),
+                          Text('الكوبون', style: A.t(10.5, c: A.muted, w: FontWeight.w700)),
+                          const Spacer(),
+                          Text('-${money(appliedCouponDiscount)}', style: A.t(11.5, c: A.success, w: FontWeight.w800)),
                         ]),
-                        const SizedBox(height: 2),
-                        Text('دفع كاش عند الاستلام 💵', style: A.t(10, c: A.success, w: FontWeight.w800)),
+                      ],
+                      const Divider(height: 12, color: A.line),
+                      Row(children: [
+                        Text('الإجمالي', style: A.t(12.5, c: A.ink, w: FontWeight.w900)),
+                        const Spacer(),
+                        Text(money(total + deliveryTotal - appliedCouponDiscount), style: A.t(19, c: A.ink, w: FontWeight.w900)),
                       ]),
-                    ),
-                    const SizedBox(width: 12),
-                    Material(
-                      color: Colors.transparent,
-                      child: InkWell(
-                        borderRadius: BorderRadius.circular(15),
-                        onTap: () => placeGroupOrder(groupList),
-                        child: Ink(
-                          height: 50,
-                          decoration: BoxDecoration(
-                            gradient: const LinearGradient(colors: [A.primary, Color(0xFF3B82F6)]),
-                            borderRadius: BorderRadius.circular(15),
-                            boxShadow: [BoxShadow(color: A.primary.withOpacity(0.35), blurRadius: 14, offset: const Offset(0, 5))],
-                          ),
-                          child: const Padding(
-                            padding: EdgeInsets.symmetric(horizontal: 20),
-                            child: Center(
-                              child: Text('إتمام الطلب ✓',
-                                  style: TextStyle(color: Colors.white, fontSize: 13, fontWeight: FontWeight.w900)),
-                            ),
-                          ),
+                      const SizedBox(height: 2),
+                      Row(children: [
+                        Text('${cart.length} صنف · دفع كاش عند الاستلام 💵', style: A.t(9.5, c: A.success, w: FontWeight.w800)),
+                      ]),
+                    ]),
+                  ),
+                  const SizedBox(height: 9),
+                  Material(
+                    color: Colors.transparent,
+                    child: InkWell(
+                      borderRadius: BorderRadius.circular(16),
+                      onTap: () => placeGroupOrder(groupList),
+                      child: Ink(
+                        height: 52,
+                        decoration: BoxDecoration(
+                          gradient: const LinearGradient(colors: [A.primaryDeep, A.primary]),
+                          borderRadius: BorderRadius.circular(16),
+                          boxShadow: [BoxShadow(color: A.primary.withOpacity(0.35), blurRadius: 14, offset: const Offset(0, 5))],
+                        ),
+                        child: const Center(
+                          child: Text('إتمام الطلب ✓ — ادفع عند الاستلام',
+                              style: TextStyle(color: Colors.white, fontSize: 14, fontWeight: FontWeight.w900)),
                         ),
                       ),
                     ),
-                  ]),
+                  ),
                 ]),
               ),
             ),

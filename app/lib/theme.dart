@@ -118,7 +118,6 @@ class ChipG extends StatelessWidget {
             ? BoxDecoration(
                 gradient: A.gradNavy,
                 borderRadius: BorderRadius.circular(999),
-                boxShadow: const [BoxShadow(color: A.primary, blurRadius: 14, offset: Offset(0, 4))],
               )
             : A.glass(radius: 999, soft: true),
         child: Row(

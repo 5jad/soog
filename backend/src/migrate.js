@@ -9,6 +9,7 @@ const stmts = [
   `ALTER TABLE refund_requests ADD COLUMN IF NOT EXISTS type TEXT DEFAULT 'return' CHECK (type IN ('return','exchange'))`,
   `ALTER TABLE refund_requests ADD COLUMN IF NOT EXISTS desired TEXT DEFAULT ''`,
   `ALTER TABLE refund_requests ADD COLUMN IF NOT EXISTS resolved_at TIMESTAMPTZ`,
+  `ALTER TABLE ad_requests ADD COLUMN IF NOT EXISTS image TEXT DEFAULT ''`,
   `CREATE INDEX IF NOT EXISTS idx_refund_orders ON refund_requests(order_id)`,
   `DROP TABLE IF EXISTS messages, conversations CASCADE`,
   `CREATE TABLE conversations (

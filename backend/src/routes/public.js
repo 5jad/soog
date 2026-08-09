@@ -139,7 +139,7 @@ r.get('/products/:id', async (req, res) => {
 // ── الإعلانات النشطة ──
 r.get('/ads', async (_req, res) => {
   const dAds = await demoCond('ads');
-  res.json({ ads: await q(`SELECT a.*, s.name AS store_name FROM ad_requests a JOIN stores s ON s.id=a.store_id ${dAds ? `WHERE a.status='active' AND ${dAds.replaceAll('o.','a.')}` : `WHERE a.status='active'`} ORDER BY a.sort, a.id`) });
+  res.json({ ads: await q(`SELECT a.*, s.name AS store_name, s.cover AS store_cover, s.logo AS store_logo FROM ad_requests a JOIN stores s ON s.id=a.store_id ${dAds ? `WHERE a.status='active' AND ${dAds.replaceAll('o.','a.')}` : `WHERE a.status='active'`} ORDER BY a.sort, a.id`) });
 });
 
 // ── العروض ──

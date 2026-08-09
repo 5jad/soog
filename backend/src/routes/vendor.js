@@ -279,7 +279,7 @@ r.get('/ads', async (req, res) => {
 r.post('/ads', async (req, res) => {
   const s = await myStore(req);
   if (!s) return res.status(404).json({ error: 'سجل محلك أول' });
-  const { title, art = '🖼', gradient = '', package_id } = req.body;
+  const { title, art = '🖼', gradient = '', image = '', package_id } = req.body;
   if (!title || !package_id) return res.status(400).json({ error: 'العنوان والباقة مطلوبين' });
 
   const pkg = await one('SELECT * FROM ad_packages WHERE id=$1 AND active=true', [package_id]);
@@ -287,9 +287,9 @@ r.post('/ads', async (req, res) => {
 
   let ad;
   await tx(async (c) => {
-    ad = (await c.query(`INSERT INTO ad_requests (store_id, title, art, duration_days, price, gradient, status, starts_at, ends_at, sort) 
-      VALUES ($1,$2,$3,$4,$5,$6,'active',now(),now()+interval '1 day' * $4, COALESCE((SELECT max(sort) FROM ad_requests WHERE status='active'),0)+1) RETURNING *`,
-      [s.id, title, art, pkg.days, pkg.price, gradient])).rows[0];
+    ad = (await c.query(`INSERT INTO ad_requests (store_id, title, art, image, duration_days, price, gradient, status, starts_at, ends_at, sort) 
+      VALUES ($1,$2,$3,$4,$5,$6,$7,'active',now(),now()+interval '1 day' * $5, COALESCE((SELECT max(sort) FROM ad_requests WHERE status='active'),0)+1) RETURNING *`,
+      [s.id, title, art, image, pkg.days, pkg.price, gradient])).rows[0];
 
     await c.query(`UPDATE wallets SET available=available-$1, updated_at=now() WHERE store_id=$2`, [pkg.price, s.id]);
     await c.query(`INSERT INTO wallet_transactions (store_id, type, amount, note) VALUES ($1,'ad',$2,$3)`, [s.id, -pkg.price, `ترويج منتج: ${title}`]);

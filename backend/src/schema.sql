@@ -367,6 +367,7 @@ CREATE TABLE ad_requests (
   store_id INTEGER NOT NULL REFERENCES stores(id) ON DELETE CASCADE,
   title TEXT NOT NULL,
   art TEXT DEFAULT '🖼',
+  image TEXT DEFAULT '',
   gradient TEXT DEFAULT 'linear-gradient(120deg,#1E3A8A,#06B6D4)',
   duration_days INTEGER DEFAULT 7,
   price INTEGER DEFAULT 25000,

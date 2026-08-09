@@ -11,7 +11,6 @@ import 'favorites_screen.dart';
 import 'notifications_screen.dart';
 import 'cart_screen.dart';
 import 'account_screen.dart';
-import 'login_screen.dart';
 
 /// واجهة الزبون — 4 تبويبات: الرئيسية، المتاجر، الطلبات، حسابي
 class CustomerShell extends StatefulWidget {
@@ -90,6 +89,7 @@ class _HomeScreenState extends State<HomeScreen> {
   List offers = [];
   List bestProducts = [];
   List categories = [];
+  Map<int, List> catProducts = {}; // منتجات كل فئة (لأشرطة التمرير)
   bool loading = true;
   final qCtrl = TextEditingController();
   String q = '';
@@ -135,9 +135,65 @@ class _HomeScreenState extends State<HomeScreen> {
       offers = results[2]['offers'] ?? [];
       categories = results[3]['categories'] ?? [];
       bestProducts = results[4]['products'] ?? [];
+      // منتجات كل فئة — لأشرطة التمرير بالرئيسية
+      final catReqs = categories.map((c) => Api.get('/api/products?category_id=${c['id']}')).toList();
+      final catRes = await Future.wait(catReqs);
+      catProducts = {
+        for (var i = 0; i < categories.length; i++) (categories[i]['id'] as int): (catRes[i]['products'] ?? []) as List,
+      };
     } catch (_) {} finally {
       if (mounted) setState(() => loading = false);
     }
+  }
+
+  /// شريط تمرير أفقي لمنتجات
+  Widget _prodStrip(List products) {
+    return SizedBox(
+      height: 150,
+      child: ListView.separated(
+        scrollDirection: Axis.horizontal,
+        padding: const EdgeInsets.symmetric(horizontal: 16),
+        itemCount: products.length,
+        separatorBuilder: (_, __) => const SizedBox(width: 11),
+        itemBuilder: (_, i) {
+          final m = Map<String, dynamic>.from(products[i] as Map);
+          final prod = Product.fromJson(m);
+          return _ProdMiniCard(
+            productJson: m,
+            storeName: m['store_name'] ?? '',
+            storeId: (m['store_id'] as num?)?.toInt() ?? 0,
+            onOpen: () => pushProduct(context, (m['store_id'] as num?)?.toInt() ?? 0, prod.id),
+          );
+        },
+      ),
+    );
+  }
+
+  /// عنوان قسم + زر «عرض الكل» للفئة
+  Widget _stripHeader(String title, {Map? cat}) {
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(16, 20, 16, 0),
+      child: Row(children: [
+        Expanded(child: SectionTitle(title)),
+        if (cat != null)
+          GestureDetector(
+            onTap: () => _pickCat(cat),
+            child: Container(
+              padding: const EdgeInsets.symmetric(horizontal: 11, vertical: 6),
+              decoration: BoxDecoration(
+                color: A.primary.withOpacity(0.09),
+                borderRadius: BorderRadius.circular(999),
+                border: Border.all(color: A.primary.withOpacity(0.35)),
+              ),
+              child: Row(mainAxisSize: MainAxisSize.min, children: [
+                Text('عرض منتجات هذه الفئة', style: A.t(10.5, c: A.primary, w: FontWeight.w900)),
+                const SizedBox(width: 3),
+                const Icon(Icons.arrow_back_rounded, size: 13, color: A.primary),
+              ]),
+            ),
+          ),
+      ]),
+    );
   }
 
   bool get hasFilters =>
@@ -489,6 +545,7 @@ class _HomeScreenState extends State<HomeScreen> {
                     // البانر الرئيسي — سلايدر تلقائي
                     _HeroCarousel(
                       ads: ads,
+                      stores: stores,
                       onOpen: (a) {
                         final sid = a['store_id'];
                         if (sid != null) widget.onGoStore(sid);
@@ -546,8 +603,9 @@ class _HomeScreenState extends State<HomeScreen> {
                         ),
                       ),
                     ],
-                    // ═══ قسم المنتجات — عنوان ديناميكي + زر الفلتر ═══
-                    Padding(
+                    // ═══ قسم المنتجات — عنوان ديناميكي + زر الفلتر (للشبكة فقط) ═══
+                    if (gridMode)
+                      Padding(
                       padding: const EdgeInsets.fromLTRB(16, 20, 16, 0),
                       child: Row(children: [
                         Expanded(
@@ -629,23 +687,23 @@ class _HomeScreenState extends State<HomeScreen> {
                                   }).toList(),
                                 )
                     else ...[
+                      // شريط الأكثر مبيعاً
+                      if (bestProducts.isNotEmpty) ...[
+                        _stripHeader('🔥 الأكثر مبيعاً اليوم'),
+                        const SizedBox(height: 10),
+                        _prodStrip(bestProducts),
+                      ],
+                      // شريط لكل فئة + زر عرض منتجاتها
+                      for (final c in categories)
+                        if ((catProducts[c['id']] ?? []).isNotEmpty) ...[
+                          _stripHeader('${c['icon'] ?? '🛍'} ${c['name']}', cat: Map<String, dynamic>.from(c as Map)),
+                          const SizedBox(height: 10),
+                          _prodStrip(catProducts[c['id']]!),
+                        ],
                       if (bestProducts.isEmpty)
                         const Padding(
                           padding: EdgeInsets.symmetric(horizontal: 16),
                           child: Text('ماكو منتجات بعد', style: TextStyle(fontSize: 12.5, color: A.muted)),
-                        )
-                      else
-                        GridView.count(
-                          crossAxisCount: 2,
-                          shrinkWrap: true,
-                          physics: const NeverScrollableScrollPhysics(),
-                          mainAxisSpacing: 0,
-                          crossAxisSpacing: 0,
-                          childAspectRatio: 0.55,
-                            children: bestProducts.map((bp) {
-                              final m = Map<String, dynamic>.from(bp as Map);
-                              return _ProdCard(product: m, onOpen: () => pushProduct(context, m['store_id'], m['id']));
-                            }).toList(),
                         ),
                     ],
                   ],
@@ -682,8 +740,9 @@ void pushStores(BuildContext context) {
 /// سلايدر الإعلانات — يتحرك تلقائياً إذا كانت أكثر من إعلان، مع نقاط مؤشر
 class _HeroCarousel extends StatefulWidget {
   final List ads;
+  final List stores;
   final void Function(Map<String, dynamic>) onOpen;
-  const _HeroCarousel({required this.ads, required this.onOpen});
+  const _HeroCarousel({required this.ads, required this.stores, required this.onOpen});
   @override
   State<_HeroCarousel> createState() => _HeroCarouselState();
 }
@@ -714,41 +773,84 @@ class _HeroCarouselState extends State<_HeroCarousel> {
 
   Widget _banner(Map a) {
     final sun = a['theme'] == 'sun';
+    // صورة الإعلان إن وجدت، وإلا غلاف المتجر، وإلا التدرج
+    final fromStore = (a['store_cover'] ?? '').toString().isNotEmpty ? a['store_cover'].toString() : '';
+    final coverOfStore = fromStore.isNotEmpty
+        ? fromStore
+        : (widget.stores.firstWhere((s) => s['id'] == a['store_id'], orElse: () => null)?['cover']?.toString() ?? '');
+    final bgImage = (a['image'] ?? '').toString().isNotEmpty ? a['image'].toString() : coverOfStore;
     return GestureDetector(
       onTap: () => widget.onOpen(Map<String, dynamic>.from(a)),
       child: Container(
         padding: const EdgeInsets.all(16),
         clipBehavior: Clip.antiAlias,
         decoration: BoxDecoration(
-          gradient: sun
-              ? const LinearGradient(colors: [A.accentDeep, A.accent])
-              : const LinearGradient(colors: [A.primaryDeep, A.primary, A.cyan]),
+          border: Border.all(color: Colors.white.withOpacity(0.6), width: 1.2),
           borderRadius: BorderRadius.circular(22),
           boxShadow: const [
             BoxShadow(color: Color(0x551D4ED8), blurRadius: 26, offset: Offset(0, 12)),
           ],
         ),
-        child: Row(children: [
-          Expanded(
-            child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-              Container(
-                padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
-                decoration: BoxDecoration(
-                  color: sun ? const Color(0xFFFFF3C4) : const Color(0xFFFFF3C4).withOpacity(0.25),
-                  borderRadius: BorderRadius.circular(999),
-                ),
-                child: Text('${a['store_name'] ?? 'عرض مميز'}', style: A.t(10.5, c: sun ? A.ink : Colors.white, w: FontWeight.w900)),
+        child: Stack(fit: StackFit.expand, children: [
+          // الخلفية: صورة الإعلان / غلاف المتجر / التدرج
+          if (bgImage.isNotEmpty)
+            productImageBox(bgImage, base: Api.base)
+          else
+            DecoratedBox(
+              decoration: BoxDecoration(
+                gradient: sun
+                    ? const LinearGradient(colors: [A.accentDeep, A.accent])
+                    : const LinearGradient(colors: [A.primaryDeep, A.primary, A.cyan]),
               ),
-              const SizedBox(height: 8),
+            ),
+          // تغميق سفلي لقراءة النص
+          const DecoratedBox(
+            decoration: BoxDecoration(
+              gradient: LinearGradient(
+                begin: Alignment.topCenter,
+                end: Alignment.bottomCenter,
+                colors: [Colors.transparent, Color(0xB30A1120)],
+              ),
+            ),
+          ),
+          if (bgImage.isEmpty)
+            Align(
+              alignment: Alignment.centerLeft,
+              child: Text(a['theme'] == 'sun' ? '🛍️' : '💎', style: A.t(58)),
+            ),
+          // النص والصور
+          Padding(
+            padding: const EdgeInsets.only(left: 4),
+            child: Column(crossAxisAlignment: CrossAxisAlignment.start, mainAxisAlignment: MainAxisAlignment.end, children: [
+              Row(children: [
+                // صورة غلاف المتجر المصغرة + الاسم
+                if (coverOfStore.isNotEmpty) ...[
+                  ClipRRect(
+                    borderRadius: BorderRadius.circular(8),
+                    child: SizedBox(width: 26, height: 26, child: productImageBox(coverOfStore, base: Api.base)),
+                  ),
+                  const SizedBox(width: 6),
+                ],
+                Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                  decoration: BoxDecoration(
+                    color: sun ? const Color(0xFFFFF3C4) : Colors.black.withOpacity(0.35),
+                    borderRadius: BorderRadius.circular(999),
+                    border: Border.all(color: Colors.white.withOpacity(0.25)),
+                  ),
+                  child: Text('${a['store_name'] ?? 'عرض مميز'}', style: A.t(10.5, c: sun ? A.ink : Colors.white, w: FontWeight.w900)),
+                ),
+              ]),
+              const SizedBox(height: 7),
               Text(a['title'] ?? 'عرض اليوم', style: A.t(19, c: Colors.white, w: FontWeight.w900), maxLines: 1, overflow: TextOverflow.ellipsis),
               if ((a['description'] ?? '').toString().isNotEmpty) ...[
                 const SizedBox(height: 3),
                 Text(a['description'].toString(), style: A.t(11, c: Colors.white.withOpacity(0.92), w: FontWeight.w600), maxLines: 2, overflow: TextOverflow.ellipsis),
               ],
-              const SizedBox(height: 10),
+              const SizedBox(height: 9),
               Container(
                 padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 7),
-                decoration: BoxDecoration(color: Colors.white.withOpacity(0.2), borderRadius: BorderRadius.circular(999)),
+                decoration: BoxDecoration(color: Colors.white.withOpacity(0.22), borderRadius: BorderRadius.circular(999)),
                 child: const Row(mainAxisSize: MainAxisSize.min, children: [
                   Text('تسوق الآن', style: TextStyle(fontSize: 12, fontWeight: FontWeight.w900, color: Colors.white)),
                   SizedBox(width: 4),
@@ -757,8 +859,6 @@ class _HeroCarouselState extends State<_HeroCarousel> {
               ),
             ]),
           ),
-          const SizedBox(width: 8),
-          Text(a['theme'] == 'sun' ? '🛍️' : '💎', style: A.t(58)),
         ]),
       ),
     );
@@ -767,17 +867,16 @@ class _HeroCarouselState extends State<_HeroCarousel> {
   @override
   Widget build(BuildContext context) {
     final ads = widget.ads;
-    final fallback = _banner({
-      'title': 'كل ما تتمناه بمكان واحد',
-      'theme': 'navy',
-      'store_name': 'مول الأزياء',
-      'description': 'لرجالك ونسائك وأطفالك — خصومات على كل الطلبيات',
-    });
     return Column(children: [
       Padding(
         padding: const EdgeInsets.fromLTRB(16, 14, 16, 0),
         child: ads.isEmpty
-            ? SizedBox(height: 148, child: fallback)
+            ? SizedBox(height: 148, child: _banner({
+                'title': 'كل ما تتمناه بمكان واحد',
+                'theme': 'navy',
+                'store_name': 'مول الأزياء',
+                'description': 'لرجالك ونسائك وأطفالك — خصومات على كل الطلبيات',
+              }))
             : SizedBox(
                 height: 148,
                 child: PageView.builder(

@@ -575,6 +575,7 @@ class _WalletTabState extends State<_WalletTab> {
 
     final title = TextEditingController();
     int? selectedPkg = packages.first['id'];
+    Uint8List? adImageBytes;
 
     if (!mounted) return;
     await showSheet(context, StatefulBuilder(
@@ -584,6 +585,46 @@ class _WalletTabState extends State<_WalletTab> {
           padding: const EdgeInsets.all(20),
           child: Column(crossAxisAlignment: CrossAxisAlignment.stretch, children: [
             TextField(controller: title, decoration: const InputDecoration(labelText: 'نص الإعلان (مثال: خصم 50%)')),
+            const SizedBox(height: 14),
+            GestureDetector(
+              onTap: () async {
+                final picked = await ImagePicker().pickImage(source: ImageSource.gallery, maxWidth: 1200);
+                if (picked != null) {
+                  final bytes = await picked.readAsBytes();
+                  setS(() => adImageBytes = bytes);
+                }
+              },
+              child: Container(
+                height: 92,
+                decoration: BoxDecoration(
+                  color: A.bg,
+                  borderRadius: BorderRadius.circular(14),
+                  border: Border.all(color: A.line, width: 1.2),
+                ),
+                alignment: Alignment.center,
+                clipBehavior: Clip.antiAlias,
+                child: adImageBytes == null
+                    ? const Column(mainAxisAlignment: MainAxisAlignment.center, children: [
+                        Icon(Icons.add_photo_alternate_rounded, color: A.primary, size: 26),
+                        SizedBox(height: 4),
+                        Text('صورة الإعلان (اختياري)', style: TextStyle(fontSize: 11, color: A.muted, fontWeight: FontWeight.w700)),
+                      ])
+                    : Stack(fit: StackFit.expand, children: [
+                        Image.memory(adImageBytes!, fit: BoxFit.cover),
+                        Positioned(
+                          top: 6, left: 6,
+                          child: GestureDetector(
+                            onTap: () => setS(() => adImageBytes = null),
+                            child: Container(
+                              padding: const EdgeInsets.all(4),
+                              decoration: const BoxDecoration(color: Colors.black54, shape: BoxShape.circle),
+                              child: const Icon(Icons.close_rounded, size: 14, color: Colors.white),
+                            ),
+                          ),
+                        ),
+                      ]),
+              ),
+            ),
             const SizedBox(height: 16),
             Text('اختر باقة الإعلان', style: A.t(13, w: FontWeight.w800)),
             const SizedBox(height: 8),
@@ -599,7 +640,12 @@ class _WalletTabState extends State<_WalletTab> {
             SolidBtn(label: 'ترويج الآن 🚀', onTap: () async {
               if (title.text.isEmpty) return;
               try {
-                await Api.post('/api/vendor/ads', {'title': title.text, 'package_id': selectedPkg});
+                var imageUrl = '';
+                if (adImageBytes != null) {
+                  final urls = await Api.uploadBytes([adImageBytes!]);
+                  imageUrl = urls.isNotEmpty ? urls.first : '';
+                }
+                await Api.post('/api/vendor/ads', {'title': title.text, 'package_id': selectedPkg, if (imageUrl.isNotEmpty) 'image': imageUrl});
                 if (!mounted) return;
                 toast(context, 'تم تفعيل الإعلان بنجاح ✓');
                 Navigator.pop(context);

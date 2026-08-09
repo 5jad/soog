@@ -185,14 +185,16 @@ class _CartScreenState extends State<CartScreen> {
   }
 
   Widget _itemRow(dynamic it) {
+    final price = (it['price'] ?? 0);
+    final qty = (it['qty'] ?? 1);
     return Padding(
-      padding: const EdgeInsets.only(bottom: 9),
+      padding: const EdgeInsets.only(bottom: 10),
       child: Container(
-        padding: const EdgeInsets.all(9),
-        decoration: A.glass(radius: 15, soft: true),
-        child: Row(children: [
-          productImage(it['image'], size: 50, radius: 12),
-          const SizedBox(width: 10),
+        padding: const EdgeInsets.fromLTRB(10, 10, 10, 9),
+        decoration: A.glass(radius: 16, soft: true),
+        child: Row(crossAxisAlignment: CrossAxisAlignment.start, children: [
+          productImage(it['image'], size: 58, radius: 14),
+          const SizedBox(width: 11),
           Expanded(
             child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
               Text(it['product_name'] ?? it['name'] ?? '',
@@ -208,13 +210,14 @@ class _CartScreenState extends State<CartScreen> {
                   ),
                   child: Text(it['variant'].toString(),
                       style: const TextStyle(fontSize: 9, fontWeight: FontWeight.w800, color: A.primary)),
-                )
-              else
-                const SizedBox(height: 3),
+                ),
+              const SizedBox(height: 8),
               Row(children: [
-                Text('${money((it['price'] ?? 0))}', style: A.t(12.5, c: A.accent, w: FontWeight.w900)),
-                const SizedBox(width: 7),
-                Text('الكمية ×${it['qty'] ?? 1}', style: A.t(10, c: A.muted, w: FontWeight.w700)),
+                Text('${money(price)}', style: A.t(13.5, c: A.accent, w: FontWeight.w900)),
+                if (qty > 1) ...[
+                  const SizedBox(width: 6),
+                  Text('×$qty', style: A.t(10.5, c: A.muted, w: FontWeight.w700)),
+                ],
               ]),
             ]),
           ),
@@ -228,10 +231,10 @@ class _CartScreenState extends State<CartScreen> {
                 child: const Icon(Icons.delete_outline_rounded, size: 15, color: A.danger),
               ),
             ),
-            const SizedBox(height: 8),
+            const Spacer(),
             Row(children: [
               GestureDetector(
-                onTap: () => setQty(it['id'], (it['qty'] ?? 1) - 1).then((_) => ((it['qty'] ?? 1) <= 1) ? removeItem(it['id']) : null),
+                onTap: () => setQty(it['id'], qty - 1).then((_) => (qty <= 1) ? removeItem(it['id']) : null),
                 child: Container(
                   width: 26, height: 26,
                   decoration: A.glass(radius: 9, soft: true),
@@ -239,18 +242,15 @@ class _CartScreenState extends State<CartScreen> {
                   child: const Icon(Icons.remove_rounded, size: 15, color: A.muted),
                 ),
               ),
-              SizedBox(
+              Container(
                 width: 30,
-                child: Center(
-                  child: Container(
-                    padding: const EdgeInsets.symmetric(vertical: 2),
-                    decoration: BoxDecoration(color: A.primary.withOpacity(0.07), borderRadius: BorderRadius.circular(8)),
-                    child: Text('${it['qty']}', textAlign: TextAlign.center, style: A.t(12.5, w: FontWeight.w900)),
-                  ),
-                ),
+                margin: const EdgeInsets.symmetric(horizontal: 4),
+                padding: const EdgeInsets.symmetric(vertical: 2),
+                decoration: BoxDecoration(color: A.primary.withOpacity(0.07), borderRadius: BorderRadius.circular(8)),
+                child: Text('$qty', textAlign: TextAlign.center, style: A.t(12.5, w: FontWeight.w900)),
               ),
               GestureDetector(
-                onTap: () => setQty(it['id'], (it['qty'] ?? 1) + 1),
+                onTap: () => setQty(it['id'], qty + 1),
                 child: Container(
                   width: 26, height: 26,
                   decoration: BoxDecoration(gradient: A.gradNavy, borderRadius: BorderRadius.circular(9)),
@@ -275,7 +275,7 @@ class _CartScreenState extends State<CartScreen> {
       decoration: A.glass(radius: 22),
       child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
         Row(children: [
-          storeLogo(g['logo'] ?? '', size: 36, radius: 11),
+          storeLogo(g['logo'] ?? '', size: 38, radius: 11),
           const SizedBox(width: 9),
           Expanded(
             child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
@@ -295,10 +295,16 @@ class _CartScreenState extends State<CartScreen> {
               ]),
             ]),
           ),
-          Text(money(subtotal.toInt()), style: A.t(13, c: A.primary, w: FontWeight.w900)),
         ]),
         const SizedBox(height: 11),
         for (final it in items) _itemRow(it),
+        const Divider(height: 1, color: A.line),
+        const SizedBox(height: 5),
+        Row(children: [
+          Text('مجموع المتجر', style: A.t(10.5, c: A.muted, w: FontWeight.w700)),
+          const Spacer(),
+          Text(money(subtotal.toInt()), style: A.t(13.5, c: A.primary, w: FontWeight.w900)),
+        ]),
       ]),
     );
   }

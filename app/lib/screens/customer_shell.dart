@@ -90,6 +90,7 @@ class _HomeScreenState extends State<HomeScreen> {
   List bestProducts = [];
   List categories = [];
   Map<int, List> catProducts = {}; // منتجات كل فئة (لأشرطة التمرير)
+  Map? expandedCat; // الفئة الموسّعة بـ «عرض الكل» في مكانها
   bool loading = true;
   final qCtrl = TextEditingController();
   String q = '';
@@ -146,54 +147,142 @@ class _HomeScreenState extends State<HomeScreen> {
     }
   }
 
-  /// شريط تمرير أفقي لمنتجات
+  /// شريط تمرير أفقي للمنتجات — صفّان من البوكسات الكبيرة القديمة
   Widget _prodStrip(List products) {
+    final w = (MediaQuery.of(context).size.width - 43) / 2;
+    const textH = 106.0;
+    final rowH = w * 4 / 3 + textH;
     return SizedBox(
-      height: 150,
+      height: rowH * 2 + 10,
       child: ListView.separated(
         scrollDirection: Axis.horizontal,
         padding: const EdgeInsets.symmetric(horizontal: 16),
-        itemCount: products.length,
+        itemCount: (products.length + 1) ~/ 2,
         separatorBuilder: (_, __) => const SizedBox(width: 11),
         itemBuilder: (_, i) {
-          final m = Map<String, dynamic>.from(products[i] as Map);
-          final prod = Product.fromJson(m);
-          return _ProdMiniCard(
-            productJson: m,
-            storeName: m['store_name'] ?? '',
-            storeId: (m['store_id'] as num?)?.toInt() ?? 0,
-            onOpen: () => pushProduct(context, (m['store_id'] as num?)?.toInt() ?? 0, prod.id),
+          final i1 = i * 2;
+          final i2 = i * 2 + 1;
+          return SizedBox(
+            width: w,
+            child: Column(children: [
+              Expanded(child: _stripCard(Map<String, dynamic>.from(products[i1] as Map), w)),
+              const SizedBox(height: 10),
+              if (i2 < products.length)
+                Expanded(child: _stripCard(Map<String, dynamic>.from(products[i2] as Map), w))
+              else
+                const Expanded(child: SizedBox()),
+            ]),
           );
         },
       ),
     );
   }
 
-  /// عنوان قسم + زر «عرض الكل» للفئة
-  Widget _stripHeader(String title, {Map? cat}) {
+  /// بوكس منتج كبير (نفس شكل الشبكة) بمقاس ثابت للشريط
+  Widget _stripCard(Map<String, dynamic> m, double w) {
+    final prod = Product.fromJson(m);
+    final offPct = prod.hasOffer && prod.price > 0
+        ? ((prod.price - prod.displayPrice) / prod.price * 100).round()
+        : 0;
+    return GestureDetector(
+      onTap: () => pushProduct(context, (m['store_id'] as num?)?.toInt() ?? 0, prod.id),
+      child: Container(
+        decoration: A.glass(radius: 0),
+        clipBehavior: Clip.antiAlias,
+        child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+          Expanded(
+            child: Stack(fit: StackFit.expand, children: [
+              productImageBox(prod.image),
+              if (prod.hasOffer) Positioned(top: 8, right: 8, child: BadgeWow('خصم $offPct%')),
+              if (prod.outOfStock) Positioned(top: 8, left: 8, child: BadgeWow('نفد', dark: true)),
+              if (prod.variants.isNotEmpty)
+                Positioned(
+                  bottom: 8,
+                  right: 8,
+                  child: Builder(builder: (ctx) {
+                    final dots = <Color>[];
+                    for (final v in (prod.variants as List)) {
+final c = _dot('${(v is Map ? (v['color'] ?? (v['name'] ?? '')) : v)}');
+                      if (!dots.contains(c)) dots.add(c);
+                    }
+                    return Row(children: [
+                      for (final c in dots.take(4))
+                        Padding(
+                          padding: const EdgeInsets.only(left: 3),
+                          child: Container(
+                            width: 9, height: 9,
+                            decoration: BoxDecoration(color: c, shape: BoxShape.circle, border: Border.all(color: Colors.white, width: 1.2)),
+                          ),
+                        ),
+                    ]);
+                  }),
+                ),
+            ]),
+          ),
+          Padding(
+            padding: const EdgeInsets.fromLTRB(9, 6, 9, 6),
+            child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+              Text(prod.name, style: A.t(11, w: FontWeight.w800), maxLines: 2, overflow: TextOverflow.ellipsis),
+              if (prod.hasOffer) ...[
+                const SizedBox(height: 2),
+                Text(money(prod.price), style: A.t(9, c: A.muted, decoration: TextDecoration.lineThrough)),
+              ],
+              const SizedBox(height: 2),
+              Row(children: [
+                Expanded(child: Text(money(prod.displayPrice), style: A.t(13, c: A.accent, w: FontWeight.w900), maxLines: 1, overflow: TextOverflow.ellipsis)),
+                GestureDetector(
+                  onTap: () => quickAdd(context, m),
+                  child: Container(
+                    width: 27, height: 27,
+                    decoration: BoxDecoration(gradient: A.gradSun, borderRadius: BorderRadius.circular(9)),
+                    alignment: Alignment.center,
+                    child: const Icon(Icons.add_rounded, size: 16, color: Colors.white),
+                  ),
+                ),
+              ]),
+            ]),
+          ),
+        ]),
+      ),
+    );
+  }
+
+  /// عنوان قسم + زر «عرض الكل/عرض أقل»
+  Widget _stripHeader(String title, {Map? cat, bool expanded = false}) {
     return Padding(
       padding: const EdgeInsets.fromLTRB(16, 20, 16, 0),
       child: Row(children: [
         Expanded(child: SectionTitle(title)),
         if (cat != null)
           GestureDetector(
-            onTap: () => _pickCat(cat),
+            onTap: () => _toggleCat(Map<String, dynamic>.from(cat)),
             child: Container(
               padding: const EdgeInsets.symmetric(horizontal: 11, vertical: 6),
               decoration: BoxDecoration(
-                color: A.primary.withOpacity(0.09),
+                color: expanded ? A.primaryDeep : A.primary.withOpacity(0.09),
                 borderRadius: BorderRadius.circular(999),
-                border: Border.all(color: A.primary.withOpacity(0.35)),
+                border: Border.all(color: expanded ? A.primaryDeep : A.primary.withOpacity(0.35)),
               ),
               child: Row(mainAxisSize: MainAxisSize.min, children: [
-                Text('عرض منتجات هذه الفئة', style: A.t(10.5, c: A.primary, w: FontWeight.w900)),
+                Text(expanded ? 'عرض أقل' : 'عرض الكل', style: A.t(10.5, c: expanded ? Colors.white : A.primary, w: FontWeight.w900)),
                 const SizedBox(width: 3),
-                const Icon(Icons.arrow_back_rounded, size: 13, color: A.primary),
+                Icon(expanded ? Icons.keyboard_arrow_up_rounded : Icons.keyboard_arrow_down_rounded, size: 15, color: expanded ? Colors.white : A.primary),
               ]),
             ),
           ),
       ]),
     );
+  }
+
+  /// توسيع فئة في مكانها — بدل صفحة جديدة
+  void _toggleCat(Map cat) {
+    setState(() {
+      if (expandedCat?['id'] == cat['id']) {
+        expandedCat = null;
+      } else {
+        expandedCat = cat;
+      }
+    });
   }
 
   bool get hasFilters =>
@@ -693,12 +782,28 @@ class _HomeScreenState extends State<HomeScreen> {
                         const SizedBox(height: 10),
                         _prodStrip(bestProducts),
                       ],
-                      // شريط لكل فئة + زر عرض منتجاتها
+                      // شريط لكل فئة + زر عرض الكل (يتوسع في مكانه)
                       for (final c in categories)
                         if ((catProducts[c['id']] ?? []).isNotEmpty) ...[
-                          _stripHeader('${c['icon'] ?? '🛍'} ${c['name']}', cat: Map<String, dynamic>.from(c as Map)),
+                          _stripHeader('${c['icon'] ?? '🛍'} ${c['name']}',
+                              cat: Map<String, dynamic>.from(c as Map), expanded: expandedCat?['id'] == c['id']),
                           const SizedBox(height: 10),
-                          _prodStrip(catProducts[c['id']]!),
+                          if (expandedCat?['id'] == c['id'])
+                            GridView.count(
+                              crossAxisCount: 2,
+                              shrinkWrap: true,
+                              physics: const NeverScrollableScrollPhysics(),
+                              padding: const EdgeInsets.symmetric(horizontal: 16),
+                              mainAxisSpacing: 0,
+                              crossAxisSpacing: 0,
+                              childAspectRatio: 0.55,
+                              children: catProducts[c['id']]!.map((bp) {
+                                final m = Map<String, dynamic>.from(bp as Map);
+                                return _ProdCard(product: m, onOpen: () => pushProduct(context, m['store_id'], m['id']));
+                              }).toList(),
+                            )
+                          else
+                            _prodStrip(catProducts[c['id']]!),
                         ],
                       if (bestProducts.isEmpty)
                         const Padding(
@@ -785,10 +890,9 @@ class _HeroCarouselState extends State<_HeroCarousel> {
         padding: const EdgeInsets.all(16),
         clipBehavior: Clip.antiAlias,
         decoration: BoxDecoration(
-          border: Border.all(color: Colors.white.withOpacity(0.6), width: 1.2),
           borderRadius: BorderRadius.circular(22),
           boxShadow: const [
-            BoxShadow(color: Color(0x551D4ED8), blurRadius: 26, offset: Offset(0, 12)),
+            BoxShadow(color: Color(0x120A1120), blurRadius: 18, offset: Offset(0, 8)),
           ],
         ),
         child: Stack(fit: StackFit.expand, children: [
@@ -907,68 +1011,76 @@ class _HeroCarouselState extends State<_HeroCarousel> {
   }
 }
 
-/// بطاقة المحل المصغرة (عرضية) — غلاف + شعار + تقييم
+/// بطاقة المحل المصغرة (عرضية) — الغلاف يغطي البوكس كاملاً مع النص والتقييم فوقه
 class _StoreMiniCard extends StatelessWidget {
   final Map<String, dynamic> data;
   final Color cover;
   final VoidCallback onOpen;
   const _StoreMiniCard({required this.data, required this.cover, required this.onOpen});
-@override
+  @override
   Widget build(BuildContext context) {
     final logo = (data['logo'] ?? '').toString();
     final coverUrl = (data['cover'] ?? '').toString();
+    final hasCover = isUrlCover(coverUrl);
     return GestureDetector(
       onTap: onOpen,
       child: Container(
-        width: 128,
-        decoration: A.glass(radius: 0),
+        width: 132,
+        height: 122,
         clipBehavior: Clip.antiAlias,
-        child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-          Container(
-            height: 64,
-            width: double.infinity,
-            decoration: const BoxDecoration(
-              gradient: LinearGradient(colors: [Color(0xFF1D4ED8), Color(0xFF38BDF8)]),
-            ),
-            child: Stack(fit: StackFit.expand, children: [
-              if (isUrlCover(coverUrl))
-                productImageBox(coverUrl)
-              else
-                DecoratedBox(
-                  decoration: BoxDecoration(
-                    gradient: LinearGradient(colors: [cover, A.primaryLight]),
-                  ),
-                ),
-              Align(
-                alignment: AlignmentDirectional.centerStart,
-                child: Padding(
-                  padding: const EdgeInsets.fromLTRB(8, 0, 0, 0),
-                  child: Container(
-                    width: 44, height: 44,
-                    clipBehavior: Clip.antiAlias,
-                    decoration: BoxDecoration(
-                      color: Colors.white,
-                      borderRadius: BorderRadius.circular(13),
-                      border: Border.all(color: Colors.white, width: 2),
-                      boxShadow: const [BoxShadow(color: Colors.black26, blurRadius: 8, offset: Offset(0, 2))],
-                    ),
-                    alignment: Alignment.center,
-                    child: storeLogo(logo, size: 38, radius: 10),
-                  ),
-                ),
+        decoration: BoxDecoration(
+          borderRadius: BorderRadius.circular(18),
+          boxShadow: const [BoxShadow(color: Color(0x140A1120), blurRadius: 10, offset: Offset(0, 4))],
+        ),
+        child: Stack(fit: StackFit.expand, children: [
+          // الغلاف يملأ البوكس كاملاً
+          if (hasCover)
+            productImageBox(coverUrl)
+          else
+            DecoratedBox(
+              decoration: BoxDecoration(
+                gradient: LinearGradient(colors: [cover, A.primaryLight]),
               ),
-            ]),
+            ),
+          // تغميق سفلي لقراءة النص
+          const DecoratedBox(
+            decoration: BoxDecoration(
+              gradient: LinearGradient(
+                begin: Alignment.topCenter,
+                end: Alignment.bottomCenter,
+                colors: [Colors.transparent, Color(0xB30A1120)],
+              ),
+            ),
           ),
-          Padding(
-            padding: const EdgeInsets.fromLTRB(9, 6, 9, 7),
+          // الشعار
+          Positioned(
+            top: 8,
+            right: 8,
+            child: Container(
+              width: 32, height: 32,
+              clipBehavior: Clip.antiAlias,
+              decoration: BoxDecoration(
+                color: Colors.white,
+                borderRadius: BorderRadius.circular(10),
+                border: Border.all(color: Colors.white, width: 1.5),
+                boxShadow: const [BoxShadow(color: Colors.black26, blurRadius: 6, offset: Offset(0, 2))],
+              ),
+              child: storeLogo(logo, size: 28, radius: 8),
+            ),
+          ),
+          // الاسم والتقييم على مستوى الغلاف
+          Positioned(
+            bottom: 8,
+            left: 9,
+            right: 9,
             child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-              Text(data['name'] ?? '', style: A.t(11.5, w: FontWeight.w900), maxLines: 1, overflow: TextOverflow.ellipsis),
+              Text(data['name'] ?? '', style: A.t(11.5, c: Colors.white, w: FontWeight.w900), maxLines: 1, overflow: TextOverflow.ellipsis),
               const SizedBox(height: 2),
               Row(children: [
                 const Icon(Icons.star_rounded, size: 12, color: A.star),
-                Text('${((data['rating'] ?? 0) as num).toStringAsFixed(1)}', style: A.t(10.5, w: FontWeight.w900)),
+                Text('${((data['rating'] ?? 0) as num).toStringAsFixed(1)}', style: A.t(10.5, c: Colors.white, w: FontWeight.w900)),
                 const SizedBox(width: 4),
-                Expanded(child: Text('${data['reviews_count'] ?? 0} تقييم', style: A.t(9, c: A.muted), maxLines: 1, overflow: TextOverflow.ellipsis)),
+                Expanded(child: Text('• ${data['reviews_count'] ?? 0} تقييم', style: A.t(9.5, c: Colors.white.withOpacity(0.85)), maxLines: 1, overflow: TextOverflow.ellipsis)),
               ]),
             ]),
           ),

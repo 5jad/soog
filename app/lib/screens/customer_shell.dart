@@ -92,6 +92,7 @@ class _HomeScreenState extends State<HomeScreen> {
   List categories = [];
   Map<int, List> catProducts = {}; // منتجات كل فئة (لأشرطة التمرير)
   Map? expandedCat; // الفئة الموسّعة بـ «عرض الكل» في مكانها
+  bool expandedBest = false; // الأكثر مبيعاً موسّع
   bool loading = true;
   final qCtrl = TextEditingController();
   String q = '';
@@ -148,16 +149,23 @@ class _HomeScreenState extends State<HomeScreen> {
     }
   }
 
-/// شريط تمرير أفقي للمنتجات — صفّان مرتبان صفاً ثم عموداً (لو فئة فيها 2 منتج يكونن بنفس الصف)
+/// شريط تمرير أفقي للمنتجات — صفّان مرتبان صفاً ثم عموداً (لو فئة فيها 2 منتج يكونن بنفس الصف)،
+  /// بنفس تصميم وحجم بوكس شبكة «عرض الكل» تماماً
   Widget _prodStrip(List products) {
     final w = (MediaQuery.of(context).size.width - 43) / 2;
-    const textH = 112.0;
-    final rowH = w * 4 / 3 + textH;
+    final cellH = w / 0.55; // نفس نسبة شبكة عرض الكل بالضبط
     Widget cell(int idx) => idx < products.length
-        ? Expanded(child: _stripCard(Map<String, dynamic>.from(products[idx] as Map), w))
-        : const Expanded(child: SizedBox());
+        ? SizedBox(
+            width: w,
+            height: cellH,
+            child: Builder(builder: (_) {
+              final m = Map<String, dynamic>.from(products[idx] as Map);
+              return _ProdCard(product: m, onOpen: () => pushProduct(context, (m['store_id'] as num?)?.toInt() ?? 0, Product.fromJson(m).id));
+            }),
+          )
+        : const SizedBox(width: 0);
     return SizedBox(
-      height: rowH * 2,
+      height: cellH * 2,
       child: ListView.separated(
         scrollDirection: Axis.horizontal,
         padding: const EdgeInsets.symmetric(horizontal: 16),
@@ -177,92 +185,15 @@ class _HomeScreenState extends State<HomeScreen> {
     );
   }
 
-  /// بوكس منتج — نفس تصميم بوكس شبكة «عرض الكل» تماماً (متلاصق بلا حواف)
-  Widget _stripCard(Map<String, dynamic> m, double w) {
-    final prod = Product.fromJson(m);
-    final offPct = prod.hasOffer && prod.price > 0
-        ? ((prod.price - prod.displayPrice) / prod.price * 100).round()
-        : 0;
-    return GestureDetector(
-      onTap: () => pushProduct(context, (m['store_id'] as num?)?.toInt() ?? 0, prod.id),
-      child: Container(
-        decoration: A.glass(radius: 0),
-        clipBehavior: Clip.antiAlias,
-        child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-          Expanded(
-            child: Stack(fit: StackFit.expand, children: [
-              productImageBox(prod.image),
-              if (prod.hasOffer) Positioned(top: 8, right: 8, child: BadgeWow('خصم $offPct%')),
-              if (prod.outOfStock) Positioned(top: 8, left: 8, child: BadgeWow('نفد', dark: true)),
-            ]),
-          ),
-          Padding(
-            padding: const EdgeInsets.fromLTRB(9, 5, 9, 6),
-            child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-              Text(prod.name, style: A.t(11, w: FontWeight.w800), maxLines: 2, overflow: TextOverflow.ellipsis),
-              // نقاط ألوان المتغيرات — مثل الشبكة
-              if (prod.variants.isNotEmpty) ...[
-                const SizedBox(height: 4),
-                Builder(builder: (ctx) {
-                  final dots = <Color>[];
-                  for (final v in (prod.variants as List)) {
-                    final c = _dot('${(v is Map ? (v['color'] ?? (v['name'] ?? '')) : v)}');
-                    if (!dots.contains(c)) dots.add(c);
-                  }
-                  return Row(children: [
-                    for (final c in dots.take(4))
-                      Padding(
-                        padding: const EdgeInsets.only(left: 4),
-                        child: Container(
-                          width: 12, height: 12,
-                          decoration: BoxDecoration(
-                            color: c,
-                            shape: BoxShape.circle,
-                            border: Border.all(color: Colors.black12, width: 0.7),
-                          ),
-                        ),
-                      ),
-                    if (dots.length > 4)
-                      Padding(
-                        padding: const EdgeInsets.only(left: 5),
-                        child: Text('+${dots.length - 4}', style: A.t(8.5, c: A.muted, w: FontWeight.w800)),
-                      ),
-                  ]);
-                }),
-              ],
-              if (prod.hasOffer) ...[
-                const SizedBox(height: 4),
-                Text(money(prod.price), style: A.t(9.5, c: A.muted, decoration: TextDecoration.lineThrough)),
-              ],
-              const SizedBox(height: 2),
-              Row(children: [
-                Expanded(child: Text(money(prod.displayPrice), style: A.t(13.5, c: A.accent, w: FontWeight.w900), maxLines: 1, overflow: TextOverflow.ellipsis)),
-                GestureDetector(
-                  onTap: () => quickAdd(context, m),
-                  child: Container(
-                    width: 28, height: 28,
-                    decoration: BoxDecoration(gradient: A.gradSun, borderRadius: BorderRadius.circular(9)),
-                    alignment: Alignment.center,
-                    child: const Icon(Icons.add_rounded, size: 17, color: Colors.white),
-                  ),
-                ),
-              ]),
-            ]),
-          ),
-        ]),
-      ),
-    );
-  }
-
   /// عنوان قسم + زر «عرض الكل/عرض أقل»
-  Widget _stripHeader(String title, {Map? cat, bool expanded = false}) {
+  Widget _stripHeader(String title, {bool expanded = false, VoidCallback? onExpand}) {
     return Padding(
       padding: const EdgeInsets.fromLTRB(16, 20, 16, 0),
       child: Row(children: [
         Expanded(child: SectionTitle(title)),
-        if (cat != null)
+        if (onExpand != null)
           GestureDetector(
-            onTap: () => _toggleCat(Map<String, dynamic>.from(cat)),
+            onTap: onExpand,
             child: Container(
               padding: const EdgeInsets.symmetric(horizontal: 11, vertical: 6),
               decoration: BoxDecoration(
@@ -558,7 +489,7 @@ class _HomeScreenState extends State<HomeScreen> {
               right: -1,
               top: -1,
               child: ValueListenableBuilder<int>(
-                valueListenable: ValueNotifier(AppState.i.unreadNotifs),
+                valueListenable: AppState.i.unreadNotifs,
                 builder: (_, v, __) => CountBadge(v),
               ),
             ),
@@ -575,46 +506,81 @@ class _HomeScreenState extends State<HomeScreen> {
                 child: ListView(
                   padding: const EdgeInsets.only(bottom: 24),
                   children: [
-                    // البحث — حقيقي بنفس الصفحة مثل شي إن
+                    // البحث + زر الفلتر في نفس الصف (الفلتر على اليسار)
                     Padding(
                       padding: const EdgeInsets.fromLTRB(16, 12, 16, 0),
-                      child: TextField(
-                        controller: qCtrl,
-                        onChanged: (v) => setState(() => q = v.trim()),
-                        onSubmitted: (_) => _loadGrid(),
-                        style: A.t(13, w: FontWeight.w700),
-                        textInputAction: TextInputAction.search,
-                        decoration: InputDecoration(
-                          hintText: 'ابحث عن قميص، فستان، شنطة، مكياج... 🔍',
-                          hintStyle: A.t(12.5, c: A.muted, w: FontWeight.w600),
-                          prefixIcon: IconButton(
-                            icon: const Icon(Icons.search_rounded, color: A.primary),
-                            onPressed: _loadGrid,
-                          ),
-                          suffixIcon: q.isNotEmpty
-                              ? IconButton(
-                                  icon: const Icon(Icons.close_rounded, size: 19, color: A.muted),
-                                  onPressed: () {
-                                    qCtrl.clear();
-                                    setState(() => q = '');
-                                    _loadGrid();
-                                  },
-                                )
-                              : null,
-                          filled: true,
-                          fillColor: Colors.white.withOpacity(0.85),
-                          isDense: true,
-                          contentPadding: const EdgeInsets.symmetric(vertical: 13),
-                          enabledBorder: OutlineInputBorder(
-                            borderRadius: BorderRadius.circular(16),
-                            borderSide: BorderSide(color: Colors.white.withOpacity(0.55), width: 1.1),
-                          ),
-                          focusedBorder: OutlineInputBorder(
-                            borderRadius: BorderRadius.circular(16),
-                            borderSide: const BorderSide(color: A.primaryLight, width: 1.4),
+                      child: Row(children: [
+                        Expanded(
+                          child: TextField(
+                            controller: qCtrl,
+                            onChanged: (v) => setState(() => q = v.trim()),
+                            onSubmitted: (_) => _loadGrid(),
+                            style: A.t(13, w: FontWeight.w700),
+                            textInputAction: TextInputAction.search,
+                            decoration: InputDecoration(
+                              hintText: 'ابحث عن قميص، فستان، شنطة، مكياج... 🔍',
+                              hintStyle: A.t(12.5, c: A.muted, w: FontWeight.w600),
+                              prefixIcon: IconButton(
+                                icon: const Icon(Icons.search_rounded, color: A.primary),
+                                onPressed: _loadGrid,
+                              ),
+                              suffixIcon: q.isNotEmpty
+                                  ? IconButton(
+                                      icon: const Icon(Icons.close_rounded, size: 19, color: A.muted),
+                                      onPressed: () {
+                                        qCtrl.clear();
+                                        setState(() => q = '');
+                                        _loadGrid();
+                                      },
+                                    )
+                                  : null,
+                              filled: true,
+                              fillColor: Colors.white.withOpacity(0.85),
+                              isDense: true,
+                              contentPadding: const EdgeInsets.symmetric(vertical: 13),
+                              enabledBorder: OutlineInputBorder(
+                                borderRadius: BorderRadius.circular(16),
+                                borderSide: BorderSide(color: Colors.white.withOpacity(0.55), width: 1.1),
+                              ),
+                              focusedBorder: OutlineInputBorder(
+                                borderRadius: BorderRadius.circular(16),
+                                borderSide: const BorderSide(color: A.primaryLight, width: 1.4),
+                              ),
+                            ),
                           ),
                         ),
-                      ),
+                        const SizedBox(width: 10),
+                        GestureDetector(
+                          onTap: _openFilters,
+                          child: Container(
+                            width: 48,
+                            height: 48,
+                            decoration: BoxDecoration(
+                              color: hasFilters ? A.primary : Colors.white,
+                              borderRadius: BorderRadius.circular(16),
+                              border: Border.all(color: hasFilters ? A.primary : A.line, width: 1.2),
+                              boxShadow: hasFilters ? [BoxShadow(color: A.primary.withOpacity(0.3), blurRadius: 12, offset: const Offset(0, 4))] : null,
+                            ),
+                            alignment: Alignment.center,
+                            child: Stack(clipBehavior: Clip.none, children: [
+                              Icon(Icons.tune_rounded, size: 22, color: hasFilters ? Colors.white : A.ink),
+                              if (hasFilters)
+                                Positioned(
+                                  left: -6,
+                                  top: -8,
+                                  child: Container(
+                                    padding: const EdgeInsets.all(3),
+                                    decoration: const BoxDecoration(color: A.accent, shape: BoxShape.circle),
+                                    child: Text(
+                                      '${[sort != 'newest' ? 1 : 0, minC.text.trim().isNotEmpty || maxC.text.trim().isNotEmpty ? 1 : 0, selColors.length > 0 ? 1 : 0, selSizes.length > 0 ? 1 : 0, offerOnly ? 1 : 0].reduce((a, b) => a + b)}',
+                                      style: const TextStyle(fontSize: 8, color: Colors.white, fontWeight: FontWeight.w900),
+                                    ),
+                                  ),
+                                ),
+                            ]),
+                          ),
+                        ),
+                      ]),
                     ),
                     // الأقسام — شيبز مثل الديمو (بلا زر «الكل»)
                     if (categories.isNotEmpty) ...[
@@ -699,7 +665,7 @@ class _HomeScreenState extends State<HomeScreen> {
                         ),
                       ),
                     ],
-                    // ═══ قسم المنتجات — عنوان ديناميكي + زر الفلتر (للشبكة فقط) ═══
+                    // ═══ قسم المنتجات — عنوان ديناميكي (للشبكة فقط) ═══
                     if (gridMode)
                       Padding(
                       padding: const EdgeInsets.fromLTRB(16, 20, 16, 0),
@@ -710,36 +676,9 @@ class _HomeScreenState extends State<HomeScreen> {
                                 ? 'نتائج البحث عن «$q»'
                                 : selCat.isNotEmpty
                                     ? '${selCat['icon'] ?? ''} ${selCat['name']}'
-                                    : '🔥 الأكثر مبيعاً اليوم',
+                                    : 'المنتجات',
                           ),
                         ),
-                        if (hasFilters || selCat.isNotEmpty)
-                          GestureDetector(
-                            onTap: _openFilters,
-                            child: Stack(clipBehavior: Clip.none, children: [
-                              Container(
-                                width: 36, height: 36,
-                                decoration: BoxDecoration(
-                                  color: hasFilters ? A.primary : Colors.white,
-                                  borderRadius: BorderRadius.circular(11),
-                                  border: Border.all(color: hasFilters ? A.primary : A.line, width: 1.2),
-                                ),
-                                child: Icon(Icons.tune_rounded, size: 19, color: hasFilters ? Colors.white : A.ink),
-                              ),
-                              if (hasFilters)
-                                Positioned(
-                                  left: -2, top: -3,
-                                  child: Container(
-                                    padding: const EdgeInsets.all(3),
-                                    decoration: const BoxDecoration(color: A.accent, shape: BoxShape.circle),
-                                    child: Text(
-                                      '${[sort != 'newest' ? 1 : 0, minC.text.trim().isNotEmpty || maxC.text.trim().isNotEmpty ? 1 : 0, selColors.length > 0 ? 1 : 0, selSizes.length > 0 ? 1 : 0, offerOnly ? 1 : 0].reduce((a, b) => a + b)}',
-                                      style: const TextStyle(fontSize: 8, color: Colors.white, fontWeight: FontWeight.w900),
-                                    ),
-                                  ),
-                                ),
-                            ]),
-                          ),
                       ]),
                     ),
                     // شرائح الفلاتر النشطة (مثل شي إن)
@@ -783,17 +722,34 @@ class _HomeScreenState extends State<HomeScreen> {
                                   }).toList(),
                                 )
                     else ...[
-                      // شريط الأكثر مبيعاً
+                      // شريط الأكثر مبيعاً + زر عرض الكل
                       if (bestProducts.isNotEmpty) ...[
-                        _stripHeader('🔥 الأكثر مبيعاً اليوم'),
+                        _stripHeader('🔥 الأكثر مبيعاً',
+                            expanded: expandedBest, onExpand: () => setState(() => expandedBest = !expandedBest)),
                         const SizedBox(height: 10),
-                        _prodStrip(bestProducts),
+                        if (expandedBest)
+                          GridView.count(
+                            crossAxisCount: 2,
+                            shrinkWrap: true,
+                            physics: const NeverScrollableScrollPhysics(),
+                            padding: const EdgeInsets.symmetric(horizontal: 16),
+                            mainAxisSpacing: 0,
+                            crossAxisSpacing: 0,
+                            childAspectRatio: 0.55,
+                            children: bestProducts.map((bp) {
+                              final m = Map<String, dynamic>.from(bp as Map);
+                              return _ProdCard(product: m, onOpen: () => pushProduct(context, m['store_id'], m['id']));
+                            }).toList(),
+                          )
+                        else
+                          _prodStrip(bestProducts),
                       ],
                       // شريط لكل فئة + زر عرض الكل (يتوسع في مكانه)
                       for (final c in categories)
                         if ((catProducts[c['id']] ?? []).isNotEmpty) ...[
                           _stripHeader('${c['icon'] ?? '🛍'} ${c['name']}',
-                              cat: Map<String, dynamic>.from(c as Map), expanded: expandedCat?['id'] == c['id']),
+                              expanded: expandedCat?['id'] == c['id'],
+                              onExpand: () => _toggleCat(Map<String, dynamic>.from(c as Map))),
                           const SizedBox(height: 10),
                           if (expandedCat?['id'] == c['id'])
                             GridView.count(
@@ -977,16 +933,16 @@ class _HeroCarouselState extends State<_HeroCarousel> {
     final ads = widget.ads;
     return Column(children: [
       Padding(
-        padding: const EdgeInsets.fromLTRB(16, 14, 16, 0),
+        padding: const EdgeInsets.only(top: 10),
         child: ads.isEmpty
-            ? SizedBox(height: 148, child: _banner({
+            ? SizedBox(height: 180, child: _banner({
                 'title': 'كل ما تتمناه بمكان واحد',
                 'theme': 'navy',
                 'store_name': 'مول الأزياء',
                 'description': 'لرجالك ونسائك وأطفالك — خصومات على كل الطلبيات',
               }))
             : SizedBox(
-                height: 148,
+                height: 180,
                 child: PageView.builder(
                   controller: _pc,
                   itemCount: ads.length,

@@ -98,7 +98,7 @@ class _StoresScreenState extends State<StoresScreen> {
               right: -1,
               top: -1,
               child: ValueListenableBuilder<int>(
-                valueListenable: ValueNotifier(AppState.i.unreadNotifs),
+                valueListenable: AppState.i.unreadNotifs,
                 builder: (_, v, __) => CountBadge(v),
               ),
             ),

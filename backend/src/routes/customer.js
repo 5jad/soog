@@ -426,12 +426,22 @@ r.delete('/favorites/:product_id', async (req, res) => {
 
 // ═══════════ الإشعارات ═══════════
 r.get('/notifications', async (req, res) => {
-  const rows = await q(`SELECT * FROM notifications WHERE user_id=$1 OR (role=$2 AND user_id IS NULL) ORDER BY id DESC LIMIT 50`,
+  const rows = await q(`SELECT *, (read_at IS NOT NULL) AS read FROM notifications WHERE user_id=$1 OR (role=$2 AND user_id IS NULL) ORDER BY id DESC LIMIT 50`,
     [req.user.id, req.user.role]);
   res.json({ notifications: rows });
 });
 r.post('/notifications/read', async (req, res) => {
-  await q(`UPDATE notifications SET read_at=now() WHERE user_id=$1 AND read_at IS NULL`, [req.user.id]);
+  await q(`UPDATE notifications SET read_at=now() WHERE read_at IS NULL AND (user_id=$1 OR (user_id IS NULL AND role=$2))`,
+    [req.user.id, req.user.role]);
+  res.json({ ok: true });
+});
+r.post('/notifications/:id/read', async (req, res) => {
+  await q(`UPDATE notifications SET read_at=now() WHERE id=$1 AND (user_id=$2 OR (user_id IS NULL AND role=$3))`,
+    [req.params.id, req.user.id, req.user.role]);
+  res.json({ ok: true });
+});
+r.delete('/notifications/:id', async (req, res) => {
+  await q(`DELETE FROM notifications WHERE id=$1 AND user_id=$2`, [req.params.id, req.user.id]);
   res.json({ ok: true });
 });
 

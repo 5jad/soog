@@ -135,7 +135,7 @@ class AppState extends ChangeNotifier {
   static final AppState i = AppState._();
   AppState._();
 
-  int unreadNotifs = 0;
+  final ValueNotifier<int> unreadNotifs = ValueNotifier(0); // عدّاد الإشعارات غير المقروءة
   List<Map<String, dynamic>> guestCart = []; // السلة المحلية للضيوف
   final ValueNotifier<int> cartCount = ValueNotifier(0); // عداد السلة — يحرك الشارات والزر العائم
   final ValueNotifier<int> favsReload = ValueNotifier(0); // إشارة لتحديث تبويب المفضلة

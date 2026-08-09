@@ -24,7 +24,6 @@ class _StoresScreenState extends State<StoresScreen> {
   List categories = [];
   List favorites = [];
   int? cat;
-  bool partnersMode = false;
   bool loading = true;
 
   @override
@@ -60,13 +59,8 @@ class _StoresScreenState extends State<StoresScreen> {
 
   List<Store> get filtered {
     var list = all.map((s) => Store.fromJson(Map<String, dynamic>.from(s as Map))).where((s) => s.open).toList();
-    if (partnersMode) {
-      final ids = favorites.map((f) => (f['store_id'] as num?)?.toInt()).toSet();
-      list = list.where((s) => ids.contains(s.id)).toList();
-    } else {
-      if (q.isNotEmpty) list = list.where((s) => s.name.contains(q) || s.categoryName.contains(q)).toList();
-      if (cat != null) list = list.where((s) => s.categoryId == cat).toList();
-    }
+    if (q.isNotEmpty) list = list.where((s) => s.name.contains(q) || s.categoryName.contains(q)).toList();
+    if (cat != null) list = list.where((s) => s.categoryId == cat).toList();
     return list;
   }
 
@@ -152,31 +146,65 @@ class _StoresScreenState extends State<StoresScreen> {
                   scrollDirection: Axis.horizontal,
                   padding: const EdgeInsets.symmetric(horizontal: 16),
                   children: [
-                    // شركائي — المتاجر المتابعة داخل شريط الفئات
-                    if (favorites.isNotEmpty)
-                      Padding(
-                        padding: const EdgeInsets.only(left: 8),
-                        child: ChipG(
-                          icon: '🤝',
-                          label: 'شركائي',
-                          active: partnersMode,
-                          onTap: () => setState(() => partnersMode = !partnersMode),
-                        ),
-                      ),
                     ...categories.map((c) => Padding(
                           padding: const EdgeInsets.only(left: 8),
                           child: ChipG(
                             label: '${c['icon'] ?? ''} ${c['name'] ?? ''}',
-                            active: partnersMode ? false : cat == c['id'],
-                            onTap: () => setState(() {
-                              partnersMode = false;
-                              cat = cat == c['id'] ? null : c['id'];
-                            }),
+                            active: cat == c['id'],
+                            onTap: () => setState(() => cat = cat == c['id'] ? null : c['id']),
                           ),
                         )),
                   ],
                 ),
               ),
+              // الشريك — بوكس المتاجر المتابعة أسفل شريط الفئات
+              if (favorites.isNotEmpty) ...[
+                Padding(
+                  padding: const EdgeInsets.fromLTRB(16, 8, 16, 4),
+                  child: Row(children: [
+                    const Icon(Icons.handshake_rounded, size: 17, color: A.primary),
+                    const SizedBox(width: 7),
+                    Text('الشريك — متاجرك المتابعة', style: A.t(13, w: FontWeight.w900)),
+                  ]),
+                ),
+                SizedBox(
+                  height: 96,
+                  child: ListView(
+                    scrollDirection: Axis.horizontal,
+                    padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 6),
+                    children: [
+                      for (final f in favorites)
+                        Padding(
+                          padding: const EdgeInsets.only(left: 10),
+                          child: GestureDetector(
+                            onTap: () {
+                              final s = all.where((x) => x['id'] == f['store_id']).firstOrNull;
+                              if (s == null) return;
+                              widget.onOpen(Store.fromJson(Map<String, dynamic>.from(s as Map)));
+                            },
+                            child: Container(
+                              width: 150,
+                              padding: const EdgeInsets.all(10),
+                              decoration: A.glass(radius: 16),
+                              child: Row(children: [
+                                storeLogo('${f['store_logo'] ?? ''}', size: 44, radius: 12),
+                                const SizedBox(width: 10),
+                                Expanded(child: Column(crossAxisAlignment: CrossAxisAlignment.start, mainAxisAlignment: MainAxisAlignment.center, children: [
+                                  Text('${f['store_name'] ?? ''}', style: A.t(11.5, w: FontWeight.w900), maxLines: 1, overflow: TextOverflow.ellipsis),
+                                  const SizedBox(height: 3),
+                                  Row(children: [
+                                    const Icon(Icons.star_rounded, size: 11, color: A.star),
+                                    Text('${(f['rating'] ?? 0).toStringAsFixed(1)}', style: A.t(10, w: FontWeight.w800)),
+                                  ]),
+                                ])),
+                              ]),
+                            ),
+                          ),
+                        ),
+                    ],
+                  ),
+                ),
+              ],
               const SizedBox(height: 10),
               Expanded(
                 child: list.isEmpty

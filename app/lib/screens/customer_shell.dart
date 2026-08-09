@@ -7,7 +7,7 @@ import '../theme.dart';
 import '../widgets.dart';
 import 'stores_screen.dart';
 import 'store_screen.dart';
-import 'orders_screen.dart';
+import 'favorites_screen.dart';
 import 'notifications_screen.dart';
 import 'cart_screen.dart';
 import 'account_screen.dart';
@@ -31,6 +31,7 @@ class _CustomerShellState extends State<CustomerShell> {
       HomeScreen(onGoStore: (id) => pushStore(context, id)),
       StoresScreen(onOpen: (s) => pushStore(context, s.id)),
       CartScreen(embedded: true, key: ValueKey('cart$cartReload')),
+      const FavoritesScreen(),
       AccountScreen(roles: widget.roles),
     ];
     return Scaffold(
@@ -45,6 +46,7 @@ class _CustomerShellState extends State<CustomerShell> {
             (Icons.home_rounded, 'الرئيسية'),
             (Icons.storefront_rounded, 'المتاجر'),
             (Icons.shopping_cart_rounded, 'السلة'),
+            (Icons.favorite_rounded, 'المفضلة'),
             (Icons.person_rounded, 'حسابي'),
           ],
           onTap: (i) => setState(() {
@@ -396,11 +398,6 @@ class _HomeScreenState extends State<HomeScreen> {
               ),
             ),
           ]),
-          IconGlass(
-            icon: Icons.receipt_long_rounded,
-            color: A.primary,
-            onTap: () => Navigator.push(context, MaterialPageRoute(builder: (_) => OrderListScreen(role: 'customer'))),
-          ),
           const SizedBox(width: 10),
         ],
       ),

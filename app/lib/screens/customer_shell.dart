@@ -13,7 +13,6 @@ import 'notifications_screen.dart';
 import 'cart_screen.dart';
 import 'account_screen.dart';
 import 'login_screen.dart';
-import 'chat_screen.dart';
 
 /// واجهة الزبون — 4 تبويبات: الرئيسية، المتاجر، الطلبات، حسابي
 class CustomerShell extends StatefulWidget {
@@ -157,10 +156,6 @@ class _HomeScreenState extends State<HomeScreen> {
           Text('${stores.length} متجر متاح', style: A.t(10.5, c: A.muted, w: FontWeight.w600)),
         ]),
         actions: [
-          IconGlass(
-            icon: Icons.chat_bubble_rounded,
-            onTap: () => Navigator.push(context, MaterialPageRoute(builder: (_) => const ChatListScreen(role: 'customer'))),
-          ),
           const SizedBox(width: 8),
           Stack(clipBehavior: Clip.none, children: [
             IconGlass(
@@ -193,14 +188,6 @@ class _HomeScreenState extends State<HomeScreen> {
                 child: ListView(
                   padding: const EdgeInsets.only(bottom: 24),
                   children: [
-                    // التحية
-                    Padding(
-                      padding: const EdgeInsets.fromLTRB(16, 2, 16, 0),
-                      child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-                        Text('أهلاً بيك ${Api.me?['name'] ?? 'حجي'}،', style: A.t(12.5, c: A.muted, w: FontWeight.w700)),
-                        Text('نورتنا 🌟 شكو تريد اليوم؟', style: A.t(19, w: FontWeight.w900)),
-                      ]),
-                    ),
                     // البحث
                     Padding(
                       padding: const EdgeInsets.fromLTRB(16, 12, 16, 0),

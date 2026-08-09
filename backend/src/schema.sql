@@ -285,10 +285,10 @@ CREATE TABLE delivery_trips (
 CREATE TABLE conversations (
   id SERIAL PRIMARY KEY,
   user_id INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
-  store_id INTEGER NOT NULL REFERENCES stores(id) ON DELETE CASCADE,
+  courier_id INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
   last_message_at TIMESTAMPTZ DEFAULT now(),
   created_at TIMESTAMPTZ DEFAULT now(),
-  UNIQUE (user_id, store_id)
+  UNIQUE (user_id, courier_id)
 );
 
 CREATE TABLE messages (

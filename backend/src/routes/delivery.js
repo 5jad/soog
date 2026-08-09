@@ -134,6 +134,42 @@ r.post('/delivered', async (req, res) => {
 });
 
 // ── المحفظة والجرد ──
+// ═══════════ محادثات المندوب مع الزبائن (فقط أثناء التوصيل) ═══════════
+const deliveringWith = (customerId, courierId) => one(
+  `SELECT o.id FROM orders o WHERE o.user_id=$1 AND o.courier_id=$2 AND o.status='delivering' LIMIT 1`,
+  [customerId, courierId]);
+
+r.get('/conversations', async (req, res) => {
+  const rows = await q(`SELECT cv.*, u.name AS user_name,
+      (SELECT body FROM messages m WHERE m.conversation_id=cv.id ORDER BY m.id DESC LIMIT 1) AS last_message,
+      EXISTS(SELECT 1 FROM messages m WHERE m.conversation_id=cv.id AND m.sender_role='customer' AND m.read_at IS NULL) AS has_unread
+    FROM conversations cv JOIN users u ON u.id=cv.user_id
+    WHERE cv.courier_id=$1 AND EXISTS(SELECT 1 FROM orders o WHERE o.user_id=cv.user_id AND o.courier_id=cv.courier_id AND o.status='delivering')
+    ORDER BY cv.last_message_at DESC`, [req.user.id]);
+  res.json({ conversations: rows });
+});
+
+r.get('/conversations/:id/messages', async (req, res) => {
+  const cv = await one('SELECT * FROM conversations WHERE id=$1 AND courier_id=$2', [req.params.id, req.user.id]);
+  if (!cv) return res.status(404).json({ error: 'المحادثة غير موجودة' });
+  if (!(await deliveringWith(cv.user_id, req.user.id))) return res.status(403).json({ error: 'انتهت رحلة التوصيل — المحادثة مغلقة' });
+  const msgs = await q(`SELECT m.*, u.name AS sender_name FROM messages m JOIN users u ON u.id=m.sender_id
+    WHERE m.conversation_id=$1 ORDER BY m.id`, [cv.id]);
+  await q(`UPDATE messages SET read_at=now() WHERE conversation_id=$1 AND sender_id!=$2 AND read_at IS NULL`, [cv.id, req.user.id]);
+  res.json({ conversation: cv, messages: msgs });
+});
+
+r.post('/conversations/:id/messages', async (req, res) => {
+  const cv = await one('SELECT * FROM conversations WHERE id=$1 AND courier_id=$2', [req.params.id, req.user.id]);
+  if (!cv) return res.status(404).json({ error: 'المحادثة غير موجودة' });
+  if (!(await deliveringWith(cv.user_id, req.user.id))) return res.status(403).json({ error: 'انتهت رحلة التوصيل — المحادثة مغلقة' });
+  const body = String(req.body.body || '').slice(0, 1000);
+  const m = (await q(`INSERT INTO messages (conversation_id, sender_id, sender_role, body) VALUES ($1,$2,'courier',$3) RETURNING *`, [cv.id, req.user.id, body]))[0];
+  await q(`UPDATE conversations SET last_message_at=now() WHERE id=$1`, [cv.id]);
+  await q(`INSERT INTO notifications (user_id, type, title, body) VALUES ($1,'chat','رسالة من المندوب 📦',$2)`, [cv.user_id, body.slice(0, 60)]);
+  res.status(201).json({ message: m });
+});
+
 r.get('/wallet', async (req, res) => {
   const today = await q(`SELECT o.code, o.total, o.status FROM orders o WHERE o.courier_id=$1 AND o.created_at::date=CURRENT_DATE ORDER BY o.id`, [req.user.id]);
   const collected = today.filter(o => o.status === 'delivered').reduce((a, b) => a + b.total, 0);

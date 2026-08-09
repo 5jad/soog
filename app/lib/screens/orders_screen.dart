@@ -5,6 +5,7 @@ import '../map_screen.dart';
 import '../models.dart';
 import '../theme.dart';
 import '../widgets.dart';
+import 'chat_screen.dart';
 
 /// قائمة الطلبات — تدعم أدوار متعددة
 /// customer: طلباتي | vendor: طلبات المتجر | delivery: طلبات متاحة/رحلة
@@ -233,6 +234,22 @@ class _OrderDetailScreenState extends State<OrderDetailScreen> {
     }
   }
 
+  Future<void> _chatCourier(Order o) async {
+    if (o.courierId <= 0) return;
+    try {
+      final d = await Api.post('/api/customer/conversations', {'courier_id': o.courierId});
+      if (!mounted) return;
+      await Navigator.push(context, MaterialPageRoute(builder: (_) => ChatScreen(role: 'customer', conversation: {
+        'id': (d['conversation'] as Map)['id'],
+        'courier_name': o.courierName,
+      })));
+    } on ApiException catch (e) {
+      toast(context, e.message, error: true);
+    } catch (_) {
+      toast(context, 'تعذر فتح المحادثة', error: true);
+    }
+  }
+
   int get stepIdx {
     final s = (o?['status'] ?? 'pending') as String;
     final i = steps.indexOf(s);
@@ -327,7 +344,15 @@ class _OrderDetailScreenState extends State<OrderDetailScreen> {
                 const Icon(Icons.delivery_dining_rounded, color: A.primaryLight),
                 const SizedBox(width: 10),
                 Expanded(child: Text('المندوب: ${order.courierName}', style: A.t(12.5))),
-                const Icon(Icons.phone_rounded, size: 17, color: A.muted),
+                if (status == 'delivering')
+                  IconButton(
+                    onPressed: () => _chatCourier(order),
+                    icon: const Icon(Icons.chat_bubble_rounded, color: A.primary, size: 20),
+                    tooltip: 'محادثة المندوب',
+                    visualDensity: VisualDensity.compact,
+                  )
+                else
+                  const Icon(Icons.phone_rounded, size: 17, color: A.muted),
               ]),
             ),
           const SizedBox(height: 20),

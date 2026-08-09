@@ -363,52 +363,6 @@ r.post('/questions/:id/answer', async (req, res) => {
   res.json({ ok: true });
 });
 
-// ═══════════ محادثات التاجر مع الزبائن ═══════════
-r.get('/conversations', async (req, res) => {
-  const s = await myStore(req);
-  if (!s) return res.json({ conversations: [] });
-  const rows = await q(`SELECT cv.*, u.name AS user_name, 
-      (SELECT body FROM messages m WHERE m.conversation_id=cv.id ORDER BY m.id DESC LIMIT 1) AS last_message,
-      EXISTS(SELECT 1 FROM messages m WHERE m.conversation_id=cv.id AND m.sender_role='customer' AND m.read_at IS NULL) AS has_unread
-    FROM conversations cv JOIN users u ON u.id=cv.user_id
-    WHERE cv.store_id=$1 ORDER BY cv.last_message_at DESC`, [s.id]);
-  res.json({ conversations: rows });
-});
-
-r.get('/conversations/:id/messages', async (req, res) => {
-  const s = await myStore(req);
-  if (!s) return res.status(404).json({ error: 'سجل محلك أول' });
-  const cv = await one('SELECT * FROM conversations WHERE id=$1 AND store_id=$2', [req.params.id, s.id]);
-  if (!cv) return res.status(404).json({ error: 'المحادثة غير موجودة' });
-  const msgs = await q(`SELECT m.*, u.name AS sender_name FROM messages m JOIN users u ON u.id=m.sender_id
-    WHERE m.conversation_id=$1 ORDER BY m.id`, [cv.id]);
-  await q(`UPDATE messages SET read_at=now() WHERE conversation_id=$1 AND sender_role='customer' AND read_at IS NULL`, [cv.id]);
-  res.json({ conversation: cv, messages: msgs });
-});
-
-r.post('/conversations/:id/messages', async (req, res) => {
-  const s = await myStore(req);
-  if (!s) return res.status(404).json({ error: 'سجل محلك أول' });
-  const cv = await one('SELECT * FROM conversations WHERE id=$1 AND store_id=$2', [req.params.id, s.id]);
-  if (!cv) return res.status(404).json({ error: 'المحادثة غير موجودة' });
-  const body = String(req.body.body || '').slice(0, 1000);
-  const m = (await q(`INSERT INTO messages (conversation_id, sender_id, sender_role, body) VALUES ($1,$2,'vendor',$3) RETURNING *`, [cv.id, req.user.id, body]))[0];
-  await q(`UPDATE conversations SET last_message_at=now() WHERE id=$1`, [cv.id]);
-  await q(`INSERT INTO notifications (user_id, type, title, body) VALUES ($1,'chat','ردّ من المحل 💬',$2)`, [cv.user_id, body.slice(0, 60)]);
-  res.status(201).json({ message: m });
-});
-
-// ── بدء محادثة من طلب ──
-r.post('/orders/:id/conversation', async (req, res) => {
-  const s = await myStore(req);
-  if (!s) return res.status(404).json({ error: 'سجل محلك أول' });
-  const o = await one(`SELECT * FROM orders WHERE id=$1 AND store_id=$2`, [req.params.id, s.id]);
-  if (!o) return res.status(404).json({ error: 'الطلب غير موجود' });
-  let cv = await one(`SELECT * FROM conversations WHERE user_id=$1 AND store_id=$2`, [o.user_id, s.id]);
-  if (!cv) cv = (await q(`INSERT INTO conversations (user_id, store_id) VALUES ($1,$2) RETURNING *`, [o.user_id, s.id]))[0];
-  res.json({ conversation: cv });
-});
-
 // ═══════════ تصدير CSV ═══════════
 r.get('/export/products.csv', async (req, res) => {
   const s = await myStore(req);

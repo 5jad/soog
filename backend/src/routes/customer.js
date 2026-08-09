@@ -107,7 +107,7 @@ r.get('/orders', async (req, res) => {
 
 r.get('/orders/:id', async (req, res) => {
   const o = await one(`SELECT o.*, s.name AS store_name, s.logo AS store_logo, s.address AS store_address, s.phone AS store_phone,
-      c.name AS courier_name, c.phone AS courier_phone
+c.id AS courier_id, c.name AS courier_name, c.phone AS courier_phone
     FROM orders o JOIN stores s ON s.id=o.store_id LEFT JOIN users c ON c.id=o.courier_id WHERE o.id=$1 AND o.user_id=$2`,
     [req.params.id, req.user.id]);
   if (!o) return res.status(404).json({ error: 'الطلب غير موجود' });
@@ -309,22 +309,27 @@ r.post('/cart/apply-coupon', async (req, res) => {
   res.json({ ok: true, code: coupon.code, discount: d, percent: coupon.percent });
 });
 
-// ═══════════ المحادثات ═══════════
+// ═══════════ المحادثات: فقط مع المندوب أثناء التوصيل ═══════════
+const activeDelivery = (userId, courierId) => one(
+  `SELECT o.id FROM orders o WHERE o.user_id=$1 AND o.courier_id=$2 AND o.status='delivering' LIMIT 1`,
+  [userId, courierId]);
+
 r.get('/conversations', async (req, res) => {
-  const rows = await q(`SELECT cv.*, s.name AS store_name, s.logo AS store_logo,
+  const rows = await q(`SELECT cv.*, u.name AS courier_name, u.phone AS courier_phone,
       (SELECT body FROM messages m WHERE m.conversation_id=cv.id ORDER BY m.id DESC LIMIT 1) AS last_message,
-      EXISTS(SELECT 1 FROM messages m WHERE m.conversation_id=cv.id AND m.sender_role!='customer' AND m.read_at IS NULL) AS has_unread
-    FROM conversations cv JOIN stores s ON s.id=cv.store_id WHERE cv.user_id=$1 ORDER BY cv.last_message_at DESC`, [req.user.id]);
+      EXISTS(SELECT 1 FROM messages m WHERE m.conversation_id=cv.id AND m.sender_role='courier' AND m.read_at IS NULL) AS has_unread
+    FROM conversations cv JOIN users u ON u.id=cv.courier_id
+    WHERE cv.user_id=$1 AND EXISTS(SELECT 1 FROM orders o WHERE o.user_id=cv.user_id AND o.courier_id=cv.courier_id AND o.status='delivering')
+    ORDER BY cv.last_message_at DESC`, [req.user.id]);
   res.json({ conversations: rows });
 });
 
-// ── فتح محادثة مع المتجر (أو استرجاع الموجودة) ──
+// ── فتح محادثة مع المندوب (فقط أثناء توصيلة حية له طلباتي) ──
 r.post('/conversations', async (req, res) => {
-  const { store_id } = req.body;
-  const s = await one('SELECT id, name FROM stores WHERE id=$1 AND status=$2', [store_id, 'approved']);
-  if (!s) return res.status(404).json({ error: 'المتجر غير موجود' });
-  let cv = await one(`SELECT * FROM conversations WHERE user_id=$1 AND store_id=$2`, [req.user.id, s.id]);
-  if (!cv) cv = (await q(`INSERT INTO conversations (user_id, store_id) VALUES ($1,$2) RETURNING *`, [req.user.id, s.id]))[0];
+  const courier_id = parseInt(req.body.courier_id) || 0;
+  if (!(await activeDelivery(req.user.id, courier_id))) return res.status(403).json({ error: 'ماكو توصيلة حية مع هذا المندوب' });
+  let cv = await one(`SELECT * FROM conversations WHERE user_id=$1 AND courier_id=$2`, [req.user.id, courier_id]);
+  if (!cv) cv = (await q(`INSERT INTO conversations (user_id, courier_id) VALUES ($1,$2) RETURNING *`, [req.user.id, courier_id]))[0];
   res.json({ conversation: cv });
 });
 
@@ -349,6 +354,7 @@ r.post('/store-favorites', async (req, res) => {
 r.get('/conversations/:id/messages', async (req, res) => {
   const cv = await one('SELECT * FROM conversations WHERE id=$1 AND user_id=$2', [req.params.id, req.user.id]);
   if (!cv) return res.status(404).json({ error: 'المحادثة غير موجودة' });
+  if (!(await activeDelivery(req.user.id, cv.courier_id))) return res.status(403).json({ error: 'انتهت رحلة التوصيل — المحادثة مغلقة' });
   const msgs = await q(`SELECT m.*, u.name AS sender_name FROM messages m JOIN users u ON u.id=m.sender_id
     WHERE m.conversation_id=$1 ORDER BY m.id`, [cv.id]);
   await q(`UPDATE messages SET read_at=now() WHERE conversation_id=$1 AND sender_id!=$2 AND read_at IS NULL`, [cv.id, req.user.id]);
@@ -358,11 +364,12 @@ r.get('/conversations/:id/messages', async (req, res) => {
 r.post('/conversations/:id/messages', async (req, res) => {
   const cv = await one('SELECT * FROM conversations WHERE id=$1 AND user_id=$2', [req.params.id, req.user.id]);
   if (!cv) return res.status(404).json({ error: 'المحادثة غير موجودة' });
+  if (!(await activeDelivery(req.user.id, cv.courier_id))) return res.status(403).json({ error: 'انتهت رحلة التوصيل — المحادثة مغلقة' });
   const body = String(req.body.body || '').slice(0, 1000);
   const m = (await q(`INSERT INTO messages (conversation_id, sender_id, sender_role, body) VALUES ($1,$2,'customer',$3) RETURNING *`, [cv.id, req.user.id, body]))[0];
   await q(`UPDATE conversations SET last_message_at=now() WHERE id=$1`, [cv.id]);
-  const store = await one('SELECT owner_id FROM stores WHERE id=$1', [cv.store_id]);
-  if (store?.owner_id) await q(`INSERT INTO notifications (user_id, type, title, body) VALUES ($1,'chat','رسالة جديدة 💬',$2)`, [store.owner_id, body.slice(0, 60)]);
+  const courier = await one('SELECT u.name FROM users u WHERE u.id=$1', [cv.courier_id]);
+  if (courier) await q(`INSERT INTO notifications (user_id, type, title, body) VALUES ($1,'chat','رسالة من الزبون 💬',$2)`, [cv.courier_id, body.slice(0, 60)]);
   res.status(201).json({ message: m });
 });
 

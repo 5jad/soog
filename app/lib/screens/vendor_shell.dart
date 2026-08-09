@@ -7,7 +7,6 @@ import '../map_screen.dart';
 import '../theme.dart';
 import '../widgets.dart';
 import 'orders_screen.dart';
-import 'chat_screen.dart';
 
 /// واجهة التاجر: الطلبات · المنتجات · المحفظة · متجري
 class VendorShell extends StatefulWidget {
@@ -37,7 +36,6 @@ class _VendorShellState extends State<VendorShell> {
           OrderListScreen(role: 'vendor', embedded: true),
           _ProductsTab(),
           _WalletTab(role: 'vendor'),
-          ChatListScreen(role: 'vendor'),
           _StoreTab(),
         ],
       ),
@@ -47,7 +45,6 @@ class _VendorShellState extends State<VendorShell> {
           (Icons.receipt_long_rounded, 'الطلبات'),
           (Icons.inventory_2_rounded, 'المنتجات'),
           (Icons.account_balance_wallet_rounded, 'المحفظة'),
-          (Icons.chat_bubble_outline_rounded, 'المحادثات'),
           (Icons.storefront_rounded, 'متجري'),
         ],
         onTap: (i) => setState(() => tab = i),

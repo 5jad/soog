@@ -7,7 +7,7 @@ import 'package:shared_preferences/shared_preferences.dart';
 
 /// عميل الـ API — كله يمر من هنا (base URL سهل التغيير)
 class Api {
-  static String base = 'https://petite-included-spanking-sciences.trycloudflare.com'; // الرابط الخارجي الافتراضي (قابل للتغيير من شاشة الدخول)
+  static String base = 'http://192.168.1.137:4000'; // شبكة المنزل — أو من شاشة الدخول تغيّره للرابط الخارجي
 
   static String? _token;
   static Map<String, dynamic>? me;

@@ -7,6 +7,7 @@ import '../map_screen.dart';
 import '../models.dart';
 import '../theme.dart';
 import '../widgets.dart';
+import 'chat_screen.dart';
 
 /// رابط موقع المتجر: من رابط التاجر المخزن أو من الإحداثيات مباشرة
 String? storeMapLink(Object? lat, Object? lng, String? url) {
@@ -95,6 +96,11 @@ class _DeliveryShellState extends State<DeliveryShell> {
                 Text(online ? 'متصل' : 'غير متصل', style: A.t(11.5, c: online ? A.success : A.muted, w: FontWeight.w800)),
               ]),
             ),
+          ),
+          IconButton(
+            icon: const Icon(Icons.chat_bubble_rounded, color: A.muted),
+            tooltip: 'المحادثات',
+            onPressed: () => Navigator.push(context, MaterialPageRoute(builder: (_) => const ChatListScreen(role: 'delivery'))),
           ),
           IconButton(onPressed: widget.onExit, icon: const Icon(Icons.exit_to_app_rounded, color: A.muted)),
         ],

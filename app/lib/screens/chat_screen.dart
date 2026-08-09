@@ -3,9 +3,9 @@ import '../api.dart';
 import '../theme.dart';
 import '../widgets.dart';
 
-/// المحادثات — قائمة + فتح محادثة (شاشة واحدة قابلة لإعادة الاستخدام للتاجر والزبون)
+/// المحادثات — قائمة + فتح محادثة (الزبون مع المندوب فقط، أثناء التوصيل)
 class ChatListScreen extends StatefulWidget {
-  final String role; // customer / vendor
+  final String role; // customer / delivery
   const ChatListScreen({super.key, required this.role});
   @override
   State<ChatListScreen> createState() => _ChatListScreenState();
@@ -32,17 +32,16 @@ class _ChatListScreenState extends State<ChatListScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final isVendor = widget.role == 'vendor';
-    final nameOf = (c) => isVendor ? c['user_name'] : c['store_name'];
-    final logoOf = (c) => isVendor ? null : c['store_logo'];
+    final nameOf = (c) => c['courier_name'] ?? c['user_name'] ?? 'زبون';
+    final logoOf = (c) => null;
 
     return Scaffold(
       appBar: AppBar(title: Text('المحادثات 💬')),
       body: loading
           ? const Loader()
-          : conversations.isEmpty
-              ? const EmptyState(icon: '💬', title: 'لا محادثات بعد', sub: 'المحادثات تبدأ من صفحة الطلب أو المتجر')
-              : ListView.builder(
+: conversations.isEmpty
+                  ? const EmptyState(icon: '💬', title: 'لا محادثات بعد', sub: 'المحادثة تبدأ من صفحة الطلب أثناء التوصيل')
+                  : ListView.builder(
                   padding: const EdgeInsets.fromLTRB(16, 6, 16, 24),
                   itemCount: conversations.length,
                   itemBuilder: (_, i) {
@@ -75,9 +74,9 @@ class _ChatListScreenState extends State<ChatListScreen> {
   }
 }
 
-/// نافذة المحادثة الفعلية (زبون أو تاجر)
+/// نافذة المحادثة الفعلية (زبون أو مندوب)
 class ChatScreen extends StatefulWidget {
-  final String role; // 'customer' / 'vendor'
+  final String role; // 'customer' / 'delivery'
   final Map<String, dynamic> conversation;
   const ChatScreen({super.key, required this.role, required this.conversation});
   @override
@@ -118,9 +117,9 @@ class _ChatScreenState extends State<ChatScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final myRole = widget.role == 'vendor' ? 'vendor' : 'customer';
+    final myRole = widget.role == 'delivery' ? 'courier' : 'customer';
     return Scaffold(
-      appBar: AppBar(title: Text('${widget.conversation['store_name'] ?? widget.conversation['user_name'] ?? 'محادثة'}')),
+      appBar: AppBar(title: Text('${widget.conversation['courier_name'] ?? widget.conversation['user_name'] ?? 'محادثة'}')),
       body: Column(children: [
         Expanded(
           child: loading

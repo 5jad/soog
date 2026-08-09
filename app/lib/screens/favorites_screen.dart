@@ -136,54 +136,57 @@ class _FavoritesScreenState extends State<FavoritesScreen> {
                                 ),
                               ]),
                             ),
-                            Padding(
-                              padding: const EdgeInsets.fromLTRB(9, 5, 9, 6),
-                              child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-                                Text('${f['store_name'] ?? ''}',
-                                    style: A.t(9.5, c: A.primary, w: FontWeight.w800),
-                                    maxLines: 1,
-                                    overflow: TextOverflow.ellipsis),
-                                Text(prod.name, style: A.t(11, w: FontWeight.w800), maxLines: 2, overflow: TextOverflow.ellipsis),
-                                if (dots.isNotEmpty) ...[
-                                  const SizedBox(height: 4),
-                                  Row(children: [
-                                    for (final c in dots.take(4))
-                                      Padding(
-                                        padding: const EdgeInsets.only(left: 4),
-                                        child: Container(
-                                          width: 12, height: 12,
-                                          decoration: BoxDecoration(
-                                            color: c,
-                                            shape: BoxShape.circle,
-                                            border: Border.all(color: Colors.black12, width: 0.7),
+                            Expanded(
+                              child: Padding(
+                                padding: const EdgeInsets.fromLTRB(9, 5, 9, 6),
+                                child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+                                  Text('${f['store_name'] ?? ''}',
+                                      style: A.t(9.5, c: A.primary, w: FontWeight.w800),
+                                      maxLines: 1,
+                                      overflow: TextOverflow.ellipsis),
+                                  Text(prod.name, style: A.t(11, w: FontWeight.w800), maxLines: 2, overflow: TextOverflow.ellipsis),
+                                  if (dots.isNotEmpty) ...[
+                                    const SizedBox(height: 4),
+                                    Row(children: [
+                                      for (final c in dots.take(4))
+                                        Padding(
+                                          padding: const EdgeInsets.only(left: 4),
+                                          child: Container(
+                                            width: 12, height: 12,
+                                            decoration: BoxDecoration(
+                                              color: c,
+                                              shape: BoxShape.circle,
+                                              border: Border.all(color: Colors.black12, width: 0.7),
+                                            ),
                                           ),
                                         ),
+                                      if (dots.length > 4)
+                                        Padding(
+                                          padding: const EdgeInsets.only(left: 5),
+                                          child: Text('+${dots.length - 4}', style: A.t(8.5, c: A.muted, w: FontWeight.w800)),
+                                        ),
+                                    ]),
+                                  ],
+                                  if (prod.hasOffer) ...[
+                                    const SizedBox(height: 4),
+                                    Text(money(prod.price), style: A.t(9.5, c: A.muted, decoration: TextDecoration.lineThrough)),
+                                  ],
+                                  // السعر + زر الإضافة — مثبتان أسفل كل بوكس
+                                  const Spacer(),
+                                  Row(children: [
+                                    Expanded(child: Text(money(prod.displayPrice), style: A.t(13.5, c: A.accent, w: FontWeight.w900), maxLines: 1, overflow: TextOverflow.ellipsis)),
+                                    GestureDetector(
+                                      onTap: () => quickAdd(context, f),
+                                      child: Container(
+                                        width: 28, height: 28,
+                                        decoration: BoxDecoration(gradient: A.gradSun, borderRadius: BorderRadius.circular(9)),
+                                        alignment: Alignment.center,
+                                        child: const Icon(Icons.add_rounded, size: 17, color: Colors.white),
                                       ),
-                                    if (dots.length > 4)
-                                      Padding(
-                                        padding: const EdgeInsets.only(left: 5),
-                                        child: Text('+${dots.length - 4}', style: A.t(8.5, c: A.muted, w: FontWeight.w800)),
-                                      ),
-                                  ]),
-                                ],
-                                if (prod.hasOffer) ...[
-                                  const SizedBox(height: 4),
-                                  Text(money(prod.price), style: A.t(9.5, c: A.muted, decoration: TextDecoration.lineThrough)),
-                                ],
-                                const SizedBox(height: 2),
-                                Row(children: [
-                                  Expanded(child: Text(money(prod.displayPrice), style: A.t(13.5, c: A.accent, w: FontWeight.w900), maxLines: 1, overflow: TextOverflow.ellipsis)),
-                                  GestureDetector(
-                                    onTap: () => quickAdd(context, f),
-                                    child: Container(
-                                      width: 28, height: 28,
-                                      decoration: BoxDecoration(gradient: A.gradSun, borderRadius: BorderRadius.circular(9)),
-                                      alignment: Alignment.center,
-                                      child: const Icon(Icons.add_rounded, size: 17, color: Colors.white),
                                     ),
-                                  ),
+                                  ]),
                                 ]),
-                              ]),
+                              ),
                             ),
                           ]),
                         ),

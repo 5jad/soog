@@ -8,6 +8,7 @@ import 'theme.dart';
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
   await Api.load();
+  AppState.i.refreshStores(); // عدد المتاجر للشريط العلوي — يعمل بالخلفية
   runApp(const ZaboonApp());
 }
 

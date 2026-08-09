@@ -19,7 +19,6 @@ class _CartScreenState extends State<CartScreen> {
   String appliedCoupon = '';
   int appliedCouponDiscount = 0;
   bool usePoints = false;
-  DateTime? scheduled;
   String? groupError;
 
   @override
@@ -60,16 +59,6 @@ class _CartScreenState extends State<CartScreen> {
       setState(() => appliedCoupon = '');
       toast(context, e.message, error: true);
     }
-  }
-
-  Future<void> _pickSchedule() async {
-    final now = DateTime.now();
-    final d = await showDatePicker(context: context, initialDate: now, firstDate: now, lastDate: now.add(const Duration(days: 14)));
-    if (d == null) return;
-    if (!mounted) return;
-    final t = await showTimePicker(context: context, initialTime: TimeOfDay(hour: now.hour.clamp(8, 22), minute: 0));
-    if (t == null) return;
-    setState(() => scheduled = DateTime(d.year, d.month, d.day, t.hour, t.minute));
   }
 
   Future<void> setQty(int id, int qty) async {
@@ -120,7 +109,6 @@ class _CartScreenState extends State<CartScreen> {
           'address': picked.$1,
           if (picked.$2 != null) 'address_id': picked.$2,
           'group_id': gid,
-          'scheduled_at': scheduled?.toUtc().toIso8601String(),
         });
         done++;
       } catch (_) {}
@@ -375,30 +363,6 @@ class _CartScreenState extends State<CartScreen> {
                   padding: const EdgeInsets.fromLTRB(16, 16, 16, 20),
                   children: [
                     for (final g in groupList) _storeGroup(g),
-                    Padding(
-                      padding: const EdgeInsets.only(top: 2),
-                      child: GlassCard(
-                        padding: const EdgeInsets.all(12),
-                        onTap: _pickSchedule,
-                        child: Row(children: [
-                          Container(
-                            padding: const EdgeInsets.all(9),
-                            decoration: BoxDecoration(color: A.cyan.withOpacity(0.12), borderRadius: BorderRadius.circular(11)),
-                            child: const Icon(Icons.schedule_rounded, color: A.cyan, size: 20),
-                          ),
-                          const SizedBox(width: 11),
-                          Expanded(
-                            child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-                              Text('جدولة التوصيل 🕐', style: A.t(13, w: FontWeight.w900)),
-                              Text(scheduled == null
-                                  ? 'الآن (عاجل) — أو اضغط للجدولة'
-                                  : '${scheduled!.day}/${(scheduled!.month).toString().padLeft(2, '0')} ${scheduled!.hour.toString().padLeft(2, '0')}:${scheduled!.minute.toString().padLeft(2, '0')}',
-                                  style: A.t(11, c: A.muted)),
-                            ]),
-                          ),
-                        ]),
-                      ),
-                    ),
                   ],
                 ),
               );
@@ -417,19 +381,9 @@ class _CartScreenState extends State<CartScreen> {
               child: Padding(
                 padding: const EdgeInsets.fromLTRB(16, 12, 16, 10),
                 child: Column(mainAxisSize: MainAxisSize.min, children: [
-                  // خيارات: جدولة + نقاط
+                  // الجدولة أزيلت — بقي خيار النقاط فقط
                   Row(children: [
-                    Expanded(
-                      child: _optTile(
-                        icon: Icons.schedule_rounded,
-                        color: A.cyan,
-                        title: 'جدولة التوصيل',
-                        sub: scheduled == null ? 'الآن (عاجل)' : '${scheduled!.day}/${scheduled!.month} ${scheduled!.hour}:${scheduled!.minute.toString().padLeft(2, '0')}',
-                        onTap: _pickSchedule,
-                      ),
-                    ),
                     if (Api.me != null && (Api.me?['points'] ?? 0) >= 100) ...[
-                      const SizedBox(width: 8),
                       Expanded(
                         child: _optTile(
                           icon: Icons.star_rounded,
@@ -563,13 +517,20 @@ class _CartScreenState extends State<CartScreen> {
     if (widget.embedded) {
       return Column(
         children: [
-          const SizedBox(height: 132),
+          Padding(
+            padding: const EdgeInsets.fromLTRB(14, 8, 14, 0),
+            child: Row(children: [
+              const Expanded(child: TopBarPill()),
+              const NotifBell(),
+            ]),
+          ),
+          const SizedBox(height: 14),
           Material(
             color: Colors.transparent,
             child: Padding(
               padding: const EdgeInsets.symmetric(horizontal: 16),
               child: SizedBox(
-                height: 56,
+                height: 40,
                 child: Row(children: [
                   Text('السلة 🛒', style: A.t(18, w: FontWeight.w900)),
                   const Spacer(),

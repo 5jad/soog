@@ -155,6 +155,14 @@ class AppState extends ChangeNotifier {
     cartCount.value = p.getInt(_cartKey) ?? 0;
   }
 
+  /// تحديث عدد المتاجر للشريط العلوي — يُجلب مرة عند الإقلاع ويُحدَّث من الرئيسية أيضاً
+  Future<void> refreshStores() async {
+    try {
+      final d = await Api.get('/api/stores');
+      storesCount = (d['stores'] ?? []).length;
+    } catch (_) {}
+  }
+
   void refresh() => notifyListeners();
 }
 

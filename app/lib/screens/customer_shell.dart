@@ -831,10 +831,9 @@ class _HeroCarouselState extends State<_HeroCarousel> {
     return GestureDetector(
       onTap: () => widget.onOpen(Map<String, dynamic>.from(a)),
       child: Container(
-        padding: const EdgeInsets.all(16),
         clipBehavior: Clip.antiAlias,
         decoration: BoxDecoration(
-          borderRadius: BorderRadius.circular(22),
+          borderRadius: BorderRadius.circular(20),
         ),
         child: Stack(fit: StackFit.expand, children: [
           // الخلفية: صورة الإعلان / غلاف المتجر / التدرج
@@ -865,7 +864,7 @@ class _HeroCarouselState extends State<_HeroCarousel> {
             ),
           // النص والصور
           Padding(
-            padding: const EdgeInsets.only(left: 4),
+            padding: const EdgeInsets.fromLTRB(14, 12, 14, 12),
             child: Column(crossAxisAlignment: CrossAxisAlignment.start, mainAxisAlignment: MainAxisAlignment.end, children: [
               Row(children: [
                 // صورة غلاف المتجر المصغرة + الاسم
@@ -886,22 +885,33 @@ class _HeroCarouselState extends State<_HeroCarousel> {
                   child: Text('${a['store_name'] ?? 'عرض مميز'}', style: A.t(10.5, c: sun ? A.ink : Colors.white, w: FontWeight.w900)),
                 ),
               ]),
-              const SizedBox(height: 7),
-              Text(a['title'] ?? 'عرض اليوم', style: A.t(19, c: Colors.white, w: FontWeight.w900), maxLines: 1, overflow: TextOverflow.ellipsis),
-              if ((a['description'] ?? '').toString().isNotEmpty) ...[
-                const SizedBox(height: 3),
-                Text(a['description'].toString(), style: A.t(11, c: Colors.white.withOpacity(0.92), w: FontWeight.w600), maxLines: 2, overflow: TextOverflow.ellipsis),
-              ],
-              const SizedBox(height: 9),
-              Container(
-                padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 7),
-                decoration: BoxDecoration(color: Colors.white.withOpacity(0.22), borderRadius: BorderRadius.circular(999)),
-                child: const Row(mainAxisSize: MainAxisSize.min, children: [
-                  Text('تسوق الآن', style: TextStyle(fontSize: 12, fontWeight: FontWeight.w900, color: Colors.white)),
-                  SizedBox(width: 4),
-                  Icon(Icons.arrow_back_rounded, size: 13, color: Colors.white),
-                ]),
-              ),
+              const SizedBox(height: 8),
+              Row(crossAxisAlignment: CrossAxisAlignment.end, children: [
+                Expanded(
+                  child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+                    Text(a['title'] ?? 'عرض اليوم', style: A.t(20, c: Colors.white, w: FontWeight.w900), maxLines: 2, overflow: TextOverflow.ellipsis),
+                    if ((a['description'] ?? '').toString().isNotEmpty) ...[
+                      const SizedBox(height: 4),
+                      Text(a['description'].toString(), style: A.t(11, c: Colors.white.withOpacity(0.92), w: FontWeight.w600), maxLines: 2, overflow: TextOverflow.ellipsis),
+                    ],
+                  ]),
+                ),
+                const SizedBox(width: 12),
+                // زر تسوق الآن — واضح في الطرف المقابل
+                Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+                  decoration: BoxDecoration(
+                    color: Colors.white,
+                    borderRadius: BorderRadius.circular(999),
+                    boxShadow: [BoxShadow(color: Colors.black.withOpacity(0.25), blurRadius: 10, offset: const Offset(0, 3))],
+                  ),
+                  child: const Row(mainAxisSize: MainAxisSize.min, children: [
+                    Text('تسوق الآن', style: TextStyle(fontSize: 12, fontWeight: FontWeight.w900, color: A.primary)),
+                    SizedBox(width: 4),
+                    Icon(Icons.arrow_back_rounded, size: 14, color: A.primary),
+                  ]),
+                ),
+              ]),
             ]),
           ),
         ]),
@@ -914,7 +924,7 @@ class _HeroCarouselState extends State<_HeroCarousel> {
     final ads = widget.ads;
     return Column(children: [
       Padding(
-        padding: const EdgeInsets.only(top: 10),
+        padding: const EdgeInsets.fromLTRB(12, 10, 12, 0),
         child: ads.isEmpty
             ? SizedBox(height: 180, child: _banner({
                 'title': 'كل ما تتمناه بمكان واحد',
@@ -1100,58 +1110,61 @@ class _ProdCard extends StatelessWidget {
               if (prod.outOfStock) Positioned(top: 8, left: 8, child: BadgeWow('نفد', dark: true)),
             ]),
           ),
-          Padding(
-            padding: const EdgeInsets.fromLTRB(9, 5, 9, 6),
-            child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-              Text(prod.name, style: A.t(11, w: FontWeight.w800), maxLines: 2, overflow: TextOverflow.ellipsis),
-              // نقاط ألوان المتغيرات (مثل شي إن) — لون كل تركيبة بلا تكرار
-              if (prod.variants.isNotEmpty) ...[
-                const SizedBox(height: 4),
-                Builder(builder: (ctx) {
-                  final dots = <Color>[];
-                  for (final v in (prod.variants as List)) {
-                    final c = _dotsColor('${(v is Map ? (v['color'] ?? (v['name'] ?? '')) : v)}');
-                    if (!dots.contains(c)) dots.add(c);
-                  }
-                  return Row(children: [
-                    for (final c in dots.take(4))
-                      Padding(
-                        padding: const EdgeInsets.only(left: 4),
-                        child: Container(
-                          width: 12, height: 12,
-                          decoration: BoxDecoration(
-                            color: c,
-                            shape: BoxShape.circle,
-                            border: Border.all(color: Colors.black12, width: 0.7),
+          Expanded(
+            child: Padding(
+              padding: const EdgeInsets.fromLTRB(9, 5, 9, 6),
+              child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+                Text(prod.name, style: A.t(11, w: FontWeight.w800), maxLines: 2, overflow: TextOverflow.ellipsis),
+                // نقاط ألوان المتغيرات (مثل شي إن) — لون كل تركيبة بلا تكرار
+                if (prod.variants.isNotEmpty) ...[
+                  const SizedBox(height: 4),
+                  Builder(builder: (ctx) {
+                    final dots = <Color>[];
+                    for (final v in (prod.variants as List)) {
+                      final c = _dotsColor('${(v is Map ? (v['color'] ?? (v['name'] ?? '')) : v)}');
+                      if (!dots.contains(c)) dots.add(c);
+                    }
+                    return Row(children: [
+                      for (final c in dots.take(4))
+                        Padding(
+                          padding: const EdgeInsets.only(left: 4),
+                          child: Container(
+                            width: 12, height: 12,
+                            decoration: BoxDecoration(
+                              color: c,
+                              shape: BoxShape.circle,
+                              border: Border.all(color: Colors.black12, width: 0.7),
+                            ),
                           ),
                         ),
-                      ),
-                    if (dots.length > 4)
-                      Padding(
-                        padding: const EdgeInsets.only(left: 5),
-                        child: Text('+${dots.length - 4}', style: A.t(8.5, c: A.muted, w: FontWeight.w800)),
-                      ),
-                  ]);
-                }),
-              ],
-              if (prod.hasOffer) ...[
-                const SizedBox(height: 4),
-                Text(money(prod.price), style: A.t(9.5, c: A.muted, decoration: TextDecoration.lineThrough)),
-              ],
-              const SizedBox(height: 2),
-              Row(children: [
-                Expanded(child: Text(money(prod.displayPrice), style: A.t(13.5, c: A.accent, w: FontWeight.w900), maxLines: 1, overflow: TextOverflow.ellipsis)),
-                GestureDetector(
-                  onTap: () => quickAdd(context, product),
-                  child: Container(
-                    width: 28, height: 28,
-                    decoration: BoxDecoration(gradient: A.gradSun, borderRadius: BorderRadius.circular(9)),
-                    alignment: Alignment.center,
-                    child: const Icon(Icons.add_rounded, size: 17, color: Colors.white),
+                      if (dots.length > 4)
+                        Padding(
+                          padding: const EdgeInsets.only(left: 5),
+                          child: Text('+${dots.length - 4}', style: A.t(8.5, c: A.muted, w: FontWeight.w800)),
+                        ),
+                    ]);
+                  }),
+                ],
+                if (prod.hasOffer) ...[
+                  const SizedBox(height: 4),
+                  Text(money(prod.price), style: A.t(9.5, c: A.muted, decoration: TextDecoration.lineThrough)),
+                ],
+                // السعر + زر الإضافة — مثبتان أسفل كل بوكس مهما تغيرت التفاصيل
+                const Spacer(),
+                Row(children: [
+                  Expanded(child: Text(money(prod.displayPrice), style: A.t(13.5, c: A.accent, w: FontWeight.w900), maxLines: 1, overflow: TextOverflow.ellipsis)),
+                  GestureDetector(
+                    onTap: () => quickAdd(context, product),
+                    child: Container(
+                      width: 28, height: 28,
+                      decoration: BoxDecoration(gradient: A.gradSun, borderRadius: BorderRadius.circular(9)),
+                      alignment: Alignment.center,
+                      child: const Icon(Icons.add_rounded, size: 17, color: Colors.white),
+                    ),
                   ),
-                ),
+                ]),
               ]),
-            ]),
+            ),
           ),
         ]),
       ),

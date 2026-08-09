@@ -45,6 +45,7 @@ class _StoresScreenState extends State<StoresScreen> {
       final d = await Api.get('/api/stores');
       final c = await Api.get('/api/categories');
       all = d['stores'] ?? [];
+      AppState.i.storesCount = all.length;
       categories = c['categories'] ?? [];
       if (Api.logged) {
         try {
@@ -167,7 +168,7 @@ class _StoresScreenState extends State<StoresScreen> {
                   child: Row(children: [
                     const Icon(Icons.storefront_rounded, size: 17, color: A.primary),
                     const SizedBox(width: 7),
-                    Text('متاجر متابعتن', style: A.t(13, w: FontWeight.w900)),
+                    Text('متاجر متابعهن', style: A.t(13, w: FontWeight.w900)),
                   ]),
                 ),
                 SizedBox(

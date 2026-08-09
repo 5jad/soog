@@ -26,6 +26,19 @@ class _CustomerShellState extends State<CustomerShell> {
   int cartReload = 0;
 
   @override
+  void initState() {
+    super.initState();
+    // العداد يظهر فوراً من الذاكرة ثم يتزامن من السيرفر للمسجل
+    AppState.i.loadCart();
+    if (Api.logged) {
+      Api.get('/api/customer/cart').then((d) {
+        final items = d['cart'] ?? d['items'] ?? [];
+        AppState.i.setCart((items as List).length);
+      }).catchError((_) {});
+    }
+  }
+
+  @override
   Widget build(BuildContext context) {
     final pages = [
       HomeScreen(onGoStore: (id) => pushStore(context, id)),
@@ -1041,12 +1054,12 @@ void quickAdd(BuildContext context, Map<String, dynamic> prod, {int qty = 1}) {
         'variant': null,
       });
     }
-    AppState.i.cartCount.value = AppState.i.guestCart.length;
+    AppState.i.setCart(AppState.i.guestCart.length);
     toast(context, 'انضاف للسلة (مؤقتاً) 🛒');
     return;
   }
   Api.post('/api/customer/cart', {'product_id': pid, 'qty': qty}).then((_) {
-    AppState.i.cartCount.value++;
+    AppState.i.setCart(AppState.i.cartCount.value + 1);
     toast(context, 'انضاف للسلة 🛒');
   }).catchError((e) {
     toast(context, '${e is ApiException ? e.message : e}', error: true);
@@ -1155,7 +1168,7 @@ class _ProductScreenState extends State<ProductScreen> {
           'qty': qty,
           'variant': label,
         });
-        AppState.i.cartCount.value = AppState.i.guestCart.length;
+        AppState.i.setCart(AppState.i.guestCart.length);
       }
       toast(context, 'انضاف للسلة (مؤقتاً) 🛒');
       return;
@@ -1167,7 +1180,7 @@ class _ProductScreenState extends State<ProductScreen> {
         if (variantId != null) 'variant_id': variantId,
         if (label != null) 'variant_label': label,
       });
-      AppState.i.cartCount.value++;
+      AppState.i.setCart(AppState.i.cartCount.value + 1);
       if (!mounted) return;
       toast(context, 'انضاف للسلة 🛒');
     } on ApiException catch (e) {
@@ -1192,6 +1205,32 @@ class _ProductScreenState extends State<ProductScreen> {
       if (!seen.contains(c)) seen.add(c);
     }
     return seen;
+  }
+
+  /// هل اكتمل اختيار اللون والمقاس (إجباري قبل الإضافة للسلة)؟
+  bool get _variantReady {
+    final variants = p['variants'] is List ? (p['variants'] as List).cast<Map>() : <Map>[];
+    if (variants.isEmpty) return true;
+    final colorList = _distinctColors(variants);
+    if (colorList.length == 1 && colorList.first.isEmpty) {
+      return selSize >= 0 && selSize < variants.length;
+    }
+    if (selColor.isEmpty) return false;
+    final rows = variants.where((v) => '${v['color'] ?? ''}' == selColor).toList();
+    return selSize >= 0 && selSize < rows.length;
+  }
+
+  /// كمية مخزون التركيبة المختارة
+  int get _selStock {
+    final variants = p['variants'] is List ? (p['variants'] as List).cast<Map>() : <Map>[];
+    if (variants.isEmpty) return 0;
+    final colorList = _distinctColors(variants);
+    if (colorList.length == 1 && colorList.first.isEmpty) {
+      return selSize >= 0 && selSize < variants.length ? ((variants[selSize]['stock'] as num?)?.toInt() ?? 0) : 0;
+    }
+    if (selColor.isEmpty) return 0;
+    final rows = variants.where((v) => '${v['color'] ?? ''}' == selColor).toList();
+    return selSize >= 0 && selSize < rows.length ? ((rows[selSize]['stock'] as num?)?.toInt() ?? 0) : 0;
   }
 
   @override
@@ -1458,6 +1497,23 @@ class _ProductScreenState extends State<ProductScreen> {
                               ),
                             ]),
                           ),
+                        // ═══ التفاصيل — السعر والمتوفر للتركيبة المختارة ═══
+                        if (_variantReady)
+                          Column(children: [
+                            const Divider(height: 1, color: A.line),
+                            Padding(
+                              padding: const EdgeInsets.symmetric(vertical: 9),
+                              child: Row(children: [
+                                Text('التفاصيل', style: A.t(11.5, c: A.muted, w: FontWeight.w800)),
+                                const Spacer(),
+                                Text('السعر: ${money(prod.displayPrice)}', style: A.t(13.5, c: A.accent, w: FontWeight.w900)),
+                                const SizedBox(width: 14),
+                                Icon(Icons.check_circle_rounded, size: 14, color: A.success),
+                                const SizedBox(width: 4),
+                                Text('متوفر: ${_selStock}', style: A.t(11.5, c: A.success, w: FontWeight.w800)),
+                              ]),
+                            ),
+                          ]),
                       ]),
                     ),
                   ],
@@ -1566,8 +1622,13 @@ class _ProductScreenState extends State<ProductScreen> {
           const SizedBox(width: 10),
           Expanded(
             child: SolidBtn(
-              label: prod.outOfStock ? 'غير متوفر' : 'أضف للسلة · ${money(prod.displayPrice * qty)}',
-              onTap: prod.outOfStock ? () {} : _addToCart,
+              label: prod.outOfStock
+                  ? 'غير متوفر'
+                  : hasVariant && !_variantReady
+                      ? 'اختر اللون والمقاس أولاً 👆'
+                      : 'أضف للسلة · ${money(prod.displayPrice * qty)}',
+              disabled: prod.outOfStock || (hasVariant && !_variantReady),
+              onTap: _addToCart,
             ),
           ),
         ]),

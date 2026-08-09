@@ -105,55 +105,56 @@ class _StoresScreenState extends State<StoresScreen> {
           ]),
           const SizedBox(width: 10),
         ],
-        bottom: PreferredSize(
-          preferredSize: const Size.fromHeight(66),
-          child: Padding(
-            padding: const EdgeInsets.fromLTRB(16, 0, 16, 12),
-            child: TextField(
-              controller: ctrl,
-              onChanged: (v) => setState(() => q = v),
-              style: A.t(13, w: FontWeight.w700),
-              decoration: InputDecoration(
-                hintText: 'ابحث عن متجر...',
-                hintStyle: A.t(12.5, c: A.muted, w: FontWeight.w600),
-                prefixIcon: const Padding(
-                  padding: EdgeInsets.only(right: 14, left: 6),
-                  child: Icon(Icons.search_rounded, color: A.muted, size: 20),
-                ),
-                filled: true,
-                fillColor: Colors.white.withOpacity(0.8),
-                isDense: true,
-                contentPadding: const EdgeInsets.symmetric(vertical: 13),
-                enabledBorder: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(16),
-                  borderSide: BorderSide(color: Colors.white.withOpacity(0.55), width: 1.1),
-                ),
-                focusedBorder: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(16),
-                  borderSide: const BorderSide(color: A.primaryLight, width: 1.4),
-                ),
-              ),
-            ),
-          ),
-        ),
       ),
       body: loading
           ? const Loader()
           : Column(children: [
+              // البحث — بنفس قياسات صفحة الرئيسية
+              Padding(
+                padding: const EdgeInsets.fromLTRB(16, 12, 16, 0),
+                child: TextField(
+                  controller: ctrl,
+                  onChanged: (v) => setState(() => q = v),
+                  style: A.t(13, w: FontWeight.w700),
+                  textInputAction: TextInputAction.search,
+                  decoration: InputDecoration(
+                    hintText: 'ابحث عن متجر...',
+                    hintStyle: A.t(12.5, c: A.muted, w: FontWeight.w600),
+                    prefixIcon: const Padding(
+                      padding: EdgeInsets.only(right: 14, left: 6),
+                      child: Icon(Icons.search_rounded, color: A.muted, size: 20),
+                    ),
+                    filled: true,
+                    fillColor: Colors.white.withOpacity(0.85),
+                    isDense: true,
+                    contentPadding: const EdgeInsets.symmetric(vertical: 13),
+                    enabledBorder: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(16),
+                      borderSide: BorderSide(color: Colors.white.withOpacity(0.55), width: 1.1),
+                    ),
+                    focusedBorder: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(16),
+                      borderSide: const BorderSide(color: A.primaryLight, width: 1.4),
+                    ),
+                  ),
+                ),
+              ),
+              // شريط الفئات — بنفس قياسات صفحة الرئيسية
               SizedBox(
-                height: 44,
+                height: 52,
                 child: ListView(
                   scrollDirection: Axis.horizontal,
-                  padding: const EdgeInsets.symmetric(horizontal: 16),
+                  padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 6),
                   children: [
-                    ...categories.map((c) => Padding(
-                          padding: const EdgeInsets.only(left: 8),
-                          child: ChipG(
-                            label: '${c['icon'] ?? ''} ${c['name'] ?? ''}',
-                            active: cat == c['id'],
-                            onTap: () => setState(() => cat = cat == c['id'] ? null : c['id']),
-                          ),
-                        )),
+                    for (final c in categories)
+                      Padding(
+                        padding: const EdgeInsets.only(right: 8),
+                        child: ChipG(
+                          label: '${c['icon'] ?? ''} ${c['name'] ?? ''}',
+                          active: cat == c['id'],
+                          onTap: () => setState(() => cat = cat == c['id'] ? null : c['id']),
+                        ),
+                      ),
                   ],
                 ),
               ),

@@ -138,6 +138,19 @@ class AppState extends ChangeNotifier {
   int unreadNotifs = 0;
   List<Map<String, dynamic>> guestCart = []; // السلة المحلية للضيوف
   final ValueNotifier<int> cartCount = ValueNotifier(0); // عداد السلة — يحرك الشارات والزر العائم
+  static const _cartKey = 'zaboon_cart_count';
+
+  /// تحديث العداد وحفظه — الرقم يبقى حتى بعد إغلاق التطبيق
+  void setCart(int n) {
+    cartCount.value = n < 0 ? 0 : n;
+    SharedPreferences.getInstance().then((p) => p.setInt(_cartKey, cartCount.value));
+  }
+
+  /// استرجاع الرقم المحفوظ عند فتح التطبيق
+  Future<void> loadCart() async {
+    final p = await SharedPreferences.getInstance();
+    cartCount.value = p.getInt(_cartKey) ?? 0;
+  }
 
   void refresh() => notifyListeners();
 }

@@ -166,24 +166,30 @@ class SolidBtn extends StatelessWidget {
   final String label;
   final VoidCallback onTap;
   final bool loading;
+  final bool disabled;
   final Color? color;
-  const SolidBtn({super.key, required this.label, required this.onTap, this.loading = false, this.color});
+  const SolidBtn({super.key, required this.label, required this.onTap, this.loading = false, this.disabled = false, this.color});
 
   @override
   Widget build(BuildContext context) {
+    final grad = disabled
+        ? const LinearGradient(colors: [Color(0xFFB9C0CC), Color(0xFF9AA3B1)])
+        : LinearGradient(colors: [color ?? A.primaryDeep, color ?? A.primary]);
     return Container(
       decoration: BoxDecoration(
-        gradient: LinearGradient(colors: [color ?? A.primaryDeep, color ?? A.primary]),
+        gradient: grad,
         borderRadius: BorderRadius.circular(14),
-        boxShadow: [
-          BoxShadow(color: (color ?? A.primary).withOpacity(0.35), blurRadius: 16, offset: const Offset(0, 6)),
-        ],
+        boxShadow: disabled
+            ? const []
+            : [
+                BoxShadow(color: (color ?? A.primary).withOpacity(0.35), blurRadius: 16, offset: const Offset(0, 6)),
+              ],
       ),
       child: Material(
         color: Colors.transparent,
         child: InkWell(
           borderRadius: BorderRadius.circular(14),
-          onTap: loading ? null : onTap,
+          onTap: (loading || disabled) ? null : onTap,
           child: Container(
             height: 50,
             alignment: Alignment.center,

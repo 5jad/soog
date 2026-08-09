@@ -33,12 +33,14 @@ class _CartScreenState extends State<CartScreen> {
     debugPrint('CART_LOAD start logged=${Api.logged}');
     if (!Api.logged) {
       if (mounted) setState(() { cart = List.from(AppState.i.guestCart); loading = false; });
+      AppState.i.setCart(AppState.i.guestCart.length);
       print('CART_LOAD guest mode, guestCart=${AppState.i.guestCart.length}');
       return;
     }
     try {
       final d = await Api.get('/api/customer/cart');
       cart = d['cart'] ?? d['items'] ?? [];
+      AppState.i.setCart(cart.length);
       print('CART_LOAD ok items=${cart.length} first=${(cart.isEmpty ? null : cart[0])}');
     } catch (e) {
       print('CART_LOAD ERROR: $e');
@@ -89,7 +91,7 @@ class _CartScreenState extends State<CartScreen> {
   Future<void> removeItem(int id) async {
     if (!Api.logged) {
       AppState.i.guestCart.removeWhere((e) => e['id'] == id);
-      AppState.i.cartCount.value = AppState.i.guestCart.length;
+      AppState.i.setCart(AppState.i.guestCart.length);
       await _load();
       return;
     }

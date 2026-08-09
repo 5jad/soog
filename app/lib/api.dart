@@ -137,7 +137,7 @@ class AppState extends ChangeNotifier {
 
   final ValueNotifier<int> unreadNotifs = ValueNotifier(0); // عدّاد الإشعارات غير المقروءة
   final ValueNotifier<int> favsCount = ValueNotifier(0); // عدّاد المفضلة — شارة تبويب المفضلة
-  int storesCount = 0; // عدد المتاجر المتاحة (للشريط العلوي)
+  final ValueNotifier<int> storesCount = ValueNotifier(0); // عدد المتاجر المتاحة (الشريط العلوي) — يحدّث كل الصفحات
   List<Map<String, dynamic>> guestCart = []; // السلة المحلية للضيوف
   final ValueNotifier<int> cartCount = ValueNotifier(0); // عداد السلة — يحرك الشارات والزر العائم
   final ValueNotifier<int> favsReload = ValueNotifier(0); // إشارة لتحديث تبويب المفضلة
@@ -159,7 +159,7 @@ class AppState extends ChangeNotifier {
   Future<void> refreshStores() async {
     try {
       final d = await Api.get('/api/stores');
-      storesCount = (d['stores'] ?? []).length;
+      storesCount.value = (d['stores'] ?? []).length;
     } catch (_) {}
   }
 

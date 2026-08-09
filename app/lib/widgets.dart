@@ -696,7 +696,10 @@ class TopBarPill extends StatelessWidget {
         ]),
       ),
       const SizedBox(width: 8),
-      Text('${AppState.i.storesCount} متجر متاح', style: A.t(10.5, c: A.muted, w: FontWeight.w600)),
+      ValueListenableBuilder<num>(
+        valueListenable: AppState.i.storesCount,
+        builder: (_, v, __) => Text('${v.toInt()} متجر متاح', style: A.t(10.5, c: A.muted, w: FontWeight.w600)),
+      ),
     ]);
   }
 }

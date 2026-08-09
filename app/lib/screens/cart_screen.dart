@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
+import 'package:latlong2/latlong.dart';
 import '../api.dart';
+import '../map_screen.dart';
 import '../theme.dart';
 import '../widgets.dart';
 import 'orders_screen.dart';
@@ -146,6 +148,25 @@ class _CartScreenState extends State<CartScreen> {
               )
           else
             const Padding(padding: EdgeInsets.all(16), child: Text('لا عناوين — أضف عنوانك', style: TextStyle(color: A.muted))),
+          Padding(
+            padding: const EdgeInsets.fromLTRB(16, 4, 16, 0),
+            child: Row(children: [
+              Expanded(
+                child: SolidBtn(
+                  label: '🎯 حدد موقعي على الخريطة',
+                  onTap: () async {
+                    final p = await Navigator.push<LatLng>(context,
+                        MaterialPageRoute(builder: (_) => const PickMapScreen()));
+                    if (p == null || !context.mounted) return;
+                    setS(() {
+                      addr = '📍 موقع محدد (${p.latitude.toStringAsFixed(6)}, ${p.longitude.toStringAsFixed(6)})';
+                      addrId = null;
+                    });
+                  },
+                ),
+              ),
+            ]),
+          ),
           Padding(
             padding: const EdgeInsets.all(16),
             child: Column(crossAxisAlignment: CrossAxisAlignment.stretch, children: [
@@ -517,14 +538,7 @@ class _CartScreenState extends State<CartScreen> {
     if (widget.embedded) {
       return Column(
         children: [
-          Padding(
-            padding: const EdgeInsets.fromLTRB(14, 8, 14, 0),
-            child: Row(children: [
-              const Expanded(child: TopBarPill()),
-              const NotifBell(),
-            ]),
-          ),
-          const SizedBox(height: 14),
+          const SizedBox(height: 8),
           Material(
             color: Colors.transparent,
             child: Padding(

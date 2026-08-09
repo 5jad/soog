@@ -138,21 +138,21 @@ class _FavoritesScreenState extends State<FavoritesScreen> {
                             ),
                             Expanded(
                               child: Padding(
-                                padding: const EdgeInsets.fromLTRB(9, 5, 9, 6),
+                                padding: const EdgeInsets.fromLTRB(8, 4, 8, 5),
                                 child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
                                   Text('${f['store_name'] ?? ''}',
-                                      style: A.t(9.5, c: A.primary, w: FontWeight.w800),
+                                      style: A.t(8.5, c: A.primary, w: FontWeight.w800),
                                       maxLines: 1,
                                       overflow: TextOverflow.ellipsis),
-                                  Text(prod.name, style: A.t(11, w: FontWeight.w800), maxLines: 2, overflow: TextOverflow.ellipsis),
+                                  Text(prod.name, style: A.t(10.5, w: FontWeight.w800), maxLines: 1, overflow: TextOverflow.ellipsis),
                                   if (dots.isNotEmpty) ...[
-                                    const SizedBox(height: 4),
+                                    const SizedBox(height: 3),
                                     Row(children: [
                                       for (final c in dots.take(4))
                                         Padding(
-                                          padding: const EdgeInsets.only(left: 4),
+                                          padding: const EdgeInsets.only(left: 3),
                                           child: Container(
-                                            width: 12, height: 12,
+                                            width: 10, height: 10,
                                             decoration: BoxDecoration(
                                               color: c,
                                               shape: BoxShape.circle,
@@ -162,26 +162,26 @@ class _FavoritesScreenState extends State<FavoritesScreen> {
                                         ),
                                       if (dots.length > 4)
                                         Padding(
-                                          padding: const EdgeInsets.only(left: 5),
-                                          child: Text('+${dots.length - 4}', style: A.t(8.5, c: A.muted, w: FontWeight.w800)),
+                                          padding: const EdgeInsets.only(left: 4),
+                                          child: Text('+${dots.length - 4}', style: A.t(8, c: A.muted, w: FontWeight.w800)),
                                         ),
                                     ]),
                                   ],
                                   if (prod.hasOffer) ...[
-                                    const SizedBox(height: 4),
-                                    Text(money(prod.price), style: A.t(9.5, c: A.muted, decoration: TextDecoration.lineThrough)),
+                                    const SizedBox(height: 3),
+                                    Text(money(prod.price), style: A.t(8.5, c: A.muted, decoration: TextDecoration.lineThrough)),
                                   ],
                                   // السعر + زر الإضافة — مثبتان أسفل كل بوكس
                                   const Spacer(),
                                   Row(children: [
-                                    Expanded(child: Text(money(prod.displayPrice), style: A.t(13.5, c: A.accent, w: FontWeight.w900), maxLines: 1, overflow: TextOverflow.ellipsis)),
+                                    Expanded(child: Text(money(prod.displayPrice), style: A.t(12.5, c: A.accent, w: FontWeight.w900), maxLines: 1, overflow: TextOverflow.ellipsis)),
                                     GestureDetector(
                                       onTap: () => quickAdd(context, f),
                                       child: Container(
-                                        width: 28, height: 28,
-                                        decoration: BoxDecoration(gradient: A.gradSun, borderRadius: BorderRadius.circular(9)),
+                                        width: 26, height: 26,
+                                        decoration: BoxDecoration(gradient: A.gradSun, borderRadius: BorderRadius.circular(8)),
                                         alignment: Alignment.center,
-                                        child: const Icon(Icons.add_rounded, size: 17, color: Colors.white),
+                                        child: const Icon(Icons.add_rounded, size: 16, color: Colors.white),
                                       ),
                                     ),
                                   ]),

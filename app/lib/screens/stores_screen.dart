@@ -45,7 +45,7 @@ class _StoresScreenState extends State<StoresScreen> {
       final d = await Api.get('/api/stores');
       final c = await Api.get('/api/categories');
       all = d['stores'] ?? [];
-      AppState.i.storesCount = all.length;
+      AppState.i.storesCount.value = all.length;
       categories = c['categories'] ?? [];
       if (Api.logged) {
         try {

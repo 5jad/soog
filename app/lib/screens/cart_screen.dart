@@ -3,7 +3,6 @@ import '../api.dart';
 import '../theme.dart';
 import '../widgets.dart';
 import 'orders_screen.dart';
-import 'login_screen.dart';
 
 /// السلة — مرتبة حسب المتجر، مع إنشاء الطلب (كاش فقط)
 class CartScreen extends StatefulWidget {
@@ -591,7 +590,16 @@ class _CartScreenState extends State<CartScreen> {
     }
 
     return Scaffold(
-      appBar: AppBar(title: const Text('السلة 🛒')),
+      appBar: AppBar(
+        toolbarHeight: 60,
+        titleSpacing: 14,
+        title: const TopBarPill(),
+        actions: const [
+          SizedBox(width: 8),
+          NotifBell(),
+          SizedBox(width: 10),
+        ],
+      ),
       body: bodyWidget,
       bottomNavigationBar: bar,
     );

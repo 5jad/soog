@@ -41,7 +41,16 @@ class _AccountScreenState extends State<AccountScreen> {
   Widget build(BuildContext context) {
     if (!Api.logged) {
       return Scaffold(
-        appBar: AppBar(title: const Text('حسابي')),
+        appBar: AppBar(
+          toolbarHeight: 60,
+          titleSpacing: 14,
+          title: const TopBarPill(),
+          actions: const [
+            SizedBox(width: 8),
+            NotifBell(),
+            SizedBox(width: 10),
+          ],
+        ),
         body: Center(
           child: Padding(
             padding: const EdgeInsets.all(24),
@@ -65,7 +74,16 @@ class _AccountScreenState extends State<AccountScreen> {
 
     final u = (me ?? Api.me ?? {}) as Map<String, dynamic>;
     return Scaffold(
-      appBar: AppBar(title: const Text('حسابي')),
+      appBar: AppBar(
+        toolbarHeight: 60,
+        titleSpacing: 14,
+        title: const TopBarPill(),
+        actions: const [
+          SizedBox(width: 8),
+          NotifBell(),
+          SizedBox(width: 10),
+        ],
+      ),
       body: ListView(
         padding: const EdgeInsets.fromLTRB(16, 6, 16, 24),
         children: [

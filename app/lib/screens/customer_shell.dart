@@ -8,7 +8,6 @@ import '../widgets.dart';
 import 'stores_screen.dart';
 import 'store_screen.dart';
 import 'favorites_screen.dart';
-import 'notifications_screen.dart';
 import 'cart_screen.dart';
 import 'account_screen.dart';
 
@@ -50,22 +49,26 @@ class _CustomerShellState extends State<CustomerShell> {
       body: IndexedStack(index: tab, children: pages),
       bottomNavigationBar: ValueListenableBuilder<int>(
         valueListenable: AppState.i.cartCount,
-        builder: (_, count, __) => GlassBottomNav(
-          index: tab,
-          badgeIndex: 2,
-          badgeCount: count,
-          items: const [
-            (Icons.home_rounded, 'الرئيسية'),
-            (Icons.storefront_rounded, 'المتاجر'),
-            (Icons.shopping_cart_rounded, 'السلة'),
-            (Icons.favorite_rounded, 'المفضلة'),
-            (Icons.person_rounded, 'حسابي'),
-          ],
-          onTap: (i) => setState(() {
-            tab = i;
-            if (i == 2) cartReload++;
-            if (i == 3) AppState.i.favsReload.value++;
-          }),
+        builder: (_, count, __) => ValueListenableBuilder<int>(
+          valueListenable: AppState.i.favsCount,
+          builder: (_, favs, __) => GlassBottomNav(
+            index: tab,
+            badgeIndex: 2,
+            badgeCount: count,
+            extraBadges: {3: favs},
+            items: const [
+              (Icons.home_rounded, 'الرئيسية'),
+              (Icons.storefront_rounded, 'المتاجر'),
+              (Icons.shopping_cart_rounded, 'السلة'),
+              (Icons.favorite_rounded, 'المفضلة'),
+              (Icons.person_rounded, 'حسابي'),
+            ],
+            onTap: (i) => setState(() {
+              tab = i;
+              if (i == 2) cartReload++;
+              if (i == 3) AppState.i.favsReload.value++;
+            }),
+          ),
         ),
       ),
     );
@@ -134,6 +137,7 @@ class _HomeScreenState extends State<HomeScreen> {
         Api.get('/api/products?best=true'),
       ]);
       stores = results[0]['stores'] ?? [];
+      AppState.i.storesCount = stores.length;
       ads = results[1]['ads'] ?? [];
       offers = results[2]['offers'] ?? [];
       categories = results[3]['categories'] ?? [];
@@ -152,7 +156,7 @@ class _HomeScreenState extends State<HomeScreen> {
 /// شريط تمرير أفقي للمنتجات — صفّان مرتبان صفاً ثم عموداً (لو فئة فيها 2 منتج يكونن بنفس الصف)،
   /// بنفس تصميم وحجم بوكس شبكة «عرض الكل» تماماً
   Widget _prodStrip(List products) {
-    final w = (MediaQuery.of(context).size.width - 43) / 2;
+    final w = MediaQuery.of(context).size.width / 2;
     final cellH = w / 0.55; // نفس نسبة شبكة عرض الكل بالضبط
     Widget cell(int idx) => idx < products.length
         ? SizedBox(
@@ -164,20 +168,24 @@ class _HomeScreenState extends State<HomeScreen> {
             }),
           )
         : const SizedBox(width: 0);
+    // فئة فيها منتجان فقط: صف واحد بارتفاع واحد — بلا فراغ سفلي قبل الفئة التالية
+    final twoRows = products.length >= 3;
     return SizedBox(
-      height: cellH * 2,
+      height: twoRows ? cellH * 2 : cellH,
       child: ListView.separated(
         scrollDirection: Axis.horizontal,
-        padding: const EdgeInsets.symmetric(horizontal: 16),
+        padding: EdgeInsets.zero,
         itemCount: (products.length + 3) ~/ 4,
         separatorBuilder: (_, __) => const SizedBox.shrink(),
         itemBuilder: (_, i) {
           final base = i * 4;
+          final hasRow2 = base + 2 < products.length;
           return SizedBox(
             width: w * 2,
+            height: hasRow2 ? cellH * 2 : cellH,
             child: Column(children: [
               Expanded(child: Row(children: [cell(base), cell(base + 1)])),
-              Expanded(child: Row(children: [cell(base + 2), cell(base + 3)])),
+              if (hasRow2) Expanded(child: Row(children: [cell(base + 2), cell(base + 3)])),
             ]),
           );
         },
@@ -465,36 +473,11 @@ class _HomeScreenState extends State<HomeScreen> {
       appBar: AppBar(
         toolbarHeight: 60,
         titleSpacing: 14,
-        title: Row(children: [
-          Container(
-            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-            decoration: A.glass(radius: 999, soft: true),
-            child: Row(mainAxisSize: MainAxisSize.min, children: [
-              const Icon(Icons.location_on_rounded, color: A.primary, size: 14),
-              const SizedBox(width: 5),
-              Text('واسط · الكوت', style: A.t(12, c: A.primary, w: FontWeight.w800)),
-            ]),
-          ),
-          const SizedBox(width: 8),
-          Text('${stores.length} متجر متاح', style: A.t(10.5, c: A.muted, w: FontWeight.w600)),
-        ]),
-        actions: [
-          const SizedBox(width: 8),
-          Stack(clipBehavior: Clip.none, children: [
-            IconGlass(
-              icon: Icons.notifications_none_rounded,
-              onTap: () => Navigator.push(context, MaterialPageRoute(builder: (_) => const NotificationsScreen())),
-            ),
-            Positioned(
-              right: -1,
-              top: -1,
-              child: ValueListenableBuilder<int>(
-                valueListenable: AppState.i.unreadNotifs,
-                builder: (_, v, __) => CountBadge(v),
-              ),
-            ),
-          ]),
-          const SizedBox(width: 10),
+        title: const TopBarPill(),
+        actions: const [
+          SizedBox(width: 8),
+          NotifBell(),
+          SizedBox(width: 10),
         ],
       ),
       body: loading
@@ -732,7 +715,6 @@ class _HomeScreenState extends State<HomeScreen> {
                             crossAxisCount: 2,
                             shrinkWrap: true,
                             physics: const NeverScrollableScrollPhysics(),
-                            padding: const EdgeInsets.symmetric(horizontal: 16),
                             mainAxisSpacing: 0,
                             crossAxisSpacing: 0,
                             childAspectRatio: 0.55,
@@ -756,7 +738,6 @@ class _HomeScreenState extends State<HomeScreen> {
                               crossAxisCount: 2,
                               shrinkWrap: true,
                               physics: const NeverScrollableScrollPhysics(),
-                              padding: const EdgeInsets.symmetric(horizontal: 16),
                               mainAxisSpacing: 0,
                               crossAxisSpacing: 0,
                               childAspectRatio: 0.55,

@@ -6,6 +6,7 @@ import 'package:flutter/material.dart';
 import 'theme.dart';
 import 'api.dart';
 import 'screens/cart_screen.dart';
+import 'screens/notifications_screen.dart';
 
 /// هل القيمة غلاف صورة حقيقي (رابط/بايت) وليس بانر CSS قديم؟
 bool isUrlCover(String v) =>
@@ -282,6 +283,9 @@ class GlassBottomNav extends StatelessWidget {
 
   /// عدد أصناف السلة — يُعرض فوق زر السلة في الشريط
   final int badgeCount;
+
+  /// شارات إضافية لتبويبات أخرى: الفهرس ← العدد (مثل المفضلة)
+  final Map<int, int> extraBadges;
   const GlassBottomNav({
     super.key,
     required this.index,
@@ -289,6 +293,7 @@ class GlassBottomNav extends StatelessWidget {
     required this.onTap,
     this.badgeIndex,
     this.badgeCount = 0,
+    this.extraBadges = const {},
   });
 
   @override
@@ -309,7 +314,8 @@ class GlassBottomNav extends StatelessWidget {
               child: Row(
                 children: List.generate(items.length, (i) {
                   final selected = i == index;
-                  final showBadge = badgeCount > 0 && i == badgeIndex;
+                  final badge = i == badgeIndex ? badgeCount : (extraBadges[i] ?? 0);
+                  final showBadge = badge > 0;
                   return Expanded(
                     child: InkWell(
                       onTap: () => onTap(i),
@@ -334,7 +340,7 @@ class GlassBottomNav extends StatelessWidget {
                                 child: Container(
                                   padding: const EdgeInsets.symmetric(horizontal: 4.5, vertical: 1),
                                   decoration: const BoxDecoration(color: A.danger, shape: BoxShape.circle),
-                                  child: Text('$badgeCount',
+                                  child: Text('$badge',
                                       style: const TextStyle(color: Colors.white, fontSize: 8.5, fontWeight: FontWeight.w900)),
                                 ),
                               ),
@@ -671,5 +677,48 @@ class _CropScreenState extends State<CropScreen> {
           }),
       ]),
     );
+  }
+}
+
+/// الشريط العلوي الموحد: واسط·الكوت + عدد المتاجر (يظهر بكل الصفحات)
+class TopBarPill extends StatelessWidget {
+  const TopBarPill({super.key});
+  @override
+  Widget build(BuildContext context) {
+    return Row(children: [
+      Container(
+        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+        decoration: A.glass(radius: 999, soft: true),
+        child: Row(mainAxisSize: MainAxisSize.min, children: [
+          const Icon(Icons.location_on_rounded, color: A.primary, size: 14),
+          const SizedBox(width: 5),
+          Text('واسط · الكوت', style: A.t(12, c: A.primary, w: FontWeight.w800)),
+        ]),
+      ),
+      const SizedBox(width: 8),
+      Text('${AppState.i.storesCount} متجر متاح', style: A.t(10.5, c: A.muted, w: FontWeight.w600)),
+    ]);
+  }
+}
+
+/// جرس الإشعارات الموحد مع عدّاد غير المقروء
+class NotifBell extends StatelessWidget {
+  const NotifBell({super.key});
+  @override
+  Widget build(BuildContext context) {
+    return Stack(clipBehavior: Clip.none, children: [
+      IconGlass(
+        icon: Icons.notifications_none_rounded,
+        onTap: () => Navigator.push(context, MaterialPageRoute(builder: (_) => const NotificationsScreen())),
+      ),
+      Positioned(
+        right: -1,
+        top: -1,
+        child: ValueListenableBuilder<num>(
+          valueListenable: AppState.i.unreadNotifs,
+          builder: (_, v, __) => CountBadge(v.toInt()),
+        ),
+      ),
+    ]);
   }
 }

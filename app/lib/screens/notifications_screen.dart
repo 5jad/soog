@@ -34,13 +34,6 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
         notifs.where((n) => !(n['read'] == true || n['read'] == 1)).length;
   }
 
-  Future<void> _markAll() async {
-    try {
-      await Api.post('/api/customer/notifications/read');
-      await _load();
-    } catch (_) {}
-  }
-
   Future<void> _markOne(Map n) async {
     try {
       await Api.post('/api/customer/notifications/${n['id']}/read');
@@ -71,15 +64,7 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
       backgroundColor: A.bg,
       appBar: AppBar(
         title: const Text('الإشعارات 🔔'),
-        actions: [
-          if (!loading && notifs.isNotEmpty)
-            TextButton.icon(
-              onPressed: _markAll,
-              icon: const Icon(Icons.done_all_rounded, size: 17, color: A.primary),
-              label: Text('تعليم الكل', style: A.t(11.5, c: A.primary, w: FontWeight.w800)),
-            ),
-          const SizedBox(width: 8),
-        ],
+        actions: const [SizedBox(width: 10)],
       ),
       body: loading
           ? const Loader()

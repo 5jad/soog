@@ -1,5 +1,6 @@
 import 'dart:async';
 import 'package:flutter/material.dart';
+import 'package:url_launcher/url_launcher.dart';
 import '../api.dart';
 import '../map_screen.dart';
 import '../models.dart';
@@ -250,6 +251,17 @@ class _OrderDetailScreenState extends State<OrderDetailScreen> {
     }
   }
 
+  Future<void> _callCourier(Order o) async {
+    final phone = o.courierPhone.trim();
+    if (phone.isEmpty) {
+      toast(context, 'ماكو رقم لمندوب التوصيل', error: true);
+      return;
+    }
+    try {
+      await launchUrl(Uri.parse('tel:$phone'));
+    } catch (_) {}
+  }
+
   int get stepIdx {
     final s = (o?['status'] ?? 'pending') as String;
     final i = steps.indexOf(s);
@@ -344,14 +356,20 @@ class _OrderDetailScreenState extends State<OrderDetailScreen> {
                 const Icon(Icons.delivery_dining_rounded, color: A.primaryLight),
                 const SizedBox(width: 10),
                 Expanded(child: Text('المندوب: ${order.courierName}', style: A.t(12.5))),
-                if (status == 'delivering')
+                if (status == 'delivering') ...[
                   IconButton(
                     onPressed: () => _chatCourier(order),
                     icon: const Icon(Icons.chat_bubble_rounded, color: A.primary, size: 20),
                     tooltip: 'محادثة المندوب',
                     visualDensity: VisualDensity.compact,
-                  )
-                else
+                  ),
+                  IconButton(
+                    onPressed: () => _callCourier(order),
+                    icon: const Icon(Icons.call_rounded, color: A.primary, size: 20),
+                    tooltip: 'اتصال بالمندوب',
+                    visualDensity: VisualDensity.compact,
+                  ),
+                ] else
                   const Icon(Icons.phone_rounded, size: 17, color: A.muted),
               ]),
             ),

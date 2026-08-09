@@ -110,6 +110,7 @@ class Order {
   final String storeName, storeLogo, courierName, address;
   final int storeId;
   final int courierId;
+  final String courierPhone;
   final String? paymentMethod;
   final int itemsCount;
 
@@ -125,6 +126,7 @@ class Order {
     required this.address,
     required this.storeId,
     required this.courierId,
+    required this.courierPhone,
     this.paymentMethod,
     this.itemsCount = 0,
   });
@@ -141,6 +143,7 @@ class Order {
         address: j['address'] ?? '',
         storeId: (j['store_id'] as num?)?.toInt() ?? 0,
         courierId: (j['courier_id'] as num?)?.toInt() ?? 0,
+        courierPhone: j['courier_phone'] ?? '',
         paymentMethod: j['payment_method'] as String?,
         itemsCount: (j['items_count'] as num?)?.toInt() ?? 0,
       );

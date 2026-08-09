@@ -3,6 +3,7 @@ import '../api.dart';
 import '../models.dart';
 import '../theme.dart';
 import '../widgets.dart';
+import 'notifications_screen.dart';
 
 /// قائمة المتاجر مع بحث وتصفية حسب القسم — بهوية الديمو
 class StoresScreen extends StatefulWidget {
@@ -21,6 +22,7 @@ class _StoresScreenState extends State<StoresScreen> {
   final ctrl = TextEditingController();
   List all = [];
   List categories = [];
+  List favorites = [];
   int? cat;
   bool loading = true;
 
@@ -44,6 +46,12 @@ class _StoresScreenState extends State<StoresScreen> {
       final c = await Api.get('/api/categories');
       all = d['stores'] ?? [];
       categories = c['categories'] ?? [];
+      if (Api.logged) {
+        try {
+          final f = await Api.get('/api/customer/store-favorites');
+          favorites = f['favorites'] ?? [];
+        } catch (_) {}
+      }
     } catch (_) {} finally {
       if (mounted) setState(() => loading = false);
     }
@@ -64,7 +72,39 @@ class _StoresScreenState extends State<StoresScreen> {
     return Scaffold(
       backgroundColor: A.bg,
       appBar: AppBar(
-        title: Text(widget.categoryName ?? 'المتاجر'),
+        toolbarHeight: 60,
+        titleSpacing: 14,
+        title: Row(children: [
+          Container(
+            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+            decoration: A.glass(radius: 999, soft: true),
+            child: Row(mainAxisSize: MainAxisSize.min, children: [
+              const Icon(Icons.location_on_rounded, color: A.primary, size: 14),
+              const SizedBox(width: 5),
+              Text('واسط · الكوت', style: A.t(12, c: A.primary, w: FontWeight.w800)),
+            ]),
+          ),
+          const SizedBox(width: 8),
+          Text('${all.length} متجر متاح', style: A.t(10.5, c: A.muted, w: FontWeight.w600)),
+        ]),
+        actions: [
+          const SizedBox(width: 8),
+          Stack(clipBehavior: Clip.none, children: [
+            IconGlass(
+              icon: Icons.notifications_none_rounded,
+              onTap: () => Navigator.push(context, MaterialPageRoute(builder: (_) => const NotificationsScreen())),
+            ),
+            Positioned(
+              right: -1,
+              top: -1,
+              child: ValueListenableBuilder<int>(
+                valueListenable: ValueNotifier(AppState.i.unreadNotifs),
+                builder: (_, v, __) => CountBadge(v),
+              ),
+            ),
+          ]),
+          const SizedBox(width: 10),
+        ],
         bottom: PreferredSize(
           preferredSize: const Size.fromHeight(66),
           child: Padding(
@@ -100,16 +140,60 @@ class _StoresScreenState extends State<StoresScreen> {
       body: loading
           ? const Loader()
           : Column(children: [
+              // الشريك — المتاجر المتابعة بالبداية
+              if (favorites.isNotEmpty) ...[
+                Padding(
+                  padding: const EdgeInsets.fromLTRB(16, 10, 16, 4),
+                  child: Row(children: [
+                    const Icon(Icons.handshake_rounded, size: 17, color: A.primary),
+                    const SizedBox(width: 7),
+                    Text('الشريك — انضم لمتابعتك', style: A.t(13, w: FontWeight.w900)),
+                  ]),
+                ),
+                SizedBox(
+                  height: 96,
+                  child: ListView(
+                    scrollDirection: Axis.horizontal,
+                    padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 6),
+                    children: [
+                      for (final f in favorites)
+                        Padding(
+                          padding: const EdgeInsets.only(left: 10),
+                          child: GestureDetector(
+                            onTap: () {
+                              final s = all.where((x) => x['id'] == f['store_id']).firstOrNull;
+                              if (s == null) return;
+                              widget.onOpen(Store.fromJson(Map<String, dynamic>.from(s as Map)));
+                            },
+                            child: Container(
+                              width: 150,
+                              padding: const EdgeInsets.all(10),
+                              decoration: A.glass(radius: 16),
+                              child: Row(children: [
+                                storeLogo('${f['store_logo'] ?? ''}', size: 44, radius: 12),
+                                const SizedBox(width: 10),
+                                Expanded(child: Column(crossAxisAlignment: CrossAxisAlignment.start, mainAxisAlignment: MainAxisAlignment.center, children: [
+                                  Text('${f['store_name'] ?? ''}', style: A.t(11.5, w: FontWeight.w900), maxLines: 1, overflow: TextOverflow.ellipsis),
+                                  const SizedBox(height: 3),
+                                  Row(children: [
+                                    const Icon(Icons.star_rounded, size: 11, color: A.star),
+                                    Text('${(f['rating'] ?? 0).toStringAsFixed(1)}', style: A.t(10, w: FontWeight.w800)),
+                                  ]),
+                                ])),
+                              ]),
+                            ),
+                          ),
+                        ),
+                    ],
+                  ),
+                ),
+              ],
               SizedBox(
                 height: 44,
                 child: ListView(
                   scrollDirection: Axis.horizontal,
                   padding: const EdgeInsets.symmetric(horizontal: 16),
                   children: [
-                    Padding(
-                      padding: const EdgeInsets.only(left: 8),
-                      child: ChipG(label: 'الكل', active: cat == null, onTap: () => setState(() => cat = null)),
-                    ),
                     ...categories.map((c) => Padding(
                           padding: const EdgeInsets.only(left: 8),
                           child: ChipG(

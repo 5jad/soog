@@ -4,8 +4,7 @@ import '../api.dart';
 import '../map_screen.dart';
 import '../theme.dart';
 import '../widgets.dart';
-import 'cart_screen.dart';
-import 'notifications_screen.dart';
+import 'orders_screen.dart';
 import 'login_screen.dart';
 import 'vendor_shell.dart';
 import 'delivery_shell.dart';
@@ -111,17 +110,11 @@ class _AccountScreenState extends State<AccountScreen> {
           Container(
             decoration: A.glass(radius: 22),
             child: Column(children: [
+              _tile(Icons.receipt_long_rounded, 'طلباتي 📦', () => Navigator.push(context, MaterialPageRoute(builder: (_) => OrderListScreen(role: 'customer')))),
+              _div(),
               _tile(Icons.star_rounded, 'نقاطي وهداياي 🎁', () => Navigator.push(context, MaterialPageRoute(builder: (_) => const PointsScreen()))),
               _div(),
-              _tile(Icons.storefront_rounded, 'المتاجر المتابعة ❤️', () => _followedStores()),
-              _div(),
               _tile(Icons.location_on_rounded, 'عناويني 📍', () => _addresses()),
-              _div(),
-              _tile(Icons.favorite_rounded, 'مفضلتي ❤️', () => _favorites()),
-              _div(),
-              _tile(Icons.notifications_none_rounded, 'الإشعارات 🔔', () => Navigator.push(context, MaterialPageRoute(builder: (_) => const NotificationsScreen()))),
-              _div(),
-              _tile(Icons.shopping_cart_rounded, 'السلة 🛒', () => Navigator.push(context, MaterialPageRoute(builder: (_) => const CartScreen()))),
             ]),
           ),
           const SizedBox(height: 18),
@@ -254,64 +247,6 @@ class _AccountScreenState extends State<AccountScreen> {
           ),
         ]),
       ));
-    } catch (_) {}
-  }
-
-  Future<void> _favorites() async {
-    try {
-      final d = await Api.get('/api/customer/favorites');
-      final favs = (d['products'] ?? []) as List;
-      if (!mounted) return;
-      await showSheet(context, Column(mainAxisSize: MainAxisSize.min, children: [
-        const SheetTitle('مفضلتي ❤️'),
-        if (favs.isEmpty)
-          const Padding(padding: EdgeInsets.all(30), child: EmptyState(icon: '🤍', title: 'لا مفضلة بعد'))
-        else
-          for (final f in favs)
-            ListTile(
-              leading: productImage(f['image'], size: 40, radius: 10),
-              title: Text(f['name'], style: A.t(13)),
-              subtitle: Text(money(f['price'] ?? 0), style: A.t(11.5, c: A.accent, w: FontWeight.w800)),
-              trailing: IconButton(
-                icon: const Icon(Icons.close, color: A.muted, size: 18),
-                onPressed: () async {
-                  await Api.post('/api/customer/favorites', {'product_id': f['id']});
-                  if (!mounted) return;
-                  Navigator.pop(context);
-                  _favorites();
-                },
-              ),
-            ),
-      ]));
-    } catch (_) {}
-  }
-
-  Future<void> _followedStores() async {
-    try {
-      final d = await Api.get('/api/customer/store-favorites');
-      final list = (d['favorites'] ?? []) as List;
-      if (!mounted) return;
-      await showSheet(context, Column(mainAxisSize: MainAxisSize.min, children: [
-        const SheetTitle('المتاجر المتابعة ❤️'),
-        if (list.isEmpty)
-          const Padding(padding: EdgeInsets.all(30), child: EmptyState(icon: '🏪', title: 'لا متاجر متابعة', sub: 'تابع متاجرك المفضلة من صفحة المتجر'))
-        else
-          for (final f in list)
-            ListTile(
-              leading: storeLogo(f['logo'] ?? '', size: 40, radius: 10),
-              title: Text(f['store_name'] ?? '', style: A.t(13)),
-              subtitle: Text('${(f['rating'] ?? 0).toStringAsFixed(1)} ★ · ${f['reviews_count'] ?? 0} تقييم', style: A.t(11, c: A.muted)),
-              trailing: IconButton(
-                icon: const Icon(Icons.close, color: A.muted, size: 18),
-                onPressed: () async {
-                  await Api.post('/api/customer/store-favorites', {'store_id': f['store_id']});
-                  if (!mounted) return;
-                  Navigator.pop(context);
-                  _followedStores();
-                },
-              ),
-            ),
-      ]));
     } catch (_) {}
   }
 }

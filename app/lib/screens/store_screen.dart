@@ -210,7 +210,6 @@ class _StoreScreenState extends State<StoreScreen> {
               child: Padding(
                 padding: const EdgeInsets.fromLTRB(16, 12, 16, 0),
                 child: Row(children: [
-                  _actionBtn(Icons.call_rounded, 'اتصال', () => _launch('tel:${s['phone'] ?? ''}')),
                   _actionBtn(Icons.map_rounded, 'الموقع', () => _launch(s['location_url'] ?? '')),
                   _actionBtn(followed ? Icons.favorite_rounded : Icons.favorite_border_rounded, followed ? 'متابع' : 'متابعة', _toggleFollow, highlighted: followed),
                 ]),

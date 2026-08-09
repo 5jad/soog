@@ -8,8 +8,7 @@ import 'orders_screen.dart';
 
 /// السلة — مرتبة حسب المتجر، مع إنشاء الطلب (كاش فقط)
 class CartScreen extends StatefulWidget {
-  final bool embedded;
-  const CartScreen({super.key, this.embedded = false});
+  const CartScreen({super.key});
   @override
   State<CartScreen> createState() => _CartScreenState();
 }
@@ -18,6 +17,7 @@ class _CartScreenState extends State<CartScreen> {
   List cart = [];
   bool loading = true;
   final couponCtrl = TextEditingController();
+  final addressCtrl = TextEditingController();
   String appliedCoupon = '';
   int appliedCouponDiscount = 0;
   bool usePoints = false;
@@ -30,7 +30,6 @@ class _CartScreenState extends State<CartScreen> {
   }
 
   Future<void> _load() async {
-    debugPrint('CART_LOAD start logged=${Api.logged}');
     if (!Api.logged) {
       if (mounted) setState(() { cart = List.from(AppState.i.guestCart); loading = false; });
       AppState.i.setCart(AppState.i.guestCart.length);
@@ -158,10 +157,12 @@ class _CartScreenState extends State<CartScreen> {
                     final p = await Navigator.push<LatLng>(context,
                         MaterialPageRoute(builder: (_) => const PickMapScreen()));
                     if (p == null || !context.mounted) return;
+                    addressCtrl.text = '📍 موقع محدد (${p.latitude.toStringAsFixed(6)}, ${p.longitude.toStringAsFixed(6)})';
                     setS(() {
-                      addr = '📍 موقع محدد (${p.latitude.toStringAsFixed(6)}, ${p.longitude.toStringAsFixed(6)})';
+                      addr = addressCtrl.text;
                       addrId = null;
                     });
+                    toast(context, 'تم تحديد موقعك — اضغط «تأكيد» لإرسال الطلب به ✓');
                   },
                 ),
               ),
@@ -171,6 +172,7 @@ class _CartScreenState extends State<CartScreen> {
             padding: const EdgeInsets.all(16),
             child: Column(crossAxisAlignment: CrossAxisAlignment.stretch, children: [
               TextField(
+                controller: addressCtrl,
                 decoration: const InputDecoration(hintText: 'أو أضف عنوان جديد: حي، زقاق، علامة مميزة'),
                 onChanged: (v) => setS(() {
                   addr = v;
@@ -199,7 +201,10 @@ class _CartScreenState extends State<CartScreen> {
       padding: const EdgeInsets.only(bottom: 10),
       child: Container(
         padding: const EdgeInsets.fromLTRB(10, 10, 10, 9),
-        decoration: A.glass(radius: 16, soft: true),
+        decoration: BoxDecoration(
+          color: const Color(0xFFF7F8FA),
+          borderRadius: BorderRadius.circular(16),
+        ),
         child: Row(crossAxisAlignment: CrossAxisAlignment.start, children: [
           productImage(it['image'], size: 58, radius: 14),
           const SizedBox(width: 11),
@@ -280,7 +285,11 @@ class _CartScreenState extends State<CartScreen> {
     return Container(
       margin: const EdgeInsets.only(bottom: 14),
       padding: const EdgeInsets.fromLTRB(11, 11, 11, 12),
-      decoration: A.glass(radius: 22),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(22),
+        boxShadow: const [BoxShadow(color: Colors.black12, blurRadius: 10, offset: Offset(0, 2))],
+      ),
       child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
         Row(children: [
           storeLogo(g['logo'] ?? '', size: 38, radius: 11),
@@ -361,7 +370,6 @@ class _CartScreenState extends State<CartScreen> {
       groups[sid]!['items'].add(it);
     }
     final groupList = groups.values.toList();
-    debugPrint('CART_BUILD cart=${cart.length} groups=${groupList.length}');
     double total = 0;
     for (final it in cart) {
       total += (double.tryParse('${it['price'] ?? 0}') ?? 0.0) * (double.tryParse('${it['qty'] ?? 1}') ?? 1.0);
@@ -535,45 +543,11 @@ class _CartScreenState extends State<CartScreen> {
             ),
           );
 
-    if (widget.embedded) {
-      return Column(
-        children: [
-          const SizedBox(height: 8),
-          Material(
-            color: Colors.transparent,
-            child: Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 16),
-              child: SizedBox(
-                height: 40,
-                child: Row(children: [
-                  Text('السلة 🛒', style: A.t(18, w: FontWeight.w900)),
-                  const Spacer(),
-                  if (!loading && cart.isNotEmpty)
-                    Container(
-                      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
-                      decoration: A.glass(radius: 999, soft: true),
-                      child: Text('${cart.length} صنف', style: A.t(11.5, c: A.primary, w: FontWeight.w900)),
-                    ),
-                ]),
-              ),
-            ),
-          ),
-          Expanded(child: bodyWidget),
-          if (bar != null) bar,
-        ],
-      );
-    }
-
     return Scaffold(
       appBar: AppBar(
         toolbarHeight: 60,
         titleSpacing: 14,
-        title: const TopBarPill(),
-        actions: const [
-          SizedBox(width: 8),
-          NotifBell(),
-          SizedBox(width: 10),
-        ],
+        title: const Text('السلة 🛒', style: TextStyle(fontWeight: FontWeight.w900)),
       ),
       body: bodyWidget,
       bottomNavigationBar: bar,

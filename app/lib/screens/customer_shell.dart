@@ -41,7 +41,7 @@ class _CustomerShellState extends State<CustomerShell> {
     final pages = [
       HomeScreen(onGoStore: (id) => pushStore(context, id)),
       StoresScreen(onOpen: (s) => pushStore(context, s.id)),
-      CartScreen(embedded: true, key: ValueKey('cart$cartReload')),
+      CartScreen(key: ValueKey('cart$cartReload')),
       const FavoritesScreen(),
       AccountScreen(roles: widget.roles),
     ];

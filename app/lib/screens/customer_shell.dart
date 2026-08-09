@@ -147,18 +147,18 @@ class _HomeScreenState extends State<HomeScreen> {
     }
   }
 
-  /// شريط تمرير أفقي للمنتجات — صفّان من البوكسات الكبيرة القديمة
+/// شريط تمرير أفقي للمنتجات — صفّان من البوكسات الكبيرة المتلاصقة (مثل شبكة عرض الكل)
   Widget _prodStrip(List products) {
     final w = (MediaQuery.of(context).size.width - 43) / 2;
-    const textH = 106.0;
+    const textH = 112.0;
     final rowH = w * 4 / 3 + textH;
     return SizedBox(
-      height: rowH * 2 + 10,
+      height: rowH * 2,
       child: ListView.separated(
         scrollDirection: Axis.horizontal,
         padding: const EdgeInsets.symmetric(horizontal: 16),
         itemCount: (products.length + 1) ~/ 2,
-        separatorBuilder: (_, __) => const SizedBox(width: 11),
+        separatorBuilder: (_, __) => const SizedBox.shrink(),
         itemBuilder: (_, i) {
           final i1 = i * 2;
           final i2 = i * 2 + 1;
@@ -166,7 +166,6 @@ class _HomeScreenState extends State<HomeScreen> {
             width: w,
             child: Column(children: [
               Expanded(child: _stripCard(Map<String, dynamic>.from(products[i1] as Map), w)),
-              const SizedBox(height: 10),
               if (i2 < products.length)
                 Expanded(child: _stripCard(Map<String, dynamic>.from(products[i2] as Map), w))
               else
@@ -178,7 +177,7 @@ class _HomeScreenState extends State<HomeScreen> {
     );
   }
 
-  /// بوكس منتج كبير (نفس شكل الشبكة) بمقاس ثابت للشريط
+  /// بوكس منتج — نفس تصميم بوكس شبكة «عرض الكل» تماماً (متلاصق بلا حواف)
   Widget _stripCard(Map<String, dynamic> m, double w) {
     final prod = Product.fromJson(m);
     final offPct = prod.hasOffer && prod.price > 0
@@ -195,48 +194,56 @@ class _HomeScreenState extends State<HomeScreen> {
               productImageBox(prod.image),
               if (prod.hasOffer) Positioned(top: 8, right: 8, child: BadgeWow('خصم $offPct%')),
               if (prod.outOfStock) Positioned(top: 8, left: 8, child: BadgeWow('نفد', dark: true)),
-              if (prod.variants.isNotEmpty)
-                Positioned(
-                  bottom: 8,
-                  right: 8,
-                  child: Builder(builder: (ctx) {
-                    final dots = <Color>[];
-                    for (final v in (prod.variants as List)) {
-final c = _dot('${(v is Map ? (v['color'] ?? (v['name'] ?? '')) : v)}');
-                      if (!dots.contains(c)) dots.add(c);
-                    }
-                    return Row(children: [
-                      for (final c in dots.take(4))
-                        Padding(
-                          padding: const EdgeInsets.only(left: 3),
-                          child: Container(
-                            width: 9, height: 9,
-                            decoration: BoxDecoration(color: c, shape: BoxShape.circle, border: Border.all(color: Colors.white, width: 1.2)),
-                          ),
-                        ),
-                    ]);
-                  }),
-                ),
             ]),
           ),
           Padding(
-            padding: const EdgeInsets.fromLTRB(9, 6, 9, 6),
+            padding: const EdgeInsets.fromLTRB(9, 5, 9, 6),
             child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
               Text(prod.name, style: A.t(11, w: FontWeight.w800), maxLines: 2, overflow: TextOverflow.ellipsis),
+              // نقاط ألوان المتغيرات — مثل الشبكة
+              if (prod.variants.isNotEmpty) ...[
+                const SizedBox(height: 4),
+                Builder(builder: (ctx) {
+                  final dots = <Color>[];
+                  for (final v in (prod.variants as List)) {
+                    final c = _dot('${(v is Map ? (v['color'] ?? (v['name'] ?? '')) : v)}');
+                    if (!dots.contains(c)) dots.add(c);
+                  }
+                  return Row(children: [
+                    for (final c in dots.take(4))
+                      Padding(
+                        padding: const EdgeInsets.only(left: 4),
+                        child: Container(
+                          width: 12, height: 12,
+                          decoration: BoxDecoration(
+                            color: c,
+                            shape: BoxShape.circle,
+                            border: Border.all(color: Colors.black12, width: 0.7),
+                          ),
+                        ),
+                      ),
+                    if (dots.length > 4)
+                      Padding(
+                        padding: const EdgeInsets.only(left: 5),
+                        child: Text('+${dots.length - 4}', style: A.t(8.5, c: A.muted, w: FontWeight.w800)),
+                      ),
+                  ]);
+                }),
+              ],
               if (prod.hasOffer) ...[
-                const SizedBox(height: 2),
-                Text(money(prod.price), style: A.t(9, c: A.muted, decoration: TextDecoration.lineThrough)),
+                const SizedBox(height: 4),
+                Text(money(prod.price), style: A.t(9.5, c: A.muted, decoration: TextDecoration.lineThrough)),
               ],
               const SizedBox(height: 2),
               Row(children: [
-                Expanded(child: Text(money(prod.displayPrice), style: A.t(13, c: A.accent, w: FontWeight.w900), maxLines: 1, overflow: TextOverflow.ellipsis)),
+                Expanded(child: Text(money(prod.displayPrice), style: A.t(13.5, c: A.accent, w: FontWeight.w900), maxLines: 1, overflow: TextOverflow.ellipsis)),
                 GestureDetector(
                   onTap: () => quickAdd(context, m),
                   child: Container(
-                    width: 27, height: 27,
+                    width: 28, height: 28,
                     decoration: BoxDecoration(gradient: A.gradSun, borderRadius: BorderRadius.circular(9)),
                     alignment: Alignment.center,
-                    child: const Icon(Icons.add_rounded, size: 16, color: Colors.white),
+                    child: const Icon(Icons.add_rounded, size: 17, color: Colors.white),
                   ),
                 ),
               ]),

@@ -7,7 +7,9 @@ import 'package:shared_preferences/shared_preferences.dart';
 
 /// عميل الـ API — كله يمر من هنا (base URL سهل التغيير)
 class Api {
-  static String base = 'https://soog-delta.vercel.app'; // السحابة — يشتغل بأي مكان
+  // السحابة — يشتغل من أي مكان وبلا حاسوب منزلي
+  static const String cloud = 'https://soog-delta.vercel.app';
+  static String base = cloud;
 
   static String? _token;
   static Map<String, dynamic>? me;
@@ -16,11 +18,13 @@ class Api {
 
   static Future<void> load() async {
     final p = await SharedPreferences.getInstance();
-    final saved = p.getString('zaboon_base');
+    var saved = p.getString('zaboon_base');
+    // روابط الشبكة المنزلية القديمة (192.168..) ما تصلح بعد الرفع السحابي — نتجاهلها نهائياً
+    if (saved != null && (saved.contains('192.168') || saved.contains('localhost'))) saved = null;
     if (saved != null && saved.isNotEmpty) base = saved;
-    // لو العنوان المخزّن معطّل (تغيّر IP الحاسوب مثلاً) → نرجع للافتراضي فوراً
+    // لو الرابط الحالي معطّل → نرجع للسحابة فوراً (ولا نخزن أي رابط محلي)
     if (!await _reachable(base)) {
-      base = 'http://192.168.1.136:4000'; // شبكة المنزل — أو من شاشة الدخول تغيّره للرابط الخارجي
+      base = cloud;
       await p.setString('zaboon_base', base);
     }
     _token = p.getString('zaboon_token');
@@ -39,7 +43,7 @@ class Api {
     try {
       final r = await http
           .get(Uri.parse('$url/api/health'))
-          .timeout(const Duration(seconds: 3));
+          .timeout(const Duration(seconds: 4));
       return r.statusCode == 200;
     } catch (_) {
       return false;

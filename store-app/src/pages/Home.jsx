@@ -163,6 +163,13 @@ export default function Home() {
       {/* الهيرو */}
       <Promo ads={ads} stores={stores} />
 
+      {/* شريط الثقة */}
+      <div className="trust-row">
+        <div className="trust-i"><span className="trust-ic"><M n="rocket_launch" s={16} w={700} /></span>توصيل سريع</div>
+        <div className="trust-i"><span className="trust-ic"><M n="payments" s={16} w={700} /></span>الدفع عند الاستلام</div>
+        <div className="trust-i"><span className="trust-ic"><M n="swap_horiz" s={16} w={700} /></span>استبدال خلال 5 أيام</div>
+      </div>
+
       {/* العروض */}
       {offers.length && !gridMode ? (
         <>

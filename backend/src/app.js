@@ -59,7 +59,13 @@ if (fs.existsSync(ADMIN_DIST)) {
   app.use('/admin', express.static(ADMIN_DIST));
   app.get('/admin', (_req, res) => res.sendFile(path.join(ADMIN_DIST, 'index.html')));
 }
-app.get('/', (_req, res) => res.redirect('/admin'));
+
+// الصفحة الرسمية: / = الموقع (الرئيسية)، واللوحة على /admin فقط
+if (fs.existsSync(LANDING_DIST)) {
+  app.get('/', (_req, res) => res.sendFile(path.join(LANDING_DIST, 'index.html')));
+} else {
+  app.get('/', (_req, res) => res.redirect('/admin'));
+}
 
 app.use((err, _req, res, _next) => {
   console.error('❌', err.message);

@@ -28,7 +28,7 @@ npm run db:seed   # بيانات الكوت التجريبية
 npm run dev       # السيرفر على http://localhost:4000
 ```
 
-- لوحة التحكم: http://localhost:4000/admin
+- الموقع الرسمي: http://localhost:4000/  •  لوحة الأدمن: http://localhost:4000/admin
 - تكوين: `backend/.env` (`DEV_OTP=true` يطبع الرمز في الرد بدل SMS)
 
 ### 3) التطبيق

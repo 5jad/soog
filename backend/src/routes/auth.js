@@ -2,6 +2,7 @@ import { Router } from 'express';
 import bcrypt from 'bcryptjs';
 import { q, one } from '../db.js';
 import { signToken, publicUser, auth, roles } from '../middleware.js';
+import { sendSms } from '../sms.js';
 
 const r = Router();
 
@@ -90,9 +91,20 @@ r.post('/request-otp', async (req, res) => {
   }
 
   const code = genCode();
-  await q(`INSERT INTO otp_codes (phone, code, purpose, expires_at) VALUES ($1,$2,'reset', now() + interval '5 minutes')`, [phone, code]);
   const dev = process.env.DEV_OTP === 'true';
-  console.log(`📲 OTP لـ ${phone}: ${code}${dev ? ' (وضع تطوير)' : ''}`);
+
+  // في الإنتاج: يرسل SMS حقيقي عبر المزود — ثم ما يرجع dev_code أبداً
+  if (!dev) {
+    try {
+      await sendSms(phone, `زبون — رمز التحقق: ${code} (صالح 5 دقائق)`);
+    } catch (e) {
+      return res.status(500).json({ error: e.message });
+    }
+  } else {
+    try { await sendSms(phone, `زبون — رمز التحقق: ${code}`); } catch (_) {}
+  }
+
+  await q(`INSERT INTO otp_codes (phone, code, purpose, expires_at) VALUES ($1,$2,'reset', now() + interval '5 minutes')`, [phone, code]);
   res.json({ ok: true, dev_code: dev ? code : undefined });
 });
 

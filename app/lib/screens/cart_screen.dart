@@ -224,7 +224,8 @@ class _CartScreenState extends State<CartScreen> {
             ),
             const SizedBox(height: 16),
             SolidBtn(
-              label: 'تأكيد العنوان ✓',
+              label: (addr != null && addr!.isNotEmpty) || selected != null ? 'إتمام الطلب ✓' : 'اختر عنوان التوصيل',
+              disabled: (addr == null || addr!.isEmpty) && selected == null,
               onTap: () => Navigator.pop(context, ((addr != null && addr!.isNotEmpty) ? addr : selected, addrId)),
             ),
           ]),

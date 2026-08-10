@@ -61,6 +61,14 @@ if (fs.existsSync(ADMIN_DIST)) {
   app.get('/admin', (_req, res) => res.sendFile(path.join(ADMIN_DIST, 'index.html')));
 }
 
+// المتجر الإلكتروني — الواجهة الرسمية للزبائن (حاسوب / جوال / آيباد)
+const STORE_DIST = fs.existsSync(path.join(PUBLIC_DIR, 'store')) ? path.join(PUBLIC_DIR, 'store')
+  : path.join(__dirname, '../../storefront');
+if (fs.existsSync(STORE_DIST)) {
+  app.use('/store', express.static(STORE_DIST));
+  app.get('/store', (_req, res) => res.sendFile(path.join(STORE_DIST, 'index.html')));
+}
+
 // الصفحة الرسمية: / = الموقع (الرئيسية)، واللوحة على /admin فقط
 if (fs.existsSync(LANDING_DIST)) {
   app.get('/', (_req, res) => res.sendFile(path.join(LANDING_DIST, 'index.html')));

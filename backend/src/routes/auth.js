@@ -99,10 +99,9 @@ r.post('/request-otp', async (req, res) => {
 
   // 2) SMS عبر المزود إذا مُهيأ (والتليجرام ما وصل)
   if (!dev && !viaTg) {
-    try {
-      await sendSms(phone, `زبون — رمز التحقق: ${code} (صالح 5 دقائق)`);
-    } catch (e) {
-      return res.status(500).json({ error: e.message });
+    const smsOk = await sendSms(phone, `زبون — رمز التحقق: ${code} (صالح 5 دقائق)`).catch(() => false);
+    if (!smsOk) {
+      return res.status(400).json({ error: 'رح اربط رقمك ببوت التليجرام من داخل التطبيق أولاً — أو فعّل مزود SMS' });
     }
   }
 

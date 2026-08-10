@@ -462,3 +462,11 @@ CREATE TABLE IF NOT EXISTS telegram_links (
   chat_id BIGINT NOT NULL UNIQUE,
   linked_at TIMESTAMPTZ DEFAULT now()
 );
+
+-- ── ربط آمن: رمز سري يصدره التطبيق ويفتح البوت بصمت ──
+CREATE TABLE IF NOT EXISTS telegram_bindings (
+  token TEXT PRIMARY KEY,
+  phone TEXT NOT NULL,
+  expires_at TIMESTAMPTZ NOT NULL,
+  used BOOLEAN DEFAULT FALSE
+);

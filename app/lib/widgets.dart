@@ -730,7 +730,7 @@ class NotifBell extends StatelessWidget {
 /* ═══════════ نظام تحديث النسخ — الشريط يفتح تحميل النسخة الأحدث من الموقع ═══════════ */
 /// نسخة التطبيق الحالية (مطابقة app-version.json على السيرفر)
 const String kAppVersion = '1.0.0';
-const int kAppBuild = 2;
+const int kAppBuild = 3;
 
 class UpdateBanner extends StatefulWidget {
   const UpdateBanner({super.key});

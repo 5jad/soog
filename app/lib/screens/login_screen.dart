@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:url_launcher/url_launcher.dart';
 import '../api.dart';
 import '../theme.dart';
 import '../widgets.dart';
@@ -15,6 +16,7 @@ class LoginScreen extends StatefulWidget {
 class _LoginScreenState extends State<LoginScreen> {
   AuthMode mode = AuthMode.login;
   bool loading = false;
+  bool linkingTg = false;
 
   final phone = TextEditingController();
   final password = TextEditingController();
@@ -62,6 +64,32 @@ class _LoginScreenState extends State<LoginScreen> {
       toast(context, 'تعذر الاتصال بالخادم', error: true);
     } finally {
       if (mounted) setState(() => loading = false);
+    }
+  }
+
+  // ربط آمن بالتليجرام: التطبيق يولّد رمز ربط سري ويفتح البوت — الرقم لا يُرسل أبداً
+  Future<void> _linkTelegram() async {
+    final p = phone.text.trim();
+    if (p.length < 10) return toast(context, 'اكتب رقم الهاتف أولاً', error: true);
+    setState(() => linkingTg = true);
+    try {
+      final d = await Api.post('/api/telegram/bind-token', {'phone': p});
+      final botName = d['bot_username'] ?? 'soog_otp_bot';
+      final ok = await launchUrl(
+        Uri.parse('https://t.me/$botName?start=${d['token']}'),
+        mode: LaunchMode.externalApplication,
+      );
+      if (ok) {
+        toast(context, 'اضغط Start داخل البوت ثم ارجع للتطبيق');
+      } else {
+        toast(context, 'افتح تليجرام واكتب $botName واضغط Start', error: true);
+      }
+    } on ApiException catch (e) {
+      toast(context, e.message, error: true);
+    } catch (_) {
+      toast(context, 'تعذر الاتصال بالخادم', error: true);
+    } finally {
+      if (mounted) setState(() => linkingTg = false);
     }
   }
 
@@ -164,6 +192,22 @@ class _LoginScreenState extends State<LoginScreen> {
                       if (mode != AuthMode.forgotPhone) ...[
                         _Field(controller: password, hint: mode == AuthMode.forgotReset ? 'كلمة المرور الجديدة' : 'كلمة المرور', icon: Icons.lock_outline, isPassword: true),
                         const SizedBox(height: 16),
+                      ],
+
+                      if (mode != AuthMode.forgotReset) ...[
+                        OutlinedButton.icon(
+                          onPressed: linkingTg ? null : _linkTelegram,
+                          icon: linkingTg
+                              ? const SizedBox(width: 16, height: 16, child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white))
+                              : const Icon(Icons.telegram, color: Colors.white),
+                          label: Text(mode == AuthMode.forgotPhone ? 'اربط بالتليجرام لاستلام الرمز' : 'استلام الرمز عبر تليجرام 📲',
+                              style: A.t(13, c: Colors.white, w: FontWeight.w700)),
+                          style: OutlinedButton.styleFrom(
+                            side: BorderSide(color: Colors.white.withOpacity(0.35)),
+                            padding: const EdgeInsets.symmetric(vertical: 13),
+                          ),
+                        ),
+                        const SizedBox(height: 14),
                       ],
 
                       SolidBtn(

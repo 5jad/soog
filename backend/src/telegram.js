@@ -1,92 +1,65 @@
-// ═══════════ بوت تليجرام — توصيل OTP مجاني ═══════════
-// التهيئة:
-//   TELEGRAM_BOT_TOKEN=123456:ABC...   (من @BotFather)
-//   WEBHOOK_URL=https://soog-delta.vercel.app  (لفعل الـ webhook — اختياري عند التشغيل المحلي)
+// ═══════════ بوت تليجرام (grammy) — توصيل OTP مجاني وآمن ═══════════
+// الأمان: الرقم ما يكتب أبداً — التطبيق يولّد رمز ربط سري (telegram_bindings)
+// ويفتح التليجرام برابط  https://t.me/<bot>?start=<رمز>
+// الزبون يضغط Start فقط → البوت يربط الـ chat بالرقم (telegram_links) → الرموز تجيه
 //
-// التجربة:
-//   1) الزبون يفتح البوت ويضغط /start
-//   2) يرسل رقمه (07701234567) → يرتبط الحساب بالبوت (جدول telegram_links)
-//   3) أي طلب OTP لاحق: الرمز يوصله رسالة تليجرام فوراً — مجاني ولانهاية
+// التهيئة:
+//   TELEGRAM_BOT_TOKEN=123456:ABC...   (من @BotFather) — إجباري
 
+import { Bot } from 'grammy';
+import dotenv from 'dotenv';
+dotenv.config();
 import { q, one } from './db.js';
 
-const TOKEN = () => process.env.TELEGRAM_BOT_TOKEN || '';
-const FBOT = () => `https://api.telegram.org/bot${TOKEN()}`;
+export const bot = process.env.TELEGRAM_BOT_TOKEN ? new Bot(process.env.TELEGRAM_BOT_TOKEN) : null;
 
-async function tgSend(chatId, text) {
-  const token = TOKEN();
-  if (!token) return false;
-  const r = await fetch(`${FBOT()}/sendMessage`, {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ chat_id: String(chatId), text, parse_mode: 'HTML' }),
-  });
-  if (!r.ok) {
-    const e = await r.json().catch(() => ({}));
-    throw new Error('تليغرام: ' + (e.description || r.status));
-  }
-  return true;
+function maskPhone(phone) {
+  return phone.slice(0, 4) + '•••' + phone.slice(-3);
 }
 
-// معالجة رسالة واردة من الزبون (حالياً: ربط الرقم بالبوت)
-async function handleUpdate(update) {
-  const msg = update.message;
-  if (!msg || msg.text === undefined) return;
-
-  const chatId = msg.chat.id;
-  const text = String(msg.text).trim().toLowerCase();
-
-  if (['/start', '/begin', 'ابدأ', 'هلو', 'هلا', 'سلام'].includes(text)) {
-    return tgSend(chatId, 'أهلاً بك في بوت «زبون» 🛒\n\nأرسل رقم هاتفك (مثال: <b>07701234567</b>) مرة وحدة، وكل رمز تحقق سيجيك هنا مباشرة ✓');
-  }
-
-  const digits = String(msg.text).trim().replace(/\D/g, '');
-  if (/^07\d{9}$/.test(digits)) {
+if (bot) {
+  // /start بدون رمز → شرح الارتباط
+  bot.command('start', async (ctx) => {
+    const payload = String(ctx.match || '');
+    if (!payload) {
+      await ctx.reply('أهلاً بك في بوت «زبون» 🛒\n\nلربط حسابك: افتح تطبيق زبون، ومن شاشة الدخول اضغط «استلام الرمز عبر تليجرام» — البوت يوصلك الرمز تلقائياً هنيه 🔐', { parse_mode: 'HTML' });
+      return;
+    }
+    // /start <رمز> صادر من التطبيق → ربط آمن
+    const row = await one(`SELECT * FROM telegram_bindings WHERE token=$1 AND used=false AND expires_at > now()`, [payload]);
+    if (!row) {
+      await ctx.reply('هذا الرابط منتهي أو غير صالح ❌\nارجع للتطبيق واضغط زر الارتباط مرة ثانية');
+      return;
+    }
+    await q(`UPDATE telegram_bindings SET used=true WHERE token=$1`, [payload]);
     await q(`INSERT INTO telegram_links (chat_id, phone) VALUES ($1,$2)
-             ON CONFLICT (phone) DO UPDATE SET chat_id = EXCLUDED.chat_id`, [chatId, digits]);
-    return tgSend(chatId, 'تم ربط حسابك بالبوت ✓\n\nمن اليوم رمز OTP الخاص بك يوصلك هذه الرسالة فوراً 🔐');
-  }
+             ON CONFLICT (phone) DO UPDATE SET chat_id = EXCLUDED.chat_id`, [ctx.chat.id, row.phone]);
+    await ctx.reply(`تم ربط حسابك «${maskPhone(row.phone)}» بنجاح ✓\nمن اليوم رموز التحقق ترد إلك هنا مباشرة 🔐`);
+  });
 
-  return tgSend(chatId, 'ما فهمت رسالتك 🤔\nأرسل رقم هاتفك فقط بصيغة: <b>07701234567</b>\nأو اضغط /start');
+  bot.on('message', async (ctx) => {
+    if (!ctx.message.text) return;
+    await ctx.reply('ما دزو لي أمر معروف 🤔\nاستخدم زر الارتباط من داخل تطبيق زبون، أو اضغط /start');
+  });
+
+  bot.catch((err) => console.error('❌ بوت تليجرام:', err.error?.message || err.message));
 }
 
 // إرسال رمز OTP عبر التليجرام — يرجع true إذا انرسل
 export async function sendOtpViaTelegram(phone, code) {
-  const token = TOKEN();
-  if (!token) return false;
+  if (!bot) return false;
   const row = await one('SELECT chat_id FROM telegram_links WHERE phone=$1', [phone]);
   if (!row) return false;
   const user = await one('SELECT name FROM users WHERE phone=$1', [phone]);
-  await tgSend(row.chat_id,
-    `رمز التحقق 🔐\n\n<b>${code}</b>\n\nلطلب ${user ? `«${user.name}» — ` : ''}صالح لمدة 5 دقائق، لا تشاركه مع أي أحد.`);
+  await bot.api.sendMessage(row.chat_id,
+    `رمز التحقق 🔐\n\n<b>${code}</b>\n\nلطلب ${user ? `«${user.name}» — ` : ''}صالح لمدة 5 دقائق، لا تشاركه مع أي أحد.`,
+    { parse_mode: 'HTML' });
   return true;
 }
 
-// ── Webhook (ممكن على Vercel مباشرة بدون أي خادم دائم) ──
-export async function handleWebhook(body) {
-  if (!body || !body.update_id) return;
-  try { await handleUpdate(body); } catch (e) { console.error('❌ تليغرام:', e.message); }
-}
-
 // ── سؤال مستمر (Local فقط — Vercel يستخدم الـ webhook) ──
-export function startTelegramPolling() {
-  if (!TOKEN()) return;
-  let offset = 0;
-  let running = true;
-  const loop = async () => {
-    if (!running) return;
-    try {
-      const r = await fetch(`${FBOT()}/getUpdates?timeout=30&offset=${offset}`);
-      if (r.ok) {
-        const data = await r.json();
-        for (const u of data.result || []) {
-          offset = u.update_id + 1;
-          await handleWebhook(u);
-        }
-      }
-    } catch (_) {}
-    setTimeout(loop, 1500);
-  };
-  loop();
-  console.log('🟢 بوت تليجرام شغال (سؤال محلي)');
+export function startLocalBot() {
+  if (!bot) return;
+  bot.start();
+  console.log('🟢 بوت تليجرام (grammy) شغال بالوضع المحلي');
 }

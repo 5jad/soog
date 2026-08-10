@@ -12,6 +12,23 @@ let done = false;
 /// 1) إنشاء الجداول إذا ما موجودة  2) حقن بيانات دنيا (أدمن + الكوت + أقسام + إعدادات)
 export async function ensureDb() {
   if (done) return;
+
+  // ترحيلات دائمة: تنفذ في كل تشغيل على أي قاعدة (IF NOT EXISTS آمن) — أوجدت الجداول الحديثة
+  const ALWAYS = `
+CREATE TABLE IF NOT EXISTS telegram_links (
+  phone TEXT PRIMARY KEY,
+  chat_id BIGINT NOT NULL UNIQUE,
+  linked_at TIMESTAMPTZ DEFAULT now()
+);
+CREATE TABLE IF NOT EXISTS telegram_bindings (
+  token TEXT PRIMARY KEY,
+  phone TEXT NOT NULL,
+  expires_at TIMESTAMPTZ NOT NULL,
+  used BOOLEAN DEFAULT FALSE
+);
+`;
+  await pool.query(ALWAYS);
+
   const ok = await one(`SELECT to_regclass('public.users') IS NOT NULL AS ok`);
   if (ok?.ok) {
     const u = await one(`SELECT count(*)::int AS c FROM users`);

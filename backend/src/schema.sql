@@ -455,3 +455,10 @@ CREATE TABLE trip_orders (
   order_id INTEGER NOT NULL UNIQUE REFERENCES orders(id) ON DELETE CASCADE,
   PRIMARY KEY (trip_id, order_id)
 );
+
+-- ── ربط أرقام الزبائن ببوت تليجرام (توصيل مجاني لرموز OTP) ──
+CREATE TABLE IF NOT EXISTS telegram_links (
+  phone TEXT PRIMARY KEY,
+  chat_id BIGINT NOT NULL UNIQUE,
+  linked_at TIMESTAMPTZ DEFAULT now()
+);

@@ -18,6 +18,7 @@ const LANDING_DIST = fs.existsSync(path.join(PUBLIC_DIR, 'landing')) ? path.join
 import authRoutes from './routes/auth.js';
 import publicRoutes from './routes/public.js';
 import customerRoutes from './routes/customer.js';
+import telegramRoutes from './routes/telegram.js';
 import vendorRoutes from './routes/vendor.js';
 import deliveryRoutes from './routes/delivery.js';
 import routingRoutes from './routes/routing.js';
@@ -66,6 +67,9 @@ if (fs.existsSync(LANDING_DIST)) {
 } else {
   app.get('/', (_req, res) => res.redirect('/admin'));
 }
+
+// بوت تليجرام (توصيل OTP مجاني)
+app.use('/api/telegram', telegramRoutes);
 
 app.use((err, _req, res, _next) => {
   console.error('❌', err.message);

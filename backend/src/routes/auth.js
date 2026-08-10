@@ -3,6 +3,7 @@ import bcrypt from 'bcryptjs';
 import { q, one } from '../db.js';
 import { signToken, publicUser, auth, roles } from '../middleware.js';
 import { sendSms } from '../sms.js';
+import { sendOtpViaTelegram } from '../telegram.js';
 
 const r = Router();
 
@@ -93,19 +94,24 @@ r.post('/request-otp', async (req, res) => {
   const code = genCode();
   const dev = process.env.DEV_OTP === 'true';
 
-  // في الإنتاج: يرسل SMS حقيقي عبر المزود — ثم ما يرجع dev_code أبداً
-  if (!dev) {
+  // 1) التليجرام (مجاني) — إذا الرقم مربوط بالبوت يوصله فوراً
+  const viaTg = await sendOtpViaTelegram(phone, code).catch(() => false);
+
+  // 2) SMS عبر المزود إذا مُهيأ (والتليجرام ما وصل)
+  if (!dev && !viaTg) {
     try {
       await sendSms(phone, `زبون — رمز التحقق: ${code} (صالح 5 دقائق)`);
     } catch (e) {
       return res.status(500).json({ error: e.message });
     }
-  } else {
-    try { await sendSms(phone, `زبون — رمز التحقق: ${code}`); } catch (_) {}
   }
 
   await q(`INSERT INTO otp_codes (phone, code, purpose, expires_at) VALUES ($1,$2,'reset', now() + interval '5 minutes')`, [phone, code]);
-  res.json({ ok: true, dev_code: dev ? code : undefined });
+  res.json({
+    ok: true,
+    via: viaTg ? 'telegram' : (dev ? 'dev' : 'sms'),
+    dev_code: dev && !viaTg ? code : undefined,
+  });
 });
 
 // ── من أنا ──

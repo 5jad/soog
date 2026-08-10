@@ -4,6 +4,7 @@ import dotenv from 'dotenv';
 dotenv.config();
 
 import app from './app.js';
+import { startTelegramPolling } from './telegram.js';
 
 // على Vercel (serverless) ما نفتح سيرفر ولا Socket.io — فقط نصدّر الـ app
 if (!process.env.VERCEL) {
@@ -22,4 +23,7 @@ if (!process.env.VERCEL) {
     console.log(`🚀 سيرفر زبون شغال: http://localhost:${PORT}`);
     console.log(`   Health: /api/health`);
   });
+
+  // بوت تليجرام محلي (لو ما عنده webhook منصوب)
+  if (!process.env.WEBHOOK_URL) startTelegramPolling();
 }

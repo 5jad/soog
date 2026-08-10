@@ -6,7 +6,9 @@ import dotenv from 'dotenv';
 dotenv.config();
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
-const pool = new pg.Pool({ connectionString: process.env.DATABASE_URL });
+const poolCfg = { connectionString: process.env.DATABASE_URL };
+if (process.env.PGSSL === 'true') poolCfg.ssl = { rejectUnauthorized: false };
+const pool = new pg.Pool(poolCfg);
 
 const sql = fs.readFileSync(path.join(__dirname, 'schema.sql'), 'utf8');
 try {

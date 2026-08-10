@@ -202,25 +202,6 @@ CREATE TABLE coupons (
   created_at TIMESTAMPTZ DEFAULT now()
 );
 
-CREATE TABLE coupon_usages (
-  id SERIAL PRIMARY KEY,
-  coupon_id INTEGER NOT NULL REFERENCES coupons(id) ON DELETE CASCADE,
-  user_id INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
-  order_id INTEGER REFERENCES orders(id) ON DELETE CASCADE,
-  discount INTEGER NOT NULL DEFAULT 0,
-  created_at TIMESTAMPTZ DEFAULT now(),
-  UNIQUE (coupon_id, user_id, order_id)
-);
-
--- مفضلة المتاجر (متابعة المتجر)
-CREATE TABLE store_favorites (
-  id SERIAL PRIMARY KEY,
-  user_id INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
-  store_id INTEGER NOT NULL REFERENCES stores(id) ON DELETE CASCADE,
-  created_at TIMESTAMPTZ DEFAULT now(),
-  UNIQUE (user_id, store_id)
-);
-
 CREATE TABLE orders (
   id SERIAL PRIMARY KEY,
   code TEXT NOT NULL UNIQUE,
@@ -246,6 +227,25 @@ CREATE TABLE orders (
   note TEXT DEFAULT '',
   created_at TIMESTAMPTZ DEFAULT now(),
   updated_at TIMESTAMPTZ DEFAULT now()
+);
+
+CREATE TABLE coupon_usages (
+  id SERIAL PRIMARY KEY,
+  coupon_id INTEGER NOT NULL REFERENCES coupons(id) ON DELETE CASCADE,
+  user_id INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+  order_id INTEGER REFERENCES orders(id) ON DELETE CASCADE,
+  discount INTEGER NOT NULL DEFAULT 0,
+  created_at TIMESTAMPTZ DEFAULT now(),
+  UNIQUE (coupon_id, user_id, order_id)
+);
+
+-- مفضلة المتاجر (متابعة المتجر)
+CREATE TABLE store_favorites (
+  id SERIAL PRIMARY KEY,
+  user_id INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+  store_id INTEGER NOT NULL REFERENCES stores(id) ON DELETE CASCADE,
+  created_at TIMESTAMPTZ DEFAULT now(),
+  UNIQUE (user_id, store_id)
 );
 
 CREATE TABLE order_items (

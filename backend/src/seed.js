@@ -3,8 +3,11 @@ import bcrypt from 'bcryptjs';
 import dotenv from 'dotenv';
 dotenv.config();
 
-const pool = new pg.Pool({ connectionString: process.env.DATABASE_URL });
+const poolCfg = { connectionString: process.env.DATABASE_URL };
+if (process.env.PGSSL === 'true') poolCfg.ssl = { rejectUnauthorized: false };
+const pool = new pg.Pool(poolCfg);
 const q = async (sql, p = []) => (await pool.query(sql, p)).rows;
+const one = async (sql, p = []) => (await pool.query(sql, p)).rows[0] || null;
 
 const F = (n) => Math.round(n * 100) / 100;
 const fx = (d) => `🛍️ ${d}`;

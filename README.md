@@ -44,6 +44,36 @@ flutter build apk --debug   # APK: app/build/app/outputs/flutter-apk/
 static String base = 'http://192.168.1.X:4000'; // IP جهازك — للمحاكي يبقى 10.0.2.2
 ```
 
+## ☁️ الرفع على الإنترنت مجاناً (Vercel + Neon)
+
+بدون بطاقة بنكية، مجاني دائم. الكود جاهز (bootstrap يبني الجداول ويحقن الأدمن تلقائياً عند أول تشغيل).
+
+1. **قاعدة البيانات — Neon** (app.neon.tech → سجل بحساب GitHub/Google):
+   - New Project → اسم `zaboon` → انسخ **connection string** (يبدأ بـ `postgresql://...`).
+   - (خيار عاجل بدون تسجيل: https://neon.new — لكن الأفضل حساب عادي)
+
+2. **الرفع — Vercel (**بدون مجلد GitHub**):**
+   ```bash
+   cd backend
+   npm i -g vercel
+   vercel          # أول مرة: يتصل بحسابك ويسأل Project Name ← اكتب soog
+   ```
+   - أو من صفحة Vercel عند استيراد GitHub: **Root Directory = `backend`**
+
+3. **المتغيرات (Project → Settings → Environment Variables):**
+   | المفتاح | القيمة |
+   |---|---|
+   | `DATABASE_URL` | رابط Neon (مع `?sslmode=require`) |
+   | `PGSSL` | `true` |
+   | `JWT_SECRET` | سلسلة عشوائية طويلة |
+   | `DEV_OTP` | `true` (بعد ما تجيب مزود SMS تغيّرها `false`) |
+
+4. `vercel --prod` → الموقع يصير: `https://soog.vercel.app`
+   - لوحة الأدمن: `https://soog.vercel.app/admin` — دخول: `07900000000` / `admin123`
+   - التطبيق: غيّر في `app/lib/api.dart` → `Api.base = 'https://soog.vercel.app'` وأعد البناء.
+
+ملاحظات الخطة المجانية: Vercel Hobby (حد 4.5MB بالطلبات) + Neon ينام بعد 5 دقايق خمول (أول طلب يستيقظه خلال ~1 ثانية).
+
 ## 🔑 حسابات التجربة (seed)
 
 | الدور | الهاتف | الدخول |

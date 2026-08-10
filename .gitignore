@@ -22,3 +22,6 @@ app/ios/.symlinks/
 .DS_Store
 *.loglanding/downloads/*.apk
 zaboon-demo.apk
+
+# ملفات كبيرة للتطبيق (لا ترفع لـ git)
+backend/public/landing/downloads/

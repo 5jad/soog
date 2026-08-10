@@ -4,10 +4,15 @@ dotenv.config();
 
 pg.types.setTypeParser(1700, parseFloat);
 
-export const pool = new pg.Pool({
+const poolCfg = {
   connectionString: process.env.DATABASE_URL || 'postgres://zaboon@127.0.0.1:5434/zaboon',
   max: 10,
-});
+  connectionTimeoutMillis: 10000,
+};
+// Neon وقواعد السحابة تتطلب TLS — فعّله بـ PGSSL=true (على Vercel لازم true)
+if (process.env.PGSSL === 'true') poolCfg.ssl = { rejectUnauthorized: false };
+
+export const pool = new pg.Pool(poolCfg);
 
 export const q = async (sql, params = []) => (await pool.query(sql, params)).rows;
 export const one = async (sql, params = []) => (await pool.query(sql, params)).rows[0] || null;

@@ -88,7 +88,13 @@ const UI = {
       $('#otpNote').textContent = 'الرمز يوصلك عبر بوت التليجرام أو يظهر في تطبيق الجوال (الوضع التجريبي).';
     }
   },
-  badge(id, n) { const b = $('#' + id); b.textContent = n; b.classList.toggle('hide', !n); },
+  badge(id, n) { const b = $('#' + id); if (!b) return; b.textContent = n; b.classList.toggle('hide', !n); },
+  setNav(active) {
+    const map = { home: 'home', 'store:': 'home', search: 'home', prods: 'home', stores: 'stores', fav: 'fav', orders: 'profile', profile: 'profile' };
+    const k = map[active] || 'home';
+    document.querySelectorAll('.bnav button').forEach(b => b.classList.toggle('on', b.dataset.v === k));
+    document.querySelectorAll('#row2Links a').forEach(a => a.classList.toggle('on', a.getAttribute('href') === '#' + active || (a.getAttribute('href') === '#/' && k === 'home')));
+  },
 };
 
 const AUTH = {
@@ -133,7 +139,8 @@ const AUTH = {
   },
   logout() {
     LS.token = ''; LS.me = null;
-    UI.badge('cartBadge', 0);
+    UI.badge('cartBadge', 0); UI.badge('cbadge', 0);
+    UI.closeUser();
     UI.toast('خرجت من الحساب');
     APP.home();
   },
@@ -146,7 +153,7 @@ const AUTH = {
 
 const CART = {
   async load() {
-    if (!LS.token) { UI.badge('cartBadge', 0); return []; }
+    if (!LS.token) { UI.badge('cartBadge', 0); UI.badge('cbadge', 0); return []; }
     try { return (await api('/api/customer/cart')).items || []; }
     catch (_) { return []; }
   },
@@ -155,7 +162,7 @@ const CART = {
     try {
       UI.load(true);
       const d = await api('/api/customer/cart', { method: 'POST', body: JSON.stringify({ product_id: pid, variant_id: variantId, variant_label: label, qty }) });
-      UI.badge('cartBadge', d.count);
+      UI.badge('cartBadge', d.count); UI.badge('cbadge', d.count);
       UI.toast('أضيف للسلة ✓', 'ok');
       return true;
     } catch (e) { UI.toast(e.message, 'err'); return false; } finally { UI.load(false); }
@@ -170,7 +177,7 @@ const CART = {
   },
   async count() {
     if (!LS.token) return;
-    try { const d = await api('/api/customer/cart'); UI.badge('cartBadge', d.items.reduce((a, b) => a + b.qty, 0)); }
+    try { const d = await api('/api/customer/cart'); const n = d.items.reduce((a, b) => a + b.qty, 0); UI.badge('cartBadge', n); UI.badge('cbadge', n); }
     catch (_) {}
   },
   async render() {
@@ -180,7 +187,7 @@ const CART = {
     const body = $('#cartBody');
     if (!items.length) {
       body.innerHTML = `<div class="empty"><span class="e">🛒</span>سلتك فاضية — ابدأ التسوق!</div>`;
-      $('#cartFoot').classList.add('hide');
+      $('#cartFoot').innerHTML = '';
       return;
     }
     body.innerHTML = Object.values(groups).map(g => {
@@ -209,7 +216,6 @@ const CART = {
     }).join('');
     const total = items.reduce((a, b) => a + priceOf(b) * b.qty, 0);
     const fees = Object.values(groups).reduce((a, g) => a + (g.items.reduce((s, b) => s + priceOf(b) * b.qty, 0) >= g.free_min ? 0 : g.fee), 0);
-    $('#cartFoot').classList.remove('hide');
     $('#cartFoot').innerHTML = `<div class="tot"><span>الإجمالي</span><span>${fmt(total + fees)}</span></div>
       <button onclick="APP.checkout()">إتمام الطلب ←</button>`;
   },
@@ -221,50 +227,108 @@ const APP = {
   cur: 'home',
   catSel: null,
   state: { stores: [], products: [], best: [], offers: [], categories: [], ads: [] },
+  _pro: null,
 
   async home() {
     this.cur = 'home';
     UI.load(true);
     try {
-      const [st, pr, ca, ofF] = await Promise.all([
-        api('/api/stores'), api('/api/products'), api('/api/categories'), api('/api/offers'),
+      const [st, pr, ca, ofF, ad] = await Promise.all([
+        api('/api/stores'), api('/api/products'), api('/api/categories'), api('/api/offers'), api('/api/ads'),
       ]);
       this.state.stores = st.stores || st || [];
       this.state.products = pr.products || [];
       this.state.categories = ca.categories || ca || [];
       this.state.offers = ofF.offers || ofF || [];
+      this.state.ads = (ad.ads || ad || []).filter(x => x && x.status !== 'inactive');
       this.catSel = null;
       this.renderHome();
-      this.setHero();
+      this.setNav('home');
+      this.startPromo();
     } catch (e) { UI.toast(e.message, 'err'); } finally { UI.load(false); }
   },
 
-  async setHero() {
-    const s = $('#heroStats');
-    if (!s) return;
-    try {
-      const cfg = await api('/api/settings');
-      s.innerHTML = `
-        <div><b>${this.state.stores.length}</b><span>متجر نشط</span></div>
-        <div><b>${this.state.products.length}+</b><span>منتج</span></div>
-        <div><b>${cfg.delivery_rate || 'سريع'}</b><span>توصيل</span></div>
-        <div><b>${cfg.platform_name || 'زبون'}</b><span>منصة الكوت</span></div>`;
-    } catch (_) {}
+  promoGrads() {
+    return [
+      'linear-gradient(120deg,#0e2a47 0%,#1d5fd6 75%,#4a86f0 110%)',
+      'linear-gradient(120deg,#7c3aed 0%,#2563eb 70%,#0ea5e9 110%)',
+      'linear-gradient(120deg,#b45309 0%,#f59e0b 60%,#fbbf24 105%)',
+    ];
+  },
+
+  startPromo() {
+    const rail = $('#promoRail');
+    if (!rail) return;
+    const slides = [...rail.querySelectorAll('.slide')];
+    if (slides.length < 2) return;
+    let i = 0;
+    clearInterval(this._promo);
+    const tick = () => {
+      const n = (i + 1) % slides.length;
+      slides[i].classList.remove('on');
+      slides[n].classList.add('on');
+      document.querySelectorAll('#promoDots i').forEach((d, k) => d.classList.toggle('on', k === n));
+      i = n;
+    };
+    this._promo = setInterval(tick, 4500);
+  },
+
+  promo() {
+    const ads = this.state.ads;
+    let slides;
+    if (ads.length) {
+      slides = ads.slice(0, 4).map((a, i) => {
+        const tgt = a.store_id ? `APP.store(${a.store_id})` : 'null';
+        const bg = a.gradient && a.gradient.includes(',') ? a.gradient : this.promoGrads()[i % 3];
+        return `<div class="slide ${i === 0 ? 'on' : ''}" style="background:${bg}" onclick="${tgt}">
+          <div>
+            <h3>${a.title || 'عرض خاص من زبون'}</h3>
+            <p>${a.store_name ? 'عرض حصري من ' + a.store_name + ' — توصيل سريع والدفع عند الاستلام.' : 'خصومات حصرية من متاجر الكوت — توصيل سريع والدفع عند الاستلام.'}</p>
+            <span class="go">تسوق الآن ←</span>
+          </div>
+          <span class="emoji">${a.art || ['🎁', '👗', '📱'][i % 3]}</span>
+        </div>`;
+      });
+    } else {
+      const d = [
+        ['كل ما تتمناه 🤲 من متاجر الكوت', 'ملابس، مكياج، ألعاب، إلكترونيات — اطلب والدفع عند الاستلام.', '🛍️', '#0e2a47,#1d5fd6'],
+        ['عروض 🔥 اليوم محدودة', 'خصومات حقيقية على الأكثر مبيعاً — شحن سريع داخل المحافظة.', '⚡', '#7c3aed,#2563eb'],
+        ['حمّل تطبيق زبون 📲', 'تجربة أسرع على الجوال بالرمز السري وبوت التليجرام.', '📲', '#b45309,#f59e0b'],
+      ];
+      slides = d.map((x, i) => `<div class="slide ${i === 0 ? 'on' : ''}" style="background:linear-gradient(120deg,${x[3]})" onclick="${i === 2 ? `location.href='/download'` : `APP.catProds(-1)`}" title="${x[1]}">
+        <div><h3>${x[0]}</h3><p>${x[1]}</p><span class="go">تسوق الآن ←</span></div>
+        <span class="emoji">${x[2]}</span>
+      </div>`);
+    }
+    return `<section class="promo"><div class="rail" id="promoRail">${slides.join('')}</div>
+      <div class="dots" id="promoDots">${slides.map((_, i) => `<i class="${i === 0 ? 'on' : ''}"></i>`).join('')}</div></section>`;
   },
 
   pcard(p, isOff = false) {
     const img = UI.img(p.image, '100%', '52px');
+    const pct = p.offer_percent ? Math.round(p.offer_percent) : (p.old_price && priceOf(p) < p.old_price ? Math.round((1 - p.offer_price / p.old_price) * 100) : 0);
     return `<div class="pcard">
-      ${p.has_offer ? `<span class="off">-${Math.round((p.offer_percent || 0))}%</span>` : ''}
-      ${isOff ? `<span class="tag">🔥 عرض</span>` : ''}
+      ${pct ? `<span class="dc">-${pct}%</span>` : ''}
+      ${isOff ? `<span class="dc" style="top:44px;background:linear-gradient(135deg,#f59e0b,#fbbf24);color:#3d2b00">🔥 عرض</span>` : ''}
       <div class="img" onclick="APP.product(${p.id})">${img}</div>
-      <button class="heart ${this.fav.includes(p.id) ? 'on' : ''}" onclick="APP.toggleFav(${p.id}, this)">${this.fav.includes(p.id) ? '❤️' : '♡'}</button>
+      <button class="heart ${this.fav.includes(p.id) ? 'on' : ''}" title="مفضلة" onclick="APP.toggleFav(${p.id}, this)">${this.fav.includes(p.id) ? '❤️' : '♡'}</button>
+      <button class="add" title="أضف للسلة" onclick="APP.addBuy(${p.id})">+</button>
       <div class="b">
         <div class="pn" onclick="APP.product(${p.id})">${p.name}</div>
         <div class="ps" onclick="APP.store(${p.store_id})">🏬 ${p.store_name}</div>
         <div class="pr"><b>${fmt(priceOf(p))}</b>${p.old_price && priceOf(p) < p.old_price ? `<s>${fmt(p.old_price)}</s>` : ''}</div>
-        <button class="add" onclick="APP.addBuy(${p.id})">أضف للسلة</button>
       </div>
+    </div>`;
+  },
+
+  addBuy(pid) { this.product(pid); },
+
+  storeCard(st) {
+    return `<div class="shop" onclick="APP.store(${st.id})">
+      <div class="lg">${U(st.logo) ? `<img src="${st.logo}" onerror="this.style.display='none'">` : (st.logo || '🏬')}</div>
+      <div class="n">${st.name}</div>
+      <div class="m">⭐ ${st.rating_avg || '5.0'} · ${st.products_count || 0} منتج${st.address ? ` · ${st.address}` : ''}</div>
+      <span class="go">زيارة المحل ←</span>
     </div>`;
   },
 
@@ -273,42 +337,23 @@ const APP = {
     const cats = `<div class="cats">${[{ name: 'الكل', icon: '🛍️' }, ...(s.categories || [])].map(c => `
       <div class="cat ${this.catSel && this.catSel.id === c.id ? 'on' : ''}" onclick="APP.pickCat(${c.id || 'null'}, this)"><i>${c.icon || '📦'}</i>${c.name}</div>`).join('')}</div>`;
     $('#screen').innerHTML = `
-      <section class="hero">
-        <h1>كل ما تتمناه 🤲<br>من متاجر الكوت</h1>
-        <p>ملابس، مكياج، ألعاب، إلكترونيات وأكثر — اطلب ووصلك الباب، والدفع عند الاستلام.</p>
-        <div class="cta">
-          <a class="cta-main" href="#stores" onclick="document.getElementById('shops')?.scrollIntoView({behavior:'smooth'});return false;">🛍️ تسوق الآن</a>
-          <a class="cta-ghost" href="/download">📲 حمّل التطبيق</a>
-        </div>
-        <div class="hero-stats" id="heroStats"></div>
-      </section>
-      <section class="sect"><div class="sect-head"><h2>التسوق حسب <em>القسم</em></h2></div>${cats}</section>
-      ${s.offers.length ? `<section class="sect"><div class="sect-head"><h2>🔥 <em>عروض</em> اليوم</h2></div>
-        <div class="offers">${s.offers.map(o => `<div class="offcard" onclick="APP.product(${o.id})">
-          <div class="img">${UI.img(o.image, '100%', '32px')}</div>
-          <div><b>${o.name}</b><div class="p">${fmt(priceOf(o))}<s>${fmt(o.price)}</s></div>
-          <div class="pc">-${Math.round(o.offer_percent || 0)}% خصم</div></div></div>`).join('')}</div></section>` : ''}
-      <section class="sect" id="shops"><div class="sect-head"><h2>🏬 <em>المتاجر</em></h2><a href="#stores" onclick="APP.view('stores');return false;">كل المتاجر ←</a></div>
-        <div class="stores">${s.stores.slice(0, 8).map(st => this.storeCard(st)).join('')}</div></section>
-      <section class="sect"><div class="sect-head"><h2>⭐ <em>الأكثر مبيعاً</em></h2><a href="#prods" onclick="APP.view('prods');return false;">كل المنتجات ←</a></div>
-        <div class="prods">${s.products.slice(0, 8).map(p => this.pcard(p)).join('')}</div></section>`;
-  },
-
-  storeCard(st) {
-    return `<div class="store" onclick="APP.store(${st.id})">
-      <div class="store-cover">${UI.img(st.logo, '100%', '40px')}</div>
-      <div class="store-b">
-        <div class="store-logo">${UI.img(st.logo, '100%', '24px')}</div>
-        <div style="flex:1">
-          <div class="store-n">${st.name}</div>
-          <div class="store-m">⭐ ${(st.rating_avg || '5.0')} · ${st.products_count || 0} منتج · ${st.address || ''}</div>
-        </div>
-      </div>
-    </div>`;
+      ${this.promo()}
+      <section class="sect"><div class="sect-head"><h2><span class="ln"></span>تسوّق حسب <em style="color:var(--blue)">القسم</em></h2></div>${cats}</section>
+      ${s.offers.length ? `<section class="sect"><div class="sect-head"><h2><span class="ln"></span>🔥 عروض <em style="color:var(--bad)">اليوم</em></h2><a href="#offers" onclick="APP.catProds(-1);return false;">كل العروض ←</a></div>
+        <div class="deals">${s.offers.map(o => `<div class="deal" onclick="APP.product(${o.id})">
+          <div class="img">${UI.img(o.image, '100%', '34px')}</div>
+          <span class="dc">-${Math.round(o.offer_percent || 0)}%</span>
+          <div class="b"><div class="n">${o.name}</div>
+          <div class="p"><b>${fmt(priceOf(o))}</b><s>${fmt(o.price)}</s></div></div></div>`).join('')}</div></section>` : ''}
+      <section class="sect"><div class="sect-head"><h2><span class="ln"></span>🏬 <em style="color:var(--navy)">متاجر الكوت</em></h2><a href="#stores" onclick="APP.view('stores');return false;">الكل ←</a></div>
+        <div class="shops">${s.stores.slice(0, 10).map(st => this.storeCard(st)).join('')}</div></section>
+      <section class="sect"><div class="sect-head"><h2><span class="ln"></span>⭐ <em style="color:var(--amber)">الأكثر مبيعاً</em></h2><a href="#prods" onclick="APP.view('prods');return false;">الكل ←</a></div>
+        <div class="prods">${s.products.slice(0, 12).map(p => this.pcard(p)).join('')}</div></section>`;
   },
 
   async store(id) {
     this.cur = 'store:' + id;
+    this.setNav(this.cur);
     UI.load(true);
     try {
       const [sd, pd] = await Promise.all([api('/api/stores/' + id), api('/api/products?store_id=' + id)]);
@@ -338,6 +383,7 @@ const APP = {
     q = (q || '').trim();
     if (!q) return this.home();
     this.cur = 'search';
+    this.setNav(this.cur);
     UI.load(true);
     try {
       const d = await api('/api/products?q=' + encodeURIComponent(q));
@@ -354,6 +400,7 @@ const APP = {
     else if (v === 'fav') { this.cur = 'fav'; await this.favPage(); }
     else if (v === 'orders') { this.cur = 'orders'; await this.orders(); }
     else if (v === 'profile') { this.cur = 'profile'; this.profile(); }
+    this.setNav(this.cur);
   },
 
   async allStores() {
@@ -361,8 +408,8 @@ const APP = {
     try {
       const d = await api('/api/stores');
       const sts = d.stores || d || [];
-      $('#screen').innerHTML = `<section class="sect" style="margin-top:24px"><div class="sect-head"><h2>🏬 كل <em>المتاجر</em></h2></div>
-        <div class="stores">${sts.map(s => this.storeCard(s)).join('')}</div></section>`;
+      $('#screen').innerHTML = `<section class="sect" style="margin-top:24px"><div class="sect-head"><h2>🏬 كل <em style="color:var(--navy)">المتاجر</em></h2></div>
+        <div class="shops" style="flex-wrap:wrap;flex:1 1 240px">${sts.map(s => this.storeCard(s)).join('')}</div></section>`;
     } catch (e) { UI.toast(e.message, 'err'); } finally { UI.load(false); }
   },
 
@@ -370,26 +417,40 @@ const APP = {
     UI.load(true);
     try {
       const params = new URLSearchParams();
-      if (this.catSel) params.set('category_id', this.catSel.id);
+      if (sort === 'discount') params.set('sort', 'discount');
+      else if (this.catSel) params.set('category_id', this.catSel.id);
       if (sort === 'best') params.set('best', 'true');
       if (sort === 'low') params.set('sort', 'price_asc');
       if (sort === 'high') params.set('sort', 'price_desc');
-      if (sort === 'discount') params.set('sort', 'discount');
+      if (sort === 'offers') params.set('has_offer', 'true');
+      if (sort === 'all') this.catSel = (catId && catId !== -1) ? { id: catId } : null;
       const u = '/api/products' + (params.toString() ? '?' + params : '');
       const d = await api(u);
       const ps = d.products || [];
-      const chip = (k, t, on) => `<span class="chip ${on ? 'on' : ''}" onclick="APP.allProds('${k}', ${catId || 'null'})">${t}</span>`;
+      const chip = (k, t, on, cid) => `<span class="chip ${on ? 'on' : ''}" onclick="APP.allProds('${k}', ${cid || 'null'})">${t}</span>`;
+      const o = sort === 'all' && catId === -1;
       $('#screen').innerHTML = `<section class="sect" style="margin-top:24px">
-        <div class="sect-head"><h2>🛍️ كل <em>المنتجات</em></h2></div>
-        <div class="chips">${chip('all', 'الكل', !sort || sort === 'all')}${chip('best', '⭐ الأفضل')}${chip('low', 'السعر: أدنى')}${chip('high', 'السعر: أعلى')}${chip('discount', '💸 الخصم')}</div>
-        ${ps.length ? `<div class="prods">${ps.map(p => this.pcard(p)).join('')}</div>`
+        <div class="sect-head"><h2>🛍️ كل <em style="color:var(--navy)">المنتجات</em></h2></div>
+        <div class="chips">${chip('all', 'الكل', (!sort || sort === 'all') && !o, catId !== -1 ? catId : null)}${chip('best', '⭐ الأفضل')}${chip('low', 'السعر: أدنى')}${chip('high', 'السعر: أعلى')}${chip('discount', '💸 الأكثر خصماً')}</div>
+        ${ps.length ? `<div class="prods">${ps.map(p => this.pcard(p, o)).join('')}</div>`
           : `<div class="noprod"><span class="e">📭</span>ماكو منتجات بعد</div>`}</section>`;
     } catch (e) { UI.toast(e.message, 'err'); } finally { UI.load(false); }
   },
 
+  catProds(disc) {
+    if (disc === -1) {
+      this.catSel = null;
+      this.cur = 'offers';
+      this.allProds('offers');
+    } else this.pickCat(disc);
+    this.setNav(this.cur);
+  },
+
   pickCat(id) {
     this.catSel = id ? { id } : null;
+    this.cur = 'prods';
     this.allProds('all', id);
+    this.setNav(this.cur);
   },
 
   async product(id) {
@@ -401,7 +462,7 @@ const APP = {
       const price = priceOf(p);
       $('#pModal').innerHTML = `<div class="box">
         <div class="g">${UI.img(p.image, '100%', '90px')}
-          ${p.has_offer ? `<span class="tag">-${Math.round(p.offer_percent)}%</span>` : ''}
+          ${p.has_offer ? `<span class="dc">-${Math.round(p.offer_percent)}%</span>` : ''}
           <span class="x" onclick="APP.closeProduct()">✕</span></div>
         <div class="i">
           <h2>${p.name}</h2>
@@ -411,7 +472,7 @@ const APP = {
           ${vars.length ? `<div class="vars" id="pvars">${vars.map((v, i) => `<span class="var ${v.stock === 0 ? 'off' : i === 0 ? 'on' : ''}" data-i="${i}" onclick="APP.varSel(this);return false;">${v.color ? v.color + ' · ' : ''}${v.name} ${v.stock === 0 ? '(نفد)' : ''}</span>`).join('')}</div>` : ''}
           <div class="qty"><button onclick="APP.pQty(-1)">−</button><b id="pqty">1</b><button onclick="APP.pQty(1)">+</button></div>
           <button class="addbig" onclick="APP.pAdd()">🛒 أضف للسلة — ${fmt(price)}</button>
-          <div class="lnote" style="margin-top:10px">الدفع عند الاستلام · توصيل سريع داخل الكوت</div>
+          <div class="lnote" style="margin-top:10px">💵 الدفع عند الاستلام · 🚚 توصيل سريع داخل الكوت</div>
         </div>
       </div>`;
       this._p = { ...p, vars, selVar: vars.filter(v => v.stock > 0)[0] || null, qty: 1 };
@@ -449,6 +510,7 @@ const APP = {
       else { await api('/api/customer/favorites', { method: 'POST', body: JSON.stringify({ product_id: id }) }); this.fav.push(id); }
       if (el) { el.textContent = fav ? '♡' : '❤️'; el.classList.toggle('on', !fav); }
       if (this.cur === 'fav') this.favPage();
+      UI.toast(fav ? 'أزيلت من المفضلة' : 'أضيفت للمفضلة ❤️', 'ok');
     } catch (e) { UI.toast(e.message, 'err'); }
   },
   async favPage() {
@@ -458,7 +520,7 @@ const APP = {
       const d = await api('/api/customer/favorites');
       const items = d.favorites || d.products || [];
       this.fav = items.map(x => x.product_id ?? x.id);
-      $('#screen').innerHTML = `<section class="sect" style="margin-top:24px"><div class="sect-head"><h2>❤️ <em>المفضلة</em></h2></div>
+      $('#screen').innerHTML = `<section class="sect" style="margin-top:24px"><div class="sect-head"><h2>❤️ <em style="color:var(--bad)">المفضلة</em></h2></div>
         ${items.length ? `<div class="prods">${items.map(x => this.pcard({ ...x, id: x.product_id ?? x.id, image: x.image, name: x.name, store_id: x.store_id, store_name: x.store_name, price: x.price, old_price: x.old_price, has_offer: x.has_offer, offer_price: x.offer_price, offer_percent: x.offer_percent })).join('')}</div>`
         : `<div class="noprod"><span class="e">🤍</span>ماكو مفضلات بعد</div>`}</section>`;
     } catch (e) { UI.toast(e.message, 'err'); } finally { UI.load(false); }
@@ -472,7 +534,7 @@ const APP = {
       const d = await api('/api/customer/orders');
       const orders = d.orders || [];
       const stl = { new: 'جديد', pending: 'قيد التحضير', ready: 'جاهز', delivering: 'بالتوصيل', delivered: 'تم التسليم', cancelled: 'ملغي', returned: 'مرتجع' };
-      $('#screen').innerHTML = `<section class="sect" style="margin-top:24px"><div class="sect-head"><h2>📦 <em>طلباتي</em></h2></div>
+      $('#screen').innerHTML = `<section class="sect" style="margin-top:24px"><div class="sect-head"><h2>📦 <em style="color:var(--navy)">طلباتي</em></h2></div>
         ${orders.length ? orders.map(o => `<div class="ord">
           <div class="ord-top">
             <b>${o.code} · ${o.store_name}</b>
@@ -496,7 +558,7 @@ const APP = {
       <div class="row"><b>نقاطي</b><span>${m.points || 0} نقطة</span></div>
       <div class="row"><b>كود الدعوة</b><span>${m.referral_code || '—'}</span></div>
       <div class="row"><b>الأدوار</b><span>${(m.roles || [m.role]).join('، ')}</span></div>
-      <div class="lnote" style="margin-top:14px">الطلبات، المفضلة والعناوين كلها داخل حسابك.</div>
+      <a class="lbtn" style="display:block;text-align:center;margin-top:16px" href="#orders" onclick="APP.view('orders');return false;">📦 طلباتي</a>
     </div></section>`;
   },
 
@@ -566,10 +628,11 @@ const APP = {
   cartClose() { CART.close(); },
   async cartCount() {
     if (LS.token) {
-      try { const d = await api('/api/customer/cart'); UI.badge('cartBadge', d.items.reduce((a, b) => a + b.qty, 0)); } catch (_) {}
+      try { const d = await api('/api/customer/cart'); const n = d.items.reduce((a, b) => a + b.qty, 0); UI.badge('cartBadge', n); UI.badge('cbadge', n); } catch (_) {}
     }
   },
   logout() { AUTH.logout(); },
+  setNav(v) { UI.setNav(v); },
 };
 
 /* ═══ بدء ═══ */

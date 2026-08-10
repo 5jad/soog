@@ -10,10 +10,9 @@
 </head>
 <body>
 
-<!-- ═══════ الترويسة ═══════ -->
+<!-- ═══════ الترويسة — صفّان ═══════ -->
 <header class="top">
-  <div class="curtain" onclick="UI.closeLogin()"></div>
-  <div class="top-in">
+  <div class="row1">
     <a class="brand" href="#/" onclick="APP.home();">
       <span class="brand-ic">🛍️</span>
       <span class="brand-tt">زبون</span>
@@ -26,6 +25,15 @@
       <button class="loved" id="favBtn" title="المفضلة" onclick="APP.view('fav')">❤️<span id="favBadge" class="badge hide">0</span></button>
       <button class="cartb" title="السلة" onclick="APP.cartToggle()">🛒<span id="cartBadge" class="badge hide">0</span></button>
       <button class="userb" id="userBtn" onclick="UI.userMenu()">👤<span id="userName"></span></button>
+    </div>
+  </div>
+  <div class="row2">
+    <div class="row2-in" id="row2Links">
+      <a href="#/" class="on" onclick="APP.home();return false;">الرئيسية</a>
+      <a href="#stores" onclick="APP.view('stores');return false;">المتاجر</a>
+      <a href="#prods" onclick="APP.view('prods');return false;">كل المنتجات</a>
+      <a href="#offers" onclick="APP.catProds(-1);return false;">🔥 العروض</a>
+      <a href="/" onclick="return true;">الصفحة الرسمية</a>
     </div>
   </div>
   <div class="user-pop hide" id="userPop">
@@ -42,9 +50,9 @@
 <!-- ═══════ السلة (درج) ═══════ -->
 <div class="overlay hide" id="cartOverlay" onclick="APP.cartClose()"></div>
 <aside class="cart" id="cart" dir="rtl">
-  <div class="cart-head"><b>سلة التسوق</b><button onclick="APP.cartClose()">✕</button></div>
+  <div class="cart-head"><b>سلة التسوق 🛒</b><button onclick="APP.cartClose()">✕</button></div>
   <div id="cartBody" class="cart-body"></div>
-  <div class="cart-foot" id="cartFoot" class="hide"></div>
+  <div class="cart-foot" id="cartFoot"></div>
 </aside>
 
 <!-- ═══════ نافذة المنتج ═══════ -->
@@ -55,6 +63,17 @@
 <div class="lmask hide" id="lmask" onclick="UI.closeLogin()"></div>
 <div class="login hide" id="login" dir="rtl"></div>
 
+<!-- ═══════ الشريط السفلي — مثل التطبيق ═══════ -->
+<nav class="bnav">
+  <div class="in">
+    <button id="n-home" data-v="home" onclick="APP.home()"><span class="ic">🏠</span>الرئيسية</button>
+    <button id="n-stores" data-v="stores" onclick="APP.view('stores')"><span class="ic">🏬</span>المتاجر</button>
+    <button id="n-cart" data-v="cart" onclick="APP.cartToggle()"><span class="ic">🛒</span>السلة<span id="cbadge" class="cbadge hide">0</span></button>
+    <button id="n-fav" data-v="fav" onclick="APP.view('fav')"><span class="ic">❤️</span>المفضلة</button>
+    <button id="n-profile" data-v="profile" onclick="APP.view('profile')"><span class="ic">👤</span>حسابي</button>
+  </div>
+</nav>
+
 <!-- ═══════ التحميل والإشعارات ═══════ -->
 <div class="load hide" id="load"><div class="spin"></div></div>
 <div class="toast hide" id="toast"></div>
@@ -64,7 +83,7 @@
   <div class="foot-links">
     <a href="/" onclick="return true;">الصفحة الرسمية</a> ·
     <a href="https://t.me/soog_otp_bot">بوت الإشعارات</a> ·
-    <a href="/admin">لوحة الأدمن</a>
+    <a href="/admin" onclick="return true;">لوحة الأدمن</a>
   </div>
 </footer>
 

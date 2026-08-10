@@ -10,8 +10,11 @@ export const api = async (path, opts = {}) => {
 
 export const fmt = (n) => (Number(n) || 0).toLocaleString('ar-IQ') + ' د.ع';
 export const priceOf = (p) => (p.has_offer && p.offer_price) ? p.offer_price : p.price;
-export const pct = (p) => (p.offer_percent ? Math.round(p.offer_percent)
-  : (p.has_offer && p.offer_price && p.price ? Math.round(100 - (p.offer_price / p.price) * 100) : 0));
+export const pct = (a, b) => {
+  if (typeof a === 'object' && a !== null) return a.offer_percent ? Math.round(a.offer_percent)
+    : (a.has_offer && a.offer_price && a.price ? Math.round(100 - (a.offer_price / a.price) * 100) : 0);
+  return a && b && b > 0 && b < a ? Math.round(100 - (b / a) * 100) : 0;
+};
 export const U = (s) => s && s.startsWith('data:') ? s : (s && s.startsWith('/') ? s : null);
 export const STAT = {
   new: ['جديد', 'st-new'], pending: ['قيد التحضير', 'st-pending'], ready: ['جاهز', 'st-ready'],

@@ -154,19 +154,45 @@ class _AccountScreenState extends State<AccountScreen> {
             ]),
           ),
           const SizedBox(height: 16),
-          // ═══ الإحصائيات — طلباتي بالمكان المثالي ═══
-          Row(children: [
-            Expanded(
-              child: _statCard(
-                Icons.receipt_long_rounded,
-                'طلباتي',
-                '$ordersCount',
-                '📦',
-                A.primary,
-                () => Navigator.push(context, MaterialPageRoute(builder: (_) => OrderListScreen(role: 'customer'))),
+          // ═══ بطاقة طلباتي البارزة — Hero ═══
+          GestureDetector(
+            onTap: () => Navigator.push(context, MaterialPageRoute(builder: (_) => OrderListScreen(role: 'customer'))),
+            child: Container(
+              padding: const EdgeInsets.fromLTRB(16, 15, 14, 15),
+              decoration: BoxDecoration(
+                gradient: A.gradNavy,
+                borderRadius: BorderRadius.circular(22),
+                boxShadow: [BoxShadow(color: A.primary.withValues(alpha: .3), blurRadius: 20, offset: const Offset(0, 8))],
               ),
+              child: Row(children: [
+                Container(
+                  width: 46,
+                  height: 46,
+                  decoration: BoxDecoration(color: Colors.white.withValues(alpha: .16), borderRadius: BorderRadius.circular(14)),
+                  alignment: Alignment.center,
+                  child: const Text('📦', style: TextStyle(fontSize: 22)),
+                ),
+                const SizedBox(width: 12),
+                Expanded(
+                  child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+                    Text('طلباتي', style: A.t(15, c: Colors.white, w: FontWeight.w900)),
+                    const SizedBox(height: 2),
+                    Text('اضغط لمتابعة طلباتك ومراحلها',
+                        maxLines: 1, overflow: TextOverflow.ellipsis, style: A.t(10.5, c: Colors.white.withValues(alpha: .8), w: FontWeight.w700)),
+                  ]),
+                ),
+                Column(children: [
+                  Text('$ordersCount', style: A.t(24, c: Colors.white, w: FontWeight.w900)),
+                  Text('طلب', style: A.t(10, c: Colors.white.withValues(alpha: .8), w: FontWeight.w700)),
+                ]),
+                const SizedBox(width: 6),
+                const Icon(Icons.chevron_left_rounded, color: Colors.white70),
+              ]),
             ),
-            const SizedBox(width: 12),
+          ),
+          const SizedBox(height: 12),
+          // ═══ إحصائيات ثانوية — نقاطي وعناويني ═══
+          Row(children: [
             Expanded(
               child: _statCard(
                 Icons.star_rounded,

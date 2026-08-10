@@ -1420,8 +1420,48 @@ class _ProductScreenState extends State<ProductScreen> {
       'size': 'القياس', 'color': 'اللون', 'material': 'الخامة', 'age': 'الفئة العمرية',
       'type': 'النوع', 'expiry': 'تاريخ الانتهاء', 'skin': 'مناسب لـ', 'weight': 'الوزن / الحجم',
       'serve': 'تكفي لـ', 'brand': 'الشركة المصنعة', 'prescription': 'وصفة طبية', 'warranty': 'مدة الضمان',
+      'length': 'الطول', 'width': 'العرض', 'height': 'الارتفاع', 'chest': 'محيط الصدر',
+      'waist': 'محيط الخصر', 'capacity': 'السعة', 'origin': 'بلد الصنع', 'flavor': 'النكهة',
     };
     return map[key] ?? key;
+  }
+
+  String _specEmoji(String key) {
+    const map = {
+      'material': '🧵', 'age': '👶', 'type': '🏷️', 'expiry': '📅', 'skin': '✨', 'weight': '⚖️',
+      'serve': '🍽️', 'brand': '🏭', 'prescription': '💊', 'warranty': '🛡️', 'length': '📏',
+      'width': '↔️', 'height': '↕️', 'chest': '📐', 'waist': '📐', 'capacity': '🪣', 'origin': '🌍',
+      'flavor': '🍬',
+    };
+    return map[key] ?? '🔹';
+  }
+
+  Widget _specChip(String key, String value) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 11, vertical: 8),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(11),
+        border: Border.all(color: A.line),
+      ),
+      child: Row(mainAxisSize: MainAxisSize.min, children: [
+        Text('${_specEmoji(key)} ', style: const TextStyle(fontSize: 12)),
+        Text('${_attrLabel(key)}: ', style: A.t(10.5, c: A.muted, w: FontWeight.w800)),
+        Text(value, style: A.t(11, w: FontWeight.w900)),
+      ]),
+    );
+  }
+
+  Widget _serviceChip(String emoji, String title, String sub) {
+    return Expanded(
+      child: Column(children: [
+        Text(emoji, style: const TextStyle(fontSize: 17)),
+        const SizedBox(height: 4),
+        Text(title, textAlign: TextAlign.center, style: A.t(10.5, c: A.ink, w: FontWeight.w900, h: 1.3)),
+        const SizedBox(height: 2),
+        Text(sub, textAlign: TextAlign.center, style: A.t(9, c: A.muted, w: FontWeight.w700)),
+      ]),
+    );
   }
 
   /// ألوان المتغيرات بالترتيب — بلا تكرار ('' = بدون لون)
@@ -1699,7 +1739,7 @@ class _ProductScreenState extends State<ProductScreen> {
                             child: const Row(children: [
                               Icon(Icons.table_chart_outlined, size: 14, color: A.primary),
                               SizedBox(width: 4),
-                              Text('دليل المقاسات', style: TextStyle(fontSize: 10.5, color: A.primary, fontWeight: FontWeight.w800)),
+                              Text('دليل المقاسات والقياسات 📐', style: TextStyle(fontSize: 10.5, color: A.primary, fontWeight: FontWeight.w800)),
                             ]),
                           ),
                         ]),
@@ -1751,41 +1791,30 @@ class _ProductScreenState extends State<ProductScreen> {
                       ]),
                     ),
                   ],
-                  // ═══ خدمات التوصيل والدفع ═══
+                  // ═══ خدمات التوصيل والدفع — شريط أفقي ═══
                   const SizedBox(height: 18),
                   Container(
-                    padding: const EdgeInsets.all(13),
+                    padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 12),
                     decoration: BoxDecoration(
                       color: A.bg,
-                      borderRadius: BorderRadius.circular(14),
+                      borderRadius: BorderRadius.circular(16),
                       border: Border.all(color: A.line),
                     ),
-                    child: Column(children: [
-                      const Row(children: [
-                        Text('🚚', style: TextStyle(fontSize: 15)),
-                        SizedBox(width: 9),
-                        Text('توصيل سريع داخل الكوت (30-60 دقيقة)', style: TextStyle(fontSize: 11.5, color: A.muted, fontWeight: FontWeight.w700)),
-                      ]),
-                      const SizedBox(height: 9),
-                      const Row(children: [
-                        Text('💵', style: TextStyle(fontSize: 15)),
-                        SizedBox(width: 9),
-                        Text('الدفع كاش عند الاستلام', style: TextStyle(fontSize: 11.5, color: A.muted, fontWeight: FontWeight.w700)),
-                      ]),
-                      const SizedBox(height: 9),
-                      Row(children: [
-                        Text('🔄', style: const TextStyle(fontSize: 15)),
-                        const SizedBox(width: 9),
-                        Text('ضمان استرجاع ${store['warranty_days'] ?? 3} أيام', style: const TextStyle(fontSize: 11.5, color: A.muted, fontWeight: FontWeight.w700)),
-                      ]),
+                    child: Row(mainAxisAlignment: MainAxisAlignment.spaceAround, children: [
+                      _serviceChip('🚚', 'توصيل\n30-60 دقيقة', 'داخل الكوت'),
+                      _serviceChip('💵', 'كاش عند\nالاستلام', 'ادفع بعد المشاهدة'),
+                      _serviceChip('🔄', 'استرجاع\nخلال ${store['warranty_days'] ?? 3} أيام', 'ضمان المتجر'),
                     ]),
                   ),
-                  // ═══ تفاصيل المنتج ═══
+                  // ═══ التفاصيل والمواصفات — شبكة كاملة مع القياسات ═══
                   const SizedBox(height: 20),
                   Row(children: [
                     const Icon(Icons.notes_rounded, size: 17, color: A.ink),
                     const SizedBox(width: 7),
                     Text('التفاصيل والمواصفات', style: A.t(15.5, w: FontWeight.w900)),
+                    const Spacer(),
+                    if (prod.attributes.entries.where((e) => !['size', 'color'].contains(e.key)).isNotEmpty)
+                      Text('${prod.attributes.entries.where((e) => !['size', 'color'].contains(e.key)).length} مواصفة', style: A.t(10.5, c: A.muted, w: FontWeight.w800)),
                   ]),
                   const SizedBox(height: 10),
                   Container(
@@ -1794,7 +1823,7 @@ class _ProductScreenState extends State<ProductScreen> {
                       borderRadius: BorderRadius.circular(14),
                       border: Border.all(color: A.line),
                     ),
-                    padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 4),
+                    padding: const EdgeInsets.all(12),
                     child: Column(
                       children: [
                         if (prod.attributes.entries.where((e) => !['size', 'color'].contains(e.key)).isEmpty)
@@ -1802,20 +1831,19 @@ class _ProductScreenState extends State<ProductScreen> {
                             padding: EdgeInsets.symmetric(vertical: 12),
                             child: Text('وصف المتجر الكامل متوفر فوق — التفاصيل الإضافية قريباً',
                                 style: TextStyle(fontSize: 12, color: A.muted, fontWeight: FontWeight.w600)),
+                          )
+                        else
+                          Wrap(
+                            spacing: 8,
+                            runSpacing: 8,
+                            children: prod.attributes.entries
+                                .where((e) => !['size', 'color'].contains(e.key))
+                                .map((e) => _specChip(e.key, '${e.value}'))
+                                .toList(),
                           ),
-                        ...prod.attributes.entries
-                            .where((e) => !['size', 'color'].contains(e.key))
-                            .map((e) => Padding(
-                          padding: const EdgeInsets.symmetric(vertical: 6),
-                          child: Row(children: [
-                            Text('${_attrLabel(e.key)}:', style: A.t(12.5, c: A.muted, w: FontWeight.w800)),
-                            const SizedBox(width: 10),
-                            Expanded(child: Text('${e.value}', style: A.t(12.5, w: FontWeight.w700))),
-                          ]),
-                        )),
-                        const Divider(height: 14, color: A.line),
+                        const Divider(height: 18, color: A.line),
                         Padding(
-                          padding: const EdgeInsets.symmetric(vertical: 8),
+                          padding: const EdgeInsets.symmetric(vertical: 4),
                           child: Row(crossAxisAlignment: CrossAxisAlignment.start, children: [
                             const Text('الوصف:', style: TextStyle(fontSize: 12.5, color: A.muted, fontWeight: FontWeight.w800)),
                             const SizedBox(width: 10),
@@ -1953,52 +1981,114 @@ class _ProductScreenState extends State<ProductScreen> {
   }
 
   void _sizeGuideSheet(Product prod, List<Map> variants) {
+    // قياسات تقريبية شائعة للملابس (سم) — تظهر إن كانت المقاسات حروفية
+    const chart = {
+      'S': ['88', '74', '66'],
+      'M': ['96', '82', '70'],
+      'L': ['104', '90', '74'],
+      'XL': ['112', '98', '78'],
+      'XXL': ['120', '106', '82'],
+      'XS': ['80', '66', '62'],
+    };
+    final letterSizes = variants.map((v) => '${v['name'] ?? ''}'.toUpperCase()).where((s) => chart.containsKey(s)).toSet();
     showSheet(context, Padding(
       padding: const EdgeInsets.fromLTRB(20, 4, 20, 28),
-      child: Column(mainAxisSize: MainAxisSize.min, crossAxisAlignment: CrossAxisAlignment.stretch, children: [
-        const SheetTitle('دليل المقاسات 📐'),
-        const SizedBox(height: 8),
-        Table(
-          border: TableBorder.all(color: A.line, borderRadius: BorderRadius.circular(12)),
-          children: [
-            TableRow(decoration: const BoxDecoration(color: A.bg), children: [
-              for (final h in ['المقاس', 'المتوفر', 'الحالة'])
-                Padding(
-                  padding: const EdgeInsets.symmetric(vertical: 9),
-                  child: Center(child: Text(h, style: A.t(11.5, w: FontWeight.w900))),
-                ),
-            ]),
-            for (final v in variants)
-              TableRow(children: [
-                Padding(
-                  padding: const EdgeInsets.symmetric(vertical: 9),
-                  child: Center(child: Text('${v['name'] ?? ''}', style: A.t(11.5, w: FontWeight.w800))),
-                ),
-                Padding(
-                  padding: const EdgeInsets.symmetric(vertical: 9),
-                  child: Center(child: Text('${v['stock'] ?? 0}', style: A.t(11.5, w: FontWeight.w800))),
-                ),
-                Padding(
-                  padding: const EdgeInsets.symmetric(vertical: 9),
-                  child: Center(
-                    child: Container(
-                      padding: const EdgeInsets.symmetric(horizontal: 9, vertical: 3),
-                      decoration: BoxDecoration(
-                        color: ((v['stock'] as num?)?.toInt() ?? 0) > 0 ? A.success.withValues(alpha: .1) : A.danger.withValues(alpha: .1),
-                        borderRadius: BorderRadius.circular(999),
+      child: SingleChildScrollView(
+        child: Column(mainAxisSize: MainAxisSize.min, crossAxisAlignment: CrossAxisAlignment.stretch, children: [
+          const SheetTitle('دليل المقاسات والقياسات 📐'),
+          const SizedBox(height: 12),
+          if (letterSizes.isNotEmpty) ...[
+            Text('💡 حسب القياسات التقريبية الشائعة (بشكل اعتمدها المتجر):', style: A.t(12, c: A.muted, w: FontWeight.w800)),
+            const SizedBox(height: 8),
+            Container(
+              clipBehavior: Clip.antiAlias,
+              decoration: BoxDecoration(borderRadius: BorderRadius.circular(12), border: Border.all(color: A.line)),
+              child: Table(
+                border: TableBorder.all(color: A.line),
+                defaultVerticalAlignment: TableCellVerticalAlignment.middle,
+                children: [
+                  TableRow(decoration: const BoxDecoration(color: A.bg), children: [
+                    for (final h in ['المقاس', 'الصدر (سم)', 'الخصر (سم)', 'الطول (سم)'])
+                      Padding(
+                        padding: const EdgeInsets.symmetric(vertical: 9),
+                        child: Center(child: Text(h, style: A.t(10.5, w: FontWeight.w900))),
                       ),
-                      child: Text(((v['stock'] as num?)?.toInt() ?? 0) > 0 ? 'متوفر' : 'نفد',
-                          style: A.t(10, c: ((v['stock'] as num?)?.toInt() ?? 0) > 0 ? A.success : A.danger, w: FontWeight.w900)),
+                  ]),
+                  for (final s in chart.entries.where((e) => letterSizes.contains(e.key)))
+                    TableRow(children: [
+                      Padding(
+                        padding: const EdgeInsets.symmetric(vertical: 9),
+                        child: Center(child: Text(s.key, style: A.t(11, w: FontWeight.w900))),
+                      ),
+                      for (final m in s.value)
+                        Padding(
+                          padding: const EdgeInsets.symmetric(vertical: 9),
+                          child: Center(child: Text(m, style: A.t(11, w: FontWeight.w700))),
+                        ),
+                    ]),
+                ],
+              ),
+            ),
+            const SizedBox(height: 10),
+            Text('* قيم تقريبية — قد تختلف بين المصنّعين، والمتجر يحدد المقاس المناسب عند الاستلام.',
+                style: A.t(9.5, c: A.muted, w: FontWeight.w600)),
+            const SizedBox(height: 12),
+          ],
+          Text('مقاسات المتوفر حالياً وحالة المخزون:', style: A.t(12, c: A.muted, w: FontWeight.w800)),
+          const SizedBox(height: 8),
+          Table(
+            border: TableBorder.all(color: A.line, borderRadius: BorderRadius.circular(12)),
+            children: [
+              TableRow(decoration: const BoxDecoration(color: A.bg), children: [
+                for (final h in ['المقاس', 'المتوفر', 'الحالة'])
+                  Padding(
+                    padding: const EdgeInsets.symmetric(vertical: 9),
+                    child: Center(child: Text(h, style: A.t(11.5, w: FontWeight.w900))),
+                  ),
+              ]),
+              for (final v in variants)
+                TableRow(children: [
+                  Padding(
+                    padding: const EdgeInsets.symmetric(vertical: 9),
+                    child: Center(child: Text('${v['name'] ?? ''}', style: A.t(11.5, w: FontWeight.w800))),
+                  ),
+                  Padding(
+                    padding: const EdgeInsets.symmetric(vertical: 9),
+                    child: Center(child: Text('${v['stock'] ?? 0}', style: A.t(11.5, w: FontWeight.w800))),
+                  ),
+                  Padding(
+                    padding: const EdgeInsets.symmetric(vertical: 9),
+                    child: Center(
+                      child: Container(
+                        padding: const EdgeInsets.symmetric(horizontal: 9, vertical: 3),
+                        decoration: BoxDecoration(
+                          color: ((v['stock'] as num?)?.toInt() ?? 0) > 0 ? A.success.withValues(alpha: .1) : A.danger.withValues(alpha: .1),
+                          borderRadius: BorderRadius.circular(999),
+                        ),
+                        child: Text(((v['stock'] as num?)?.toInt() ?? 0) > 0 ? 'متوفر' : 'نفد',
+                            style: A.t(10, c: ((v['stock'] as num?)?.toInt() ?? 0) > 0 ? A.success : A.danger, w: FontWeight.w900)),
+                      ),
                     ),
                   ),
-                ),
-              ]),
-          ],
-        ),
-        const SizedBox(height: 12),
-        Text('مقاس غير مناسب؟ اضغط أي مقاس بأعلى الصفحة وسيُحفظ اختيارك تلقائياً 👌',
-            style: A.t(11.5, c: A.muted, w: FontWeight.w700), textAlign: TextAlign.center),
-      ]),
+                ]),
+            ],
+          ),
+          const SizedBox(height: 14),
+          Container(
+            padding: const EdgeInsets.all(12),
+            decoration: BoxDecoration(color: A.primary.withValues(alpha: .06), borderRadius: BorderRadius.circular(12), border: Border.all(color: A.primary.withValues(alpha: .25))),
+            child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+              Text('📏 كيف تقيس بشكل صحيح؟', style: A.t(12, c: A.primary, w: FontWeight.w900)),
+              const SizedBox(height: 6),
+              Text('• الصدر: محيط أوسع نقطة تحت الإبط\n• الخصر: أنحف نقطة فوق السرة\n• الطول: من الكتف حتى نهاية الثوب — وقارنها بالجدول',
+                  style: A.t(11, c: A.ink, h: 1.9, w: FontWeight.w700)),
+            ]),
+          ),
+          const SizedBox(height: 12),
+          Text('مقاس غير مناسب؟ اضغط أي مقاس بأعلى الصفحة وسيُحفظ اختيارك تلقائياً 👌',
+              style: A.t(11.5, c: A.muted, w: FontWeight.w700), textAlign: TextAlign.center),
+        ]),
+      ),
     ));
   }
 

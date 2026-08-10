@@ -4,7 +4,7 @@
     <uses-permission android:name="android.permission.ACCESS_COARSE_LOCATION"/>
     <application
         android:usesCleartextTraffic="true"
-        android:label="zaboon"
+        android:label="زبون"
         android:name="${applicationName}"
         android:icon="@mipmap/ic_launcher">
         <activity

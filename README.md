@@ -68,9 +68,9 @@ static String base = 'http://192.168.1.X:4000'; // IP جهازك — للمحا�
    | `JWT_SECRET` | سلسلة عشوائية طويلة |
    | `DEV_OTP` | `true` (بعد ما تجيب مزود SMS تغيّرها `false`) |
 
-4. `vercel --prod` → الموقع يصير: `https://soog.vercel.app`
-   - لوحة الأدمن: `https://soog.vercel.app/admin` — دخول: `07900000000` / `admin123`
-   - التطبيق: غيّر في `app/lib/api.dart` → `Api.base = 'https://soog.vercel.app'` وأعد البناء.
+4. `vercel --prod` → الموقع يصير: `https://soog-delta.vercel.app`
+   - لوحة الأدمن: `https://soog-delta.vercel.app/admin` — دخول: `07900000000` / `admin123`
+   - التطبيق: غيّر في `app/lib/api.dart` → `Api.base = 'https://soog-delta.vercel.app'` وأعد البناء.
 
 ملاحظات الخطة المجانية: Vercel Hobby (حد 4.5MB بالطلبات) + Neon ينام بعد 5 دقايق خمول (أول طلب يستيقظه خلال ~1 ثانية).
 

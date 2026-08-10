@@ -540,6 +540,8 @@ class HomeScreenState extends State<HomeScreen> {
                   controller: scrollCtrl,
                   padding: const EdgeInsets.only(bottom: 24),
                   children: [
+                    // تنبيه النسخة الأحدث (من الموقع)
+                    const UpdateBanner(),
                     // البحث + زر الفلتر في نفس الصف (الفلتر على اليسار)
                     Padding(
                       padding: const EdgeInsets.fromLTRB(16, 12, 16, 0),

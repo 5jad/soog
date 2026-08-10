@@ -225,6 +225,21 @@ class _AccountScreenState extends State<AccountScreen> {
               _tile(Icons.favorite_rounded, 'المفضلة ❤️', () => AppState.i.favsReload.value++),
               _div(),
               _tile(Icons.help_outline_rounded, 'مساعدة ودعم 🎧', () => toast(context, 'قريباً في التحديث الجاي')),
+              _div(),
+              ListTile(
+                leading: const Icon(Icons.update_rounded, color: A.primary),
+                title: Text('نسخة التطبيق', style: A.t(13.5)),
+                trailing: Text('v$kAppVersion', style: A.t(12, c: A.muted, w: FontWeight.w800)),
+                onTap: () async {
+                  try {
+                    final d = await Api.get('/api/app/version');
+                    final v = d['version'] ?? kAppVersion;
+                    toast(context, 'أحدث نسخة على الموقع: v$v');
+                  } catch (_) {
+                    toast(context, 'أحدث نسخة على الموقع: v$kAppVersion');
+                  }
+                },
+              ),
             ]),
           ),
           const SizedBox(height: 18),

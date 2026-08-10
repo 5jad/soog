@@ -7,7 +7,7 @@ import 'package:shared_preferences/shared_preferences.dart';
 
 /// عميل الـ API — كله يمر من هنا (base URL سهل التغيير)
 class Api {
-  static String base = 'http://192.168.1.136:4000'; // شبكة المنزل — أو من شاشة الدخول تغيّره للرابط الخارجي
+  static String base = 'https://soog-delta.vercel.app'; // السحابة — يشتغل بأي مكان
 
   static String? _token;
   static Map<String, dynamic>? me;

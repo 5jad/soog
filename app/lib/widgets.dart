@@ -3,6 +3,7 @@ import 'dart:math' as math;
 import 'dart:typed_data';
 import 'dart:ui' as ui;
 import 'package:flutter/material.dart';
+import 'package:url_launcher/url_launcher.dart';
 import 'theme.dart';
 import 'api.dart';
 import 'screens/cart_screen.dart';
@@ -723,5 +724,78 @@ class NotifBell extends StatelessWidget {
         ),
       ),
     ]);
+  }
+}
+
+/* ═══════════ نظام تحديث النسخ — الشريط يفتح تحميل النسخة الأحدث من الموقع ═══════════ */
+/// نسخة التطبيق الحالية (مطابقة app-version.json على السيرفر)
+const String kAppVersion = '1.0.0';
+const int kAppBuild = 2;
+
+class UpdateBanner extends StatefulWidget {
+  const UpdateBanner({super.key});
+  @override
+  State<UpdateBanner> createState() => _UpdateBannerState();
+}
+
+class _UpdateBannerState extends State<UpdateBanner> {
+  String? latest;
+  String? url;
+
+  @override
+  void initState() {
+    super.initState();
+    _check();
+  }
+
+  Future<void> _check() async {
+    try {
+      final d = await Api.get('/api/app/version');
+      final v = (d['version'] ?? '').toString();
+      final b = (d['build'] as num?)?.toInt() ?? 0;
+      if ((v.isNotEmpty && v != kAppVersion) || b > kAppBuild) {
+        setState(() {
+          latest = v;
+          url = Api.base + (d['download_url'] ?? '/download');
+        });
+      }
+    } catch (_) {}
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final v = latest;
+    if (v == null) return const SizedBox.shrink();
+    return Container(
+      margin: const EdgeInsets.fromLTRB(16, 8, 16, 0),
+      padding: const EdgeInsets.all(14),
+      decoration: BoxDecoration(
+        gradient: A.gradSun,
+        borderRadius: BorderRadius.circular(16),
+        boxShadow: [BoxShadow(color: A.accent.withOpacity(0.3), blurRadius: 14, offset: const Offset(0, 5))],
+      ),
+      child: Row(children: [
+        Text('📦', style: A.t(24)),
+        const SizedBox(width: 10),
+        Expanded(
+          child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+            Text('نسخة جديدة متوفرة ($v)', style: A.t(13, c: Colors.white, w: FontWeight.w900)),
+            Text('حمّلها من موقعنا — أحدث إصدار دائماً', style: A.t(10.5, c: Colors.white.withOpacity(0.9))),
+          ]),
+        ),
+        const SizedBox(width: 8),
+        GestureDetector(
+          onTap: () async {
+            final u = url;
+            if (u != null) await launchUrl(Uri.parse(u), mode: LaunchMode.externalApplication);
+          },
+          child: Container(
+            padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 9),
+            decoration: BoxDecoration(color: Colors.white, borderRadius: BorderRadius.circular(12)),
+            child: Text('حمّل', style: A.t(12.5, c: A.accentDeep, w: FontWeight.w900)),
+          ),
+        ),
+      ]),
+    );
   }
 }

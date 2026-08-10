@@ -1,8 +1,22 @@
 import { Router } from 'express';
+import fs from 'fs';
+import path from 'path';
+import { fileURLToPath } from 'url';
 import { q, one } from '../db.js';
 import { demoCond } from '../demo.js';
 
 const r = Router();
+const __dirname = path.dirname(fileURLToPath(import.meta.url));
+
+// ── نسخة التطبيق الحالية (الزبون يقارنها ويحمّل الأحدث من الموقع) ──
+r.get('/app/version', (_req, res) => {
+  try {
+    const v = JSON.parse(fs.readFileSync(path.join(__dirname, '../app-version.json'), 'utf8'));
+    res.json(v);
+  } catch (_) {
+    res.json({ version: '1.0.0', build: 1, download_url: '/download' });
+  }
+});
 
 // ── المحافظات والأحياء ──
 r.get('/governorates', async (_req, res) => {

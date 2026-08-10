@@ -24,4 +24,3 @@ app/ios/.symlinks/
 zaboon-demo.apk
 
 # ملفات كبيرة للتطبيق (لا ترفع لـ git)
-backend/public/landing/downloads/

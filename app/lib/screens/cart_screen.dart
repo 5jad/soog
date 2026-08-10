@@ -5,6 +5,7 @@ import '../map_screen.dart';
 import '../theme.dart';
 import '../widgets.dart';
 import 'orders_screen.dart';
+import 'order_success_screen.dart';
 
 /// السلة — مرتبة حسب المتجر، مع إنشاء الطلب (كاش فقط)
 class CartScreen extends StatefulWidget {
@@ -115,10 +116,16 @@ class _CartScreenState extends State<CartScreen> {
       } catch (_) {}
     }
     if (!mounted) return;
-    toast(context, done > 0 ? 'انطلقت طلباتك ($done) بموعد واحد 🎉' : 'ما انطلق أي طلب', error: done == 0);
     if (done > 0) {
-      Navigator.push(context, MaterialPageRoute(builder: (_) => OrderListScreen(role: 'customer', initialCode: null)));
-      _load();
+      AppState.i.setCart(0);
+      await _load();
+      if (!mounted) return;
+      Navigator.push(
+        context,
+        MaterialPageRoute(builder: (_) => OrderSuccessScreen(done: done)),
+      );
+    } else {
+      toast(context, 'ما انطلق أي طلب — جرب مرة ثانية', error: true);
     }
   }
 

@@ -9,6 +9,7 @@ export function AppProvider({ children }) {
   const [me, setMe] = useState(() => { try { return JSON.parse(localStorage.zaboon_me || 'null'); } catch (_) { return null; } });
   const [cartN, setCartN] = useState(0);
   const [favs, setFavs] = useState([]);
+  const [notifN, setNotifN] = useState(0);
   const [toast, setToast] = useState(null);
   const [prodId, setProdId] = useState(null);
   const [cartOpen, setCartOpen] = useState(false);
@@ -26,7 +27,7 @@ export function AppProvider({ children }) {
     localStorage.zaboon_me = JSON.stringify(d.user || d.me || null);
     setToken(d.token); setMe(d.user || d.me || null);
     setLoginOpen(false);
-    notify('مرحباً بك 👋', 'ok');
+    notify('أهلاً وسهلاً 👋', 'ok');
   }, [notify]);
 
   const logout = useCallback(() => {
@@ -37,28 +38,28 @@ export function AppProvider({ children }) {
 
   const refreshCart = useCallback(async () => {
     if (!localStorage.zaboon_token) { setCartN(0); return; }
-    try {
-      const d = await api('/api/customer/cart');
-      setCartN(d.items.reduce((a, b) => a + b.qty, 0));
-    } catch (_) {}
+    try { const d = await api('/api/customer/cart'); setCartN(d.items.reduce((a, b) => a + b.qty, 0)); } catch (_) {}
   }, []);
 
   const refreshFav = useCallback(async () => {
     if (!localStorage.zaboon_token) { setFavs([]); return; }
-    try {
-      const d = await api('/api/customer/favorites');
-      setFavs((d.favorites || d.products || []).map(x => x.product_id ?? x.id));
-    } catch (_) {}
+    try { const d = await api('/api/customer/favorites'); setFavs(d.products.map(p => p.id)); } catch (_) {}
   }, []);
 
-  useEffect(() => { refreshCart(); refreshFav(); }, [token, refreshCart, refreshFav]);
+  const refreshNotif = useCallback(async () => {
+    if (!localStorage.zaboon_token) { setNotifN(0); return; }
+    try { const d = await api('/api/customer/notifications'); setNotifN(d.notifications.filter(n => !n.read).length); } catch (_) {}
+  }, []);
+
+  useEffect(() => { refreshCart(); refreshFav(); refreshNotif(); }, [token, refreshCart, refreshFav, refreshNotif]);
 
   const toggleFav = useCallback(async (id) => {
     if (!localStorage.zaboon_token) { setLoginOpen(true); notify('سجّل دخولك أولاً', 'err'); return; }
     try {
       const on = favs.includes(id);
-      if (on) { await api('/api/customer/favorites/' + id, { method: 'DELETE' }); setFavs(f => f.filter(x => x !== id)); notify('أزيلت من المفضلة'); }
-      else { await api('/api/customer/favorites', { method: 'POST', body: JSON.stringify({ product_id: id }) }); setFavs(f => [...f, id]); notify('أضيفت للمفضلة ❤️', 'ok'); }
+      const d = await api('/api/customer/favorites', { method: 'POST', body: JSON.stringify({ product_id: id }) });
+      setFavs(f => d.favorite ? [...f, id] : f.filter(x => x !== id));
+      notify(d.favorite ? 'أضيفت للمفضلة ❤️' : 'أزيلت من المفضلة', d.favorite ? 'ok' : '');
     } catch (e) { notify(e.message, 'err'); }
   }, [favs, notify]);
 
@@ -73,8 +74,8 @@ export function AppProvider({ children }) {
   }, [notify]);
 
   const v = {
-    token, me, cartN, favs, toast, prodId, cartOpen, loginOpen,
-    notify, login, logout, refreshCart, refreshFav, toggleFav, addToCart,
+    token, me, cartN, favs, notifN, toast, prodId, cartOpen, loginOpen,
+    notify, login, logout, refreshCart, refreshFav, refreshNotif, toggleFav, addToCart,
     setProdId, setCartOpen, setLoginOpen,
   };
   return <Ctx.Provider value={v}>{children}</Ctx.Provider>;

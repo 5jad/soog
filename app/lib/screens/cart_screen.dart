@@ -138,62 +138,97 @@ class _CartScreenState extends State<CartScreen> {
       String? selected = addresses.isEmpty ? null : addresses.first['address'];
       int? selectedId = addresses.isEmpty ? null : (addresses.first['id'] as num).toInt();
       await showSheet(context, StatefulBuilder(
-        builder: (context, setS) => Column(mainAxisSize: MainAxisSize.min, children: [
-          const SheetTitle('عنوان التوصيل 📍'),
-          if (addresses.isNotEmpty)
-            for (final a in addresses)
-              RadioListTile<String>(
-                value: a['address'],
-                groupValue: selected,
-                activeColor: A.primary,
-                title: Text(a['address'], style: A.t(13.5)),
-                onChanged: (v) => setS(() {
-                  selected = v;
-                  addrId = (a['id'] as num).toInt();
-                }),
-              )
-          else
-            const Padding(padding: EdgeInsets.all(16), child: Text('لا عناوين — أضف عنوانك', style: TextStyle(color: A.muted))),
-          Padding(
-            padding: const EdgeInsets.fromLTRB(16, 4, 16, 0),
-            child: Row(children: [
-              Expanded(
-                child: SolidBtn(
-                  label: '🎯 حدد موقعي على الخريطة',
-                  onTap: () async {
-                    final p = await Navigator.push<LatLng>(context,
-                        MaterialPageRoute(builder: (_) => const PickMapScreen()));
-                    if (p == null || !context.mounted) return;
-                    addressCtrl.text = '📍 موقع محدد (${p.latitude.toStringAsFixed(6)}, ${p.longitude.toStringAsFixed(6)})';
-                    setS(() {
-                      addr = addressCtrl.text;
-                      addrId = null;
-                    });
-                    toast(context, 'تم تحديد موقعك — اضغط «تأكيد» لإرسال الطلب به ✓');
-                  },
+        builder: (context, setS) => Padding(
+          padding: const EdgeInsets.fromLTRB(20, 4, 20, 28),
+          child: Column(mainAxisSize: MainAxisSize.min, crossAxisAlignment: CrossAxisAlignment.stretch, children: [
+            const SheetTitle('عنوان التوصيل 📍'),
+            if (addresses.isNotEmpty) ...[
+              const Text('اختر من العناوين المحفوظة',
+                  style: TextStyle(color: A.muted, fontSize: 11.5, fontWeight: FontWeight.w700)),
+              const SizedBox(height: 10),
+              for (final a in addresses)
+                GestureDetector(
+                  onTap: () => setS(() {
+                    selected = a['address'];
+                    addrId = (a['id'] as num).toInt();
+                  }),
+                  child: Container(
+                    margin: const EdgeInsets.only(bottom: 8),
+                    padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 13),
+                    decoration: BoxDecoration(
+                      color: selected == a['address'] ? const Color(0xFFEEF4FB) : const Color(0xFFF7F8FA),
+                      borderRadius: BorderRadius.circular(14),
+                      border: Border.all(
+                          color: selected == a['address'] ? A.primary : A.line, width: selected == a['address'] ? 1.6 : 1),
+                    ),
+                    child: Row(children: [
+                      Icon(
+                        selected == a['address'] ? Icons.check_circle_rounded : Icons.radio_button_unchecked,
+                        color: selected == a['address'] ? A.primary : const Color(0xFFC9CDD6),
+                        size: 22,
+                      ),
+                      const SizedBox(width: 10),
+                      Expanded(
+                        child: Text(a['address'],
+                            style: TextStyle(
+                                fontSize: 13, fontWeight: FontWeight.w700, color: selected == a['address'] ? A.primary : A.text)),
+                      ),
+                    ]),
+                  ),
                 ),
+              const Divider(height: 26, color: A.line),
+              const Text('أو حدد موقعك / أضف عنوان جديد',
+                  style: TextStyle(color: A.muted, fontSize: 11.5, fontWeight: FontWeight.w700)),
+              const SizedBox(height: 10),
+            ] else
+              const Padding(padding: EdgeInsets.only(top: 6, bottom: 4),
+                  child: Text('لا عناوين محفوظة — حدد موقعك من الخريطة', style: TextStyle(color: A.muted, fontSize: 12.5))),
+            OutlinedButton.icon(
+              style: OutlinedButton.styleFrom(
+                foregroundColor: A.primary,
+                side: const BorderSide(color: A.primary, width: 1.3),
+                padding: const EdgeInsets.symmetric(vertical: 13),
+                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
               ),
-            ]),
-          ),
-          Padding(
-            padding: const EdgeInsets.all(16),
-            child: Column(crossAxisAlignment: CrossAxisAlignment.stretch, children: [
-              TextField(
-                controller: addressCtrl,
-                decoration: const InputDecoration(hintText: 'أو أضف عنوان جديد: حي، زقاق، علامة مميزة'),
-                onChanged: (v) => setS(() {
-                  addr = v;
-                  if (v.isNotEmpty) addrId = null;
-                }),
+              onPressed: () async {
+                final p = await Navigator.push<LatLng>(context,
+                    MaterialPageRoute(builder: (_) => const PickMapScreen()));
+                if (p == null || !context.mounted) return;
+                addressCtrl.text = '📍 موقع محدد (${p.latitude.toStringAsFixed(6)}, ${p.longitude.toStringAsFixed(6)})';
+                if (mounted) Navigator.pop(context, (addressCtrl.text, null));
+              },
+              icon: const Icon(Icons.location_on_outlined, size: 20),
+              label: const Text('حدد موقعي على الخريطة', style: TextStyle(fontSize: 13, fontWeight: FontWeight.w800)),
+            ),
+            const SizedBox(height: 12),
+            TextField(
+              controller: addressCtrl,
+              style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w600),
+              decoration: InputDecoration(
+                hintText: 'أو اكتب عنواناً جديداً: حي، زقاق، علامة مميزة',
+                hintStyle: TextStyle(color: A.muted.withValues(alpha: .7), fontSize: 12.5, fontWeight: FontWeight.w600),
+                prefixIcon: const Icon(Icons.edit_location_alt_outlined, color: A.primary, size: 20),
+                filled: true,
+                fillColor: const Color(0xFFF7F8FA),
+                contentPadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 13),
+                border: OutlineInputBorder(borderRadius: BorderRadius.circular(14), borderSide: const BorderSide(color: A.line)),
+                enabledBorder: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(14), borderSide: const BorderSide(color: A.line)),
+                focusedBorder: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(14), borderSide: const BorderSide(color: A.primary, width: 1.6)),
               ),
-              const SizedBox(height: 12),
-              SolidBtn(
-                label: 'تأكيد',
-                onTap: () => Navigator.pop(context, ((addr != null && addr!.isNotEmpty) ? addr : selected, addrId)),
-              ),
-            ]),
-          ),
-        ]),
+              onChanged: (v) => setS(() {
+                addr = v;
+                if (v.isNotEmpty) addrId = null;
+              }),
+            ),
+            const SizedBox(height: 16),
+            SolidBtn(
+              label: 'تأكيد العنوان ✓',
+              onTap: () => Navigator.pop(context, ((addr != null && addr!.isNotEmpty) ? addr : selected, addrId)),
+            ),
+          ]),
+        ),
       ));
     } on ApiException catch (e) {
       toast(context, e.message, error: true);

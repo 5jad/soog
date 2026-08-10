@@ -137,7 +137,7 @@ class _CartScreenState extends State<CartScreen> {
       final addresses = (d['addresses'] ?? []) as List;
       String? selected = addresses.isEmpty ? null : addresses.first['address'];
       int? selectedId = addresses.isEmpty ? null : (addresses.first['id'] as num).toInt();
-      await showSheet(context, StatefulBuilder(
+      final picked = await showSheet(context, StatefulBuilder(
         builder: (context, setS) => Padding(
           padding: const EdgeInsets.fromLTRB(20, 4, 20, 28),
           child: Column(mainAxisSize: MainAxisSize.min, crossAxisAlignment: CrossAxisAlignment.stretch, children: [
@@ -231,6 +231,11 @@ class _CartScreenState extends State<CartScreen> {
           ]),
         ),
       ));
+      if (picked is (String?, int?)?) {
+        final p = picked as (String?, int?)?;
+        if (p != null) return p;
+      }
+      return ((addr != null && addr!.isNotEmpty) ? addr : selected, addrId ?? selectedId);
     } on ApiException catch (e) {
       toast(context, e.message, error: true);
     }

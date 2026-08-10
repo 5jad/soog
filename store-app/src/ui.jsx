@@ -1,6 +1,11 @@
 import React from 'react';
 import { U } from './api';
 
+/* ═══ أيقونة Material Symbols — مطابقة أيقونات التطبيق ═══ */
+export const M = ({ n, s = 20, c = 'currentColor', fill = false, w = 400, cls = '', style = {} }) => (
+  <span className={'msm ' + (fill ? 'mf ' : '') + cls} style={{ fontSize: s, color: c, fontVariationSettings: `'FILL' ${fill ? 1 : 0},'wght' ${w},'GRAD' 0,'opsz' 24`, ...style }}>{n}</span>
+);
+
 /* صورة آمنة: data-URI أو مسار داخلي، وإلا أيقونة */
 export const Img = ({ src, alt = '', fontSize = '44px', fallback = '🛍️', className = '', style = {}, noSpan }) => {
   if (U(src)) {
@@ -11,9 +16,14 @@ export const Img = ({ src, alt = '', fontSize = '44px', fallback = '🛍️', cl
 };
 
 /* نجوم التقييم */
-export const Stars = ({ n = 0, size = 15 }) => {
+export const Stars = ({ n = 0, size = 15, color = 'var(--star)' }) => {
   const v = Math.max(0, Math.min(5, Math.round(Number(n) || 0)));
-  return <span className="stars" style={{ fontSize: size }}>{'★'.repeat(v)}<span className="stars muted">{'★'.repeat(5 - v)}</span></span>;
+  return (
+    <span className="stars" style={{ fontSize: size }}>
+      {Array.from({ length: v }).map((_, i) => <M key={i} n="star" fill s={size} c={color} w={700} />)}
+      {Array.from({ length: 5 - v }).map((_, i) => <M key={i} n="star" s={size} c="var(--line2)" w={400} />)}
+    </span>
+  );
 };
 
 /* علبة فراغ */
@@ -65,9 +75,9 @@ export const Sheet = ({ open, onClose, children }) => {
     <>
       <div className="overlay" onClick={onClose} style={{ zIndex: 105 }} />
       <div style={{ position: 'fixed', inset: 0, zIndex: 105, display: 'flex', alignItems: 'flex-end', justifyContent: 'center' }}>
-        <div className="sheet" style={{ width: 'min(520px,100vw)' }}>
+        <div className="sheet" style={{ width: 'min(560px,100vw)' }}>
           <div className="sheet-head"><b>{children.title || ''}</b>
-            <button className="i-btn" onClick={onClose}>✕</button></div>
+            <button className="i-btn" onClick={onClose}><M n="close" s={20} /></button></div>
           {children.body}
         </div>
       </div>

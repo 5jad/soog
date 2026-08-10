@@ -1,9 +1,9 @@
 import React, { useEffect, useState } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
-import { api, fmt, priceOf } from '../api';
+import { api, fmt, U } from '../api';
 import { useApp } from '../ctx';
-import { ProductCard, DealCard, CatIcon } from '../components/Cards';
-import { Stars, SkeGrid, Empty, Loader, Img } from '../ui';
+import { ProductCard } from '../components/Cards';
+import { Stars, SkeGrid, Empty, Loader, M } from '../ui';
 
 export default function StorePage() {
   const { id } = useParams();
@@ -48,82 +48,115 @@ export default function StorePage() {
   };
 
   return (
-    <div className="sect" style={{ marginTop: 18 }}>
-      <div className="breadcrumb"><a onClick={() => nav('/')}>زبون</a> <b>&lt;</b> <a onClick={() => nav('/stores')}>المتاجر</a> <b>&lt;</b> {st.name}</div>
-      <div className="store-hero">
-        <div className="logo"><Img src={st.logo} fontSize="38px" /></div>
-        <div style={{ flex: 1 }}>
-          <h1>{st.name} {st.verified ? '✔' : ''}</h1>
-          <div className="meta">{st.category_name || ''}{st.governorate_name ? ' · ' + st.governorate_name : ''}{st.district_name ? ' — ' + st.district_name : ''}</div>
-          <div className="meta" style={{ display: 'flex', alignItems: 'center', gap: 6 }}><Stars n={st.rating} size={13} /> {st.rating || '5.0'} ({st.reviews_count || 0})</div>
-          <div className="badges">
-            {open ? <span>🟢 مفتوح</span> : <span>🔴 مغلق{st.on_vacation ? ' — إجازة' : ''}</span>}
-            <span>🚚 {st.delivery_fee ? 'توصيل ' + fmt(st.delivery_fee) : 'توصيل مجاني'}</span>
-            {st.free_delivery_min ? <span>مجاني فوق {fmt(st.free_delivery_min)}</span> : null}
-            {st.phone ? <span>📞 {st.phone}</span> : null}
+    <div className="pg">
+      {/* هيرو المتجر — غلاف يملأ الأعلى */}
+      <div className="st-hero">
+        {U(st.cover) ? <img className="bg" src={st.cover} alt="" /> : <div className="bg" style={{ background: 'linear-gradient(135deg,#1E3A8A,#1D4ED8,#06B6D4)' }} />}
+        <div className="ov" />
+        <div className="st-hero-in">
+          <div className="st-htop">
+            <button className="i-btn" onClick={() => nav(-1)} style={{ background: 'rgba(255,255,255,.16)', border: '1px solid rgba(255,255,255,.35)', color: '#fff' }}><M n="arrow_back_ios_new" s={17} w={600} /></button>
+            <div className="st-cs">
+              {open
+                ? <span className="cv"><M n="check_circle" s={13} fill c="#4ADE80" w={700} />{st.on_vacation ? 'ويا إجازة' : 'مفتوح'}</span>
+                : <span className="cv"><M n="cancel" s={13} c="var(--danger)" fill w={700} />مغلق{st.on_vacation ? ' — إجازة' : ''}</span>}
+              <span className="cv"><M n="verified_user" s={13} c="#4ADE80" fill w={700} />ضمان {st.warranty_days ?? 3} يوم</span>
+            </div>
+          </div>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 14 }}>
+            <div className="st-logo">{U(st.logo) ? <img src={st.logo} alt="" /> : (st.logo || '🏪')}</div>
+            <div>
+              <div className="st-sn">{st.name} {st.verified ? <M n="verified" s={17} fill c="#38BDF8" w={700} /> : null}</div>
+              <div className="st-sr">
+                <M n="star" fill s={14} c="var(--star)" w={700} />
+                <b>{Number(st.rating || 0) > 0 ? Number(st.rating).toFixed(1) : 'جديد'}</b>
+                <span>· {st.reviews_count || 0} تقييم</span>
+                {st.governorate_name ? <span>· {st.governorate_name}{st.district_name ? ' — ' + st.district_name : ''}</span> : null}
+              </div>
+            </div>
+          </div>
+          <div className="st-acts">
+            {st.delivery_fee != null ? <span className="st-act" style={{ cursor: 'default' }}><M n="delivery_dining" s={16} w={600} />{st.delivery_fee ? fmt(st.delivery_fee) : 'مجاني'}</span> : null}
+            {st.free_delivery_min ? <span className="st-act" style={{ cursor: 'default' }}><M n="card_giftcard" s={16} w={600} />مجاني فوق {fmt(st.free_delivery_min)}</span> : null}
+            {st.open_time ? <span className="st-act" style={{ cursor: 'default' }}><M n="storefront" s={16} w={600} />{st.open_time} - {st.close_time}</span> : null}
+            {st.phone ? <a className="st-act" href={'tel:' + st.phone}><M n="call" s={16} w={600} />اتصال</a> : null}
+            {st.location_url ? <a className="st-act" href={st.location_url} target="_blank" rel="noreferrer"><M n="map" s={16} w={600} />الموقع</a> : null}
+            <button className={`st-act ${followed ? 'on' : ''}`} disabled={busyF} onClick={toggleFollow}>
+              <M n="favorite" fill={followed} s={16} w={600} />{followed ? 'متابع' : 'متابعة'}
+            </button>
           </div>
         </div>
-        <button className={`btn ${followed ? 'btn-o' : ''}`} style={{ background: followed ? '#fff' : 'rgba(255,255,255,.92)', color: followed ? 'var(--primary)' : 'var(--primary-deep)', borderRadius: 999 }} disabled={busyF} onClick={toggleFollow}>
-          {followed ? '❤️ تتبعه' : '🤍 متابعة'}
-        </button>
       </div>
 
-      {coupons.length ? (
-        <div style={{ display: 'flex', gap: 10, flexWrap: 'wrap', marginBottom: 14 }}>
-          {coupons.map(c => (
-            <div key={c.id} className="card" style={{ padding: '9px 14px', fontSize: 12, fontWeight: 800, color: 'var(--primary)', borderStyle: 'dashed' }}>
-              🎟️ {c.code} — {c.percent ? c.percent + '%' : fmt(c.flat)}{c.min_total ? ` (من ${fmt(c.min_total)})` : ''}
-            </div>
-          ))}
-        </div>
-      ) : null}
-
-      <div className="tabs" style={{ maxWidth: 420, marginBottom: 16 }}>
-        {[['prods', '🛍️ المنتجات'], ['deals', '🔥 العروض'], ['reviews', '⭐ التقييمات']].map(([k, t]) => (
-          <button key={k} className={tab === k ? 'on' : ''} onClick={() => setTab(k)}>{t}</button>
-        ))}
-      </div>
-
-      {tab !== 'reviews' && (
-        <div style={{ display: 'flex', gap: 10, marginBottom: 14, flexWrap: 'wrap', alignItems: 'center' }}>
-          <input className="inp" style={{ maxWidth: 280 }} placeholder="ابحث داخل المحل…" value={q} onChange={(e) => setQ(e.target.value)} />
-          <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap' }}>
-            <span className={`chip ${!catSel ? 'on' : ''}`} onClick={() => setCatSel(null)}>الكل</span>
-            {cats.filter(c => prods && prods.some(p => p.category_id === c.id)).map(c => (
-              <span key={c.id} className={`chip ${catSel === c.id ? 'on' : ''}`} onClick={() => setCatSel(c.id)}>{c.icon || ''} {c.name}</span>
+      <div className="sect" style={{ paddingTop: 16 }}>
+        {/* كوبونات المتجر */}
+        {coupons.length ? (
+          <div style={{ display: 'flex', gap: 10, flexWrap: 'wrap', marginBottom: 12 }}>
+            {coupons.map(c => (
+              <div key={c.id} className="st-coupon" style={{ color: 'var(--ink)', background: 'rgba(245,166,35,.08)', borderColor: 'rgba(245,166,35,.5)' }}>
+                <M n="confirmation_number" s={16} c="var(--accent)" w={600} />
+                <span className="cd2">{c.code}</span> — {c.percent ? c.percent + '%' : fmt(c.flat)}{c.min_total ? ` (من ${fmt(c.min_total)})` : ''}
+              </div>
             ))}
           </div>
-        </div>
-      )}
+        ) : null}
 
-      {tab === 'prods' && (showProds.length ? <div className="grid">{showProds.map(p => <ProductCard key={p.id} p={p} />)}</div> : <Empty icon="📭" msg="ماكو منتجات مطابقة" />)}
-      {tab === 'deals' && (bestDeals.length ? <div className="grid">{bestDeals.map(p => <ProductCard key={p.id} p={p} fire />)}</div> : <Empty icon="🔥" msg="ماكو عروض حالياً" />)}
-      {tab === 'reviews' && (
-        <div style={{ display: 'flex', gap: 18, flexWrap: 'wrap' }}>
-          <div className="card" style={{ padding: 18, minWidth: 220 }}>
-            <div style={{ fontSize: 34, fontWeight: 900, color: 'var(--ink)' }}>{st.rating || '5.0'} <span style={{ fontSize: 15, color: 'var(--muted)', fontWeight: 700 }}>/ 5</span></div>
-            <Stars n={st.rating} size={18} />
-            <div style={{ marginTop: 10 }}>
-              {[5, 4, 3, 2, 1].map(n => (
-                <div key={n} className="rat-row" style={{ margin: '4px 0' }}>
-                  <span style={{ fontWeight: 800, fontSize: 11.5, width: 30 }}>{n} ★</span>
-                  <span className="rat-bar"><i style={{ width: (breakdown[n] || 0) * 8 + '%' }} /></span>
-                  <span style={{ fontSize: 11 }}>{breakdown[n] || 0}</span>
-                </div>
-              ))}
+        <div className="tabs" style={{ maxWidth: 440, marginBottom: 14 }}>
+          {[['prods', 'المنتجات', 'grid_view'], ['deals', 'العروض', 'local_fire_department'], ['reviews', 'التقييمات', 'star']].map(([k, t, ic]) => (
+            <button key={k} className={tab === k ? 'on' : ''} onClick={() => setTab(k)}>
+              <M n={ic} s={15} w={700} /> {t}
+            </button>
+          ))}
+        </div>
+
+        {tab !== 'reviews' && (
+          <div className="search-row" style={{ marginBottom: 10 }}>
+            <div className="search-f">
+              <span className="go" style={{ background: 'none', border: 0, color: 'var(--muted)', padding: '0 8px' }}><M n="search" s={20} w={500} /></span>
+              <input placeholder="ابحث داخل المحل…" value={q} onChange={(e) => setQ(e.target.value)} />
+              {q ? <button className="clr" onClick={() => setQ('')}><M n="close" s={19} w={500} /></button> : null}
             </div>
           </div>
-          <div style={{ flex: 1, minWidth: 260 }}>
-            {reviews.length ? reviews.map((r, i) => (
-              <div key={i} className="review">
-                <div className="top"><span className="nm">👤 {r.user_name}</span><span className="dt">{r.created_at ? new Date(r.created_at).toLocaleDateString('ar-IQ') : ''}</span></div>
-                <Stars n={r.rating} size={13} />
-                {r.comment ? <div style={{ fontSize: 12.5, color: 'var(--text)', marginTop: 6 }}>{r.comment}</div> : null}
-              </div>
-            )) : <Empty icon="⭐" msg="ماكو تقييمات بعد — كن أول من يقيّم!" />}
+        )}
+        {tab !== 'reviews' && (
+          <div className="cats-row" style={{ paddingInline: 0 }}>
+            <span className={`chipg ${!catSel ? 'on' : ''}`} onClick={() => setCatSel(null)}>الكل</span>
+            {cats.filter(c => prods && prods.some(p => p.category_id === c.id)).map(c => (
+              <span key={c.id} className={`chipg ${catSel === c.id ? 'on' : ''}`} onClick={() => setCatSel(c.id)}>{c.icon || ''} {c.name}</span>
+            ))}
           </div>
-        </div>
-      )}
+        )}
+
+        {tab === 'prods' && (prods === null ? <SkeGrid n={6} /> : showProds.length ? <div className="grid" style={{ paddingInline: 0, marginTop: 10 }}>{showProds.map(p => <ProductCard key={p.id} p={p} />)}</div> : <Empty icon="📭" msg="ماكو منتجات مطابقة" />)}
+        {tab === 'deals' && (bestDeals.length ? <div className="grid" style={{ paddingInline: 0, marginTop: 10 }}>{bestDeals.map(p => <ProductCard key={p.id} p={p} />)}</div> : <Empty icon="🔥" msg="ماكو عروض حالياً" />)}
+        {tab === 'reviews' && (
+          <div style={{ display: 'flex', gap: 16, flexWrap: 'wrap' }}>
+            <div className="card" style={{ padding: 18, minWidth: 220 }}>
+              <div style={{ fontSize: 34, fontWeight: 900, color: 'var(--ink)' }}>{Number(st.rating || 0) > 0 ? Number(st.rating).toFixed(1) : '5.0'} <span style={{ fontSize: 15, color: 'var(--muted)', fontWeight: 700 }}>/ 5</span></div>
+              <Stars n={st.rating} size={18} />
+              <div style={{ marginTop: 10 }}>
+                {[5, 4, 3, 2, 1].map(n => (
+                  <div key={n} style={{ display: 'flex', alignItems: 'center', gap: 8, margin: '5px 0' }}>
+                    <span style={{ fontWeight: 800, fontSize: 11.5, width: 26 }}>{n} <M n="star" fill s={11} c="var(--star)" w={700} /></span>
+                    <span className="cg-bar" style={{ flex: 1, margin: 0 }}><i style={{ width: Math.min(100, (breakdown[n] || 0) * 8) + '%' }} /></span>
+                    <span style={{ fontSize: 11, color: 'var(--muted)' }}>{breakdown[n] || 0}</span>
+                  </div>
+                ))}
+              </div>
+            </div>
+            <div style={{ flex: 1, minWidth: 260 }}>
+              {reviews.length ? reviews.map((r, i) => (
+                <div key={i} className="rv">
+                  <div className="rvn"><M n="person" s={14} c="var(--muted)" w={600} /> {r.user_name}</div>
+                  <Stars n={r.rating} size={13} />
+                  {r.comment ? <div style={{ fontSize: 12.5, color: 'var(--text)', marginTop: 4, lineHeight: 1.7 }}>{r.comment}</div> : null}
+                  <div className="rvd">{r.created_at ? new Date(r.created_at).toLocaleDateString('ar-IQ') : ''}</div>
+                </div>
+              )) : <Empty icon="⭐" msg="ماكو تقييمات بعد — كن أول من يقيّم!" />}
+            </div>
+          </div>
+        )}
+      </div>
     </div>
   );
 }

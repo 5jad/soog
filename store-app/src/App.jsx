@@ -1,13 +1,12 @@
-import React, { lazy, Suspense } from 'react';
+import React, { Suspense } from 'react';
 import { Routes, Route } from 'react-router-dom';
 import { useApp } from './ctx';
 import Layout from './components/Layout';
-import ProductModal from './components/ProductModal';
-import CartDrawer from './components/CartDrawer';
 import LoginModal from './components/LoginModal';
 import { Loader } from './ui';
 
 import Home from './pages/Home';
+import CartPage from './pages/CartPage';
 import ProductPage from './pages/ProductPage';
 import StorePage from './pages/StorePage';
 import StoresPage from './pages/StoresPage';
@@ -22,9 +21,10 @@ import Notifications from './pages/Notifications';
 import Favorites from './pages/Favorites';
 import Account from './pages/Account';
 import Logout from './pages/Logout';
+import ComingSoon from './pages/ComingSoon';
 
 export default function App() {
-  const { toast, prodId, setProdId, cartOpen, setCartOpen, loginOpen, setLoginOpen } = useApp();
+  const { toast, loginOpen, setLoginOpen } = useApp();
   return (
     <>
       <Layout />
@@ -32,6 +32,7 @@ export default function App() {
         <Suspense fallback={<Loader />}>
           <Routes>
             <Route path="/" element={<Home />} />
+            <Route path="/cart" element={<CartPage />} />
             <Route path="/product/:id" element={<ProductPage />} />
             <Route path="/stores" element={<StoresPage />} />
             <Route path="/stores/:id" element={<StorePage />} />
@@ -49,11 +50,12 @@ export default function App() {
             <Route path="/fav" element={<Favorites />} />
             <Route path="/account" element={<Account />} />
             <Route path="/logout" element={<Logout />} />
+            <Route path="/vendor" element={<ComingSoon area="vendor" />} />
+            <Route path="/delivery" element={<ComingSoon area="delivery" />} />
+            <Route path="/admin" element={<ComingSoon area="admin" />} />
           </Routes>
         </Suspense>
       </main>
-      <CartDrawer open={cartOpen} onClose={() => setCartOpen(false)} />
-      <ProductModal id={prodId} onClose={() => setProdId(null)} />
       <LoginModal open={loginOpen} onClose={() => setLoginOpen(false)} />
       {toast && <div className={`toast ${toast.kind}`}>{toast.msg}</div>}
     </>

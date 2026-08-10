@@ -1,60 +1,127 @@
 import React from 'react';
 import { useNavigate } from 'react-router-dom';
+import { fmt, priceOf, pct, U } from '../api';
 import { useApp } from '../ctx';
-import { fmt, priceOf, pct } from '../api';
-import { Img, Stars } from '../ui';
+import { Img, M } from '../ui';
 
-export const ProductCard = ({ p, fire = false }) => {
-  const { favs, toggleFav, setProdId } = useApp();
+export const DOT = (name) => {
+  const n = String(name || '').toLowerCase().trim();
+  const map = {
+    'أحمر': '#E7352B', 'احمر': '#E7352B', 'red': '#E7352B',
+    'أزرق': '#2453CB', 'ازرق': '#2453CB', 'blue': '#2453CB',
+    'أسود': '#202126', 'اسود': '#202126', 'black': '#202126',
+    'أبيض': '#F5F5F5', 'ابيض': '#F5F5F5', 'white': '#F5F5F5',
+    'أخضر': '#1E8A4C', 'اخضر': '#1E8A4C', 'green': '#1E8A4C',
+    'أصفر': '#F2C513', 'اصفر': '#F2C513', 'yellow': '#F2C513',
+    'بنفسجي': '#7C3AED', 'بنفسجية': '#7C3AED', 'purple': '#7C3AED',
+    'وردي': '#F472B6', 'وردية': '#F472B6', 'pink': '#F472B6',
+    'رمادي': '#9CA3AF', 'رمادية': '#9CA3AF', 'grey': '#9CA3AF',
+    'بني': '#7C4A23', 'بنية': '#7C4A23', 'brown': '#7C4A23',
+    'برتقالي': '#F97316', 'برتقالية': '#F97316', 'orange': '#F97316',
+    'بيج': '#E5CBB0', 'ذهبي': '#D4AF37',
+  };
+  for (const k of Object.keys(map)) if (n.includes(k)) return map[k];
+  return '#D9DEE7';
+};
+
+/* ═══ بطاقة منتج — شبكة 2×2 مثل التطبيق: صورة 3:4 + خصم + نقاط ألوان + زر برتقالي ═══ */
+export function ProductCard({ p, cols = 2 }) {
   const nav = useNavigate();
-  const on = favs.includes(p.id);
-  const d = pct(p);
+  const { addToCart, notify, setLoginOpen, token } = useApp();
+  const off = p.has_offer ? pct(p.price, p.offer_price) : 0;
+  const variants = p.variants && p.variants.length ? p.variants : [];
+  const dots = [];
+  for (const v of variants) {
+    const c = DOT(v.color || (v.name || ''));
+    if (!dots.includes(c)) dots.push(c);
+  }
+  const quick = async (e) => {
+    e.stopPropagation();
+    if (variants.length) { nav('/product/' + p.id); return; }
+    if (!token) { notify('سجل دخولك أولاً', 'err'); setLoginOpen(true); return; }
+    await addToCart(p.id, null, null, 1);
+  };
   return (
-    <div className="pcard">
-      {d ? <span className="dc">-{d}%</span> : null}
-      {fire ? <span className="dc" style={{ top: 44, background: 'var(--grad-sky)' }}>🔥</span> : null}
-      <div className="img" onClick={() => setProdId(p.id)}><Img src={p.image} /></div>
-      <button className={`heart ${on ? 'on' : ''}`} title="مفضلة" onClick={() => toggleFav(p.id)}>{on ? '❤️' : '♡'}</button>
-      <button className="add" title="أضف للسلة" onClick={() => setProdId(p.id)}>+</button>
-      <div className="b">
-        <div className="pn" onClick={() => setProdId(p.id)}>{p.name}</div>
-        <div className="ps" onClick={() => nav('/stores/' + p.store_id)}>🏬 {p.store_name}</div>
-        <div className="pr"><b>{fmt(priceOf(p))}</b>{p.old_price && Number(p.old_price) > Number(priceOf(p)) ? <s>{fmt(p.old_price)}</s> : null}</div>
+    <div className="pc" onClick={() => nav('/product/' + p.id)}>
+      <div className="pc-img">
+        {U(p.image) ? <img src={p.image} alt={p.name} loading="lazy" onError={(e) => { e.currentTarget.style.display = 'none'; }} /> : <span>{p.image || '🛍️'}</span>}
+        {off ? <span className="pc-badge">خصم {off}%</span> : null}
+        {p.out_of_stock ? <span className="pc-badge dark">نفد</span> : null}
+      </div>
+      <div className="pc-in">
+        <div className="pc-n">{p.name}</div>
+        {dots.length ? (
+          <div className="pc-dots">
+            {dots.slice(0, 4).map((c, i) => <span key={i} className="pc-dot" style={{ background: c }} />)}
+            {dots.length > 4 ? <span className="more">+{dots.length - 4}</span> : null}
+          </div>
+        ) : null}
+        {p.has_offer ? <div className="pc-old">{fmt(p.price)}</div> : null}
+        <div className="pc-row">
+          <span className="pc-p">{fmt(priceOf(p))}</span>
+          <button className={`add-mini ${p.has_offer ? '' : ''}`} onClick={quick} title="أضف للسلة">
+            <M n="add" s={17} c="#fff" w={700} />
+          </button>
+        </div>
       </div>
     </div>
   );
-};
+}
 
-export const StoreCard = ({ st }) => {
+/* ═══ بطاقة محل مصغرة — الغلاف يملأ البوكس (132×122) ═══ */
+export function StoreCard({ s, cover }) {
   const nav = useNavigate();
-  const open = st.is_open && !st.on_vacation;
+  const hasCover = U(s.cover);
   return (
-    <div className="shop" onClick={() => nav('/stores/' + st.id)}>
-      <div className="lg"><Img src={st.logo} fontSize="28px" /></div>
-      <div className="n">{st.name}</div>
-      <div className="m"><Stars n={st.rating} size={11} /> {st.rating || '5.0'} · {st.reviews_count || 0} تقييم</div>
-      <div className="m">{st.governorate_name}{st.district_name ? ' — ' + st.district_name : ''}</div>
-      {!open ? <span className="pill st-cancelled" style={{ marginTop: 8 }}>مغلق حالياً</span> : <span className="pill st-delivered" style={{ marginTop: 8 }}>مفتوح</span>}
-    </div>
-  );
-};
-
-export const DealCard = ({ p }) => {
-  const { setProdId } = useApp();
-  return (
-    <div className="deal" onClick={() => setProdId(p.id)}>
-      <div className="img"><Img src={p.image} /></div>
-      <span className="dc">-{Math.round(p.offer_percent || pct(p))}%</span>
-      <div className="b">
-        <div className="n">{p.name}</div>
-        <div className="p"><b>{fmt(priceOf(p))}</b><s>{fmt(p.price)}</s></div>
+    <div className="sm" onClick={() => nav('/stores/' + s.id)}>
+      {hasCover ? <img className="sm-cover" src={s.cover} alt={s.name} loading="lazy" onError={(e) => { e.currentTarget.style.display = 'none'; }} /> : <div className="sm-cover" style={{ background: cover }} />}
+      <div className="sm-ov" />
+      <div className="sm-logo">
+        {U(s.logo) ? <img src={s.logo} alt="" onError={(e) => { e.currentTarget.style.display = 'none'; }} /> : <span style={{ fontSize: 16 }}>{s.logo || '🏪'}</span>}
+      </div>
+      <div className="sm-info">
+        <div className="sm-n">{s.name}</div>
+        <div className="sm-r">
+          <M n="star" fill s={12} c="var(--star)" w={700} />
+          <span className="rc">{Number(s.rating || 0).toFixed(1)}</span>
+          <span className="rv">• {s.reviews_count || 0} تقييم</span>
+        </div>
       </div>
     </div>
   );
-};
+}
 
+/* ═══ بطاقة عرض مصغرة — شريط عروض اليوم ═══ */
+export function DealCard({ d }) {
+  const nav = useNavigate();
+  const { addToCart, notify, setLoginOpen, token } = useApp();
+  const prod = d.product || d;
+  const variants = prod.variants && prod.variants.length ? prod.variants : [];
+  const add = (e) => {
+    e.stopPropagation();
+    if (variants.length) { nav('/product/' + prod.id); return; }
+    if (!token) { setLoginOpen(true); return; }
+    addToCart(prod.id, null, null, 1);
+  };
+  return (
+    <div className="card deal-c" onClick={() => nav('/product/' + prod.id)} style={{ cursor: 'pointer', position: 'relative' }}>
+      {prod.has_offer ? <span className="deal-badge">خصم {pct(prod.price, prod.offer_price)}%</span> : null}
+      <div className="deal-img">
+        {U(prod.image) ? <img src={prod.image} alt={prod.name} style={{ width: '100%', height: '100%', objectFit: 'cover', borderRadius: 15 }} loading="lazy" onError={(e) => { e.currentTarget.style.display = 'none'; }} /> : <span>{prod.image || '🛍️'}</span>}
+      </div>
+      <div className="deal-n">{prod.name}</div>
+      <div className="deal-s">{d.store_name || 'متجر'}</div>
+      <div className="deal-row">
+        <span className="deal-p">{fmt(priceOf(prod))}</span>
+        <button className="add-mini" onClick={add}><M n="add" s={17} c="#fff" w={700} /></button>
+      </div>
+    </div>
+  );
+}
+
+/* ═══ شريحة فئة ═══ */
 export const CatIcon = ({ c, on, onClick }) => (
-  <div className={`cat ${on ? 'on' : ''}`} onClick={onClick}>
-    <i>{c.icon || '📦'}</i>{c.name}
-  </div>
+  <span className={`chipg ${on ? 'on' : ''}`} onClick={onClick}>
+    <span className="ce">{c.icon || '🛍️'}</span>{c.name}
+  </span>
 );

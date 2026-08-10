@@ -1,93 +1,97 @@
 import React, { useEffect, useState } from 'react';
-import { Link, useLocation, useNavigate } from 'react-router-dom';
+import { useLocation, useNavigate } from 'react-router-dom';
 import { useApp } from '../ctx';
 import { api } from '../api';
+import { M } from '../ui';
 
 export default function Layout() {
-  const { me, cartN, favs, notifN, setCartOpen, setLoginOpen, logout } = useApp();
-  const [q, setQ] = useState('');
-  const [cats, setCats] = useState([]);
-  const [menu, setMenu] = useState(false);
+  const { me, cartN, favs, notifN, setLoginOpen } = useApp();
+  const [storesN, setStoresN] = useState(0);
   const nav = useNavigate();
   const loc = useLocation();
-  const is = (p) => loc.pathname === p || (p !== '/' && loc.pathname.startsWith(p));
+  const p = loc.pathname;
+  const is = (x) => p === x || (x !== '/' && p.startsWith(x));
 
-  useEffect(() => { api('/api/categories').then(d => setCats((d.categories || []).slice(0, 8))).catch(() => {}); }, []);
+  useEffect(() => { api('/api/stores').then(d => setStoresN((d.stores || []).length)).catch(() => {}); }, []);
 
-  const doSearch = (ev) => { ev.preventDefault(); if (q.trim()) nav('/search?q=' + encodeURIComponent(q.trim())); };
-  const go = (p) => { setMenu(false); nav(p); };
-
-  const tabs = [
-    ['/', 'الرئيسية', is('/') && !is('/prods') && !is('/stores') && !is('/fav') && !is('/orders') && !is('/account') && !is('/points') && !is('/notifications')],
-    ['/prods', 'كل المنتجات', is('/prods') || is('/cat') || is('/search') || is('/offers')],
-    ['/stores', 'المتاجر', is('/stores')],
-    ['/fav', 'المفضلة', is('/fav')],
-    ['/points', 'نقاطي', is('/points')],
-  ];
+  const go = (x) => nav(x);
   const hasRoles = me && me.roles && me.roles.filter(r => r !== 'customer').length;
 
   return (
-    <header className="top">
-      <div className="row1">
-        <a className="brand" onClick={() => go('/')}>
-          <span className="brand-ic">🛍️</span><span className="brand-tt">زبون</span>
-        </a>
-        <form className="search" onSubmit={doSearch}>
-          <input value={q} onChange={(e) => setQ(e.target.value)} type="search" placeholder="ابحث عن منتج أو محل…" />
-          <button type="submit">🔍</button>
-        </form>
-        <div className="acts">
-          <button className="i-btn" title="الإشعارات" onClick={() => go('/notifications')}>🔔{notifN ? <span className="badge">{notifN}</span> : null}</button>
-          <button className="i-btn" title="السلة" onClick={() => setCartOpen(true)}>🛒{cartN ? <span className="badge">{cartN}</span> : null}</button>
-          <button className="i-btn user-btn" onClick={() => me ? setMenu(!menu) : setLoginOpen(true)}>
-            👤<span>{me ? me.name.split(' ')[0] : 'دخول'}</span>
-          </button>
+    <>
+      <header className="top">
+        <div className="top-in">
+          <div className="top-pill"><M n="location_on" s={14} c="var(--primary)" w={600} />واسط · الكوت</div>
+          <span className="top-count">{storesN} متجر متاح</span>
+          <div className="top-acts">
+            <button className="i-btn" title="الإشعارات" onClick={() => go('/notifications')}><M n="notifications" s={20} w={500} />{notifN ? <span className="badge">{notifN}</span> : null}</button>
+            <button className="i-btn" title="السلة" onClick={() => go('/cart')}><M n="shopping_cart" s={20} w={500} />{cartN ? <span className="badge">{cartN}</span> : null}</button>
+            <button className="i-btn" title="حسابي" onClick={() => me ? go('/account') : setLoginOpen(true)}>
+              <M n={me ? "person" : "person_outline"} s={20} w={500} />
+            </button>
+          </div>
         </div>
-      </div>
-      <div className="row2"><div className="row2-in">
-        {tabs.map(([p, t, on]) => <a key={p} className={`nav-l ${on ? 'on' : ''}`} onClick={() => go(p)}>{t}</a>)}
-        {cats.map(c => <a key={c.id} className="nav-l" onClick={() => go('/cat/' + c.id)}>
-          <span className="em">{c.icon || '📦'}</span>{c.name}</a>)}
-        {hasRoles ? hasRoles.map(r => (
-          <a key={r} className="nav-l" onClick={() => go('/' + (r === 'vendor' ? 'vendor' : r === 'delivery' ? 'delivery' : 'admin'))}>
-            {r === 'vendor' ? '🏪' : r === 'delivery' ? '🛵' : '🛡️'} لوحة {r === 'vendor' ? 'التاجر' : r === 'delivery' ? 'المندوب' : 'الأدمن'}
-          </a>
-        )) : null}
-      </div></div>
-      {menu && (
-        <div className="pop">
-          <a onClick={() => go('/orders')}>📦 طلباتي</a>
-          <a onClick={() => go('/fav')}>❤️ المفضلة</a>
-          <a onClick={() => go('/points')}>🎁 نقاطي</a>
-          <a onClick={() => go('/chat')}>💬 المحادثات</a>
-          <a onClick={() => go('/account')}>👤 حسابي</a>
-          <a className="danger" onClick={() => logout()}>🚪 خروج</a>
+        <div className="dnav">
+          <a className={is('/') && !is('/cart') ? 'on' : ''} onClick={() => go('/')}><M n="home" s={17} />الرئيسية</a>
+          <a className={is('/stores') && !is('/stores/') ? 'on' : ''} onClick={() => go('/stores')}><M n="storefront" s={17} />المتاجر</a>
+          <a className={is('/cart') ? 'on' : ''} onClick={() => go('/cart')}><M n="shopping_cart" s={17} />السلة{cartN ? ` (${cartN})` : ''}</a>
+          <a className={is('/fav') ? 'on' : ''} onClick={() => go('/fav')}><M n="favorite" s={17} fill={is('/fav')} />المفضلة{favs.length ? ` (${favs.length})` : ''}</a>
+          <a className={is('/orders') ? 'on' : ''} onClick={() => go('/orders')}><M n="receipt_long" s={17} />طلباتي</a>
+          <a className={is('/points') ? 'on' : ''} onClick={() => go('/points')}><M n="stars" s={17} />نقاطي</a>
+          <a className={is('/account') ? 'on' : ''} onClick={() => go('/account')}><M n="person" s={17} />حسابي</a>
+          {hasRoles ? hasRoles.map(r => (
+            <a key={r} onClick={() => go('/' + (r === 'vendor' ? 'vendor' : r === 'delivery' ? 'delivery' : 'admin'))}>
+              <M n={r === 'vendor' ? 'store' : r === 'delivery' ? 'two_wheeler' : 'shield'} s={17} />
+              لوحة {r === 'vendor' ? 'التاجر' : r === 'delivery' ? 'المندوب' : 'الأدمن'}
+            </a>
+          )) : null}
         </div>
-      )}
+      </header>
       <BottomNav />
-    </header>
+      <CartFab />
+    </>
   );
 }
 
 function BottomNav() {
   const loc = useLocation();
   const nav = useNavigate();
-  const { cartN, setCartOpen, notifN } = useApp();
+  const { cartN, favs } = useApp();
   const p = loc.pathname;
-  const b = (to, ic, l, on, extra) => (
-    <button className={on ? 'on' : ''} onClick={() => extra ? extra() : nav(to)}>
-      <span className="ic">{ic}</span>{l}
-      {extra && cartN ? <span className="cbadge">{cartN}</span> : null}
-      {to === '/notifications' && !extra && notifN ? <span className="cbadge">{notifN}</span> : null}
-    </button>
-  );
+  const on = (x) => p === x || (x !== '/' && p.startsWith(x));
+  const items = [
+    ['home', 'الرئيسية', '/', on('/') && !['/cart'].includes(p)],
+    ['storefront', 'المتاجر', '/stores', on('/stores')],
+    ['shopping_cart', 'السلة', '/cart', on('/cart'), cartN],
+    ['favorite', 'المفضلة', '/fav', on('/fav'), favs.length],
+    ['person', 'حسابي', '/account', on('/account') || on('/orders')],
+  ];
   return (
-    <nav className="bnav"><div className="in">
-      {b('/', '🏠', 'الرئيسية', p === '/')}
-      {b('/stores', '🏬', 'المتاجر', p.startsWith('/stores'))}
-      {b('/', '🛒', 'السلة', false, () => setCartOpen(true))}
-      {b('/fav', '❤️', 'المفضلة', p === '/fav')}
-      {b('/account', '👤', 'حسابي', p === '/account' || p === '/orders')}
-    </div></nav>
+    <nav className="bnav">
+      <div className="bnav-in">
+        {items.map(([ic, l, to, selected, badge]) => (
+          <button key={to} className={`bnav-b ${selected ? 'on' : ''}`} onClick={() => nav(to)}>
+            <span className="bv">
+              <M n={ic} s={22} fill={selected} w={selected ? 600 : 400} h={0} />
+              {badge ? <span className="cb">{badge}</span> : null}
+            </span>
+            {l}
+          </button>
+        ))}
+      </div>
+    </nav>
+  );
+}
+
+function CartFab() {
+  const { cartN } = useApp();
+  const nav = useNavigate();
+  const loc = useLocation();
+  if (!cartN || loc.pathname === '/cart') return null;
+  return (
+    <button className="fab" onClick={() => nav('/cart')}>
+      <M n="shopping_cart" s={26} c="#fff" w={600} />
+      <span className="cb">{cartN}</span>
+    </button>
   );
 }

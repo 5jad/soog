@@ -24,10 +24,11 @@ class _CustomerShellState extends State<CustomerShell> {
   int cartReload = 0;
   final GlobalKey<HomeScreenState> homeKey = GlobalKey();
 
-  /// عند الضغط على «الرئيسية» نرجع لأعلى الصفحة (ولو فتح الفلترة)
+  /// عند الضغط على أيقونة «الرئيسية»: جلب جديد صامت + رجوع لأعلى الصفحة
   void _goHome() {
-    setState(() {});
-    homeKey.currentState?.scrollTop();
+    final h = homeKey.currentState;
+    h?.refresh(); // بيانات جديدة من السيرفر (بدون إظهار الـ loading)
+    h?.scrollTop();
   }
 
   @override
@@ -72,13 +73,9 @@ class _CustomerShellState extends State<CustomerShell> {
             ],
             onTap: (i) {
               if (i == 0) {
-                // الضغط على الرئيسية: لو إحنا عليها نرجع لأعلى الصفحة مباشرة
-                if (tab == 0) {
-                  _goHome();
-                } else {
-                  setState(() => tab = 0);
-                  homeKey.currentState?.scrollTop();
-                }
+                // الضغط على الرئيسية: ننتقل إليها + رفريش + رجوع للأعلى دائماً
+                if (tab != 0) setState(() => tab = 0);
+                _goHome();
                 return;
               }
               setState(() {
@@ -139,6 +136,11 @@ class HomeScreenState extends State<HomeScreen> {
     _load();
   }
 
+  /// جلب جديد صامت — مستدعى من أيقونة الرئيسية (بدون إظهار الـ loading)
+  void refresh() {
+    _load();
+  }
+
   @override
   void dispose() {
     qCtrl.dispose();
@@ -165,6 +167,7 @@ class HomeScreenState extends State<HomeScreen> {
         expandedCat = null;
         expandedBest = false;
       });
+      _loadGrid(); // نعاود جلب الشبكة بعد التصفير — رئيسية محدثة بالكامل
       WidgetsBinding.instance.addPostFrameCallback((_) {
         if (mounted && scrollCtrl.hasClients) {
           scrollCtrl.animateTo(0, duration: const Duration(milliseconds: 400), curve: Curves.easeOut);

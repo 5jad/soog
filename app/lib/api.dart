@@ -7,7 +7,7 @@ import 'package:shared_preferences/shared_preferences.dart';
 
 /// عميل الـ API — كله يمر من هنا (base URL سهل التغيير)
 class Api {
-  static String base = 'http://192.168.1.137:4000'; // شبكة المنزل — أو من شاشة الدخول تغيّره للرابط الخارجي
+  static String base = 'http://192.168.1.136:4000'; // شبكة المنزل — أو من شاشة الدخول تغيّره للرابط الخارجي
 
   static String? _token;
   static Map<String, dynamic>? me;
@@ -18,6 +18,11 @@ class Api {
     final p = await SharedPreferences.getInstance();
     final saved = p.getString('zaboon_base');
     if (saved != null && saved.isNotEmpty) base = saved;
+    // لو العنوان المخزّن معطّل (تغيّر IP الحاسوب مثلاً) → نرجع للافتراضي فوراً
+    if (!await _reachable(base)) {
+      base = 'http://192.168.1.136:4000'; // شبكة المنزل — أو من شاشة الدخول تغيّره للرابط الخارجي
+      await p.setString('zaboon_base', base);
+    }
     _token = p.getString('zaboon_token');
     if (_token != null) {
       try {
@@ -27,6 +32,17 @@ class Api {
         // التوكن منتهي/خاطئ → نسحبه ونرجع كضيف
         await clear();
       }
+    }
+  }
+
+  static Future<bool> _reachable(String url) async {
+    try {
+      final r = await http
+          .get(Uri.parse('$url/api/health'))
+          .timeout(const Duration(seconds: 3));
+      return r.statusCode == 200;
+    } catch (_) {
+      return false;
     }
   }
 
@@ -60,8 +76,15 @@ class Api {
       };
 
   static Future<dynamic> get(String path) async {
-    final r = await http.get(Uri.parse('$base$path'), headers: _headers());
-    return _handle(r);
+    debugPrint('[API] GET $path → $base$path');
+    try {
+      final r = await http.get(Uri.parse('$base$path'), headers: _headers());
+      debugPrint('[API] ← ${r.statusCode} $path');
+      return _handle(r);
+    } catch (e) {
+      debugPrint('[API] ❌ $path :: $e');
+      rethrow;
+    }
   }
 
   static Future<dynamic> post(String path, [Map<String, dynamic>? body]) async {

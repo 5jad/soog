@@ -84,7 +84,8 @@ class IconGlass extends StatelessWidget {
   final double size;
   final Color? color;
   final double radius;
-  const IconGlass({super.key, required this.icon, this.onTap, this.size = 40, this.color = A.text, this.radius = 14});
+  const IconGlass({super.key, required this.icon, this.onTap, this.size = 40, this.color = A.text, this.radius = 14, this.iconColor});
+  final Color? iconColor;
   @override
   Widget build(BuildContext context) {
     return GestureDetector(
@@ -93,7 +94,7 @@ class IconGlass extends StatelessWidget {
         width: size,
         height: size,
         decoration: A.glass(radius: radius, soft: true),
-        child: Icon(icon, color: color, size: size * 0.45),
+        child: Icon(icon, color: iconColor ?? color, size: size * 0.45),
       ),
     );
   }
@@ -322,10 +323,13 @@ String orderIcon(String status) {
 /// تسمية عربية حسب الحالة
 String statusAr(String status) {
   switch (status) {
+    case 'new': return 'طلب جديد 🆕';
     case 'pending': return 'قيد الانتظار';
     case 'accepted': return 'مقبول';
+    case 'preparing': return 'قيد التجهيز';
     case 'ready': return 'جاهز للاستلام';
     case 'picked': return 'بالتوصيل';
+    case 'delivering': return 'بالتوصيل';
     case 'delivered': return 'تم التوصيل';
     case 'cancelled': return 'ملغي';
     case 'returned': return 'مرتجع';
@@ -337,10 +341,13 @@ String statusAr(String status) {
 
 Color statusColor(String status) {
   switch (status) {
+    case 'new': return A.warning;
     case 'pending': return A.warning;
     case 'accepted': return A.primary;
+    case 'preparing': return A.primary;
     case 'ready': return A.cyan;
     case 'picked': return A.primaryLight;
+    case 'delivering': return A.primaryLight;
     case 'delivered': return A.success;
     case 'cancelled': return A.danger;
     case 'returned': return A.muted;

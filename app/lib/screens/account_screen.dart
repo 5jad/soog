@@ -11,6 +11,7 @@ import 'delivery_shell.dart';
 import 'admin_shell.dart';
 import 'shell.dart';
 import 'points_screen.dart';
+import 'notifications_screen.dart';
 
 /// حسابي — معلوماتي، الدخول كتاجر/مندوب/أدمن، الإشعارات، خروج
 class AccountScreen extends StatefulWidget {
@@ -22,6 +23,8 @@ class AccountScreen extends StatefulWidget {
 
 class _AccountScreenState extends State<AccountScreen> {
   dynamic me;
+  int ordersCount = 0;
+  int pointsCount = 0;
 
   @override
   void initState() {
@@ -33,6 +36,11 @@ class _AccountScreenState extends State<AccountScreen> {
     try {
       final d = await Api.get('/api/auth/me');
       me = d['user'];
+      pointsCount = ((d['me']?['points'] ?? me?['points'] ?? 0) as num).toInt();
+    } catch (_) {}
+    try {
+      final d = await Api.get('/api/customer/orders');
+      ordersCount = (d['orders'] ?? []).length;
     } catch (_) {}
     if (mounted) setState(() {});
   }
@@ -87,56 +95,114 @@ class _AccountScreenState extends State<AccountScreen> {
       body: ListView(
         padding: const EdgeInsets.fromLTRB(16, 6, 16, 24),
         children: [
-          // البطاقة (بتصميم الديمو)
+          // ═══ بطاقة البروفايل ═══
           Container(
-            padding: const EdgeInsets.all(16),
-            decoration: BoxDecoration(gradient: A.gradNavy, borderRadius: BorderRadius.circular(22)),
-            child: Row(children: [
-              Container(
-                width: 54,
-                height: 54,
-                decoration: BoxDecoration(
-                  gradient: const LinearGradient(begin: Alignment.topLeft, end: Alignment.bottomRight, colors: [A.primaryLight, A.cyan]),
-                  shape: BoxShape.circle,
-                  border: Border.all(color: Colors.white.withOpacity(0.55), width: 2),
-                ),
-                alignment: Alignment.center,
-                child: Text(
-                  (u['name'] ?? '؟').toString().characters.first,
-                  style: A.t(22, c: Colors.white, w: FontWeight.w900),
-                ),
-              ),
-              const SizedBox(width: 14),
-              Expanded(child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-                Text(u['name'] ?? 'زبون', style: A.t(16, c: Colors.white, w: FontWeight.w900)),
-                Text('${u['phone'] ?? ''} · ${roleAr(u['role'])}', style: A.t(11.5, c: Colors.white.withOpacity(0.85), w: FontWeight.w700)),
-                const SizedBox(height: 7),
-                Row(children: [
-                  Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 9, vertical: 3),
-                    decoration: BoxDecoration(color: Colors.white.withOpacity(0.16), borderRadius: BorderRadius.circular(999)),
-                    child: const Text('عضو في زبون منذ 2026 ✨', style: TextStyle(color: Colors.white, fontSize: 10, fontWeight: FontWeight.w700)),
+            padding: const EdgeInsets.fromLTRB(16, 18, 16, 16),
+            decoration: BoxDecoration(
+              gradient: A.gradNavy,
+              borderRadius: BorderRadius.circular(24),
+              boxShadow: [
+                BoxShadow(color: A.primary.withValues(alpha: .25), blurRadius: 18, offset: const Offset(0, 8)),
+              ],
+            ),
+            child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+              Row(children: [
+                Container(
+                  width: 62,
+                  height: 62,
+                  decoration: BoxDecoration(
+                    gradient: const LinearGradient(begin: Alignment.topLeft, end: Alignment.bottomRight, colors: [A.primaryLight, A.cyan]),
+                    shape: BoxShape.circle,
+                    border: Border.all(color: Colors.white.withValues(alpha: .55), width: 2.4),
                   ),
+                  alignment: Alignment.center,
+                  child: Text(
+                    (u['name'] ?? '؟').toString().characters.first,
+                    style: A.t(24, c: Colors.white, w: FontWeight.w900),
+                  ),
+                ),
+                const SizedBox(width: 14),
+                Expanded(
+                  child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+                    Text(u['name'] ?? 'زبون', style: A.t(17, c: Colors.white, w: FontWeight.w900), maxLines: 1, overflow: TextOverflow.ellipsis),
+                    const SizedBox(height: 3),
+                    Text('${u['phone'] ?? ''} · ${roleAr(u['role'])}', style: A.t(12, c: Colors.white.withValues(alpha: .85), w: FontWeight.w700)),
+                    const SizedBox(height: 8),
+                    Row(children: [
+                      Container(
+                        padding: const EdgeInsets.symmetric(horizontal: 9, vertical: 3.5),
+                        decoration: BoxDecoration(color: Colors.white.withValues(alpha: .16), borderRadius: BorderRadius.circular(999)),
+                        child: const Text('عضو في زبون منذ 2026 ✨', style: TextStyle(color: Colors.white, fontSize: 10, fontWeight: FontWeight.w700)),
+                      ),
+                    ]),
+                  ]),
+                ),
+              ]),
+              const SizedBox(height: 14),
+              Container(
+                height: 48,
+                padding: const EdgeInsets.symmetric(horizontal: 14),
+                decoration: BoxDecoration(color: Colors.white.withValues(alpha: .14), borderRadius: BorderRadius.circular(16)),
+                child: Row(children: [
+                  const Icon(Icons.bolt_rounded, color: Color(0xFFFFD54F), size: 18),
+                  const SizedBox(width: 8),
+                  Text('رصيدك من النقاط', style: A.t(12, c: Colors.white.withValues(alpha: .85), w: FontWeight.w800)),
+                  const Spacer(),
+                  Text('${pointsCount.toString()} نقطة', style: A.t(15, c: Colors.white, w: FontWeight.w900)),
                 ]),
-              ])),
+              ),
             ]),
           ),
+          const SizedBox(height: 16),
+          // ═══ الإحصائيات — طلباتي بالمكان المثالي ═══
+          Row(children: [
+            Expanded(
+              child: _statCard(
+                Icons.receipt_long_rounded,
+                'طلباتي',
+                '$ordersCount',
+                '📦',
+                A.primary,
+                () => Navigator.push(context, MaterialPageRoute(builder: (_) => OrderListScreen(role: 'customer'))),
+              ),
+            ),
+            const SizedBox(width: 12),
+            Expanded(
+              child: _statCard(
+                Icons.star_rounded,
+                'نقاطي',
+                '$pointsCount',
+                '🎁',
+                A.accent,
+                () => Navigator.push(context, MaterialPageRoute(builder: (_) => const PointsScreen())),
+              ),
+            ),
+            const SizedBox(width: 12),
+            Expanded(
+              child: _statCard(
+                Icons.location_on_rounded,
+                'عناويني',
+                '${_addrCount}',
+                '📍',
+                A.cyan,
+                () => _addresses(),
+              ),
+            ),
+          ]),
           const SizedBox(height: 18),
-          Text('كل شيء بحسابك', style: A.t(13, c: A.muted, w: FontWeight.w800)),
-          const SizedBox(height: 10),
-          // قوائم
+          // ═══ قائمة سريعة ═══
           Container(
             decoration: A.glass(radius: 22),
             child: Column(children: [
-              _tile(Icons.receipt_long_rounded, 'طلباتي 📦', () => Navigator.push(context, MaterialPageRoute(builder: (_) => OrderListScreen(role: 'customer')))),
+              _tile(Icons.notifications_rounded, 'الإشعارات 🔔', () => Navigator.push(context, MaterialPageRoute(builder: (_) => const NotificationsScreen()))),
               _div(),
-              _tile(Icons.star_rounded, 'نقاطي وهداياي 🎁', () => Navigator.push(context, MaterialPageRoute(builder: (_) => const PointsScreen()))),
+              _tile(Icons.favorite_rounded, 'المفضلة ❤️', () => AppState.i.favsReload.value++),
               _div(),
-              _tile(Icons.location_on_rounded, 'عناويني 📍', () => _addresses()),
+              _tile(Icons.help_outline_rounded, 'مساعدة ودعم 🎧', () => toast(context, 'قريباً في التحديث الجاي')),
             ]),
           ),
           const SizedBox(height: 18),
-          // تبديل الأدوار
+          // ═══ تبديل الأدوار ═══
           if (widget.roles.length > 1) ...[
             Text('التطبيقات المتاحة لك', style: A.t(13, c: A.muted, w: FontWeight.w800)),
             const SizedBox(height: 10),
@@ -164,12 +230,130 @@ class _AccountScreenState extends State<AccountScreen> {
     );
   }
 
+  Future<void> _addresses() async {
+    try {
+      final d = await Api.get('/api/customer/addresses');
+      final addrs = (d['addresses'] ?? []) as List;
+      _addrCount = addrs.length;
+      if (mounted) setState(() {});
+      final ctrl = TextEditingController();
+      double? alat;
+      double? alng;
+      await showSheet(context, StatefulBuilder(
+        builder: (context, setS) => Padding(
+          padding: const EdgeInsets.fromLTRB(20, 4, 20, 28),
+          child: Column(mainAxisSize: MainAxisSize.min, crossAxisAlignment: CrossAxisAlignment.stretch, children: [
+            const SheetTitle('عناويني 📍'),
+            if (addrs.isNotEmpty) ...[
+              for (final a in addrs)
+                Container(
+                  margin: const EdgeInsets.only(bottom: 8),
+                  padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+                  decoration: BoxDecoration(color: const Color(0xFFF7F8FA), borderRadius: BorderRadius.circular(14), border: Border.all(color: A.line)),
+                  child: Row(children: [
+                    const Icon(Icons.location_on_rounded, color: A.primary, size: 20),
+                    const SizedBox(width: 10),
+                    Expanded(child: Text('${a['address']}', style: A.t(13, w: FontWeight.w700))),
+                    IconButton(
+                      icon: const Icon(Icons.delete_outline_rounded, color: A.danger, size: 19),
+                      onPressed: () async {
+                        await Api.del('/api/customer/addresses/${a['id']}');
+                        setS(() {});
+                        Navigator.pop(context);
+                        _addresses();
+                      },
+                    ),
+                  ]),
+                ),
+              const Divider(height: 22, color: A.line),
+            ] else
+              const Padding(padding: EdgeInsets.only(bottom: 8),
+                  child: Text('لا عناوين محفوظة — أضف أول عنوان', style: TextStyle(color: A.muted, fontSize: 12.5))),
+            Row(children: [
+              Expanded(
+                child: TextField(
+                  controller: ctrl,
+                  style: const TextStyle(fontSize: 13),
+                  decoration: InputDecoration(
+                    hintText: 'عنوان جديد...',
+                    filled: true,
+                    fillColor: const Color(0xFFF7F8FA),
+                    border: OutlineInputBorder(borderRadius: BorderRadius.circular(14), borderSide: const BorderSide(color: A.line)),
+                  ),
+                ),
+              ),
+              const SizedBox(width: 10),
+              SolidBtn(label: 'أضف', onTap: () async {
+                if (ctrl.text.isEmpty) return;
+                await Api.post('/api/customer/addresses', {
+                  'details': ctrl.text,
+                  if (alat != null) 'lat': alat,
+                  if (alng != null) 'lng': alng,
+                });
+                Navigator.pop(context);
+                _addresses();
+              }),
+            ]),
+            const SizedBox(height: 12),
+            OutlinedButton.icon(
+              style: OutlinedButton.styleFrom(foregroundColor: A.primary, side: const BorderSide(color: A.primary, width: 1.2)),
+              onPressed: () async {
+                final picked = await Navigator.push<Object?>(context, MaterialPageRoute(builder: (_) => PickMapScreen(lat: alat, lng: alng)));
+                if (picked != null && picked is LatLng) {
+                  setS(() {
+                    alat = picked.latitude;
+                    alng = picked.longitude;
+                  });
+                }
+              },
+              icon: const Icon(Icons.map_rounded),
+              label: Text(
+                alat != null ? 'الموقع محدد ✓ (${alat!.toStringAsFixed(4)}, ${alng!.toStringAsFixed(4)})' : 'حدد موقعك على الخريطة 🗺',
+                style: const TextStyle(fontWeight: FontWeight.w800),
+              ),
+            ),
+          ]),
+        ),
+      ));
+    } catch (_) {}
+  }
+
+  int _addrCount = 0;
+
+  Widget _statCard(IconData icon, String label, String value, String emoji, Color color, VoidCallback onTap) {
+    return GestureDetector(
+      onTap: onTap,
+      child: Container(
+        padding: const EdgeInsets.symmetric(vertical: 14, horizontal: 6),
+        decoration: BoxDecoration(
+          color: Colors.white,
+          borderRadius: BorderRadius.circular(20),
+          border: Border.all(color: A.line),
+          boxShadow: const [BoxShadow(color: Color(0x0A0A1120), blurRadius: 10, offset: Offset(0, 4))],
+        ),
+        child: Column(children: [
+          Container(
+            width: 42,
+            height: 42,
+            decoration: BoxDecoration(color: color.withValues(alpha: .12), borderRadius: BorderRadius.circular(14)),
+            alignment: Alignment.center,
+            child: Icon(icon, color: color, size: 21),
+          ),
+          const SizedBox(height: 8),
+          Text(value, style: A.t(17, w: FontWeight.w900)),
+          const SizedBox(height: 2),
+          Text(label, style: A.t(11, c: A.muted, w: FontWeight.w800)),
+        ]),
+      ),
+    );
+  }
+
   Widget _tile(IconData icon, String label, VoidCallback onTap) {
     return ListTile(
       leading: Container(
         width: 38, height: 38,
         decoration: BoxDecoration(
-          color: A.primary.withOpacity(0.09),
+          color: A.primary.withValues(alpha: .09),
           borderRadius: BorderRadius.circular(12),
         ),
         child: Icon(icon, color: A.primary, size: 19),
@@ -188,7 +372,7 @@ class _AccountScreenState extends State<AccountScreen> {
       child: Row(children: [
         Container(
           padding: const EdgeInsets.all(11),
-          decoration: BoxDecoration(color: color.withOpacity(0.12), borderRadius: BorderRadius.circular(13)),
+          decoration: BoxDecoration(color: color.withValues(alpha: .12), borderRadius: BorderRadius.circular(13)),
           child: Icon(icon, color: color, size: 22),
         ),
         const SizedBox(width: 12),
@@ -199,73 +383,6 @@ class _AccountScreenState extends State<AccountScreen> {
         const Icon(Icons.chevron_left_rounded, color: A.muted),
       ]),
     );
-  }
-
-  Future<void> _addresses() async {
-    try {
-      final d = await Api.get('/api/customer/addresses');
-      final addrs = (d['addresses'] ?? []) as List;
-      final ctrl = TextEditingController();
-      double? alat;
-      double? alng;
-      await showSheet(context, StatefulBuilder(
-        builder: (context, setS) => Column(mainAxisSize: MainAxisSize.min, children: [
-          const SheetTitle('عناويني 📍'),
-          if (addrs.isNotEmpty)
-            for (final a in addrs)
-              ListTile(
-                leading: const Icon(Icons.location_on_rounded, color: A.primary),
-                title: Text(a['address'], style: A.t(13)),
-                trailing: IconButton(
-                  icon: const Icon(Icons.delete_outline_rounded, color: A.danger, size: 19),
-                  onPressed: () async {
-                    await Api.del('/api/customer/addresses/${a['id']}');
-                    setS(() {});
-                    Navigator.pop(context);
-                    _addresses();
-                  },
-                ),
-              ),
-          Padding(
-            padding: const EdgeInsets.all(16),
-            child: Column(children: [
-              Row(children: [
-                Expanded(child: TextField(controller: ctrl, decoration: const InputDecoration(hintText: 'عنوان جديد...'))),
-                const SizedBox(width: 10),
-                SolidBtn(label: 'أضف', onTap: () async {
-                  if (ctrl.text.isEmpty) return;
-                  await Api.post('/api/customer/addresses', {
-                    'details': ctrl.text,
-                    if (alat != null) 'lat': alat,
-                    if (alng != null) 'lng': alng,
-                  });
-                  Navigator.pop(context);
-                  _addresses();
-                }),
-              ]),
-              const SizedBox(height: 10),
-              OutlinedButton.icon(
-                style: OutlinedButton.styleFrom(foregroundColor: A.primary, side: const BorderSide(color: A.primary, width: 1.2)),
-                onPressed: () async {
-                  final picked = await Navigator.push<Object?>(context, MaterialPageRoute(builder: (_) => PickMapScreen(lat: alat, lng: alng)));
-                  if (picked != null && picked is LatLng) {
-                    setS(() {
-                      alat = picked.latitude;
-                      alng = picked.longitude;
-                    });
-                  }
-                },
-                icon: const Icon(Icons.map_rounded),
-                label: Text(
-                  alat != null ? 'الموقع محدد ✓ (${alat!.toStringAsFixed(4)}, ${alng!.toStringAsFixed(4)})' : 'حدد موقعك على الخريطة 🗺',
-                  style: const TextStyle(fontWeight: FontWeight.w800),
-                ),
-              ),
-            ]),
-          ),
-        ]),
-      ));
-    } catch (_) {}
   }
 }
 

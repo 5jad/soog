@@ -26,6 +26,19 @@ class _OrderListScreenState extends State<OrderListScreen> {
   String filter = 'all';
   Timer? _t;
 
+  /// مجموعات الحالة الفعلية في الباك — كل مجموعة تحوي قيم `status` الحقيقية
+  static const groups = [
+    ('الكل 📋', <String>[]),
+    ('قيد التجهيز ⏳', ['new', 'pending', 'accepted', 'preparing']),
+    ('بالتوصيل 🛵', ['ready', 'picked', 'delivering']),
+    ('مكتملة ✅', ['delivered']),
+    ('ملغية/مرتجعة ↩️', ['cancelled', 'returned']),
+  ];
+
+  /// عدّاد كل فئة — يظهر بجانب اسمها
+  int _count(List<String> ss) =>
+      ss.isEmpty ? orders.length : orders.where((o) => ss.contains(o['status'])).length;
+
   @override
   void initState() {
     super.initState();
@@ -64,15 +77,8 @@ class _OrderListScreenState extends State<OrderListScreen> {
 
   @override
   Widget build(BuildContext context) {
-    List list = orders;
-    if (widget.role == 'customer' && filter != 'all') list = orders.where((o) => o['status'] == filter).toList();
-    final tabs = [
-      (Icons.swap_vert_rounded, 'الكل'),
-      (Icons.hourglass_top_rounded, 'قيد الانتظار'),
-      (Icons.check_circle_rounded, 'مقبول/جاهز'),
-      (Icons.local_shipping_rounded, 'بالتوصيل'),
-      (Icons.task_alt_rounded, 'تم/ملغي'),
-    ];
+    final selGroup = groups.firstWhere((g) => g.$1 == filter, orElse: () => groups.first);
+    late List list = selGroup.$2.isEmpty ? orders : orders.where((o) => selGroup.$2.contains(o['status'])).toList();
 
     Widget body;
     if (loading) {
@@ -81,7 +87,7 @@ class _OrderListScreenState extends State<OrderListScreen> {
       body = EmptyState(
         icon: widget.role == 'vendor' ? '🗃' : '🧾',
         title: widget.role == 'vendor' ? 'لا طلبات على متجرك' : 'ماكو طلبات',
-        sub: 'رح تظهر الطلبات هنا',
+        sub: selGroup.$2.isEmpty ? 'رح تظهر الطلبات هنا' : 'هذي الفئة مافيها طلبات — جرب فئة ثانية أو «الكل»',
       );
     } else {
       body = RefreshIndicator(
@@ -91,52 +97,7 @@ class _OrderListScreenState extends State<OrderListScreen> {
           padding: const EdgeInsets.fromLTRB(16, 6, 16, 24),
           itemCount: list.length,
           separatorBuilder: (_, __) => const SizedBox(height: 10),
-          itemBuilder: (_, i) {
-            final o = Map<String, dynamic>.from(list[i] as Map);
-            final order = Order.fromJson(o);
-            final items = (o['items'] ?? []) as List;
-            return GestureDetector(
-              onTap: () => _open(o),
-              child: AnimatedContainer(
-                duration: const Duration(milliseconds: 140),
-                padding: const EdgeInsets.all(13),
-                decoration: A.glass(radius: 20),
-                child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-                  Row(children: [
-                    if (order.storeName.isNotEmpty) storeLogo(order.storeLogo, size: 34, radius: 10),
-                    if (order.storeName.isNotEmpty) const SizedBox(width: 8),
-                    Expanded(
-                      child: Text(order.storeName.isEmpty ? '#${order.code}' : order.storeName, style: A.t(13, w: FontWeight.w900), maxLines: 1, overflow: TextOverflow.ellipsis),
-                    ),
-                    Text('#${order.code}', style: A.t(10.5, c: A.muted, w: FontWeight.w700)),
-                  ]),
-                  const SizedBox(height: 10),
-                  Row(children: [
-                    for (final it in items.take(3)) ...[
-                      productImage(it['image'], size: 30, radius: 9),
-                      const SizedBox(width: 6),
-                    ],
-                    if (items.length > 3)
-                      Container(
-                        padding: const EdgeInsets.symmetric(horizontal: 9, vertical: 6),
-                        decoration: BoxDecoration(color: A.bg, borderRadius: BorderRadius.circular(999)),
-                        child: Text('+${items.length - 3} صنف', style: A.t(10, c: A.muted, w: FontWeight.w800)),
-                      )
-                    else if (items.isNotEmpty)
-                      Text('${items.length} صنف', style: A.t(10, c: A.muted, w: FontWeight.w700)),
-                    const Spacer(),
-                    Text(timeAgo(order.createdAt), style: A.t(10, c: A.muted)),
-                  ]),
-                  const SizedBox(height: 10),
-                  Row(children: [
-                    Text(money(order.total), style: A.t(16, c: A.accent, w: FontWeight.w900)),
-                    const Spacer(),
-                    StatusChip(order.status),
-                  ]),
-                ]),
-              ),
-            );
-          },
+          itemBuilder: (_, i) => _orderCard(Map<String, dynamic>.from(list[i] as Map)),
         ),
       );
     }
@@ -146,26 +107,97 @@ class _OrderListScreenState extends State<OrderListScreen> {
     return Scaffold(
       appBar: AppBar(title: const Text('طلباتي 📦')),
       body: Column(children: [
-        if (widget.role == 'customer') _filterBar(tabs),
+        if (widget.role == 'customer') _filterBar(),
         Expanded(child: body),
       ]),
     );
   }
 
-  Widget _filterBar(List<(IconData, String)> tabs) {
+  /// بطاقة طلب واحدة — تصميم عالي: شريط حالة، صور الأصناف، السعر
+  Widget _orderCard(Map<String, dynamic> o) {
+    final order = Order.fromJson(o);
+    final items = (o['items'] ?? []) as List;
+    return GestureDetector(
+      onTap: () => _open(o),
+      child: Container(
+        padding: const EdgeInsets.all(13),
+        decoration: BoxDecoration(
+          color: Colors.white,
+          borderRadius: BorderRadius.circular(20),
+          border: Border.all(color: A.line),
+          boxShadow: const [BoxShadow(color: Color(0x0D0A1120), blurRadius: 14, offset: Offset(0, 4))],
+        ),
+        child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+          Row(children: [
+            if (order.storeName.isNotEmpty) storeLogo(order.storeLogo, size: 34, radius: 10),
+            if (order.storeName.isNotEmpty) const SizedBox(width: 8),
+            Expanded(
+              child: Text(order.storeName.isEmpty ? '#${order.code}' : order.storeName, style: A.t(13, w: FontWeight.w900), maxLines: 1, overflow: TextOverflow.ellipsis),
+            ),
+            Text('#${order.code}', style: A.t(10.5, c: A.muted, w: FontWeight.w700)),
+          ]),
+          const SizedBox(height: 12),
+          Row(children: [
+            for (final it in items.take(3)) ...[
+              productImage(it['image'], size: 30, radius: 9),
+              const SizedBox(width: 6),
+            ],
+            if (items.length > 3)
+              Container(
+                padding: const EdgeInsets.symmetric(horizontal: 9, vertical: 6),
+                decoration: BoxDecoration(color: A.bg, borderRadius: BorderRadius.circular(999)),
+                child: Text('+${items.length - 3} صنف', style: A.t(10, c: A.muted, w: FontWeight.w800)),
+              )
+            else if (items.isNotEmpty)
+              Text('${items.length} صنف', style: A.t(10, c: A.muted, w: FontWeight.w700)),
+            const Spacer(),
+            Text(timeAgo(order.createdAt), style: A.t(10, c: A.muted)),
+          ]),
+          const SizedBox(height: 12),
+          Row(children: [
+            Text(money(order.total), style: A.t(16, c: A.accent, w: FontWeight.w900)),
+            const Spacer(),
+            StatusChip(order.status),
+          ]),
+        ]),
+      ),
+    );
+  }
+
+  /// شريط الفئات — مع عدّاد لكل فئة، واختيار «الكل» يلغي أي تحديد
+  Widget _filterBar() {
     return SizedBox(
-      height: 44,
+      height: 48,
       child: ListView(
         scrollDirection: Axis.horizontal,
         padding: const EdgeInsets.symmetric(horizontal: 16),
         children: [
-          for (final t in tabs)
+          for (final g in groups)
             Padding(
               padding: const EdgeInsets.only(left: 8),
-              child: ChipG(
-                label: t.$2,
-                active: filter == t.$2,
-                onTap: () => setState(() => filter = t.$2),
+              child: GestureDetector(
+                onTap: () => setState(() => filter = g.$1),
+                child: Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 15),
+                  alignment: Alignment.center,
+                  decoration: BoxDecoration(
+                    color: filter == g.$1 ? A.primary : Colors.white,
+                    borderRadius: BorderRadius.circular(14),
+                    border: Border.all(color: filter == g.$1 ? A.primary : A.line, width: 1.2),
+                  ),
+                  child: Row(children: [
+                    Text(g.$1, style: A.t(11.5, c: filter == g.$1 ? Colors.white : A.ink, w: FontWeight.w900)),
+                    const SizedBox(width: 6),
+                    Container(
+                      padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 1),
+                      decoration: BoxDecoration(
+                        color: filter == g.$1 ? Colors.white24 : A.primary.withValues(alpha: .1),
+                        borderRadius: BorderRadius.circular(999),
+                      ),
+                      child: Text('${_count(g.$2)}', style: A.t(10, c: filter == g.$1 ? Colors.white : A.primary, w: FontWeight.w900)),
+                    ),
+                  ]),
+                ),
               ),
             ),
         ],

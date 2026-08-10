@@ -22,6 +22,13 @@ class CustomerShell extends StatefulWidget {
 class _CustomerShellState extends State<CustomerShell> {
   int tab = 0;
   int cartReload = 0;
+  final GlobalKey<HomeScreenState> homeKey = GlobalKey();
+
+  /// عند الضغط على «الرئيسية» نرجع لأعلى الصفحة (ولو فتح الفلترة)
+  void _goHome() {
+    setState(() {});
+    homeKey.currentState?.scrollTop();
+  }
 
   @override
   void initState() {
@@ -39,7 +46,7 @@ class _CustomerShellState extends State<CustomerShell> {
   @override
   Widget build(BuildContext context) {
     final pages = [
-      HomeScreen(onGoStore: (id) => pushStore(context, id)),
+      HomeScreen(key: homeKey, onGoStore: (id) => pushStore(context, id)),
       StoresScreen(onOpen: (s) => pushStore(context, s.id)),
       CartScreen(key: ValueKey('cart$cartReload')),
       const FavoritesScreen(),
@@ -63,11 +70,23 @@ class _CustomerShellState extends State<CustomerShell> {
               (Icons.favorite_rounded, 'المفضلة'),
               (Icons.person_rounded, 'حسابي'),
             ],
-            onTap: (i) => setState(() {
-              tab = i;
-              if (i == 2) cartReload++;
-              if (i == 3) AppState.i.favsReload.value++;
-            }),
+            onTap: (i) {
+              if (i == 0) {
+                // الضغط على الرئيسية: لو إحنا عليها نرجع لأعلى الصفحة مباشرة
+                if (tab == 0) {
+                  _goHome();
+                } else {
+                  setState(() => tab = 0);
+                  homeKey.currentState?.scrollTop();
+                }
+                return;
+              }
+              setState(() {
+                tab = i;
+                if (i == 2) cartReload++;
+                if (i == 3) AppState.i.favsReload.value++;
+              });
+            },
           ),
         ),
       ),
@@ -84,10 +103,11 @@ class HomeScreen extends StatefulWidget {
   final void Function(int) onGoStore;
   const HomeScreen({super.key, required this.onGoStore});
   @override
-  State<HomeScreen> createState() => _HomeScreenState();
+  HomeScreenState createState() => HomeScreenState();
 }
 
-class _HomeScreenState extends State<HomeScreen> {
+class HomeScreenState extends State<HomeScreen> {
+  final scrollCtrl = ScrollController();
   List ads = [];
   List stores = [];
   List offers = [];
@@ -124,7 +144,37 @@ class _HomeScreenState extends State<HomeScreen> {
     qCtrl.dispose();
     minC.dispose();
     maxC.dispose();
+    scrollCtrl.dispose();
     super.dispose();
+  }
+
+  /// العودة لأعلى الرئيسية — تستدعى من الشيل عند الضغط على أيقونة الرئيسية
+  void scrollTop() {
+    if (!mounted) return;
+    if (gridMode) {
+      // نلغي كل الفلترة: الفئة، البحث، السعر، الألوان، المقاسات، العروض
+      setState(() {
+        selCat = {};
+        q = '';
+        qCtrl.clear();
+        minC.clear();
+        maxC.clear();
+        selColors.clear();
+        selSizes.clear();
+        offerOnly = false;
+        expandedCat = null;
+        expandedBest = false;
+      });
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (mounted && scrollCtrl.hasClients) {
+          scrollCtrl.animateTo(0, duration: const Duration(milliseconds: 400), curve: Curves.easeOut);
+        }
+      });
+      return;
+    }
+    if (scrollCtrl.hasClients) {
+      scrollCtrl.animateTo(0, duration: const Duration(milliseconds: 400), curve: Curves.easeOut);
+    }
   }
 
   Future<void> _load() async {
@@ -487,6 +537,7 @@ class _HomeScreenState extends State<HomeScreen> {
                 onRefresh: () async { await _load(); if (gridMode) _loadGrid(); },
                 color: A.primary,
                 child: ListView(
+                  controller: scrollCtrl,
                   padding: const EdgeInsets.only(bottom: 24),
                   children: [
                     // البحث + زر الفلتر في نفس الصف (الفلتر على اليسار)
@@ -1120,7 +1171,7 @@ class _ProdCard extends StatelessWidget {
                   const SizedBox(height: 3),
                   Builder(builder: (ctx) {
                     final dots = <Color>[];
-                    for (final v in (prod.variants as List)) {
+                    for (final v in prod.variants) {
                       final c = _dotsColor('${(v is Map ? (v['color'] ?? (v['name'] ?? '')) : v)}');
                       if (!dots.contains(c)) dots.add(c);
                     }
@@ -1237,13 +1288,15 @@ class BadgeWow extends StatelessWidget {
   const BadgeWow(this.label, {super.key, this.dark = false});
   @override
   Widget build(BuildContext context) {
+    final color = dark ? const Color(0xFF0A1120) : A.danger;
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+      padding: const EdgeInsets.symmetric(horizontal: 9, vertical: 4),
       decoration: BoxDecoration(
-        color: dark ? const Color(0xDD0A1120) : A.accent,
-        borderRadius: BorderRadius.circular(999),
+        color: color,
+        borderRadius: BorderRadius.circular(10),
+        boxShadow: [BoxShadow(color: color.withValues(alpha: .35), blurRadius: 8, offset: const Offset(0, 3))],
       ),
-      child: Text(label, style: A.t(9, c: dark ? Colors.white : const Color(0xFF0A1120), w: FontWeight.w900)),
+      child: Text(label, style: A.t(11, c: Colors.white, w: FontWeight.w900)),
     );
   }
 }
@@ -1428,11 +1481,13 @@ class _ProductScreenState extends State<ProductScreen> {
           ListView(
             padding: EdgeInsets.zero,
             children: [
-              // ═══ صور المنتج — سلايدر بعرض الشاشة (تصاميم شي إن: 3:4) ═══
+              // ═══ سلايدر الصور — مع شارات وأزرار علوية ═══
               AspectRatio(
                 aspectRatio: 3 / 4,
-                child: Stack(fit: StackFit.expand, children: [
-                  PageView.builder(
+                child: Stack(
+                  fit: StackFit.expand,
+                  children: [
+                    PageView.builder(
                     itemCount: _imageList.length,
                     onPageChanged: (i) => setState(() => imgIdx = i),
                     itemBuilder: (_, i) => productImageBox(_imageList[i], base: Api.base),
@@ -1442,58 +1497,85 @@ class _ProductScreenState extends State<ProductScreen> {
                       bottom: 12,
                       left: 0,
                       right: 0,
-                      child: Row(
-                        mainAxisAlignment: MainAxisAlignment.center,
-                        children: List.generate(_imageList.length, (i) => AnimatedContainer(
-                          duration: const Duration(milliseconds: 200),
-                          margin: const EdgeInsets.symmetric(horizontal: 3),
-                          width: i == imgIdx ? 16 : 6,
-                          height: 6,
-                          decoration: BoxDecoration(
-                            color: i == imgIdx ? A.ink : Colors.white.withOpacity(0.85),
-                            borderRadius: BorderRadius.circular(99),
-                            boxShadow: const [BoxShadow(color: Colors.black26, blurRadius: 4)],
-                          ),
-                        )),
-                      ),
-                    ),
-                  if (prod.hasOffer)
-                    Positioned(
-                      left: 14,
-                      top: 14,
-                      child: Container(
-                        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-                        decoration: BoxDecoration(
-                          gradient: A.gradSun,
-                          borderRadius: BorderRadius.circular(10),
-                        ),
-                        child: Text('خصم $offPct% 🔥', style: A.t(12, c: Colors.white, w: FontWeight.w900)),
-                      ),
+                      child: _dots(),
                     ),
                 ]),
               ),
               // ═══ معلومات المنتج ═══
               Padding(
-                padding: const EdgeInsets.fromLTRB(16, 16, 16, 26),
+                padding: const EdgeInsets.fromLTRB(16, 14, 16, 30),
                 child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-                  Text(prod.name, style: A.t(19, w: FontWeight.w900)),
-                  const SizedBox(height: 10),
-                  Row(crossAxisAlignment: CrossAxisAlignment.end, children: [
-                    Text(money(prod.displayPrice), style: A.t(26, c: A.ink, w: FontWeight.w900)),
-                    const SizedBox(width: 9),
-                    if (prod.hasOffer)
-                      Text(money(prod.price), style: A.t(13.5, c: A.muted, w: FontWeight.w700, decoration: TextDecoration.lineThrough)),
-                    const Spacer(),
-                    Container(
-                      padding: const EdgeInsets.symmetric(horizontal: 9, vertical: 4),
-                      decoration: BoxDecoration(
-                        color: prod.outOfStock ? A.danger.withOpacity(0.1) : A.success.withOpacity(0.1),
-                        borderRadius: BorderRadius.circular(8),
+                  Row(children: [
+                    if (store?['name'] != null)
+                      Flexible(
+                        child: Text('${store['name']}', style: A.t(11, c: A.primary, w: FontWeight.w800), maxLines: 1, overflow: TextOverflow.ellipsis),
                       ),
-                      child: Text(prod.outOfStock ? 'نفد المخزون' : 'متوفر: ${prod.stock}', style: A.t(11, c: prod.outOfStock ? A.danger : A.success, w: FontWeight.w900)),
-                    ),
+                    const SizedBox(width: 8),
+                    if ((store?['rating'] ?? 0) as num > 0) ...[
+                      const Icon(Icons.star_rounded, size: 14, color: A.star),
+                      Text('${(store?['rating'] ?? 0) as num > 0 ? (store['rating'] as num).toStringAsFixed(1) : ''}',
+                          style: A.t(11, c: A.ink, w: FontWeight.w900)),
+                    ],
                   ]),
-                  const SizedBox(height: 10),
+                  const SizedBox(height: 5),
+                  Text(prod.name, style: A.t(19.5, w: FontWeight.w900, h: 1.3)),
+                  const SizedBox(height: 12),
+                  // السعر — صف منفصل: السعر الكبير + شارة الخصم الحمراء، وتحته السعر السابق والمخزون
+                  Row(crossAxisAlignment: CrossAxisAlignment.end, children: [
+                    Text(money(prod.displayPrice), style: A.t(28, c: A.ink, w: FontWeight.w900)),
+                    if (prod.hasOffer) ...[
+                      const SizedBox(width: 10),
+                      Container(
+                        padding: const EdgeInsets.symmetric(horizontal: 9, vertical: 4),
+                        margin: const EdgeInsets.only(bottom: 4),
+                        decoration: BoxDecoration(
+                          color: A.danger,
+                          borderRadius: BorderRadius.circular(10),
+                          boxShadow: [BoxShadow(color: A.danger.withValues(alpha: .3), blurRadius: 10, offset: const Offset(0, 3))],
+                        ),
+                        child: Text('خصم $offPct%', style: A.t(11, c: Colors.white, w: FontWeight.w900)),
+                      ),
+                    ],
+                  ]),
+                  if (prod.hasOffer) ...[
+                    const SizedBox(height: 6),
+                    Row(children: [
+                      Text(money(prod.price), style: A.t(13, c: A.muted, decoration: TextDecoration.lineThrough, w: FontWeight.w700)),
+                      const SizedBox(width: 8),
+                      Text('وفّرت ${money((prod.price - prod.displayPrice).clamp(0, double.infinity))} 🎉', style: A.t(11.5, c: A.success, w: FontWeight.w800)),
+                      const Spacer(),
+                      if (!prod.outOfStock)
+                        Container(
+                          padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                          decoration: BoxDecoration(color: A.success.withValues(alpha: .1), borderRadius: BorderRadius.circular(9)),
+                          child: Text('● متوفر الآن', style: A.t(11, c: A.success, w: FontWeight.w900)),
+                        )
+                      else
+                        Container(
+                          padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                          decoration: BoxDecoration(color: A.danger.withValues(alpha: .1), borderRadius: BorderRadius.circular(9)),
+                          child: Text('● نفد المخزون', style: A.t(11, c: A.danger, w: FontWeight.w900)),
+                        ),
+                    ]),
+                  ] else ...[
+                    const SizedBox(height: 6),
+                    Row(children: [
+                      const Spacer(),
+                      if (!prod.outOfStock)
+                        Container(
+                          padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                          decoration: BoxDecoration(color: A.success.withValues(alpha: .1), borderRadius: BorderRadius.circular(9)),
+                          child: Text('● متوفر الآن · المخزون ${prod.stock}', style: A.t(11, c: A.success, w: FontWeight.w900)),
+                        )
+                      else
+                        Container(
+                          padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                          decoration: BoxDecoration(color: A.danger.withValues(alpha: .1), borderRadius: BorderRadius.circular(9)),
+                          child: Text('● نفد المخزون', style: A.t(11, c: A.danger, w: FontWeight.w900)),
+                        ),
+                    ]),
+                  ],
+                  const SizedBox(height: 14),
                   // ═══ بوكس المتجر الناشر ═══
                   Container(
                     padding: const EdgeInsets.all(12),
@@ -1545,153 +1627,131 @@ class _ProductScreenState extends State<ProductScreen> {
                       ),
                     ]),
                   ),
-                  // ═══ اختيار اللون ثم المقاس — بوكس واحد بسيط ═══
+                  // ═══ اختيار اللون ثم المقاس — بوكس أنيق ═══
                   if (hasVariant) ...[
                     const SizedBox(height: 18),
                     Container(
-                      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 6),
+                      padding: const EdgeInsets.all(14),
                       decoration: BoxDecoration(
-                        color: A.bg,
-                        borderRadius: BorderRadius.circular(14),
-                        border: Border.all(color: A.line),
+                        color: Colors.white,
+                        borderRadius: BorderRadius.circular(18),
+                        border: Border.all(color: A.line, width: 1.2),
+                        boxShadow: const [BoxShadow(color: Color(0x0A0A1120), blurRadius: 12, offset: Offset(0, 4))],
                       ),
                       child: Column(children: [
                         if (colorList.length > 1 || (colorList.length == 1 && colorList.first.isNotEmpty)) ...[
-                          Padding(
-                            padding: const EdgeInsets.symmetric(vertical: 7),
-                            child: Row(crossAxisAlignment: CrossAxisAlignment.start, children: [
-                              SizedBox(
-                                width: 64,
-                                child: Padding(
-                                  padding: const EdgeInsets.only(top: 6),
-                                  child: Text('اللون', style: A.t(12, w: FontWeight.w900)),
-                                ),
-                              ),
-                              Expanded(
-                                child: Wrap(
-                                  spacing: 7,
-                                  runSpacing: 7,
-                                  children: colorList.map((c) {
-                                    final selected = selColor == c;
-                                    return GestureDetector(
-                                      onTap: () => setState(() {
-                                        selColor = selected ? '' : c;
-                                        selSize = -1;
-                                      }),
-                                      child: Container(
-                                        padding: const EdgeInsets.symmetric(horizontal: 13, vertical: 6),
-                                        decoration: BoxDecoration(
-                                          color: selected ? A.primary : Colors.white,
-                                          borderRadius: BorderRadius.circular(9),
-                                          border: Border.all(color: selected ? A.primary : A.line, width: 1.1),
-                                        ),
-                                        child: Text(c.isEmpty ? 'قياسي' : c,
-                                            style: A.t(11.5, c: selected ? Colors.white : A.ink, w: FontWeight.w800)),
+                          Row(children: [
+                            const Icon(Icons.palette_outlined, size: 16, color: A.primary),
+                            const SizedBox(width: 6),
+                            Text('اختر اللون', style: A.t(13, w: FontWeight.w900)),
+                            const Spacer(),
+                            if (selColor.isNotEmpty)
+                              Text(selColor, style: A.t(11, c: A.primary, w: FontWeight.w800)),
+                          ]),
+                          const SizedBox(height: 10),
+                          Wrap(
+                            spacing: 9,
+                            runSpacing: 9,
+                            children: colorList.map((c) {
+                              final selected = selColor == c;
+                              return GestureDetector(
+                                onTap: () => setState(() {
+                                  selColor = selected ? '' : c;
+                                  selSize = -1;
+                                }),
+                                child: AnimatedContainer(
+                                  duration: const Duration(milliseconds: 150),
+                                  padding: const EdgeInsets.symmetric(horizontal: 17, vertical: 9),
+                                  decoration: BoxDecoration(
+                                    color: selected ? A.primary : A.bg,
+                                    borderRadius: BorderRadius.circular(12),
+                                    border: Border.all(color: selected ? A.primary : A.line, width: 1.2),
+                                  ),
+                                  child: Row(mainAxisSize: MainAxisSize.min, children: [
+                                    Container(
+                                      width: 13,
+                                      height: 13,
+                                      decoration: BoxDecoration(
+                                        shape: BoxShape.circle,
+                                        border: Border.all(color: selected ? Colors.white : A.line, width: 2),
                                       ),
-                                    );
-                                  }).toList(),
+                                    ),
+                                    const SizedBox(width: 7),
+                                    Text(c.isEmpty ? 'قياسي' : c,
+                                        style: A.t(11.5, c: selected ? Colors.white : A.ink, w: FontWeight.w800)),
+                                  ]),
                                 ),
-                              ),
+                              );
+                            }).toList(),
+                          ),
+                          const SizedBox(height: 12),
+                          const Divider(height: 1, color: A.line),
+                          const SizedBox(height: 12),
+                        ],
+                        // المقاسات
+                        Row(children: [
+                          const Icon(Icons.straighten_rounded, size: 16, color: A.primary),
+                          const SizedBox(width: 6),
+                          Text('اختر المقاس', style: A.t(13, w: FontWeight.w900)),
+                          const Spacer(),
+                          GestureDetector(
+                            onTap: () => _sizeGuideSheet(prod, variants),
+                            child: const Row(children: [
+                              Icon(Icons.table_chart_outlined, size: 14, color: A.primary),
+                              SizedBox(width: 4),
+                              Text('دليل المقاسات', style: TextStyle(fontSize: 10.5, color: A.primary, fontWeight: FontWeight.w800)),
+                            ]),
+                          ),
+                        ]),
+                        const SizedBox(height: 10),
+                        SizedBox(
+                          width: double.infinity,
+                          child: Wrap(
+                            spacing: 9,
+                            runSpacing: 9,
+                            children: (selColor.isEmpty && colorList.length > 1)
+                                ? colorRows.isEmpty
+                                    ? []
+                                    : []
+                                : (selColor.isEmpty && (colorList.isEmpty || (colorList.length == 1 && colorList.first.isEmpty)))
+                                    ? variants.asMap().entries.map((ve) => _sizeChip(ve.key, ve.value)).toList()
+                                    : colorRows.asMap().entries.map((ve) => _sizeChip(ve.key, ve.value)).toList(),
+                          ),
+                        ),
+                        // ═══ ملخص التركيبة المختارة ═══
+                        if (_variantReady) ...[
+                          const SizedBox(height: 6),
+                          const Divider(height: 1, color: A.line),
+                          const SizedBox(height: 10),
+                          Container(
+                            width: double.infinity,
+                            padding: const EdgeInsets.symmetric(horizontal: 13, vertical: 11),
+                            decoration: BoxDecoration(
+                              color: A.success.withValues(alpha: .08),
+                              borderRadius: BorderRadius.circular(12),
+                              border: Border.all(color: A.success.withValues(alpha: .35)),
+                            ),
+                            child: Row(children: [
+                              Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+                                Text('التركيبة المختارة ✓', style: A.t(11.5, c: A.success, w: FontWeight.w900)),
+                                const SizedBox(height: 3),
+                                Text(
+                                  [
+                                    if (selColor.isNotEmpty) selColor,
+                                    if (selSize >= 0) _selLabel,
+                                  ].where((s) => s.isNotEmpty).join(' · '),
+                                  style: A.t(12, c: A.ink, w: FontWeight.w800),
+                                ),
+                              ]),
+                              const Spacer(),
+                              Text('متوفر: $_selStock', style: A.t(12.5, c: A.success, w: FontWeight.w900)),
                             ]),
                           ),
                         ],
-                        // المقاسات المتاحة للون المختار
-                        if (colorRows.isNotEmpty)
-                          Padding(
-                            padding: const EdgeInsets.symmetric(vertical: 7),
-                            child: Row(crossAxisAlignment: CrossAxisAlignment.start, children: [
-                              SizedBox(
-                                width: 64,
-                                child: Padding(
-                                  padding: const EdgeInsets.only(top: 6),
-                                  child: Text('المقاس', style: A.t(12, w: FontWeight.w900)),
-                                ),
-                              ),
-                              Expanded(
-                                child: Wrap(
-                                  spacing: 7,
-                                  runSpacing: 7,
-                                  children: colorRows.asMap().entries.map((ve) {
-                                    final selected = selSize == ve.key;
-                                    final v = ve.value;
-                                    final soldOut = ((v['stock'] as num?)?.toInt() ?? 0) == 0;
-                                    return GestureDetector(
-                                      onTap: soldOut ? null : () => setState(() => selSize = selected ? -1 : ve.key),
-                                      child: Container(
-                                        padding: const EdgeInsets.symmetric(horizontal: 13, vertical: 6),
-                                        decoration: BoxDecoration(
-                                          color: selected ? A.primary : Colors.white,
-                                          borderRadius: BorderRadius.circular(9),
-                                          border: Border.all(color: selected ? A.primary : A.line, width: 1.1),
-                                        ),
-                                        child: Text('${v['name']}${soldOut ? ' (نفد)' : ''}',
-                                            style: A.t(11.5, c: selected ? Colors.white : (soldOut ? A.muted : A.ink), w: FontWeight.w800)),
-                                      ),
-                                    );
-                                  }).toList(),
-                                ),
-                              ),
-                            ]),
-                          ),
-                        // بلا ألوان — فقط المقاسات
-                        if (colorList.length == 1 && colorList.first.isEmpty)
-                          Padding(
-                            padding: const EdgeInsets.symmetric(vertical: 7),
-                            child: Row(crossAxisAlignment: CrossAxisAlignment.start, children: [
-                              SizedBox(
-                                width: 64,
-                                child: Padding(
-                                  padding: const EdgeInsets.only(top: 6),
-                                  child: Text('المقاس', style: A.t(12, w: FontWeight.w900)),
-                                ),
-                              ),
-                              Expanded(
-                                child: Wrap(
-                                  spacing: 7,
-                                  runSpacing: 7,
-                                  children: variants.asMap().entries.map((ve) {
-                                    final selected = selSize == ve.key;
-                                    final v = ve.value;
-                                    final soldOut = ((v['stock'] as num?)?.toInt() ?? 0) == 0;
-                                    return GestureDetector(
-                                      onTap: soldOut ? null : () => setState(() => selSize = selected ? -1 : ve.key),
-                                      child: Container(
-                                        padding: const EdgeInsets.symmetric(horizontal: 13, vertical: 6),
-                                        decoration: BoxDecoration(
-                                          color: selected ? A.primary : Colors.white,
-                                          borderRadius: BorderRadius.circular(9),
-                                          border: Border.all(color: selected ? A.primary : A.line, width: 1.1),
-                                        ),
-                                        child: Text('${v['name']}${soldOut ? ' (نفد)' : ''}',
-                                            style: A.t(11.5, c: selected ? Colors.white : (soldOut ? A.muted : A.ink), w: FontWeight.w800)),
-                                      ),
-                                    );
-                                  }).toList(),
-                                ),
-                              ),
-                            ]),
-                          ),
-                        // ═══ التفاصيل — السعر والمتوفر للتركيبة المختارة ═══
-                        if (_variantReady)
-                          Column(children: [
-                            const Divider(height: 1, color: A.line),
-                            Padding(
-                              padding: const EdgeInsets.symmetric(vertical: 9),
-                              child: Row(children: [
-                                Text('التفاصيل', style: A.t(11.5, c: A.muted, w: FontWeight.w800)),
-                                const Spacer(),
-                                Text('السعر: ${money(prod.displayPrice)}', style: A.t(13.5, c: A.accent, w: FontWeight.w900)),
-                                const SizedBox(width: 14),
-                                Icon(Icons.check_circle_rounded, size: 14, color: A.success),
-                                const SizedBox(width: 4),
-                                Text('متوفر: ${_selStock}', style: A.t(11.5, c: A.success, w: FontWeight.w800)),
-                              ]),
-                            ),
-                          ]),
                       ]),
                     ),
                   ],
-                  // ═══ بطاقة التوصيل والدفع ═══
+                  // ═══ خدمات التوصيل والدفع ═══
                   const SizedBox(height: 18),
                   Container(
                     padding: const EdgeInsets.all(13),
@@ -1720,24 +1780,30 @@ class _ProductScreenState extends State<ProductScreen> {
                       ]),
                     ]),
                   ),
-                  // ═══ الوصف ═══
-                  const SizedBox(height: 18),
-                  Text(prod.description.isEmpty ? 'منتج من ${store['name'] ?? ''}' : prod.description, style: A.t(13, c: A.muted, h: 1.7)),
-                  // ═══ التفاصيل ═══
-                  // تفاصيل المنتج — بلا المقاس/اللون (ظاهرة بالمتغيرات فوق)
-                  if (prod.attributes.entries.where((e) => !['size', 'color'].contains(e.key)).isNotEmpty) ...[
-                    const SizedBox(height: 18),
-                    Text('تفاصيل المنتج', style: A.t(15, w: FontWeight.w900)),
-                    const SizedBox(height: 10),
-                    Container(
-                      decoration: BoxDecoration(
-                        color: A.bg,
-                        borderRadius: BorderRadius.circular(14),
-                        border: Border.all(color: A.line),
-                      ),
-                      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 6),
-                      child: Column(
-                        children: prod.attributes.entries
+                  // ═══ تفاصيل المنتج ═══
+                  const SizedBox(height: 20),
+                  Row(children: [
+                    const Icon(Icons.notes_rounded, size: 17, color: A.ink),
+                    const SizedBox(width: 7),
+                    Text('التفاصيل والمواصفات', style: A.t(15.5, w: FontWeight.w900)),
+                  ]),
+                  const SizedBox(height: 10),
+                  Container(
+                    decoration: BoxDecoration(
+                      color: A.bg,
+                      borderRadius: BorderRadius.circular(14),
+                      border: Border.all(color: A.line),
+                    ),
+                    padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 4),
+                    child: Column(
+                      children: [
+                        if (prod.attributes.entries.where((e) => !['size', 'color'].contains(e.key)).isEmpty)
+                          const Padding(
+                            padding: EdgeInsets.symmetric(vertical: 12),
+                            child: Text('وصف المتجر الكامل متوفر فوق — التفاصيل الإضافية قريباً',
+                                style: TextStyle(fontSize: 12, color: A.muted, fontWeight: FontWeight.w600)),
+                          ),
+                        ...prod.attributes.entries
                             .where((e) => !['size', 'color'].contains(e.key))
                             .map((e) => Padding(
                           padding: const EdgeInsets.symmetric(vertical: 6),
@@ -1746,14 +1812,28 @@ class _ProductScreenState extends State<ProductScreen> {
                             const SizedBox(width: 10),
                             Expanded(child: Text('${e.value}', style: A.t(12.5, w: FontWeight.w700))),
                           ]),
-                        )).toList(),
-                      ),
+                        )),
+                        const Divider(height: 14, color: A.line),
+                        Padding(
+                          padding: const EdgeInsets.symmetric(vertical: 8),
+                          child: Row(crossAxisAlignment: CrossAxisAlignment.start, children: [
+                            const Text('الوصف:', style: TextStyle(fontSize: 12.5, color: A.muted, fontWeight: FontWeight.w800)),
+                            const SizedBox(width: 10),
+                            Expanded(
+                              child: Text(
+                                prod.description.isEmpty ? 'منتج من ${store['name'] ?? ''}' : prod.description,
+                                style: A.t(12.5, c: A.ink, h: 1.7, w: FontWeight.w600),
+                              ),
+                            ),
+                          ]),
+                        ),
+                      ],
                     ),
-                  ],
+                  ),
                   // ═══ التقييمات والمراجعات ═══
                   const SizedBox(height: 22),
                   _reviewsBox(),
-                  // ═══ المحتوى ذا صلة ═══
+                  // ═══ منتجات ذات صلة ═══
                   const SizedBox(height: 22),
                   _productsRow('منتجات ذات صلة ⚡', related),
                   // ═══ منتجات من نفس المحل ═══
@@ -1763,14 +1843,25 @@ class _ProductScreenState extends State<ProductScreen> {
               ),
             ],
           ),
-          // ═══ زر الرجوع الشفاف فوق الصورة ═══
+          // ═══ شريط علوي زجاجي فوق الصورة ═══
           Positioned(
             top: 8,
-            left: 6,
-            child: IconGlass(
-              icon: Icons.arrow_back_ios_new_rounded,
-              onTap: () => Navigator.pop(context),
-            ),
+            left: 10,
+            right: 10,
+            child: Row(children: [
+              IconGlass(
+                icon: Icons.arrow_back_ios_new_rounded,
+                onTap: () => Navigator.pop(context),
+              ),
+              const Spacer(),
+              IconGlass(icon: Icons.share_rounded, onTap: _share),
+              const SizedBox(width: 6),
+              IconGlass(
+                icon: isFav ? Icons.favorite_rounded : Icons.favorite_border_rounded,
+                iconColor: isFav ? A.danger : null,
+                onTap: _toggleFav,
+              ),
+            ]),
           ),
         ]),
       ),
@@ -1790,9 +1881,6 @@ class _ProductScreenState extends State<ProductScreen> {
             ]),
           ),
           const SizedBox(width: 8),
-          _barBtn(icon: Icons.share_rounded, onTap: _share),
-          const SizedBox(width: 8),
-          _barBtn(icon: isFav ? Icons.favorite_rounded : Icons.favorite_border_rounded, iconColor: isFav ? A.danger : null, onTap: _toggleFav),
           const SizedBox(width: 10),
           Expanded(
             child: SolidBtn(
@@ -1808,6 +1896,110 @@ class _ProductScreenState extends State<ProductScreen> {
         ]),
       ),
     );
+  }
+
+  String get _selLabel {
+    final variants = p['variants'] is List ? (p['variants'] as List).cast<Map>() : <Map>[];
+    if (selSize < 0 || selSize >= variants.length) return '';
+    final colorList = _distinctColors(variants);
+    if (colorList.length == 1 && colorList.first.isEmpty) return '${variants[selSize]['name'] ?? ''}';
+    final rows = variants.where((v) => '${v['color'] ?? ''}' == selColor).toList();
+    if (selSize < 0 || selSize >= rows.length) return '';
+    return '${rows[selSize]['name'] ?? ''}';
+  }
+
+  Widget _sizeChip(int index, Map v) {
+    final selected = selSize == index;
+    final soldOut = ((v['stock'] as num?)?.toInt() ?? 0) == 0;
+    return GestureDetector(
+      onTap: soldOut ? null : () => setState(() => selSize = selected ? -1 : index),
+      child: AnimatedContainer(
+        duration: const Duration(milliseconds: 150),
+        width: 76,
+        padding: const EdgeInsets.symmetric(vertical: 10),
+        decoration: BoxDecoration(
+          color: selected ? A.primary : A.bg,
+          borderRadius: BorderRadius.circular(14),
+          border: Border.all(color: selected ? A.primary : A.line, width: 1.2),
+        ),
+        child: Column(children: [
+          Text('${v['name'] ?? ''}', style: A.t(13, c: selected ? Colors.white : A.ink, w: FontWeight.w900)),
+          const SizedBox(height: 2),
+          Text(soldOut ? 'نفد' : '${v['stock'] ?? 0} متوفر',
+              style: A.t(9.5, c: selected ? Colors.white.withValues(alpha: .85) : (soldOut ? A.danger : A.muted), w: FontWeight.w700)),
+        ]),
+      ),
+    );
+  }
+
+  Widget _dots() {
+    return Row(
+      mainAxisAlignment: MainAxisAlignment.center,
+      children: [
+        for (int i = 0; i < _imageList.length; i++)
+          AnimatedContainer(
+            duration: const Duration(milliseconds: 200),
+            margin: const EdgeInsets.symmetric(horizontal: 3),
+            width: i == imgIdx ? 18 : 7,
+            height: 7,
+            decoration: BoxDecoration(
+              color: i == imgIdx ? A.primary : Colors.white.withValues(alpha: .85),
+              borderRadius: BorderRadius.circular(99),
+              boxShadow: const [BoxShadow(color: Colors.black26, blurRadius: 4)],
+            ),
+          ),
+      ],
+    );
+  }
+
+  void _sizeGuideSheet(Product prod, List<Map> variants) {
+    showSheet(context, Padding(
+      padding: const EdgeInsets.fromLTRB(20, 4, 20, 28),
+      child: Column(mainAxisSize: MainAxisSize.min, crossAxisAlignment: CrossAxisAlignment.stretch, children: [
+        const SheetTitle('دليل المقاسات 📐'),
+        const SizedBox(height: 8),
+        Table(
+          border: TableBorder.all(color: A.line, borderRadius: BorderRadius.circular(12)),
+          children: [
+            TableRow(decoration: const BoxDecoration(color: A.bg), children: [
+              for (final h in ['المقاس', 'المتوفر', 'الحالة'])
+                Padding(
+                  padding: const EdgeInsets.symmetric(vertical: 9),
+                  child: Center(child: Text(h, style: A.t(11.5, w: FontWeight.w900))),
+                ),
+            ]),
+            for (final v in variants)
+              TableRow(children: [
+                Padding(
+                  padding: const EdgeInsets.symmetric(vertical: 9),
+                  child: Center(child: Text('${v['name'] ?? ''}', style: A.t(11.5, w: FontWeight.w800))),
+                ),
+                Padding(
+                  padding: const EdgeInsets.symmetric(vertical: 9),
+                  child: Center(child: Text('${v['stock'] ?? 0}', style: A.t(11.5, w: FontWeight.w800))),
+                ),
+                Padding(
+                  padding: const EdgeInsets.symmetric(vertical: 9),
+                  child: Center(
+                    child: Container(
+                      padding: const EdgeInsets.symmetric(horizontal: 9, vertical: 3),
+                      decoration: BoxDecoration(
+                        color: ((v['stock'] as num?)?.toInt() ?? 0) > 0 ? A.success.withValues(alpha: .1) : A.danger.withValues(alpha: .1),
+                        borderRadius: BorderRadius.circular(999),
+                      ),
+                      child: Text(((v['stock'] as num?)?.toInt() ?? 0) > 0 ? 'متوفر' : 'نفد',
+                          style: A.t(10, c: ((v['stock'] as num?)?.toInt() ?? 0) > 0 ? A.success : A.danger, w: FontWeight.w900)),
+                    ),
+                  ),
+                ),
+              ]),
+          ],
+        ),
+        const SizedBox(height: 12),
+        Text('مقاس غير مناسب؟ اضغط أي مقاس بأعلى الصفحة وسيُحفظ اختيارك تلقائياً 👌',
+            style: A.t(11.5, c: A.muted, w: FontWeight.w700), textAlign: TextAlign.center),
+      ]),
+    ));
   }
 
   void _share() {
@@ -1831,18 +2023,6 @@ class _ProductScreenState extends State<ProductScreen> {
     }
   }
 
-  Widget _barBtn({required IconData icon, VoidCallback? onTap, Color? iconColor}) {
-    return GestureDetector(
-      onTap: onTap,
-      child: Container(
-        width: 48,
-        height: 48,
-        alignment: Alignment.center,
-        decoration: BoxDecoration(color: A.bg, borderRadius: BorderRadius.circular(14), border: Border.all(color: A.line)),
-        child: Icon(icon, size: 21, color: iconColor ?? A.ink),
-      ),
-    );
-  }
 
   /// صور المنتج: عمود images (من المعرض) وإن فاضي → الصورة الأساسية
   List<String> get _imageList {

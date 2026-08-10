@@ -69,7 +69,8 @@ class _LoginScreenState extends State<LoginScreen> {
     await Api.saveToken(d['token']);
     Api.me = d['user'];
     if (!mounted) return;
-    Navigator.of(context).pushReplacement(MaterialPageRoute(builder: (_) => const Shell()));
+    // نمسح كل الـ stack — حتى نسخة "الضيف" السابقة ما تبقى تحته فيطلع زر رجوع
+    Navigator.of(context).pushAndRemoveUntil(MaterialPageRoute(builder: (_) => const Shell()), (_) => false);
   }
 
   Future<void> _changeServer() async {

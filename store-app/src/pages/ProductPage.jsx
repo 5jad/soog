@@ -271,7 +271,7 @@ export default function ProductPage() {
             </div>
           </div>
         ) : null}
-        <div style={{ height: 90 }} />
+        <div style={{ height: 170 }} />
       </div>
 
       {/* الشريط السفلي الثابت */}

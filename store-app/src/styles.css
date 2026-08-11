@@ -76,10 +76,10 @@ select.inp { appearance: none; background-image: url("data:image/svg+xml,%3Csvg 
 
 /* ═══ 7. الترويسة ═══ */
 .top { position: sticky; top: 0; z-index: 90; background: rgba(247,248,250,.9); backdrop-filter: blur(16px); border-bottom: 1px solid rgba(229,231,235,.8); }
-.top-in { width: 100%; padding: var(--sp-2) var(--sp-4); display: flex; align-items: center; gap: var(--sp-3); }
-.top-pill { display: inline-flex; align-items: center; gap: 5px; padding: var(--sp-2) var(--sp-3); border-radius: var(--r-full); background: #fff; border: 1px solid var(--line); font-size: var(--t-c1); font-weight: 800; color: var(--trust); white-space: nowrap; }
-.top-count { font-size: var(--t-c2); font-weight: 700; color: var(--muted); white-space: nowrap; }
-.top-acts { margin-inline-start: auto; display: flex; align-items: center; gap: var(--sp-2); }
+.top-in { width: 100%; padding: var(--sp-2) var(--sp-4); display: flex; align-items: center; gap: var(--sp-2); min-width: 0; }
+.top-pill { display: inline-flex; align-items: center; gap: 5px; padding: var(--sp-2) var(--sp-3); border-radius: var(--r-full); background: #fff; border: 1px solid var(--line); font-size: var(--t-c1); font-weight: 800; color: var(--trust); white-space: nowrap; flex: none; }
+.top-count { font-size: var(--t-c2); font-weight: 700; color: var(--muted); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; min-width: 0; }
+.top-acts { margin-inline-start: auto; display: flex; align-items: center; gap: var(--sp-2); flex: none; }
 .i-btn { width: 44px; height: 44px; border-radius: var(--r-md); border: 1px solid var(--line); background: #fff; display: inline-flex; align-items: center; justify-content: center; color: var(--text); cursor: pointer; position: relative; }
 .i-btn .badge { position: absolute; top: -4px; inset-inline-end: -4px; background: var(--cta); color: #fff; font-size: 10px; font-weight: 900; border-radius: 10px; padding: 1px 5px; min-width: 16px; text-align: center; }
 
@@ -89,7 +89,7 @@ select.inp { appearance: none; background-image: url("data:image/svg+xml,%3Csvg 
 
 /* ═══ 8. البحث الرئيسي ═══ */
 .search-row { display: flex; gap: var(--sp-3); align-items: center; }
-.search-f { flex: 1; display: flex; align-items: center; background: #fff; border: 1.2px solid var(--line); border-radius: var(--r-lg); padding: 0 6px 0 var(--sp-4); }
+.search-f { flex: 1; display: flex; align-items: center; background: #fff; border: 1.2px solid var(--line); border-radius: var(--r-lg); padding: 0 6px 0 var(--sp-4); min-width: 0; }
 .search-f input { flex: 1; border: 0; background: transparent; padding: var(--sp-3) 4px; font-size: var(--t-fn); font-weight: 700; outline: none; color: var(--ink); }
 .search-f .go { border: 0; background: transparent; cursor: pointer; color: var(--trust); display: flex; padding: var(--sp-2); }
 .search-f .clr { border: 0; background: transparent; cursor: pointer; color: var(--muted); display: flex; padding: var(--sp-2); }
@@ -619,7 +619,7 @@ select.inp { appearance: none; background-image: url("data:image/svg+xml,%3Csvg 
 .rvn { display: flex; align-items: center; gap: 7px; font-size: var(--t-c1); font-weight: 900; color: var(--ink); }
 .rvt { font-size: var(--t-fn); color: var(--text); line-height: 1.7; margin-top: 4px; }
 .rvd { font-size: var(--t-c2); font-weight: 700; color: var(--muted); margin-top: 4px; }
-.pg-foot { position: fixed; bottom: 0; left: 0; right: 0; z-index: 95; background: rgba(255,255,255,.96); backdrop-filter: blur(16px); border-top: 1px solid var(--line); display: flex; gap: var(--sp-3); padding: var(--sp-3) var(--sp-4) calc(var(--sp-3) + env(safe-area-inset-bottom)); }
+.pg-foot { position: fixed; bottom: calc(56px + env(safe-area-inset-bottom)); left: 0; right: 0; z-index: 95; background: rgba(255,255,255,.96); backdrop-filter: blur(16px); border-top: 1px solid var(--line); display: flex; gap: var(--sp-3); padding: var(--sp-3) var(--sp-4); }
 .qty { display: inline-flex; align-items: center; gap: 2px; background: var(--bg); border: 1px solid var(--line); border-radius: var(--r-md); padding: 3px; }
 .qty button { width: 40px; height: 40px; border: 0; background: transparent; color: var(--text); font-size: var(--t-hd); font-weight: 800; cursor: pointer; border-radius: 9px; display: inline-flex; align-items: center; justify-content: center; }
 .qty b { min-width: 26px; text-align: center; font-size: var(--t-fn); }
@@ -692,7 +692,7 @@ select.inp { appearance: none; background-image: url("data:image/svg+xml,%3Csvg 
 .mi { flex: 1; min-width: 0; }
 .pr { font-size: var(--t-fn); font-weight: 900; color: var(--ink); margin-top: 5px; }
 .x { align-self: flex-start; border: 0; background: transparent; color: var(--muted); cursor: pointer; padding: 4px; display: flex; }
-.cart-foot { position: fixed; bottom: 0; left: 0; right: 0; z-index: 95; background: rgba(255,255,255,.97); backdrop-filter: blur(16px); border-top: 1px solid var(--line); display: flex; align-items: center; gap: var(--sp-3); padding: var(--sp-3) var(--sp-4) calc(var(--sp-3) + env(safe-area-inset-bottom)); }
+.cart-foot { position: fixed; bottom: calc(56px + env(safe-area-inset-bottom)); left: 0; right: 0; z-index: 95; background: rgba(255,255,255,.97); backdrop-filter: blur(16px); border-top: 1px solid var(--line); display: flex; align-items: center; gap: var(--sp-3); padding: var(--sp-3) var(--sp-4); }
 .cart-total { display: flex; flex-direction: column; line-height: 1.35; white-space: nowrap; }
 .cart-total b { font-size: var(--t-c1); color: var(--muted); font-weight: 800; }
 .cart-total span { font-size: var(--t-h2); font-weight: 900; color: var(--ink); }
@@ -805,6 +805,7 @@ select.inp { appearance: none; background-image: url("data:image/svg+xml,%3Csvg 
 @media (min-width: 900px) {
   .bnav { left: 50%; transform: translateX(-50%); max-width: 440px; border-inline: 1px solid var(--line); border-radius: var(--r-lg) var(--r-lg) 0 0; }
   .fab { bottom: 100px; }
+  .pg-foot, .cart-foot { left: 50%; transform: translateX(-50%); width: min(760px, calc(100% - 48px)); bottom: calc(68px + env(safe-area-inset-bottom)); border-radius: var(--r-lg); border: 1px solid var(--line); box-shadow: var(--sh-md); }
 }
 
 /* ═══ 42. مودال المنتج ═══ */

@@ -48,7 +48,8 @@ export default function Promo({ ads, stores }) {
               {!img && <span className="hero-emoji">{sun ? '🛍️' : '💎'}</span>}
               <div className="hero-in">
                 <span className={`hero-chip ${sun ? 'sun' : ''}`}>
-                  {coverOf(a) ? <img src={coverOf(a)} alt="" /> : <b className="hero-logo" style={{ background: 'rgba(255,255,255,.2)', display: 'inline-flex', alignItems: 'center', justifyContent: 'center' }}>🏪</b>}
+                  {U(coverOf(a)) ? <img src={coverOf(a)} alt="" />
+                    : <b className="hero-logo" style={{ background: 'rgba(255,255,255,.2)', display: 'inline-flex', alignItems: 'center', justifyContent: 'center' }}>🏪</b>}
                   {a.store_name || 'عرض مميز'}
                 </span>
                 <div className="hero-row">

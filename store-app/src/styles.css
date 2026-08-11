@@ -209,7 +209,8 @@ select.inp { appearance: none; background-image: url("data:image/svg+xml,%3Csvg 
 .pul { position: absolute; top: -5px; inset-inline-end: -5px; background: var(--disc); width: 16px; height: 16px; border-radius: var(--r-full); font-size: 10px; font-weight: 900; display: flex; align-items: center; justify-content: center; color: #fff; }
 
 /* ═══ 17. تنقل الحساب (مخزني / زبون) ═══ */
-.dnav { width: 100%; background: #fff; border-bottom: 1px solid var(--line); display: flex; padding: 0 var(--sp-2); }
+.dnav { width: 100%; background: #fff; border-bottom: 1px solid var(--line); display: flex; padding: 0 var(--sp-2); overflow-x: auto; scrollbar-width: none; }
+.dnav::-webkit-scrollbar { display: none; }
 .dnav-in { width: 100%; display: flex; align-items: center; gap: 4px; overflow-x: auto; scrollbar-width: none; }
 .dnav-in::-webkit-scrollbar { display: none; }
 .dn { display: inline-flex; align-items: center; gap: 6px; padding: var(--sp-3) var(--sp-3) var(--sp-3) 4px; font-size: var(--t-c1); font-weight: 800; color: var(--muted); cursor: pointer; border-bottom: 3px solid transparent; margin-bottom: -1px; white-space: nowrap; }

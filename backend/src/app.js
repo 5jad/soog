@@ -70,8 +70,11 @@ if (fs.existsSync(STORE_DIST)) {
   app.get('/store/*splat', (_req, res) => res.sendFile(path.join(STORE_DIST, 'index.html')));
 }
 
-// الصفحة الرسمية: / = الموقع (الرئيسية)، واللوحة على /admin فقط
-if (fs.existsSync(LANDING_DIST)) {
+// الصفحة الرسمية: / = المتجر مباشرة (الواجهة الاحترافية للمتصفح بنفس ألوان وخط التطبيق)،
+// واللاندينغ القديم يبقى متاح على /site
+if (fs.existsSync(STORE_DIST)) {
+  app.get('/', (_req, res) => res.redirect('/store'));
+} else if (fs.existsSync(LANDING_DIST)) {
   app.get('/', (_req, res) => res.sendFile(path.join(LANDING_DIST, 'index.html')));
 } else {
   app.get('/', (_req, res) => res.redirect('/admin'));

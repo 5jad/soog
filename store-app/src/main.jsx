@@ -6,6 +6,11 @@ import App from './App';
 import 'leaflet/dist/leaflet.css';
 import './styles.css';
 
+// لا تعرض أبداً نسخة قديمة عند الرجوع للصفحة من ذاكرة المتصفح
+window.addEventListener('pageshow', (e) => {
+  if (e.persisted) window.location.reload();
+});
+
 createRoot(document.getElementById('root')).render(
   <React.StrictMode>
     <AppProvider>

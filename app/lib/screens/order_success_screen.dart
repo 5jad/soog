@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import '../theme.dart';
 import '../widgets.dart';
+import '../lottie_box.dart';
 import 'orders_screen.dart';
 
 /// شاشة نجاح إرسال الطلبات — تظهر بعد إتمام الطلب
@@ -16,11 +17,16 @@ class OrderSuccessScreen extends StatelessWidget {
         child: Padding(
           padding: const EdgeInsets.all(28),
           child: Column(mainAxisAlignment: MainAxisAlignment.center, children: [
-            Container(
-              width: 108,
-              height: 108,
-              decoration: BoxDecoration(color: A.success.withOpacity(0.14), shape: BoxShape.circle),
-              child: const Icon(Icons.check_rounded, color: A.success, size: 62),
+            LottieBox(
+              assetKey: 'success',
+              width: 150,
+              height: 150,
+              fallback: Container(
+                width: 108,
+                height: 108,
+                decoration: BoxDecoration(color: A.success.withOpacity(0.14), shape: BoxShape.circle),
+                child: const Icon(Icons.check_rounded, color: A.success, size: 62),
+              ),
             ),
             const SizedBox(height: 22),
             Text('انطلق طلبك بنجاح 🎉', style: A.t(22, w: FontWeight.w900)),

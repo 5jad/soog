@@ -22,6 +22,7 @@ class _LoginScreenState extends State<LoginScreen> {
   final password = TextEditingController();
   final name = TextEditingController();
   final code = TextEditingController();
+  final referral = TextEditingController();
 
   Future<void> submit() async {
     if (phone.text.trim().length < 10) return toast(context, 'أدخل رقم هاتف صحيح', error: true);
@@ -37,6 +38,7 @@ class _LoginScreenState extends State<LoginScreen> {
         if (name.text.isEmpty || password.text.isEmpty) throw ApiException('الاسم وكلمة المرور مطلوبين', 400);
         final d = await Api.post('/api/auth/register', {
           'name': name.text.trim(), 'phone': phone.text.trim(), 'password': password.text,
+          if (referral.text.trim().isNotEmpty) 'referral': referral.text.trim(),
         });
         await _onSuccess(d);
       } 
@@ -155,7 +157,7 @@ class _LoginScreenState extends State<LoginScreen> {
                     child: const Text('🛍️', style: TextStyle(fontSize: 40)),
                   ),
                   const SizedBox(height: 12),
-                  Text('زبون', style: A.t(30, c: Colors.white, w: FontWeight.w900)),
+                  Text('زبون', style: A.t(30, c: Colors.white, w: FontWeight.w700).copyWith(fontFamily: 'ElMessiri')),
                   const SizedBox(height: 4),
                   Text('كل ما تتمناه — لرجالك ونسائك وأطفالك — بمكان واحد 👌', style: A.t(12, c: Colors.white70, w: FontWeight.w700), textAlign: TextAlign.center),
                   const SizedBox(height: 22),
@@ -176,6 +178,8 @@ class _LoginScreenState extends State<LoginScreen> {
                     child: Column(children: [
                       if (mode == AuthMode.register) ...[
                         _Field(controller: name, hint: 'الاسم الكامل', icon: Icons.person_outline),
+                        const SizedBox(height: 12),
+                        _Field(controller: referral, hint: 'كود الدعوة (اختياري) 🎁', icon: Icons.card_giftcard),
                         const SizedBox(height: 12),
                       ],
                       

@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:latlong2/latlong.dart';
 import '../api.dart';
 import '../map_screen.dart';
@@ -9,7 +10,9 @@ import 'order_success_screen.dart';
 
 /// السلة — مرتبة حسب المتجر، مع إنشاء الطلب (كاش فقط)
 class CartScreen extends StatefulWidget {
-  const CartScreen({super.key});
+  /// «الاستمرار بالتسوق» — عند فتحها كتبويب: يرجع للرئيسية؛ عند فتحها منفردة: يغلقها
+  final VoidCallback? onContinueShopping;
+  const CartScreen({super.key, this.onContinueShopping});
   @override
   State<CartScreen> createState() => _CartScreenState();
 }
@@ -110,6 +113,7 @@ class _CartScreenState extends State<CartScreen> {
           'store_id': g['store_id'],
           'address': picked.$1,
           if (picked.$2 != null) 'address_id': picked.$2,
+          if (picked.$3 != null) 'scheduled_at': picked.$3,
           'group_id': gid,
         });
         done++;
@@ -129,9 +133,11 @@ class _CartScreenState extends State<CartScreen> {
     }
   }
 
-  Future<(String?, int?)> _pickAddress() async {
+  Future<(String?, int?, String?)> _pickAddress() async {
     String? addr;
     int? addrId;
+    String? scheduled;
+    String? scheduledLabel;
     try {
       final d = await Api.get('/api/customer/addresses');
       final addresses = (d['addresses'] ?? []) as List;
@@ -195,7 +201,7 @@ class _CartScreenState extends State<CartScreen> {
                     MaterialPageRoute(builder: (_) => const PickMapScreen()));
                 if (p == null || !context.mounted) return;
                 addressCtrl.text = '📍 موقع محدد (${p.latitude.toStringAsFixed(6)}, ${p.longitude.toStringAsFixed(6)})';
-                if (mounted) Navigator.pop(context, (addressCtrl.text, null));
+                if (mounted) Navigator.pop(context, (addressCtrl.text, null, null));
               },
               icon: const Icon(Icons.location_on_outlined, size: 20),
               label: const Text('حدد موقعي على الخريطة', style: TextStyle(fontSize: 13, fontWeight: FontWeight.w800)),
@@ -222,25 +228,94 @@ class _CartScreenState extends State<CartScreen> {
                 if (v.isNotEmpty) addrId = null;
               }),
             ),
+            const SizedBox(height: 12),
+            Row(children: [
+              Expanded(
+                child: GestureDetector(
+                  onTap: () async {
+                    final now = DateTime.now();
+                    final day = await showDatePicker(
+                      context: context,
+                      initialDate: now,
+                      firstDate: now,
+                      lastDate: now.add(const Duration(days: 7)),
+                      helpText: 'اختر يوم التوصيل',
+                      cancelText: 'رجوع',
+                      confirmText: 'حسناً',
+                    );
+                    if (day == null || !context.mounted) return;
+                    final tm = await showTimePicker(
+                      context: context,
+                      initialTime: TimeOfDay(hour: 12, minute: 0),
+                      helpText: 'اختر وقت التوصيل',
+                      cancelText: 'رجوع',
+                      confirmText: 'حسناً',
+                    );
+                    if (tm == null) return;
+                    final dt = DateTime(day.year, day.month, day.day, tm.hour, tm.minute);
+                    setS(() {
+                      scheduled = dt.toIso8601String();
+                      scheduledLabel =
+                          '${dt.day}/${dt.month} · ${tm.hour.toString().padLeft(2, '0')}:${tm.minute.toString().padLeft(2, '0')}';
+                    });
+                  },
+                  child: Container(
+                    height: 44,
+                    alignment: Alignment.center,
+                    decoration: BoxDecoration(
+                      color: scheduled == null ? const Color(0xFFEEF4FB) : const Color(0xFFE9F7EF),
+                      borderRadius: BorderRadius.circular(13),
+                      border: Border.all(color: scheduled == null ? A.primary : A.success, width: 1.2),
+                    ),
+                    child: Row(mainAxisAlignment: MainAxisAlignment.center, children: [
+                      Icon(scheduled == null ? Icons.schedule_rounded : Icons.check_circle_rounded,
+                          size: 17, color: scheduled == null ? A.primary : A.success),
+                      const SizedBox(width: 6),
+                      Text(
+                        scheduled == null ? 'حدد موعد التوصيل (اختياري) 🕒' : 'موعد التوصيل: $scheduledLabel ✅',
+                        style: A.t(11.5, c: scheduled == null ? A.primary : A.success, w: FontWeight.w900),
+                      ),
+                    ]),
+                  ),
+                ),
+              ),
+              if (scheduled != null) ...[
+                const SizedBox(width: 8),
+                GestureDetector(
+                  onTap: () => setS(() {
+                    scheduled = null;
+                    scheduledLabel = null;
+                  }),
+                  child: Container(
+                    width: 44,
+                    height: 44,
+                    decoration: BoxDecoration(color: A.danger.withOpacity(0.09), borderRadius: BorderRadius.circular(13)),
+                    alignment: Alignment.center,
+                    child: const Icon(Icons.close_rounded, size: 18, color: A.danger),
+                  ),
+                ),
+              ],
+            ]),
             const SizedBox(height: 16),
             SolidBtn(
               label: (addr != null && addr!.isNotEmpty) || selected != null ? 'إتمام الطلب ✓' : 'اختر عنوان التوصيل',
               color: A.accent,
+              haptic: true,
               disabled: (addr == null || addr!.isEmpty) && selected == null,
-              onTap: () => Navigator.pop(context, ((addr != null && addr!.isNotEmpty) ? addr : selected, addrId)),
+              onTap: () => Navigator.pop(context, ((addr != null && addr!.isNotEmpty) ? addr : selected, addrId, scheduled)),
             ),
           ]),
         ),
       ));
-      if (picked is (String?, int?)?) {
-        final p = picked as (String?, int?)?;
+      if (picked is (String?, int?, String?)?) {
+        final p = picked as (String?, int?, String?)?;
         if (p != null) return p;
       }
-      return ((addr != null && addr!.isNotEmpty) ? addr : selected, addrId ?? selectedId);
+      return ((addr != null && addr!.isNotEmpty) ? addr : selected, addrId ?? selectedId, scheduled);
     } on ApiException catch (e) {
       toast(context, e.message, error: true);
     }
-    return (null, null);
+    return (null, null, null);
   }
 
   Widget _itemRow(dynamic it) {
@@ -432,7 +507,14 @@ class _CartScreenState extends State<CartScreen> {
     final bodyWidget = loading
         ? const Loader()
         : cart.isEmpty
-            ? const EmptyState(icon: '🛒', title: 'سلتك فاضية', sub: 'روح للمتاجر وضيف شي تحبه')
+            ? EmptyState(
+                icon: '🛒',
+                title: 'سلتك فاضية',
+                sub: 'روح للمتاجر وضيف شي تحبه',
+                action: 'الاستمرار بالتسوق ←',
+                lottie: 'cart_empty',
+                onAction: widget.onContinueShopping ?? () => Navigator.pop(context),
+              )
             : RefreshIndicator(
                 onRefresh: _load,
                 color: A.primary,
@@ -572,7 +654,10 @@ class _CartScreenState extends State<CartScreen> {
                     color: Colors.transparent,
                     child: InkWell(
                       borderRadius: BorderRadius.circular(16),
-                      onTap: () => placeGroupOrder(groupList),
+                      onTap: () {
+                        HapticFeedback.lightImpact();
+                        placeGroupOrder(groupList);
+                      },
                       child: Ink(
                         height: 52,
                         decoration: BoxDecoration(

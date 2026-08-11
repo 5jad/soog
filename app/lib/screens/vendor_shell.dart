@@ -230,7 +230,7 @@ class _ProductsTabState extends State<_ProductsTab> {
                   })),
                   child: Container(
                     padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
-                    decoration: BoxDecoration(gradient: A.gradSun, borderRadius: BorderRadius.circular(8)),
+                    decoration: BoxDecoration(color: A.primary, borderRadius: BorderRadius.circular(8)),
                     child: const Text('+ أضف', style: TextStyle(fontSize: 11.5, color: Colors.white, fontWeight: FontWeight.w900)),
                   ),
                 ),
@@ -451,7 +451,7 @@ class _VendorProdCard extends StatelessWidget {
                   onTap: onEdit,
                   child: Container(
                     width: 28, height: 28,
-                    decoration: BoxDecoration(gradient: A.gradSun, borderRadius: BorderRadius.circular(9)),
+                    decoration: BoxDecoration(color: A.primary, borderRadius: BorderRadius.circular(9)),
                     alignment: Alignment.center,
                     child: const Icon(Icons.edit_rounded, size: 15, color: Colors.white),
                   ),

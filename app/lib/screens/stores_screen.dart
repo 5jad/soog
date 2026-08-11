@@ -23,14 +23,15 @@ class _StoresScreenState extends State<StoresScreen> {
   List all = [];
   List categories = [];
   List favorites = [];
-  int? cat;
+  final List<int> catIds = [];
+  String sortStores = 'top';
   bool loading = true;
 
   @override
   void initState() {
     super.initState();
     ctrl.text = q;
-    cat = widget.categoryId;
+    if (widget.categoryId != null) catIds.add(widget.categoryId!);
     _load();
   }
 
@@ -61,7 +62,12 @@ class _StoresScreenState extends State<StoresScreen> {
   List<Store> get filtered {
     var list = all.map((s) => Store.fromJson(Map<String, dynamic>.from(s as Map))).where((s) => s.open).toList();
     if (q.isNotEmpty) list = list.where((s) => s.name.contains(q) || s.categoryName.contains(q)).toList();
-    if (cat != null) list = list.where((s) => s.categoryId == cat).toList();
+    if (catIds.isNotEmpty) list = list.where((s) => catIds.contains(s.categoryId)).toList();
+    switch (sortStores) {
+      case 'low': list.sort((a, b) => a.rating.compareTo(b.rating));
+      case 'most': list.sort((a, b) => b.reviewsCount.compareTo(a.reviewsCount));
+      default: list.sort((a, b) => b.rating.compareTo(a.rating));
+    }
     return list;
   }
 
@@ -75,19 +81,8 @@ class _StoresScreenState extends State<StoresScreen> {
       appBar: AppBar(
         toolbarHeight: 60,
         titleSpacing: 14,
-        title: Row(children: [
-          Container(
-            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-            decoration: BoxDecoration(color: A.surface, borderRadius: BorderRadius.circular(A.pill), border: Border.all(color: A.line)),
-            child: Row(mainAxisSize: MainAxisSize.min, children: [
-              const Icon(Icons.location_on_rounded, color: A.primary, size: 14),
-              const SizedBox(width: 5),
-              Text('واسط · الكوت', style: A.t(12, c: A.primary, w: FontWeight.w800)),
-            ]),
-          ),
-          const SizedBox(width: 8),
-          Text('${all.length} متجر متاح', style: A.t(10.5, c: A.muted, w: FontWeight.w600)),
-        ]),
+        centerTitle: true,
+        title: const TopBarPill(),
         actions: [
           const SizedBox(width: 8),
           Stack(clipBehavior: Clip.none, children: [
@@ -112,56 +107,69 @@ class _StoresScreenState extends State<StoresScreen> {
           : ListView(
               padding: const EdgeInsets.only(bottom: 20),
               children: [
-              // البحث — بنفس قياسات صفحة الرئيسية
+              // البحث + زر الفلترة — بنفس قياسات صفحة الرئيسية
               Padding(
                 padding: const EdgeInsets.fromLTRB(16, 12, 16, 0),
-                child: TextField(
-                  controller: ctrl,
-                  onChanged: (v) => setState(() => q = v),
-                  style: A.t(13, w: FontWeight.w700),
-                  textInputAction: TextInputAction.search,
-                  decoration: InputDecoration(
-                    hintText: 'ابحث عن متجر...',
-                    hintStyle: A.t(12.5, c: A.muted, w: FontWeight.w600),
-                    prefixIcon: const Padding(
-                      padding: EdgeInsets.only(right: 14, left: 6),
-                      child: Icon(Icons.search_rounded, color: A.muted, size: 20),
-                    ),
-                    filled: true,
-                    fillColor: Colors.white.withOpacity(0.85),
-                    isDense: true,
-                    contentPadding: const EdgeInsets.symmetric(vertical: 13),
-                    enabledBorder: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(16),
-                      borderSide: BorderSide(color: Colors.white.withOpacity(0.55), width: 1.1),
-                    ),
-                    focusedBorder: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(16),
-                      borderSide: const BorderSide(color: A.primaryLight, width: 1.4),
-                    ),
-                  ),
-                ),
-              ),
-              // شريط الفئات — بنفس قياسات صفحة الرئيسية
-              SizedBox(
-                height: 52,
-                child: ListView(
-                  scrollDirection: Axis.horizontal,
-                  padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 6),
-                  children: [
-                    for (final c in categories)
-                      Padding(
-                        padding: const EdgeInsets.only(right: 8),
-                        child: ChipG(
-                          label: '${c['icon'] ?? ''} ${c['name'] ?? ''}',
-                          active: cat == c['id'],
-                          onTap: () => setState(() => cat = cat == c['id'] ? null : c['id']),
+                child: Row(children: [
+                  Expanded(
+                    child: TextField(
+                      controller: ctrl,
+                      onChanged: (v) => setState(() => q = v),
+                      style: A.t(13, w: FontWeight.w700),
+                      textInputAction: TextInputAction.search,
+                      decoration: InputDecoration(
+                        hintText: 'ابحث عن متجر...',
+                        hintStyle: A.t(12.5, c: A.muted, w: FontWeight.w600),
+                        prefixIcon: const Padding(
+                          padding: EdgeInsets.only(right: 14, left: 6),
+                          child: Icon(Icons.search_rounded, color: A.muted, size: 20),
+                        ),
+                        filled: true,
+                        fillColor: Colors.white.withOpacity(0.85),
+                        isDense: true,
+                        contentPadding: const EdgeInsets.symmetric(vertical: 13),
+                        enabledBorder: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(16),
+                          borderSide: BorderSide(color: Colors.white.withOpacity(0.55), width: 1.1),
+                        ),
+                        focusedBorder: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(16),
+                          borderSide: const BorderSide(color: A.primaryLight, width: 1.4),
                         ),
                       ),
-                  ],
-                ),
+                    ),
+                  ),
+                  const SizedBox(width: 10),
+                  GestureDetector(
+                    onTap: _openFilterSheet,
+                    child: Container(
+                      width: 48,
+                      height: 48,
+                      decoration: BoxDecoration(
+                        color: catIds.isNotEmpty || sortStores != 'top' ? A.primary : Colors.white,
+                        borderRadius: BorderRadius.circular(16),
+                        border: Border.all(color: catIds.isNotEmpty || sortStores != 'top' ? A.primary : A.line, width: 1.2),
+                      ),
+                      alignment: Alignment.center,
+                      child: Stack(clipBehavior: Clip.none, children: [
+                        Icon(Icons.tune_rounded, size: 22, color: catIds.isNotEmpty || sortStores != 'top' ? Colors.white : A.ink),
+                        if (catIds.isNotEmpty || sortStores != 'top')
+                          Positioned(
+                            left: -6,
+                            top: -8,
+                            child: Container(
+                              width: 18, height: 18,
+                              decoration: const BoxDecoration(color: A.accent, shape: BoxShape.circle),
+                              alignment: Alignment.center,
+                              child: Text('${catIds.length + (sortStores != 'top' ? 1 : 0)}', style: const TextStyle(color: Colors.white, fontSize: 10, fontWeight: FontWeight.w900)),
+                            ),
+                          ),
+                      ]),
+                    ),
+                  ),
+                ]),
               ),
-              // المتاجر المتابعة — أسفل شريط الفئات
+              // المتاجر المتابعة
               if (favorites.isNotEmpty) ...[
                 Padding(
                   padding: const EdgeInsets.fromLTRB(16, 8, 16, 4),
@@ -225,6 +233,112 @@ class _StoresScreenState extends State<StoresScreen> {
                   ],
                 ),
             ]),
+    );
+  }
+
+  /// بوكس فلترة المتاجر — فئات متعددة + ترتيب
+  Future<void> _openFilterSheet() async {
+    final tempCatIds = List<int>.from(catIds);
+    var sort = sortStores;
+    await showModalBottomSheet<void>(
+      context: context,
+      backgroundColor: A.bg,
+      shape: const RoundedRectangleBorder(borderRadius: BorderRadius.vertical(top: Radius.circular(26))),
+      builder: (ctx) => StatefulBuilder(
+        builder: (ctx, setS) => SafeArea(
+          child: SingleChildScrollView(
+            padding: const EdgeInsets.fromLTRB(18, 14, 18, 20),
+            child: Column(mainAxisSize: MainAxisSize.min, crossAxisAlignment: CrossAxisAlignment.stretch, children: [
+              Row(children: [
+                Text('الفلترة', style: TextStyle(fontSize: 18, fontWeight: FontWeight.w900)),
+                const Spacer(),
+                IconButton(onPressed: () => Navigator.pop(ctx), icon: const Icon(Icons.close_rounded)),
+              ]),
+              Text('الفئة', style: A.t(12.5, w: FontWeight.w900)),
+              const SizedBox(height: 8),
+              Wrap(spacing: 8, runSpacing: 8, children: [
+                for (final c in categories)
+                  GestureDetector(
+                    onTap: () => setS(() {
+                      final id = c['id'] as int;
+                      tempCatIds.contains(id) ? tempCatIds.remove(id) : tempCatIds.add(id);
+                    }),
+                    child: Container(
+                      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 7),
+                      decoration: BoxDecoration(
+                        color: tempCatIds.contains(c['id']) ? A.primary : Colors.white,
+                        borderRadius: BorderRadius.circular(999),
+                        border: Border.all(color: tempCatIds.contains(c['id']) ? A.primary : A.line, width: 1.2),
+                      ),
+                      child: Row(mainAxisSize: MainAxisSize.min, children: [
+                        Text('${c['icon'] ?? '🛍'} ', style: const TextStyle(fontSize: 12)),
+                        Text('${c['name'] ?? ''}', style: A.t(11.5, c: tempCatIds.contains(c['id']) ? Colors.white : A.ink, w: FontWeight.w800)),
+                      ]),
+                    ),
+                  ),
+              ]),
+              const SizedBox(height: 16),
+              Text('الترتيب', style: A.t(12.5, w: FontWeight.w900)),
+              const SizedBox(height: 8),
+              Wrap(spacing: 8, runSpacing: 8, children: [
+                GestureDetector(
+                  onTap: () => setS(() => sort = 'top'),
+                  child: Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 7),
+                    decoration: BoxDecoration(
+                      color: sort == 'top' ? A.primary : Colors.white,
+                      borderRadius: BorderRadius.circular(999),
+                      border: Border.all(color: sort == 'top' ? A.primary : A.line, width: 1.2),
+                    ),
+                    child: Text('الأعلى تقييماً', style: A.t(11.5, c: sort == 'top' ? Colors.white : A.ink, w: FontWeight.w800)),
+                  ),
+                ),
+                GestureDetector(
+                  onTap: () => setS(() => sort = 'low'),
+                  child: Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 7),
+                    decoration: BoxDecoration(
+                      color: sort == 'low' ? A.primary : Colors.white,
+                      borderRadius: BorderRadius.circular(999),
+                      border: Border.all(color: sort == 'low' ? A.primary : A.line, width: 1.2),
+                    ),
+                    child: Text('الأقل تقييماً', style: A.t(11.5, c: sort == 'low' ? Colors.white : A.ink, w: FontWeight.w800)),
+                  ),
+                ),
+                GestureDetector(
+                  onTap: () => setS(() => sort = 'most'),
+                  child: Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 7),
+                    decoration: BoxDecoration(
+                      color: sort == 'most' ? A.primary : Colors.white,
+                      borderRadius: BorderRadius.circular(999),
+                      border: Border.all(color: sort == 'most' ? A.primary : A.line, width: 1.2),
+                    ),
+                    child: Text('الأكثر تقييماً', style: A.t(11.5, c: sort == 'most' ? Colors.white : A.ink, w: FontWeight.w800)),
+                  ),
+                ),
+              ]),
+              const SizedBox(height: 18),
+              FilledButton(
+                style: FilledButton.styleFrom(
+                  minimumSize: const Size.fromHeight(46),
+                  backgroundColor: A.accent,
+                  foregroundColor: Colors.white,
+                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
+                ),
+                onPressed: () {
+                  setState(() {
+                    catIds..clear()..addAll(tempCatIds);
+                    sortStores = sort;
+                  });
+                  Navigator.pop(ctx);
+                },
+                child: const Text('تطبيق', style: TextStyle(fontSize: 15, fontWeight: FontWeight.w900)),
+              ),
+            ]),
+          ),
+        ),
+      ),
     );
   }
 

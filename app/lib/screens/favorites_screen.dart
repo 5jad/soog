@@ -78,7 +78,7 @@ class _FavoritesScreenState extends State<FavoritesScreen> {
       body: loading
           ? const Loader()
           : favs.isEmpty
-              ? const EmptyState(icon: '🤍', title: 'لا مفضلة بعد', sub: 'اضغط ♡ على أي منتج يعجبك')
+              ? const EmptyState(icon: '🤍', title: 'لا مفضلة بعد', sub: 'اضغط ♡ على أي منتج يعجبك', lottie: 'fav_empty')
               : RefreshIndicator(
                   onRefresh: _load,
                   color: A.primary,
@@ -174,12 +174,12 @@ class _FavoritesScreenState extends State<FavoritesScreen> {
                                   // السعر + زر الإضافة — مثبتان أسفل كل بوكس
                                   const Spacer(),
                                   Row(children: [
-                                    Expanded(child: Text(money(prod.displayPrice), style: A.t(12.5, c: A.accent, w: FontWeight.w900), maxLines: 1, overflow: TextOverflow.ellipsis)),
+                                    Expanded(child: Text(money(prod.displayPrice), style: A.t(12.5, c: A.ink, w: FontWeight.w900), maxLines: 1, overflow: TextOverflow.ellipsis)),
                                     GestureDetector(
                                       onTap: () => quickAdd(context, f),
                                       child: Container(
                                         width: 26, height: 26,
-                                        decoration: BoxDecoration(gradient: A.gradSun, borderRadius: BorderRadius.circular(8)),
+                                        decoration: BoxDecoration(color: A.primary, borderRadius: BorderRadius.circular(8)),
                                         alignment: Alignment.center,
                                         child: const Icon(Icons.add_rounded, size: 16, color: Colors.white),
                                       ),

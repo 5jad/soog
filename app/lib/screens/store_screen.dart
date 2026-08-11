@@ -389,7 +389,7 @@ delegate: SliverChildBuilderDelegate((_, i) {
                                       },
                                 child: Container(
                                   width: 28, height: 28,
-                                  decoration: BoxDecoration(gradient: A.gradSun, borderRadius: BorderRadius.circular(9)),
+                                  decoration: BoxDecoration(color: A.primary, borderRadius: BorderRadius.circular(9)),
                                   alignment: Alignment.center,
                                   child: const Icon(Icons.add_rounded, size: 17, color: Colors.white),
                                 ),

@@ -1,5 +1,6 @@
 import 'dart:async';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:share_plus/share_plus.dart';
 import '../api.dart';
 import '../models.dart';
@@ -8,8 +9,9 @@ import '../widgets.dart';
 import 'stores_screen.dart';
 import 'store_screen.dart';
 import 'favorites_screen.dart';
-import 'cart_screen.dart';
+import 'search_screen.dart';
 import 'account_screen.dart';
+import 'outfit_screen.dart';
 
 /// واجهة الزبون — 4 تبويبات: الرئيسية، المتاجر، الطلبات، حسابي
 class CustomerShell extends StatefulWidget {
@@ -21,7 +23,6 @@ class CustomerShell extends StatefulWidget {
 
 class _CustomerShellState extends State<CustomerShell> {
   int tab = 0;
-  int cartReload = 0;
   final GlobalKey<HomeScreenState> homeKey = GlobalKey();
 
   /// عند الضغط على أيقونة «الرئيسية»: جلب جديد صامت + رجوع لأعلى الصفحة
@@ -41,6 +42,10 @@ class _CustomerShellState extends State<CustomerShell> {
         final items = d['cart'] ?? d['items'] ?? [];
         AppState.i.setCart((items as List).length);
       }).catchError((_) {});
+      Api.get('/api/customer/favorites').then((d) {
+        final favs = d['products'] ?? [];
+        AppState.i.favsCount.value = (favs as List).length;
+      }).catchError((_) {});
     }
   }
 
@@ -49,42 +54,41 @@ class _CustomerShellState extends State<CustomerShell> {
     final pages = [
       HomeScreen(key: homeKey, onGoStore: (id) => pushStore(context, id)),
       StoresScreen(onOpen: (s) => pushStore(context, s.id)),
-      CartScreen(key: ValueKey('cart$cartReload')),
+      const SearchScreen(),
       const FavoritesScreen(),
       AccountScreen(roles: widget.roles),
     ];
     return Scaffold(
-      body: IndexedStack(index: tab, children: pages),
+      body: Stack(children: [
+        _PageStack(tab: tab, children: pages),
+        // زر السلة العائم — يظهر فوق كل التبويبات عند وجود أغراض (ويتحرك حسب السلة)
+        const FloatingCartFab(bottom: 84),
+      ]),
       bottomNavigationBar: ValueListenableBuilder<int>(
-        valueListenable: AppState.i.cartCount,
-        builder: (_, count, __) => ValueListenableBuilder<int>(
-          valueListenable: AppState.i.favsCount,
-          builder: (_, favs, __) => GlassBottomNav(
-            index: tab,
-            badgeIndex: 2,
-            badgeCount: count,
-            extraBadges: {3: favs},
-            items: const [
-              (Icons.home_rounded, 'الرئيسية'),
-              (Icons.storefront_rounded, 'المتاجر'),
-              (Icons.shopping_cart_rounded, 'السلة'),
-              (Icons.favorite_rounded, 'المفضلة'),
-              (Icons.person_rounded, 'حسابي'),
-            ],
-            onTap: (i) {
-              if (i == 0) {
-                // الضغط على الرئيسية: ننتقل إليها + رفريش + رجوع للأعلى دائماً
-                if (tab != 0) setState(() => tab = 0);
-                _goHome();
-                return;
-              }
-              setState(() {
-                tab = i;
-                if (i == 2) cartReload++;
-                if (i == 3) AppState.i.favsReload.value++;
-              });
-            },
-          ),
+        valueListenable: AppState.i.favsCount,
+        builder: (_, favs, __) => GlassBottomNav(
+          index: tab,
+          badgeIndex: null,
+          extraBadges: {3: favs},
+          items: const [
+            (Icons.home_rounded, 'الرئيسية'),
+            (Icons.storefront_rounded, 'المتاجر'),
+            (Icons.search_rounded, 'بحث'),
+            (Icons.favorite_rounded, 'المفضلة'),
+            (Icons.person_rounded, 'حسابي'),
+          ],
+          onTap: (i) {
+            if (i == 0) {
+              // الضغط على الرئيسية: ننتقل إليها + رفريش + رجوع للأعلى دائماً
+              if (tab != 0) setState(() => tab = 0);
+              _goHome();
+              return;
+            }
+            setState(() {
+              tab = i;
+              if (i == 3) AppState.i.favsReload.value++;
+            });
+          },
         ),
       ),
     );
@@ -93,6 +97,60 @@ class _CustomerShellState extends State<CustomerShell> {
 
 void pushStore(BuildContext context, int id) {
   Navigator.push(context, MaterialPageRoute(builder: (_) => StoreScreen(storeId: id)));
+}
+
+/// انتقال ناعم بين التبويبات (بدل الانقلاب الفوري) — 280ms fade + سلايد باتجاه التبويب الجديد
+/// ويحفظ حالة كل تبويب حية لأن IndexedStack تبقى هي الحاوية
+class _PageStack extends StatefulWidget {
+  final int tab;
+  final List<Widget> children;
+  const _PageStack({required this.tab, required this.children});
+
+  @override
+  State<_PageStack> createState() => _PageStackState();
+}
+
+class _PageStackState extends State<_PageStack> with SingleTickerProviderStateMixin {
+  late final AnimationController _c = AnimationController(
+    vsync: this,
+    duration: const Duration(milliseconds: 280),
+    value: 1,
+  );
+  int _prev = 0;
+
+  @override
+  void initState() {
+    super.initState();
+    _prev = widget.tab;
+  }
+
+  @override
+  void didUpdateWidget(_PageStack old) {
+    super.didUpdateWidget(old);
+    if (widget.tab != old.tab) {
+      _prev = old.tab;
+      _c.forward(from: 0);
+    }
+  }
+
+  @override
+  void dispose() {
+    _c.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final dir = widget.tab > _prev ? 1.0 : -1.0;
+    final curved = CurvedAnimation(parent: _c, curve: Curves.easeOutCubic);
+    return FadeTransition(
+      opacity: curved,
+      child: SlideTransition(
+        position: Tween(begin: Offset(dir * 0.07, 0), end: Offset.zero).animate(curved),
+        child: IndexedStack(index: widget.tab, children: widget.children),
+      ),
+    );
+  }
 }
 
 /* ═══════════ الرئيسية ═══════════ */
@@ -107,28 +165,10 @@ class HomeScreenState extends State<HomeScreen> {
   final scrollCtrl = ScrollController();
   List ads = [];
   List stores = [];
-  List offers = [];
-  List bestProducts = [];
-  List categories = [];
-  Map<int, List> catProducts = {}; // منتجات كل فئة (لأشرطة التمرير)
-  Map? expandedCat; // الفئة الموسّعة بـ «عرض الكل» في مكانها
-  bool expandedBest = false; // الأكثر مبيعاً موسّع
+  List bestProducts = []; // ترند اليوم (الأعلى تقييماً)
+  List recent = []; // جديدنا (الأحدث)
+  List outfits = []; // إطلالات تلقائية من مشتريات الزبون
   bool loading = true;
-  final qCtrl = TextEditingController();
-  String q = '';
-
-  // ═══ حالة الفئة والفلترة — مثل شي إن: تبقى بصفحة الرئيسية ═══
-  Map selCat = {};
-  List gridProducts = [];
-  bool gridLoading = false;
-  String sort = 'newest';
-  final minC = TextEditingController();
-  final maxC = TextEditingController();
-  final List<String> selColors = [];
-  final List<String> selSizes = [];
-  bool offerOnly = false;
-  List metaColors = [];
-  List metaSizes = [];
 
   @override
   void initState() {
@@ -143,9 +183,6 @@ class HomeScreenState extends State<HomeScreen> {
 
   @override
   void dispose() {
-    qCtrl.dispose();
-    minC.dispose();
-    maxC.dispose();
     scrollCtrl.dispose();
     super.dispose();
   }
@@ -153,372 +190,45 @@ class HomeScreenState extends State<HomeScreen> {
   /// العودة لأعلى الرئيسية — تستدعى من الشيل عند الضغط على أيقونة الرئيسية
   void scrollTop() {
     if (!mounted) return;
-    if (gridMode) {
-      // نلغي كل الفلترة: الفئة، البحث، السعر، الألوان، المقاسات، العروض
-      setState(() {
-        selCat = {};
-        q = '';
-        qCtrl.clear();
-        minC.clear();
-        maxC.clear();
-        selColors.clear();
-        selSizes.clear();
-        offerOnly = false;
-        expandedCat = null;
-        expandedBest = false;
-      });
-      _loadGrid(); // نعاود جلب الشبكة بعد التصفير — رئيسية محدثة بالكامل
-      WidgetsBinding.instance.addPostFrameCallback((_) {
-        if (mounted && scrollCtrl.hasClients) {
-          scrollCtrl.animateTo(0, duration: const Duration(milliseconds: 400), curve: Curves.easeOut);
-        }
-      });
-      return;
-    }
-    if (scrollCtrl.hasClients) {
-      scrollCtrl.animateTo(0, duration: const Duration(milliseconds: 400), curve: Curves.easeOut);
-    }
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (mounted && scrollCtrl.hasClients) {
+        scrollCtrl.animateTo(0, duration: const Duration(milliseconds: 400), curve: Curves.easeOut);
+      }
+    });
   }
 
   Future<void> _load() async {
     try {
       final results = await Future.wait([
-        Api.get('/api/stores'),
-        Api.get('/api/ads'),
-        Api.get('/api/offers'),
-        Api.get('/api/categories'),
         Api.get('/api/products?best=true'),
+        Api.get('/api/products'),
+        Api.get('/api/ads'),
+        Api.get('/api/stores'),
       ]);
-      stores = results[0]['stores'] ?? [];
-      AppState.i.storesCount.value = stores.length;
-      ads = results[1]['ads'] ?? [];
-      offers = results[2]['offers'] ?? [];
-      categories = results[3]['categories'] ?? [];
-      bestProducts = results[4]['products'] ?? [];
-      // منتجات كل فئة — لأشرطة التمرير بالرئيسية
-      final catReqs = categories.map((c) => Api.get('/api/products?category_id=${c['id']}')).toList();
-      final catRes = await Future.wait(catReqs);
-      catProducts = {
-        for (var i = 0; i < categories.length; i++) (categories[i]['id'] as int): (catRes[i]['products'] ?? []) as List,
-      };
-    } catch (_) {} finally {
-      if (mounted) setState(() => loading = false);
+      bestProducts = results[0]['products'] ?? [];
+      recent = results[1]['products'] ?? [];
+      ads = results[2]['ads'] ?? [];
+      stores = results[3]['stores'] ?? [];
+    } catch (_) {}
+    // إطلالات مشترياتك — منفصلة حتى لا تعطّل الرئيسية لو فشلت (سيرفر قديم/توكن منتهي)
+    if (Api.logged) {
+      try {
+        final d = await Api.get('/api/outfit/for-me');
+        if (mounted) outfits = (d['outfits'] ?? []) as List;
+      } catch (_) {}
     }
+    if (mounted) setState(() => loading = false);
   }
 
-/// شريط تمرير أفقي للمنتجات — صفّان مرتبان صفاً ثم عموداً (لو فئة فيها 2 منتج يكونن بنفس الصف)،
-  /// بنفس تصميم وحجم بوكس شبكة «عرض الكل» تماماً
-  Widget _prodStrip(List products) {
-    final w = MediaQuery.of(context).size.width / 2;
-    final cellH = w / 0.55; // نفس نسبة شبكة عرض الكل بالضبط
-    Widget cell(int idx) => idx < products.length
-        ? SizedBox(
-            width: w,
-            height: cellH,
-            child: Builder(builder: (_) {
-              final m = Map<String, dynamic>.from(products[idx] as Map);
-              return _ProdCard(product: m, onOpen: () => pushProduct(context, (m['store_id'] as num?)?.toInt() ?? 0, Product.fromJson(m).id));
-            }),
-          )
-        : const SizedBox(width: 0);
-    // فئة فيها منتجان فقط: صف واحد بارتفاع واحد — بلا فراغ سفلي قبل الفئة التالية
-    final twoRows = products.length >= 3;
-    return SizedBox(
-      height: twoRows ? cellH * 2 : cellH,
-      child: ListView.separated(
-        scrollDirection: Axis.horizontal,
-        padding: EdgeInsets.zero,
-        itemCount: (products.length + 3) ~/ 4,
-        separatorBuilder: (_, __) => const SizedBox.shrink(),
-        itemBuilder: (_, i) {
-          final base = i * 4;
-          final hasRow2 = base + 2 < products.length;
-          return SizedBox(
-            width: w * 2,
-            height: hasRow2 ? cellH * 2 : cellH,
-            child: Column(children: [
-              Expanded(child: Row(children: [cell(base), cell(base + 1)])),
-              if (hasRow2) Expanded(child: Row(children: [cell(base + 2), cell(base + 3)])),
-            ]),
-          );
-        },
-      ),
-    );
-  }
-
-  /// عنوان قسم + زر «عرض الكل/عرض أقل»
-  Widget _stripHeader(String title, {bool expanded = false, VoidCallback? onExpand}) {
+  /// عنوان قسم
+  Widget _sectionHeader(String title) {
     return Padding(
       padding: const EdgeInsets.fromLTRB(16, 20, 16, 0),
       child: Row(children: [
         Expanded(child: SectionTitle(title)),
-        if (onExpand != null)
-          GestureDetector(
-            onTap: onExpand,
-            child: Container(
-              padding: const EdgeInsets.symmetric(horizontal: 11, vertical: 6),
-              decoration: BoxDecoration(
-                color: expanded ? A.primaryDeep : A.primary.withOpacity(0.09),
-                borderRadius: BorderRadius.circular(999),
-                border: Border.all(color: expanded ? A.primaryDeep : A.primary.withOpacity(0.35)),
-              ),
-              child: Row(mainAxisSize: MainAxisSize.min, children: [
-                Text(expanded ? 'عرض أقل' : 'عرض الكل', style: A.t(10.5, c: expanded ? Colors.white : A.primary, w: FontWeight.w900)),
-                const SizedBox(width: 3),
-                Icon(expanded ? Icons.keyboard_arrow_up_rounded : Icons.keyboard_arrow_down_rounded, size: 15, color: expanded ? Colors.white : A.primary),
-              ]),
-            ),
-          ),
       ]),
     );
   }
-
-  /// توسيع فئة في مكانها — بدل صفحة جديدة
-  void _toggleCat(Map cat) {
-    setState(() {
-      if (expandedCat?['id'] == cat['id']) {
-        expandedCat = null;
-      } else {
-        expandedCat = cat;
-      }
-    });
-  }
-
-  bool get hasFilters =>
-      sort != 'newest' ||
-      minC.text.trim().isNotEmpty ||
-      maxC.text.trim().isNotEmpty ||
-      selColors.isNotEmpty ||
-      selSizes.isNotEmpty ||
-      offerOnly;
-
-  bool get gridMode => selCat.isNotEmpty || q.isNotEmpty || hasFilters;
-
-  Future<void> _loadGrid() async {
-    setState(() => gridLoading = true);
-    final qs = <String>[];
-    if (selCat.isNotEmpty) {
-      qs.add('category_id=${selCat['id']}');
-      if (metaColors.isEmpty || metaSizes.isEmpty) await _loadMeta();
-    } else {
-      metaColors = [];
-      metaSizes = [];
-    }
-    if (q.isNotEmpty) qs.add('q=$q');
-    if (sort != 'newest') qs.add('sort=$sort');
-    if (minC.text.trim().isNotEmpty) qs.add('min_price=${minC.text.trim()}');
-    if (maxC.text.trim().isNotEmpty) qs.add('max_price=${maxC.text.trim()}');
-    if (selColors.isNotEmpty) qs.add('colors=${selColors.join(',')}');
-    if (selSizes.isNotEmpty) qs.add('sizes=${selSizes.join(',')}');
-    if (offerOnly) qs.add('offer=true');
-    try {
-      final d = await Api.get('/api/products?${qs.join('&')}');
-      gridProducts = d['products'] ?? [];
-    } catch (_) {} finally {
-      if (mounted) setState(() => gridLoading = false);
-    }
-  }
-
-  Future<void> _loadMeta() async {
-    try {
-      final d = await Api.get('/api/products/meta?category_id=${selCat['id']}');
-      metaColors = d['colors'] ?? [];
-      metaSizes = d['sizes'] ?? [];
-    } catch (_) {}
-  }
-
-  void _pickCat(Map c) {
-    setState(() {
-      if (selCat['id'] == c['id']) {
-        selCat = {};
-      } else {
-        selCat = c;
-      }
-      _resetFilters();
-    });
-    _loadGrid();
-  }
-
-  void _resetFilters() {
-    sort = 'newest';
-    minC.clear();
-    maxC.clear();
-    selColors.clear();
-    selSizes.clear();
-    offerOnly = false;
-    metaColors = [];
-    metaSizes = [];
-  }
-
-  void _clearFilters() {
-    setState(_resetFilters);
-    _loadGrid();
-  }
-
-  Future<void> _openFilters() async {
-    final applied = await _openFilterSheet();
-    if (applied == true) _loadGrid();
-  }
-
-  Future<bool?> _openFilterSheet() {
-    return showModalBottomSheet<bool>(
-      context: context,
-      isScrollControlled: true,
-      backgroundColor: A.bg,
-      shape: const RoundedRectangleBorder(borderRadius: BorderRadius.vertical(top: Radius.circular(26))),
-      builder: (ctx) => StatefulBuilder(
-        builder: (ctx, setS) => Padding(
-          padding: EdgeInsets.only(bottom: MediaQuery.of(ctx).viewInsets.bottom),
-          child: SafeArea(
-            child: SingleChildScrollView(
-              padding: const EdgeInsets.fromLTRB(18, 14, 18, 20),
-              child: Column(mainAxisSize: MainAxisSize.min, crossAxisAlignment: CrossAxisAlignment.stretch, children: [
-                Row(children: [
-                  Text('الفلترة', style: TextStyle(fontSize: 18, fontWeight: FontWeight.w900)),
-                  const Spacer(),
-                  TextButton(onPressed: () { _clearFilters(); setS(() {}); }, child: const Text('مسح الكل', style: TextStyle(fontWeight: FontWeight.w800, color: A.danger))),
-                  IconButton(onPressed: () => Navigator.pop(ctx, false), icon: const Icon(Icons.close_rounded)),
-                ]),
-                Text('الترتيب', style: A.t(12.5, w: FontWeight.w900)),
-                const SizedBox(height: 8),
-                Wrap(spacing: 8, runSpacing: 8, children: [
-                  _chipFilter('newest', 'الأحدث', sort, (v) => setS(() => sort = v as String)),
-                  _chipFilter('best', 'الأفضل تقييماً', sort, (v) => setS(() => sort = v as String)),
-                  _chipFilter('discount', 'الأكثر خصماً', sort, (v) => setS(() => sort = v as String)),
-                  _chipFilter('price_asc', 'السعر: من الأقل', sort, (v) => setS(() => sort = v as String)),
-                  _chipFilter('price_desc', 'السعر: من الأعلى', sort, (v) => setS(() => sort = v as String)),
-                ]),
-                const SizedBox(height: 16),
-                Text('السعر (د.ع)', style: A.t(12.5, w: FontWeight.w900)),
-                const SizedBox(height: 8),
-                Row(children: [
-                  Expanded(child: _priceField('من', minC)),
-                  const Padding(padding: EdgeInsets.symmetric(horizontal: 10), child: Text('—', style: TextStyle(fontSize: 14, color: A.muted))),
-                  Expanded(child: _priceField('إلى', maxC)),
-                ]),
-                const SizedBox(height: 16),
-                if (metaColors.isNotEmpty) ...[
-                  Text('اللون', style: A.t(12.5, w: FontWeight.w900)),
-                  const SizedBox(height: 8),
-                  Wrap(spacing: 8, runSpacing: 8, children: [
-                    for (final c in metaColors) ...[
-                      GestureDetector(
-                        onTap: () => setS(() {
-                          selColors.contains(c) ? selColors.remove(c) : selColors.add('$c');
-                        }),
-                        child: Container(
-                          padding: const EdgeInsets.symmetric(horizontal: 11, vertical: 6),
-                          decoration: BoxDecoration(
-                            color: selColors.contains(c) ? A.primary : Colors.white,
-                            borderRadius: BorderRadius.circular(999),
-                            border: Border.all(color: selColors.contains(c) ? A.primary : A.line, width: 1.2),
-                          ),
-                          child: Row(mainAxisSize: MainAxisSize.min, children: [
-                            Container(
-                              width: 11, height: 11,
-                              decoration: BoxDecoration(color: _dot('$c'), shape: BoxShape.circle, border: Border.all(color: Colors.black12)),
-                            ),
-                            const SizedBox(width: 6),
-                            Text('$c', style: A.t(11.5, c: selColors.contains(c) ? Colors.white : A.ink, w: FontWeight.w800)),
-                          ]),
-                        ),
-                      ),
-                    ],
-                  ]),
-                  const SizedBox(height: 16),
-                ],
-                if (metaSizes.isNotEmpty) ...[
-                  Text('المقاس', style: A.t(12.5, w: FontWeight.w900)),
-                  const SizedBox(height: 8),
-                  Wrap(spacing: 8, runSpacing: 8, children: [
-                    for (final s in metaSizes) ...[
-                      GestureDetector(
-                        onTap: () => setS(() {
-                          selSizes.contains(s) ? selSizes.remove(s) : selSizes.add('$s');
-                        }),
-                        child: Container(
-                          padding: const EdgeInsets.symmetric(horizontal: 13, vertical: 6),
-                          decoration: BoxDecoration(
-                            color: selSizes.contains(s) ? A.primary : Colors.white,
-                            borderRadius: BorderRadius.circular(9),
-                            border: Border.all(color: selSizes.contains(s) ? A.primary : A.line, width: 1.2),
-                          ),
-                          child: Text('$s', style: A.t(11.5, c: selSizes.contains(s) ? Colors.white : A.ink, w: FontWeight.w800)),
-                        ),
-                      ),
-                    ],
-                  ]),
-                  const SizedBox(height: 8),
-                ],
-                Row(children: [
-                  const Icon(Icons.local_fire_department_rounded, color: A.accent, size: 19),
-                  const SizedBox(width: 8),
-                  const Expanded(child: Text('العروض والخصومات فقط', style: TextStyle(fontWeight: FontWeight.w800, fontSize: 12.5))),
-                  Switch(value: offerOnly, activeColor: A.accent, onChanged: (v) => setS(() => offerOnly = v)),
-                ]),
-                const SizedBox(height: 10),
-                SolidBtn(label: 'عرض النتائج', onTap: () => Navigator.pop(ctx, true)),
-              ]),
-            ),
-          ),
-        ),
-      ),
-    );
-  }
-
-  Widget _chipFilter(String val, String label, String cur, ValueChanged onTap) {
-    final active = cur == val;
-    return GestureDetector(
-      onTap: () => onTap(val),
-      child: Container(
-        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 7),
-        decoration: BoxDecoration(
-          color: active ? A.primary : Colors.white,
-          borderRadius: BorderRadius.circular(999),
-          border: Border.all(color: active ? A.primary : A.line, width: 1.2),
-        ),
-        child: Text(label, style: A.t(11.5, c: active ? Colors.white : A.ink, w: FontWeight.w800)),
-      ),
-    );
-  }
-
-  Widget _priceField(String hint, TextEditingController c) {
-    return TextField(
-      controller: c,
-      keyboardType: TextInputType.number,
-      decoration: InputDecoration(hintText: hint, isDense: true, filled: true, fillColor: Colors.white,
-          contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
-          enabledBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(10), borderSide: const BorderSide(color: A.line)),
-          focusedBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(10), borderSide: const BorderSide(color: A.primary, width: 1.4))),
-    );
-  }
-
-  Color _dot(String name) {
-    final n = '$name'.toLowerCase().trim();
-    const map = {
-      'أحمر': Color(0xFFE7352B), 'احمر': Color(0xFFE7352B), 'red': Color(0xFFE7352B),
-      'أزرق': Color(0xFF2453CB), 'ازرق': Color(0xFF2453CB), 'blue': Color(0xFF2453CB),
-      'أسود': Color(0xFF202126), 'اسود': Color(0xFF202126), 'black': Color(0xFF202126),
-      'أبيض': Color(0xFFF5F5F5), 'ابيض': Color(0xFFF5F5F5), 'white': Color(0xFFF5F5F5),
-      'أخضر': Color(0xFF1E8A4C), 'اخضر': Color(0xFF1E8A4C), 'green': Color(0xFF1E8A4C),
-      'أصفر': Color(0xFFF2C513), 'اصفر': Color(0xFFF2C513), 'yellow': Color(0xFFF2C513),
-      'بنفسجي': Color(0xFF7C3AED), 'purple': Color(0xFF7C3AED),
-      'وردي': Color(0xFFF472B6), 'pink': Color(0xFFF472B6),
-      'رمادي': Color(0xFF9CA3AF), 'grey': Color(0xFF9CA3AF),
-      'بني': Color(0xFF7C4A23), 'brown': Color(0xFF7C4A23),
-      'برتقالي': Color(0xFFF97316), 'orange': Color(0xFFF97316),
-      'بيج': Color(0xFFE5CBB0), 'ذهبي': Color(0xFFD4AF37),
-    };
-    return map.entries.firstWhere((e) => n.contains(e.key), orElse: () => const MapEntry('', Color(0xFFD9DEE7))).value;
-  }
-
-  String _sortLabel(String s) => switch (s) {
-        'best' => 'الأفضل تقييماً',
-        'discount' => 'الأكثر خصماً',
-        'price_asc' => 'السعر: من الأقل',
-        'price_desc' => 'السعر: من الأعلى',
-        _ => 'الأحدث',
-      };
 
   @override
   Widget build(BuildContext context) {
@@ -537,7 +247,7 @@ class HomeScreenState extends State<HomeScreen> {
           ? const Loader()
           : Stack(children: [
               RefreshIndicator(
-                onRefresh: () async { await _load(); if (gridMode) _loadGrid(); },
+                onRefresh: () async { await _load(); },
                 color: A.primary,
                 child: ListView(
                   controller: scrollCtrl,
@@ -545,104 +255,6 @@ class HomeScreenState extends State<HomeScreen> {
                   children: [
                     // تنبيه النسخة الأحدث (من الموقع)
                     const UpdateBanner(),
-                    // البحث + زر الفلتر في نفس الصف (الفلتر على اليسار)
-                    Padding(
-                      padding: const EdgeInsets.fromLTRB(16, 12, 16, 0),
-                      child: Row(children: [
-                        Expanded(
-                          child: TextField(
-                            controller: qCtrl,
-                            onChanged: (v) => setState(() => q = v.trim()),
-                            onSubmitted: (_) => _loadGrid(),
-                            style: A.t(13, w: FontWeight.w700),
-                            textInputAction: TextInputAction.search,
-                            decoration: InputDecoration(
-                              hintText: 'ابحث عن قميص، فستان، شنطة، مكياج... 🔍',
-                              hintStyle: A.t(12.5, c: A.muted, w: FontWeight.w600),
-                              prefixIcon: IconButton(
-                                icon: const Icon(Icons.search_rounded, color: A.primary),
-                                onPressed: _loadGrid,
-                              ),
-                              suffixIcon: q.isNotEmpty
-                                  ? IconButton(
-                                      icon: const Icon(Icons.close_rounded, size: 19, color: A.muted),
-                                      onPressed: () {
-                                        qCtrl.clear();
-                                        setState(() => q = '');
-                                        _loadGrid();
-                                      },
-                                    )
-                                  : null,
-                              filled: true,
-                              fillColor: Colors.white.withOpacity(0.85),
-                              isDense: true,
-                              contentPadding: const EdgeInsets.symmetric(vertical: 13),
-                              enabledBorder: OutlineInputBorder(
-                                borderRadius: BorderRadius.circular(16),
-                                borderSide: BorderSide(color: Colors.white.withOpacity(0.55), width: 1.1),
-                              ),
-                              focusedBorder: OutlineInputBorder(
-                                borderRadius: BorderRadius.circular(16),
-                                borderSide: const BorderSide(color: A.primaryLight, width: 1.4),
-                              ),
-                            ),
-                          ),
-                        ),
-                        const SizedBox(width: 10),
-                        GestureDetector(
-                          onTap: _openFilters,
-                          child: Container(
-                            width: 48,
-                            height: 48,
-                            decoration: BoxDecoration(
-                              color: hasFilters ? A.primary : Colors.white,
-                              borderRadius: BorderRadius.circular(16),
-                              border: Border.all(color: hasFilters ? A.primary : A.line, width: 1.2),
-                              boxShadow: hasFilters ? [BoxShadow(color: A.primary.withOpacity(0.3), blurRadius: 12, offset: const Offset(0, 4))] : null,
-                            ),
-                            alignment: Alignment.center,
-                            child: Stack(clipBehavior: Clip.none, children: [
-                              Icon(Icons.tune_rounded, size: 22, color: hasFilters ? Colors.white : A.ink),
-                              if (hasFilters)
-                                Positioned(
-                                  left: -6,
-                                  top: -8,
-                                  child: Container(
-                                    padding: const EdgeInsets.all(3),
-                                    decoration: const BoxDecoration(color: A.accent, shape: BoxShape.circle),
-                                    child: Text(
-                                      '${[sort != 'newest' ? 1 : 0, minC.text.trim().isNotEmpty || maxC.text.trim().isNotEmpty ? 1 : 0, selColors.length > 0 ? 1 : 0, selSizes.length > 0 ? 1 : 0, offerOnly ? 1 : 0].reduce((a, b) => a + b)}',
-                                      style: const TextStyle(fontSize: 8, color: Colors.white, fontWeight: FontWeight.w900),
-                                    ),
-                                  ),
-                                ),
-                            ]),
-                          ),
-                        ),
-                      ]),
-                    ),
-                    // الأقسام — شيبز مثل الديمو (بلا زر «الكل»)
-                    if (categories.isNotEmpty) ...[
-                      SizedBox(
-                        height: 52,
-                        child: ListView(
-                          scrollDirection: Axis.horizontal,
-                          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 6),
-                          children: [
-                            for (final c in categories)
-                              Padding(
-                                padding: const EdgeInsets.only(right: 8),
-                                child: ChipG(
-                                  icon: c['icon'] ?? '🛍',
-                                  label: c['name'] ?? '',
-                                  active: selCat['id'] == c['id'],
-                                  onTap: () => _pickCat(Map<String, dynamic>.from(c as Map)),
-                                ),
-                              ),
-                          ],
-                        ),
-                      ),
-                    ],
                     // البانر الرئيسي — سلايدر تلقائي
                     _HeroCarousel(
                       ads: ads,
@@ -650,41 +262,11 @@ class HomeScreenState extends State<HomeScreen> {
                       onOpen: (a) {
                         final sid = a['store_id'];
                         if (sid != null) widget.onGoStore(sid);
-                        else pushStores(context);
                       },
                     ),
-                    // العروض
-                    if (offers.isNotEmpty && !gridMode) ...[
-                      const Padding(
-                        padding: EdgeInsets.fromLTRB(16, 20, 16, 0),
-                        child: SectionTitle('⚡ عروض اليوم'),
-                      ),
-                      SizedBox(
-                        height: 196,
-                        child: ListView.separated(
-                          scrollDirection: Axis.horizontal,
-                          padding: const EdgeInsets.symmetric(horizontal: 16),
-                          itemCount: offers.length,
-                          separatorBuilder: (_, __) => const SizedBox(width: 11),
-                          itemBuilder: (_, i) {
-                            final of = Map<String, dynamic>.from(offers[i] as Map);
-                            final prod = Product.fromJson(Map<String, dynamic>.from(of['product'] as Map));
-                            return _ProdMiniCard(
-                              productJson: Map<String, dynamic>.from(of['product'] as Map),
-                              storeName: of['store_name'] ?? '',
-                              storeId: (of['product']['store_id'] as num?)?.toInt() ?? 0,
-                              onOpen: () => pushProduct(context, of['product']['store_id'], prod.id),
-                            );
-                          },
-                        ),
-                      ),
-                    ],
                     // محلات مميزة
-                    if (stores.isNotEmpty && !gridMode) ...[
-                      const Padding(
-                        padding: EdgeInsets.fromLTRB(16, 20, 16, 0),
-                        child: SectionTitle('محلات مميزة'),
-                      ),
+                    if (stores.isNotEmpty) ...[
+                      _sectionHeader('⭐ محلات مميزة'),
                       SizedBox(
                         height: 158,
                         child: ListView.separated(
@@ -698,151 +280,144 @@ class HomeScreenState extends State<HomeScreen> {
                             return _StoreMiniCard(
                               data: Map<String, dynamic>.from(s as Map),
                               cover: covers[i % covers.length],
-                              onOpen: () => widget.onGoStore(s['id']),
+                              onOpen: () => widget.onGoStore((s['id'] as num).toInt()),
                             );
                           },
                         ),
                       ),
                     ],
-                    // ═══ قسم المنتجات — عنوان ديناميكي (للشبكة فقط) ═══
-                    if (gridMode)
-                      Padding(
-                      padding: const EdgeInsets.fromLTRB(16, 20, 16, 0),
-                      child: Row(children: [
-                        Expanded(
-                          child: SectionTitle(
-                            q.isNotEmpty
-                                ? 'نتائج البحث عن «$q»'
-                                : selCat.isNotEmpty
-                                    ? '${selCat['icon'] ?? ''} ${selCat['name']}'
-                                    : 'المنتجات',
-                          ),
-                        ),
-                      ]),
-                    ),
-                    // شرائح الفلاتر النشطة (مثل شي إن)
-                    if (hasFilters)
+                    // ═══ إطلالات تلقائية من مشترياتك ═══
+                    if (outfits.isNotEmpty) ...[
+                      _sectionHeader('👔 إطلالات من مشترياتك'),
+                      const SizedBox(height: 10),
                       SizedBox(
-                        height: 44,
-                        child: ListView(
+                        height: 128,
+                        child: ListView.separated(
                           scrollDirection: Axis.horizontal,
-                          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 7),
-                          children: [
-                            if (sort != 'newest')
-                              _activeChip(_sortLabel(sort), () => setState(() { sort = 'newest'; _loadGrid(); })),
-                            if (minC.text.trim().isNotEmpty || maxC.text.trim().isNotEmpty)
-                              _activeChip('سعر: ${minC.text.trim().isEmpty ? '0' : minC.text.trim()}-${maxC.text.trim().isEmpty ? '∞' : maxC.text.trim()}', () => setState(() { minC.clear(); maxC.clear(); _loadGrid(); })),
-                            for (final c in List.of(selColors))
-                              _activeChip('لون: $c', () => setState(() { selColors.remove(c); _loadGrid(); })),
-                            for (final s in List.of(selSizes))
-                              _activeChip('مقاس: $s', () => setState(() { selSizes.remove(s); _loadGrid(); })),
-                            if (offerOnly)
-                              _activeChip('عروض فقط', () => setState(() { offerOnly = false; _loadGrid(); })),
-                            _activeChip('مسح الكل', _clearFilters, danger: true),
-                          ],
+                          padding: const EdgeInsets.symmetric(horizontal: 16),
+                          itemCount: outfits.length,
+                          separatorBuilder: (_, __) => const SizedBox(width: 11),
+                          itemBuilder: (_, i) {
+                            final o = Map<String, dynamic>.from(outfits[i] as Map);
+                            final seed = (o['seed'] ?? {}) as Map;
+                            final of = (o['outfit'] ?? {}) as Map;
+                            final slots = (of['slots'] ?? []) as List;
+                            final pid = (seed['id'] as num?)?.toInt() ?? 0;
+                            return GestureDetector(
+                              onTap: () => Navigator.push(context, MaterialPageRoute(
+                                builder: (_) => OutfitScreen(productId: pid, seedName: '${seed['name'] ?? ''}', seedImage: '${seed['image'] ?? ''}'),
+                              )),
+                              child: Container(
+                                width: 224,
+                                padding: const EdgeInsets.all(10),
+                                decoration: BoxDecoration(
+                                  color: Colors.white,
+                                  borderRadius: BorderRadius.circular(17),
+                                  border: Border.all(color: A.line),
+                                ),
+                                child: Row(children: [
+                                  productImage('${seed['image'] ?? ''}', size: 62, radius: 14),
+                                  const SizedBox(width: 10),
+                                  Expanded(
+                                    child: Column(crossAxisAlignment: CrossAxisAlignment.start, mainAxisAlignment: MainAxisAlignment.center, children: [
+                                      Text('${seed['name'] ?? ''}', style: A.t(12, w: FontWeight.w900), maxLines: 1, overflow: TextOverflow.ellipsis),
+                                      const SizedBox(height: 3),
+                                      Row(children: [
+                                        for (final s in slots.take(4))
+                                          Padding(
+                                            padding: const EdgeInsets.only(left: 3),
+                                            child: productImage('${s['image'] ?? ''}', size: 24, radius: 7),
+                                          ),
+                                      ]),
+                                      const SizedBox(height: 5),
+                                      Text('${slots.length} قطع · ${money((of['total'] ?? 0) as num)} · توافق ${of['fit']}/100',
+                                          style: A.t(9.5, c: A.muted, w: FontWeight.w800)),
+                                    ]),
+                                  ),
+                                  const Icon(Icons.chevron_left_rounded, color: A.primary),
+                                ]),
+                              ),
+                            );
+                          },
                         ),
                       ),
-                    // الشبكة
-                    if (gridMode)
-                      gridLoading
-                          ? const Padding(padding: EdgeInsets.all(30), child: Loader())
-                          : gridProducts.isEmpty
-                              ? const Padding(padding: EdgeInsets.fromLTRB(16, 30, 16, 0), child: EmptyState(icon: '📦', title: 'ماكو منتجات مطابقة', sub: 'جرب كلمة أو فلترة أخرى'))
-                              : GridView.count(
-                                  crossAxisCount: 2,
-                                  shrinkWrap: true,
-                                  physics: const NeverScrollableScrollPhysics(),
-                                  mainAxisSpacing: 0,
-                                  crossAxisSpacing: 0,
-                                  childAspectRatio: 0.55,
-                                  children: gridProducts.map((bp) {
-                                    final m = Map<String, dynamic>.from(bp as Map);
-                                    return _ProdCard(product: m, onOpen: () => pushProduct(context, m['store_id'], m['id']));
-                                  }).toList(),
-                                )
-                    else ...[
-                      // شريط الأكثر مبيعاً + زر عرض الكل
-                      if (bestProducts.isNotEmpty) ...[
-                        _stripHeader('🔥 الأكثر مبيعاً',
-                            expanded: expandedBest, onExpand: () => setState(() => expandedBest = !expandedBest)),
-                        const SizedBox(height: 10),
-                        if (expandedBest)
-                          GridView.count(
-                            crossAxisCount: 2,
-                            shrinkWrap: true,
-                            physics: const NeverScrollableScrollPhysics(),
-                            mainAxisSpacing: 0,
-                            crossAxisSpacing: 0,
-                            childAspectRatio: 0.55,
-                            children: bestProducts.map((bp) {
-                              final m = Map<String, dynamic>.from(bp as Map);
-                              return _ProdCard(product: m, onOpen: () => pushProduct(context, m['store_id'], m['id']));
-                            }).toList(),
-                          )
-                        else
-                          _prodStrip(bestProducts),
-                      ],
-                      // شريط لكل فئة + زر عرض الكل (يتوسع في مكانه)
-                      for (final c in categories)
-                        if ((catProducts[c['id']] ?? []).isNotEmpty) ...[
-                          _stripHeader('${c['icon'] ?? '🛍'} ${c['name']}',
-                              expanded: expandedCat?['id'] == c['id'],
-                              onExpand: () => _toggleCat(Map<String, dynamic>.from(c as Map))),
-                          const SizedBox(height: 10),
-                          if (expandedCat?['id'] == c['id'])
-                            GridView.count(
-                              crossAxisCount: 2,
-                              shrinkWrap: true,
-                              physics: const NeverScrollableScrollPhysics(),
-                              mainAxisSpacing: 0,
-                              crossAxisSpacing: 0,
-                              childAspectRatio: 0.55,
-                              children: catProducts[c['id']]!.map((bp) {
-                                final m = Map<String, dynamic>.from(bp as Map);
-                                return _ProdCard(product: m, onOpen: () => pushProduct(context, m['store_id'], m['id']));
-                              }).toList(),
-                            )
-                          else
-                            _prodStrip(catProducts[c['id']]!),
-                        ],
-                      if (bestProducts.isEmpty)
-                        const Padding(
-                          padding: EdgeInsets.symmetric(horizontal: 16),
-                          child: Text('ماكو منتجات بعد', style: TextStyle(fontSize: 12.5, color: A.muted)),
-                        ),
                     ],
+                    // ═══ ترند اليوم — كل المنتجات شبكة كاملة (بلا زر عرض الكل) ═══
+                    if (bestProducts.isNotEmpty) ...[
+                      _sectionHeader('🔥 ترند اليوم'),
+                      const SizedBox(height: 10),
+                      GridView.count(
+                        crossAxisCount: 2,
+                        shrinkWrap: true,
+                        physics: const NeverScrollableScrollPhysics(),
+                        mainAxisSpacing: 0,
+                        crossAxisSpacing: 0,
+                        childAspectRatio: 0.55,
+                        children: bestProducts.map((bp) {
+                          final m = Map<String, dynamic>.from(bp as Map);
+                          return ProdCard(product: m, onOpen: () => pushProduct(context, m['store_id'], m['id']));
+                        }).toList(),
+                      ),
+                    ],
+                    // ═══ جديدنا — شريط أفقي بصفين ═══
+                    if (recent.isNotEmpty) ...[
+                      _sectionHeader('✨ جديدنا'),
+                      const SizedBox(height: 10),
+                      prodStrip(context, recent),
+                    ],
+                    if (bestProducts.isEmpty && recent.isEmpty)
+                      const Padding(
+                        padding: EdgeInsets.symmetric(horizontal: 16),
+                        child: Text('ماكو منتجات بعد', style: TextStyle(fontSize: 12.5, color: A.muted)),
+                      ),
                   ],
                 ),
               ),
             ]),
     );
   }
-
-  Widget _activeChip(String label, VoidCallback onDelete, {bool danger = false}) {
-    return Padding(
-      padding: const EdgeInsets.only(left: 6),
-      child: InputChip(
-        label: Text(label, style: A.t(10.5, c: danger ? A.danger : A.ink, w: FontWeight.w800)),
-        backgroundColor: danger ? A.danger.withOpacity(0.08) : A.primary.withOpacity(0.08),
-        side: BorderSide(color: danger ? A.danger : A.primary, width: 1),
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(9)),
-        onDeleted: onDelete,
-        deleteIcon: Icon(Icons.close_rounded, size: 14, color: danger ? A.danger : A.primary),
-        visualDensity: VisualDensity.compact,
-        padding: EdgeInsets.zero,
-      ),
-    );
-  }
 }
 
-void pushStores(BuildContext context) {
-  Navigator.push(
-      context,
-      MaterialPageRoute(
-          builder: (_) => StoresScreen(onOpen: (s) => pushStore(context, s.id))));
+/// شريط تمرير أفقي للمنتجات — صفّان مرتبان صفاً ثم عموداً،
+  /// بنفس تصميم وحجم بوكس شبكة «عرض الكل» تماماً (مشترك: الرئيسية + البحث)
+Widget prodStrip(BuildContext context, List products) {
+  final w = MediaQuery.of(context).size.width / 2;
+  final cellH = w / 0.55; // نفس نسبة شبكة عرض الكل بالضبط
+  Widget cell(int idx) => idx < products.length
+      ? SizedBox(
+          width: w,
+          height: cellH,
+          child: Builder(builder: (_) {
+            final m = Map<String, dynamic>.from(products[idx] as Map);
+            return ProdCard(product: m, onOpen: () => pushProduct(context, (m['store_id'] as num?)?.toInt() ?? 0, Product.fromJson(m).id));
+          }),
+        )
+      : const SizedBox(width: 0);
+  final twoRows = products.length >= 3;
+  return SizedBox(
+    height: twoRows ? cellH * 2 : cellH,
+    child: ListView.separated(
+      scrollDirection: Axis.horizontal,
+      padding: EdgeInsets.zero,
+      itemCount: (products.length + 3) ~/ 4,
+      separatorBuilder: (_, __) => const SizedBox.shrink(),
+      itemBuilder: (_, i) {
+        final base = i * 4;
+        final hasRow2 = base + 2 < products.length;
+        return SizedBox(
+          width: w * 2,
+          height: hasRow2 ? cellH * 2 : cellH,
+          child: Column(children: [
+            Expanded(child: Row(children: [cell(base), cell(base + 1)])),
+            if (hasRow2) Expanded(child: Row(children: [cell(base + 2), cell(base + 3)])),
+          ]),
+        );
+      },
+    ),
+  );
 }
 
-/// سلايدر الإعلانات — يتحرك تلقائياً إذا كانت أكثر من إعلان، مع نقاط مؤشر
+/// سلايدر الإعلانات — يتحرك تلقائياً، مع نقاط مؤشر واسم المتجر تحت النص
 class _HeroCarousel extends StatefulWidget {
   final List ads;
   final List stores;
@@ -854,17 +429,17 @@ class _HeroCarousel extends StatefulWidget {
 
 class _HeroCarouselState extends State<_HeroCarousel> {
   late final PageController _pc = PageController();
-  Timer? _timer;
   int _page = 0;
+  Timer? _timer;
 
   @override
   void initState() {
     super.initState();
     if (widget.ads.length > 1) {
       _timer = Timer.periodic(const Duration(seconds: 4), (_) {
-        if (!mounted || !_pc.hasClients) return;
-        _pc.animateToPage((_page + 1) % widget.ads.length,
-            duration: const Duration(milliseconds: 450), curve: Curves.easeOutCubic);
+        if (mounted) {
+          _pc.nextPage(duration: const Duration(milliseconds: 420), curve: Curves.easeOut);
+        }
       });
     }
   }
@@ -876,34 +451,25 @@ class _HeroCarouselState extends State<_HeroCarousel> {
     super.dispose();
   }
 
-  Widget _banner(Map a) {
-    final sun = a['theme'] == 'sun';
-    // صورة الإعلان إن وجدت، وإلا غلاف المتجر، وإلا التدرج
-    final fromStore = (a['store_cover'] ?? '').toString().isNotEmpty ? a['store_cover'].toString() : '';
-    final coverOfStore = fromStore.isNotEmpty
-        ? fromStore
-        : (widget.stores.firstWhere((s) => s['id'] == a['store_id'], orElse: () => null)?['cover']?.toString() ?? '');
-    final bgImage = (a['image'] ?? '').toString().isNotEmpty ? a['image'].toString() : coverOfStore;
+  Widget _banner(Map<String, dynamic> m) {
+    final img = (m['image'] ?? '').toString();
+    final title = (m['title'] ?? '').toString();
+    final subtitle = (m['subtitle'] ?? m['text'] ?? '').toString();
+    final storeName = m['store_name']?.toString() ?? '';
+    final hasImg = img.startsWith('http') || img.startsWith('/') || img.startsWith('data:') || img.startsWith('/9j');
     return GestureDetector(
-      onTap: () => widget.onOpen(Map<String, dynamic>.from(a)),
-      child: Container(
-        clipBehavior: Clip.antiAlias,
-        decoration: BoxDecoration(
-          borderRadius: BorderRadius.circular(20),
-        ),
+      onTap: () => widget.onOpen(m),
+      child: ClipRRect(
+        borderRadius: BorderRadius.circular(20),
         child: Stack(fit: StackFit.expand, children: [
-          // الخلفية: صورة الإعلان / غلاف المتجر / التدرج
-          if (bgImage.isNotEmpty)
-            productImageBox(bgImage, base: Api.base)
+          if (hasImg)
+            productImageBox(img)
           else
-            DecoratedBox(
+            const DecoratedBox(
               decoration: BoxDecoration(
-                gradient: sun
-                    ? const LinearGradient(colors: [A.accentDeep, A.accent])
-                    : const LinearGradient(colors: [A.primaryDeep, A.primary, A.cyan]),
+                gradient: LinearGradient(colors: [Color(0xFF12294E), Color(0xFF161F38)]),
               ),
             ),
-          // تغميق سفلي لقراءة النص
           const DecoratedBox(
             decoration: BoxDecoration(
               gradient: LinearGradient(
@@ -913,61 +479,14 @@ class _HeroCarouselState extends State<_HeroCarousel> {
               ),
             ),
           ),
-          if (bgImage.isEmpty)
-            Align(
-              alignment: Alignment.centerLeft,
-              child: Text(a['theme'] == 'sun' ? '🛍️' : '💎', style: A.t(58)),
-            ),
-          // النص والصور
-          Padding(
-            padding: const EdgeInsets.fromLTRB(14, 12, 14, 12),
-            child: Column(crossAxisAlignment: CrossAxisAlignment.start, mainAxisAlignment: MainAxisAlignment.end, children: [
-              Row(children: [
-                // صورة غلاف المتجر المصغرة + الاسم
-                if (coverOfStore.isNotEmpty) ...[
-                  ClipRRect(
-                    borderRadius: BorderRadius.circular(8),
-                    child: SizedBox(width: 26, height: 26, child: productImageBox(coverOfStore, base: Api.base)),
-                  ),
-                  const SizedBox(width: 6),
-                ],
-                Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
-                  decoration: BoxDecoration(
-                    color: sun ? const Color(0xFFFFF3C4) : Colors.black.withOpacity(0.35),
-                    borderRadius: BorderRadius.circular(999),
-                    border: Border.all(color: Colors.white.withOpacity(0.25)),
-                  ),
-                  child: Text('${a['store_name'] ?? 'عرض مميز'}', style: A.t(10.5, c: sun ? A.ink : Colors.white, w: FontWeight.w900)),
-                ),
-              ]),
-              const SizedBox(height: 8),
-              Row(crossAxisAlignment: CrossAxisAlignment.end, children: [
-                Expanded(
-                  child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-                    Text(a['title'] ?? 'عرض اليوم', style: A.t(20, c: Colors.white, w: FontWeight.w900), maxLines: 2, overflow: TextOverflow.ellipsis),
-                    if ((a['description'] ?? '').toString().isNotEmpty) ...[
-                      const SizedBox(height: 4),
-                      Text(a['description'].toString(), style: A.t(11, c: Colors.white.withOpacity(0.92), w: FontWeight.w600), maxLines: 2, overflow: TextOverflow.ellipsis),
-                    ],
-                  ]),
-                ),
-                const SizedBox(width: 12),
-                // زر تسوق الآن — واضح في الطرف المقابل
-                Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
-                  decoration: BoxDecoration(
-                    color: Colors.white,
-                    borderRadius: BorderRadius.circular(999),
-                    boxShadow: [BoxShadow(color: Colors.black.withOpacity(0.25), blurRadius: 10, offset: const Offset(0, 3))],
-                  ),
-                  child: const Row(mainAxisSize: MainAxisSize.min, children: [
-                    Text('تسوق الآن', style: TextStyle(fontSize: 12, fontWeight: FontWeight.w900, color: A.primary)),
-                    SizedBox(width: 4),
-                    Icon(Icons.arrow_back_rounded, size: 14, color: A.primary),
-                  ]),
-                ),
-              ]),
+          Positioned(
+            right: 14,
+            bottom: 12,
+            left: 14,
+            child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+              if (title.isNotEmpty) Text(title, style: A.t(17, c: Colors.white, w: FontWeight.w900)),
+              if (subtitle.isNotEmpty) Text(subtitle, style: A.t(11, c: Colors.white.withOpacity(0.9))),
+              if (storeName.isNotEmpty) Text(storeName, style: A.t(10, c: Colors.white.withOpacity(0.75))),
             ]),
           ),
         ]),
@@ -978,43 +497,46 @@ class _HeroCarouselState extends State<_HeroCarousel> {
   @override
   Widget build(BuildContext context) {
     final ads = widget.ads;
-    return Column(children: [
-      Padding(
-        padding: const EdgeInsets.fromLTRB(12, 10, 12, 0),
-        child: ads.isEmpty
-            ? SizedBox(height: 180, child: _banner({
-                'title': 'كل ما تتمناه بمكان واحد',
-                'theme': 'navy',
-                'store_name': 'مول الأزياء',
-                'description': 'لرجالك ونسائك وأطفالك — خصومات على كل الطلبيات',
-              }))
-            : SizedBox(
-                height: 180,
-                child: PageView.builder(
-                  controller: _pc,
-                  itemCount: ads.length,
-                  onPageChanged: (i) => setState(() => _page = i),
-                  itemBuilder: (_, i) => _banner(Map<String, dynamic>.from(ads[i] as Map)),
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(16, 12, 16, 0),
+      child: Column(children: [
+        if (ads.isEmpty)
+          GestureDetector(
+            onTap: () => widget.onOpen(const {}),
+            child: _banner(const {
+              'title': '🌙 تسوق في الشهر الفضيل',
+              'subtitle': 'لرجالك ونسائك وأطفالك — خصومات على كل الطلبيات',
+              'store_name': 'زبون · الكوت',
+            }),
+          )
+        else
+          SizedBox(
+            height: 180,
+            child: PageView.builder(
+              controller: _pc,
+              itemCount: ads.length,
+              onPageChanged: (i) => setState(() => _page = i),
+              itemBuilder: (_, i) => _banner(Map<String, dynamic>.from(ads[i] as Map)),
+            ),
+          ),
+        if (ads.length > 1) ...[
+          const SizedBox(height: 9),
+          Row(mainAxisAlignment: MainAxisAlignment.center, children: [
+            for (var i = 0; i < ads.length; i++)
+              AnimatedContainer(
+                duration: const Duration(milliseconds: 260),
+                margin: const EdgeInsets.symmetric(horizontal: 3),
+                width: i == _page ? 17 : 6,
+                height: 6,
+                decoration: BoxDecoration(
+                  color: i == _page ? A.primary : A.primary.withOpacity(0.22),
+                  borderRadius: BorderRadius.circular(999),
                 ),
               ),
-      ),
-      if (ads.length > 1) ...[
-        const SizedBox(height: 9),
-        Row(mainAxisAlignment: MainAxisAlignment.center, children: [
-          for (var i = 0; i < ads.length; i++)
-            AnimatedContainer(
-              duration: const Duration(milliseconds: 260),
-              margin: const EdgeInsets.symmetric(horizontal: 3),
-              width: i == _page ? 17 : 6,
-              height: 6,
-              decoration: BoxDecoration(
-                color: i == _page ? A.primary : A.primary.withOpacity(0.22),
-                borderRadius: BorderRadius.circular(999),
-              ),
-            ),
-        ]),
-      ],
-    ]);
+          ]),
+        ],
+      ]),
+    );
   }
 }
 
@@ -1040,7 +562,6 @@ class _StoreMiniCard extends StatelessWidget {
           boxShadow: const [BoxShadow(color: Color(0x140A1120), blurRadius: 10, offset: Offset(0, 4))],
         ),
         child: Stack(fit: StackFit.expand, children: [
-          // الغلاف يملأ البوكس كاملاً
           if (hasCover)
             productImageBox(coverUrl)
           else
@@ -1049,7 +570,6 @@ class _StoreMiniCard extends StatelessWidget {
                 gradient: LinearGradient(colors: [cover, A.primaryLight]),
               ),
             ),
-          // تغميق سفلي لقراءة النص
           const DecoratedBox(
             decoration: BoxDecoration(
               gradient: LinearGradient(
@@ -1059,7 +579,6 @@ class _StoreMiniCard extends StatelessWidget {
               ),
             ),
           ),
-          // الشعار
           Positioned(
             top: 8,
             right: 8,
@@ -1075,7 +594,6 @@ class _StoreMiniCard extends StatelessWidget {
               child: storeLogo(logo, size: 28, radius: 8),
             ),
           ),
-          // الاسم والتقييم على مستوى الغلاف
           Positioned(
             bottom: 8,
             left: 9,
@@ -1097,55 +615,11 @@ class _StoreMiniCard extends StatelessWidget {
   }
 }
 
-/// بطاقة المنتج المصغرة (قائمة عرضية)
-class _ProdMiniCard extends StatelessWidget {
-  final Map<String, dynamic> productJson;
-  final String storeName;
-  final int storeId;
-  final VoidCallback onOpen;
-  const _ProdMiniCard({required this.productJson, required this.storeName, required this.storeId, required this.onOpen});
-  @override
-  Widget build(BuildContext context) {
-    final prod = Product.fromJson(productJson);
-    return GestureDetector(
-      onTap: onOpen,
-      child: Container(
-        width: 158,
-        padding: const EdgeInsets.all(10),
-        decoration: A.card(radius: A.r20),
-        child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-          productImage(prod.image, size: 92, radius: 15),
-          const SizedBox(height: 8),
-          Text(prod.name, style: A.t(12.5, w: FontWeight.w900), maxLines: 1, overflow: TextOverflow.ellipsis),
-          Text(storeName, style: A.t(9.5, c: A.muted), maxLines: 1, overflow: TextOverflow.ellipsis),
-          const SizedBox(height: 6),
-          Row(children: [
-            IconButton.filled(
-              onPressed: () => quickAdd(context, productJson),
-              icon: const Icon(Icons.add_rounded, size: 18),
-              style: IconButton.styleFrom(
-                backgroundColor: A.primaryDeep,
-                foregroundColor: Colors.white,
-                minimumSize: const Size(24, 24),
-                padding: EdgeInsets.zero,
-                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
-                tapTargetSize: MaterialTapTargetSize.shrinkWrap,
-              ),
-            ),
-            const Spacer(),
-            Text(money(prod.displayPrice), style: A.t(13, c: A.accent, w: FontWeight.w900)),
-          ]),
-        ]),
-      ),
-    );
-  }
-}
-
 /// بطاقة المنتج لشبكة 2×2 — تصميم Shein: صورة 3:4 + اسم + نقاط ألوان + نسبة خصم + سعر بارز + زر سريع
-class _ProdCard extends StatelessWidget {
+class ProdCard extends StatelessWidget {
   final Map<String, dynamic> product;
   final VoidCallback onOpen;
-  const _ProdCard({required this.product, required this.onOpen});
+  const ProdCard({required this.product, required this.onOpen});
   @override
   Widget build(BuildContext context) {
     final prod = Product.fromJson(product);
@@ -1208,16 +682,20 @@ class _ProdCard extends StatelessWidget {
                 // السعر + زر الإضافة — مثبتان أسفل كل بوكس مهما تغيرت التفاصيل
                 const Spacer(),
                 Row(children: [
-                  Expanded(child: Text(money(prod.displayPrice), style: A.t(12.5, c: A.accent, w: FontWeight.w900), maxLines: 1, overflow: TextOverflow.ellipsis)),
-                  GestureDetector(
-                    onTap: () => quickAdd(context, product),
+                  Expanded(child: Text(money(prod.displayPrice), style: A.t(12.5, c: A.ink, w: FontWeight.w900), maxLines: 1, overflow: TextOverflow.ellipsis)),
+                  Builder(builder: (btnCtx) => GestureDetector(
+                    onTap: () {
+                      final box = btnCtx.findRenderObject() as RenderBox?;
+                      quickAdd(context, product,
+                          origin: box != null ? box.localToGlobal(Offset.zero) + const Offset(13, 13) : null);
+                    },
                     child: Container(
                       width: 26, height: 26,
-                      decoration: BoxDecoration(gradient: A.gradSun, borderRadius: BorderRadius.circular(8)),
+                      decoration: BoxDecoration(color: A.primary, borderRadius: BorderRadius.circular(8)),
                       alignment: Alignment.center,
                       child: const Icon(Icons.add_rounded, size: 16, color: Colors.white),
                     ),
-                  ),
+                  )),
                 ]),
               ]),
             ),
@@ -1248,13 +726,16 @@ class _ProdCard extends StatelessWidget {
 }
 
 /// إضافة سريعة للسلة — مثل زر + في الديمو
-void quickAdd(BuildContext context, Map<String, dynamic> prod, {int qty = 1}) {
+void quickAdd(BuildContext context, Map<String, dynamic> prod, {int qty = 1, Offset? origin}) {
   final variants = prod['variants'];
   if (variants is List && variants.isNotEmpty) {
     // منتج بمتغيرات — فتح الصفحة ليختار اللون/القياس
     final storeId = (prod['store_id'] as num?)?.toInt() ?? 0;
     final pid = (prod['id'] as num?)?.toInt() ?? 0;
-    if (storeId > 0 && pid > 0) return pushProduct(context, storeId, pid);
+    if (storeId > 0 && pid > 0) {
+      toast(context, 'لهذا المنتج ألوان/مقاسات — اخترها من صفحته ثم أضفه');
+      return pushProduct(context, storeId, pid);
+    }
   }
   final pid = (prod['id'] as num?)?.toInt() ?? 0;
   if (!Api.logged) {
@@ -1276,12 +757,12 @@ void quickAdd(BuildContext context, Map<String, dynamic> prod, {int qty = 1}) {
       });
     }
     AppState.i.setCart(AppState.i.guestCart.length);
-    toast(context, 'انضاف للسلة (مؤقتاً) 🛒');
+    addPop(context, '${prod['name']}', img: prod['image'], origin: origin);
     return;
   }
   Api.post('/api/customer/cart', {'product_id': pid, 'qty': qty}).then((_) {
     AppState.i.setCart(AppState.i.cartCount.value + 1);
-    toast(context, 'انضاف للسلة 🛒');
+    addPop(context, '${prod['name']}', img: prod['image'], origin: origin);
   }).catchError((e) {
     toast(context, '${e is ApiException ? e.message : e}', error: true);
   });
@@ -1329,6 +810,7 @@ class _ProductScreenState extends State<ProductScreen> {
   List related = [];
   List same = [];
   bool isFav = false;
+  Map<String, dynamic>? outfitPreview;
 
   @override
   void initState() {
@@ -1357,12 +839,20 @@ class _ProductScreenState extends State<ProductScreen> {
         final rel = await Api.get('/api/products?category_id=$catId');
         related = (rel['products'] ?? []).where((x) => x['id'] != widget.productId).toList();
       }
+      // معاينة الإطلالة المقترحة (خفيفة — تظهر لو القطعة من الأزياء)
+      try {
+        final of = await Api.get('/api/outfit/${widget.productId}');
+        final o = of['outfit'];
+        if ((o['slots'] ?? []).length > 1) {
+          if (mounted) setState(() => outfitPreview = Map<String, dynamic>.from(of));
+        }
+      } catch (_) {}
     } catch (_) {} finally {
       if (mounted) setState(() => loading = false);
     }
   }
 
-  Future<void> _addToCart() async {
+  Future<void> _addToCart([Offset? origin]) async {
     final variants = p['variants'] is List ? (p['variants'] as List).cast<Map>() : <Map>[];
     // المتغيرات على شكل تركيبات (لون + مقاس) — كل صف بمخزونه
     int? variantId;
@@ -1402,7 +892,7 @@ class _ProductScreenState extends State<ProductScreen> {
         });
         AppState.i.setCart(AppState.i.guestCart.length);
       }
-      toast(context, 'انضاف للسلة (مؤقتاً) 🛒');
+      addPop(context, '${p['name']}', img: p['image'], origin: origin);
       return;
     }
     try {
@@ -1414,7 +904,7 @@ class _ProductScreenState extends State<ProductScreen> {
       });
       AppState.i.setCart(AppState.i.cartCount.value + 1);
       if (!mounted) return;
-      toast(context, 'انضاف للسلة 🛒');
+      addPop(context, '${p['name']}', img: p['image'], origin: origin);
     } on ApiException catch (e) {
       toast(context, e.message, error: true);
     }
@@ -1619,6 +1109,37 @@ class _ProductScreenState extends State<ProductScreen> {
                           child: Text('● نفد المخزون', style: A.t(11, c: A.danger, w: FontWeight.w900)),
                         ),
                     ]),
+                  ],
+                  const SizedBox(height: 14),
+                  // ═══ زر التنسيق الذكي «نسّق لي» ═══
+                  GestureDetector(
+                    onTap: () {
+                      HapticFeedback.lightImpact();
+                      Navigator.push(context, MaterialPageRoute(
+                        builder: (_) => OutfitScreen(productId: widget.productId, seedName: prod.name, seedImage: prod.image),
+                      )).then((added) {
+                        if (added == true && mounted) Navigator.pop(context, true);
+                      });
+                    },
+                    child: Container(
+                      width: double.infinity,
+                      padding: const EdgeInsets.symmetric(vertical: 14),
+                      decoration: BoxDecoration(
+                        gradient: const LinearGradient(colors: [Color(0xFF12294E), Color(0xFF1D4ED8)]),
+                        borderRadius: BorderRadius.circular(16),
+                        boxShadow: [BoxShadow(color: A.primary.withValues(alpha: .3), blurRadius: 14, offset: const Offset(0, 5))],
+                      ),
+                      child: const Row(mainAxisAlignment: MainAxisAlignment.center, children: [
+                        Icon(Icons.auto_awesome_rounded, size: 18, color: Colors.white),
+                        SizedBox(width: 8),
+                        Text('نسّق لي هذه القطعة ✨',
+                            style: TextStyle(color: Colors.white, fontSize: 14.5, fontWeight: FontWeight.w900)),
+                      ]),
+                    ),
+                  ),
+                  if (outfitPreview != null) ...[
+                    const SizedBox(height: 12),
+                    _outfitPreview(),
                   ],
                   const SizedBox(height: 14),
                   // ═══ بوكس المتجر الناشر ═══
@@ -1916,16 +1437,20 @@ class _ProductScreenState extends State<ProductScreen> {
           const SizedBox(width: 8),
           const SizedBox(width: 10),
           Expanded(
-            child: SolidBtn(
+            child: Builder(builder: (btnCtx) => SolidBtn(
               label: prod.outOfStock
                   ? 'غير متوفر'
                   : hasVariant && !_variantReady
                       ? 'اختر اللون والمقاس أولاً 👆'
                       : 'أضف للسلة · ${money(prod.displayPrice * qty)}',
               color: prod.outOfStock || (hasVariant && !_variantReady) ? A.primary : A.accent,
+              haptic: true,
               disabled: prod.outOfStock || (hasVariant && !_variantReady),
-              onTap: _addToCart,
-            ),
+              onTap: () {
+                final box = btnCtx.findRenderObject() as RenderBox?;
+                _addToCart(box != null ? box.localToGlobal(Offset.zero) + const Offset(0, 24) : null);
+              },
+            )),
           ),
         ]),
       ),
@@ -2111,8 +1636,12 @@ class _ProductScreenState extends State<ProductScreen> {
     }
     try {
       final d = await Api.post('/api/customer/favorites', {'product_id': widget.productId});
-      setState(() => isFav = d['favorite'] == true);
-      toast(context, d['favorite'] == true ? 'انضاف للمفضلة ❤️' : 'انحذف من المفضلة');
+      final nowFav = d['favorite'] == true;
+      if (nowFav != isFav) {
+        AppState.i.favsCount.value = (AppState.i.favsCount.value + (nowFav ? 1 : -1)).clamp(0, 9999);
+      }
+      setState(() => isFav = nowFav);
+      toast(context, nowFav ? 'انضاف للمفضلة ❤️' : 'انحذف من المفضلة');
       AppState.i.favsReload.value++;
     } catch (e) {
       toast(context, '$e', error: true);
@@ -2210,11 +1739,77 @@ class _ProductScreenState extends State<ProductScreen> {
             final sid = (m['store_id'] as num?)?.toInt() ?? widget.storeId;
             return SizedBox(
               width: 162,
-              child: _ProdCard(product: m, onOpen: () => pushProduct(context, sid, Product.fromJson(m).id)),
+              child: ProdCard(product: m, onOpen: () => pushProduct(context, sid, Product.fromJson(m).id)),
             );
           },
         ),
       ),
     ]);
+  }
+
+  /// معاينة مصغرة للإطلالة المقترحة أسفل زر التنسيق
+  Widget _outfitPreview() {
+    final o = outfitPreview?['outfit'];
+    final slots = (o?['slots'] ?? []) as List;
+    return GestureDetector(
+      onTap: () => Navigator.push(context, MaterialPageRoute(
+        builder: (_) => OutfitScreen(productId: widget.productId, seedName: p?['name'] ?? '', seedImage: p?['image'] ?? ''),
+      )),
+      child: Container(
+        padding: const EdgeInsets.all(12),
+      decoration: BoxDecoration(
+        color: const Color(0xFFF2F7FF),
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: A.primary.withValues(alpha: .25)),
+      ),
+      child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+        Row(children: [
+          Text('${o?['title'] ?? 'إطلالة مقترحة'}', style: A.t(12.5, c: A.primary, w: FontWeight.w900)),
+          const Spacer(),
+          if ((o?['fit'] ?? 0) > 0)
+            Container(
+              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+              decoration: BoxDecoration(color: A.success.withValues(alpha: .12), borderRadius: BorderRadius.circular(999)),
+              child: Text('توافق ${o?['fit']}/100', style: A.t(9.5, c: A.success, w: FontWeight.w900)),
+            ),
+        ]),
+        const SizedBox(height: 9),
+        SizedBox(
+          height: 58,
+          child: ListView(
+            scrollDirection: Axis.horizontal,
+            children: [
+              for (final s in slots)
+                Padding(
+                  padding: const EdgeInsets.only(left: 8),
+                  child: Column(children: [
+                    productImage('${s['image'] ?? ''}', size: 42, radius: 10),
+                    const SizedBox(height: 3),
+                    Text(money((s['price'] ?? 0) as num), style: A.t(9, c: A.accent, w: FontWeight.w900)),
+                  ]),
+                ),
+              Padding(
+                padding: const EdgeInsets.only(left: 4),
+                child: Center(
+                  child: Container(
+                    width: 34,
+                    height: 34,
+                    decoration: BoxDecoration(color: A.primary, borderRadius: BorderRadius.circular(10)),
+                    child: const Icon(Icons.arrow_forward_rounded, size: 17, color: Colors.white),
+                  ),
+                ),
+              ),
+            ],
+          ),
+        ),
+        const SizedBox(height: 7),
+        Row(children: [
+          Text(money((o?['total'] ?? 0) as num), style: A.t(14, c: A.ink, w: FontWeight.w900)),
+          const Spacer(),
+          Text('اضغط لعرض البدائل وتعديلها', style: A.t(9.5, c: A.muted, w: FontWeight.w700)),
+        ]),
+      ]),
+      ),
+    );
   }
 }

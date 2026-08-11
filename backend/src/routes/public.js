@@ -4,6 +4,7 @@ import path from 'path';
 import { fileURLToPath } from 'url';
 import { q, one } from '../db.js';
 import { demoCond } from '../demo.js';
+import { auth } from '../middleware.js';
 
 const r = Router();
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
@@ -82,7 +83,17 @@ r.get('/products', async (req, res) => {
   const w = [];
   const p = [];
   if (store_id) { p.push(store_id); w.push(`p.store_id=$${p.length}`); }
-  if (category_id) { p.push(category_id); w.push(`p.category_id=$${p.length}`); }
+  if (category_id) {
+    // فئات متعددة: category_id=3,7 (يرجع منتجات كل الفئات المختارة)
+    const list = String(category_id).split(',').map(Number).filter((n) => n > 0);
+    if (list.length === 1) {
+      p.push(list[0]);
+      w.push(`p.category_id=$${p.length}`);
+    } else if (list.length > 1) {
+      p.push(list);
+      w.push(`p.category_id = ANY($${p.length}::int[])`);
+    }
+  }
   if (query) { p.push(`%${query}%`); w.push(`(p.name ILIKE $${p.length} OR p.description ILIKE $${p.length})`); }
   if (offer === 'true') w.push(`pr.active=true AND pr.percent>0`);
   // الفلترة على السعر الفعلي (بعد الخصم)
@@ -128,7 +139,16 @@ r.get('/products/meta', async (req, res) => {
   const w = [];
   const p = [];
   if (store_id) { p.push(store_id); w.push(`p.store_id=$${p.length}`); }
-  if (category_id) { p.push(category_id); w.push(`p.category_id=$${p.length}`); }
+  if (category_id) {
+    const list = String(category_id).split(',').map(Number).filter((n) => n > 0);
+    if (list.length === 1) {
+      p.push(list[0]);
+      w.push(`p.category_id=$${p.length}`);
+    } else if (list.length > 1) {
+      p.push(list);
+      w.push(`p.category_id = ANY($${p.length}::int[])`);
+    }
+  }
   const ww = w.join(' AND ') || 'true';
   const colors = await q(`SELECT DISTINCT pv.color FROM product_variants pv JOIN products p ON p.id=pv.product_id
     JOIN stores s ON s.id=p.store_id AND s.status='approved'
@@ -148,6 +168,56 @@ r.get('/products/:id', async (req, res) => {
   if (!p) return res.status(404).json({ error: 'المنتج غير موجود' });
   p.variants = await q('SELECT * FROM product_variants WHERE product_id=$1 ORDER BY id', [p.id]);
   res.json({ product: p });
+});
+
+// ═══════════ محرك التنسيق الذكي «نسّق لي» — إطلالة كاملة حول أي منتج ═══════════
+// ── إطلالات تلقائية من مشتريات الزبون الفعلية ──
+r.get('/outfit/for-me', auth, async (req, res) => {
+  const { buildOutfit } = await import('../outfit.js');
+  const bought = await q(`SELECT DISTINCT oi.product_id
+    FROM order_items oi JOIN orders o ON o.id=oi.order_id
+    WHERE o.user_id=$1 AND o.status IN ('delivered','preparing','accepted','new','ready','picked','delivering')
+      AND oi.product_id IS NOT NULL
+    ORDER BY oi.product_id DESC LIMIT 4`, [req.user.id]);
+  let ids = bought.map((r) => r.product_id);
+  if (ids.length < 2) {
+    const favs = await q(`SELECT product_id FROM favorites WHERE user_id=$1
+      ORDER BY id DESC LIMIT ${4 - ids.length}`, [req.user.id]);
+    ids = ids.concat(favs.map((r) => r.product_id));
+  }
+  if (!ids.length) return res.json({ outfits: [] });
+  const seeds = await q(`SELECT p.*, s.name AS store_name, s.logo AS store_logo, s.id AS store_id,
+      (pr.active AND pr.percent>0) AS has_offer,
+      ROUND(p.price*(1-COALESCE(pr.percent,0)/100.0)) AS offer_price
+    FROM products p JOIN stores s ON s.id=p.store_id
+    LEFT JOIN offers pr ON pr.product_id=p.id AND pr.active=true
+    WHERE p.id = ANY($1::int[]) AND p.is_available`, [ids]);
+  const outfits = [];
+  for (const seed of seeds) {
+    const outfit = await buildOutfit(seed, { occasion: 'casual' });
+    if (outfit.slots.length >= 2) {
+      outfits.push({ seed: { id: seed.id, name: seed.name, image: seed.image }, outfit });
+    }
+  }
+  res.json({ outfits });
+});
+
+r.get('/outfit/:id', async (req, res) => {
+  const seed = await one(`SELECT p.*, s.name AS store_name, s.logo AS store_logo, s.id AS store_id,
+      (pr.active AND pr.percent>0) AS has_offer,
+      ROUND(p.price*(1-COALESCE(pr.percent,0)/100.0)) AS offer_price
+    FROM products p JOIN stores s ON s.id=p.store_id
+    LEFT JOIN offers pr ON pr.product_id=p.id AND pr.active=true
+    WHERE p.id=$1 AND p.is_available`, [req.params.id]);
+  if (!seed) return res.status(404).json({ error: 'المنتج غير موجود' });
+  const { buildOutfit, qualityOf } = await import('../outfit.js');
+  const outfit = await buildOutfit(seed, {
+    budget: req.query.budget ? Number(req.query.budget) : 0,
+    occasion: String(req.query.occasion || 'casual'),
+    color: String(req.query.color || ''),
+  });
+  const quality = await qualityOf(seed);
+  res.json({ seed: { id: seed.id, name: seed.name, image: seed.image, price: seed.price }, outfit, quality });
 });
 
 // ── الإعلانات النشطة ──

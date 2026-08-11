@@ -19,10 +19,8 @@ class Api {
   static Future<void> load() async {
     final p = await SharedPreferences.getInstance();
     var saved = p.getString('zaboon_base');
-    // روابط الشبكة المنزلية القديمة (192.168..) ما تصلح بعد الرفع السحابي — نتجاهلها نهائياً
-    if (saved != null && (saved.contains('192.168') || saved.contains('localhost'))) saved = null;
+    // نجرّب الرابط المحفوظ أولاً (سحابة أو محلي/نفق) — لو معطّل نرجع للسحابة
     if (saved != null && saved.isNotEmpty) base = saved;
-    // لو الرابط الحالي معطّل → نرجع للسحابة فوراً (ولا نخزن أي رابط محلي)
     if (!await _reachable(base)) {
       base = cloud;
       await p.setString('zaboon_base', base);

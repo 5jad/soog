@@ -119,6 +119,28 @@
   .socials a:hover{background:var(--primary);transform:translateY(-2px)}
 
   @media(max-width:860px){
+    .foot-grid{grid-template-columns:1fr 1fr;gap:28px}
+  }
+  /* ═══ الأسئلة الشائعة ═══ */
+  .faq{max-width:760px;margin:0 auto;display:flex;flex-direction:column;gap:12px}
+  .faq-item{background:#fff;border:1px solid var(--line);border-radius:16px;overflow:hidden;box-shadow:var(--shadow)}
+  .faq-q{width:100%;display:flex;justify-content:space-between;align-items:center;gap:12px;padding:16px 20px;background:none;border:0;cursor:pointer;font-size:15px;font-weight:900;color:var(--ink);font-family:inherit;text-align:right}
+  .faq-q .arr{transition:.25s;color:var(--primary);font-weight:900}
+  .faq-item.open .faq-q .arr{transform:rotate(180deg)}
+  .faq-a{max-height:0;overflow:hidden;transition:max-height .3s ease;font-size:13.5px;color:var(--muted);line-height:1.9}
+  .faq-item.open .faq-a{max-height:260px}
+  .faq-a p{padding:0 20px 18px}
+  /* ═══ الفوتر الكامل ═══ */
+  footer{background:var(--ink);color:rgba(255,255,255,.65);padding:56px 0 0}
+  .foot-grid{display:grid;grid-template-columns:2fr 1fr 1fr 1.3fr;gap:36px;padding-bottom:40px}
+  footer h5{color:#fff;font-size:14px;font-weight:900;margin-bottom:16px}
+  footer a{color:rgba(255,255,255,.65);text-decoration:none;display:block;padding:5px 0;font-size:13.5px;transition:.2s}
+  footer a:hover{color:#FB923C}
+  .foot-brand p{font-size:13px;margin-top:10px;max-width:280px;line-height:1.9}
+  .foot-contact a{display:flex;align-items:center;gap:8px}
+  .foot-bottom{border-top:1px solid rgba(255,255,255,.1);padding:18px 0;display:flex;justify-content:space-between;align-items:center;gap:12px;flex-wrap:wrap;font-size:12.5px}
+  .foot-bottom .socials a{width:36px;height:36px}
+  @media(max-width:860px){
     .hero{padding:60px 0 90px}
     .hero .wrap{grid-template-columns:1fr;text-align:center}
     .hero p{margin-inline:auto}
@@ -139,7 +161,7 @@
     <nav class="nav-links">
       <a href="/store">🛍️ تسوق الآن</a>
       <a href="#features">المميزات</a>
-      <a href="#screens">لقطات</a>
+      <a href="#faq">الأسئلة</a>
       <a href="#download">التحميل</a>
     </nav>
     <a class="btn sun" href="/store">🛒 افتح المتجر</a>
@@ -261,15 +283,101 @@
   </div>
 </section>
 
+<!-- ═══ الأسئلة الشائعة ═══ -->
+<section id="faq">
+  <div class="wrap">
+    <div class="sec-title">
+      <span class="kicker">أسئلة تتكرر</span>
+      <h2>الأسئلة الشائعة 🤔</h2>
+      <p>إجابات سريعة لأكثر الأسئلة وصولة — وإن ما لقيت جوابك تواصل ويا الإدارة.</p>
+    </div>
+    <div class="faq">
+      <div class="faq-item open">
+        <button class="faq-q" onclick="this.parentElement.classList.toggle('open')">هل الدفع مسبق؟ <span class="arr">▼</span></button>
+        <div class="faq-a"><p>لا — الدفع <b>كاش عند الاستلام</b>. تستلم طلبك، تفحصه، وبعدها تدفع للمندوب. بدون بطاقة ولا حساب بنكي.</p></div>
+      </div>
+      <div class="faq-item">
+        <button class="faq-q" onclick="this.parentElement.classList.toggle('open')">شنو مدى التوصيل؟ <span class="arr">▼</span></button>
+        <div class="faq-a"><p>نغطي محافظة واسط — الكوت والمناطق المجاورة. بوقت ما تنحجز السلة، المندوب المتاح ياخذ طلبك ويوصله لبابك غالباً بنفس اليوم.</p></div>
+      </div>
+      <div class="faq-item">
+        <button class="faq-q" onclick="this.parentElement.classList.toggle('open')">أبي أفتح متجر على المنصة — شلون؟ <span class="arr">▼</span></button>
+        <div class="faq-a"><p>سجّل حسابك كتاجر، أنشئ متجرك من تبويب «متجري» داخل التطبيق، ارفع مستندات توثيق، وبعد موافقة الإدارة تستقبل الطلبات وتحوّل أرباحك من المحفظة.</p></div>
+      </div>
+      <div class="faq-item">
+        <button class="faq-q" onclick="this.parentElement.classList.toggle('open')">أبي أشتغل مندوب توصيل؟ <span class="arr">▼</span></button>
+        <div class="faq-a"><p>تواصل مع الإدارة لتسجيلك كمندوب. بعدها بتتحكم بحالة اتصالك، تستلم الطلبات الجاهزة، وترسل تقرير الكاش اليومي من تطبيقك.</p></div>
+      </div>
+      <div class="faq-item">
+        <button class="faq-q" onclick="this.parentElement.classList.toggle('open')">صار طلب مكسور أو غلط — شلون أرجعه؟ <span class="arr">▼</span></button>
+        <div class="faq-a"><p>من تفاصيل الطلب داخل التطبيق اضغط «إرجاع/استبدال» وفصّل السبب. التاجر يرد عليك خلال مدة الإرجاع، ونظام النقاط والتقييم يحمي كل الطرفين.</p></div>
+      </div>
+      <div class="faq-item">
+        <button class="faq-q" onclick="this.parentElement.classList.toggle('open')">شنو يعني نظام النقاط؟ <span class="arr">▼</span></button>
+        <div class="faq-a"><p>كل طلب يوصلك يوفر لك نقاط (نقطة لكل 1000 د.ع من قيمة الطلب). تقدر تستبدلها بخصم على طلباتك الجاية، وأكو عجلة حظ يومية تكسب منها نقاط إضافية.</p></div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ═══ سياسة وشروط ═══ -->
+<section id="terms" style="background:#fff;border-top:1px solid var(--line);border-bottom:1px solid var(--line)">
+  <div class="wrap">
+    <div class="sec-title">
+      <span class="kicker">وثائق المنصة</span>
+      <h2>الشروط والسياسة 📜</h2>
+    </div>
+    <div style="max-width:760px;margin:0 auto;display:flex;flex-direction:column;gap:16px;font-size:13.5px;color:var(--muted)">
+      <div class="card"><h3>🔒 الخصوصية والبيانات</h3><p style="margin-top:6px">نحتفظ ببياناتك (الاسم، الهاتف، العنوان) لغرض توصيل طلباتك فقط، ولا نشاركها مع أي طرف ثالث. بياناتك التصفحية تُستخدم لتحسين الخدمة. تقدر تطلب حذف حسابك وأي وقت بمراسلة الإدارة.</p></div>
+      <div class="card"><h3>💰 الدفع والإرجاع</h3><p style="margin-top:6px">الدفع كاش عند الاستلام. فترة الإرجاع والاستبدال صفحة من تاريخ التسليم (حسب إعدادات المنصة)، وعليها ترسل طلب الإرجاع من التطبيق مع السبب. التاجر يقرر، وبتأكيده يُرجع المخزون ويُحدّث طلبك.</p></div>
+      <div class="card"><h3>🏪 مسؤولية المتاجر</h3><p style="margin-top:6px">كل متجر مسؤول عن جودة منتجاته ومطابقتها للوصف والصور المنشورة. المنصة وسيط للتوصيل والدفع، وتتحفظ بحق إيقاف أي حساب يخالف سياساتها.</p></div>
+      <div class="card"><h3>🛵 التوصيل</h3><p style="margin-top:6px">رسوم التوصيل تحددها كل متجر وتعرض قبل تأكيد الطلب. المندوب يلتزم بتسليم الطلب للعنوان المحدد وبنفس حالة الاستلام، وبتجاوز أي خرق يحاسب.</p></div>
+    </div>
+  </div>
+</section>
+
 <!-- ═══ فوتر ═══ -->
 <footer>
   <div class="wrap">
-    <div class="brand"><span class="dot">🛍️</span> زبون — منصة متاجر الكوت</div>
-    <small>© 2026 منصة زبون · واسط · جميع الحقوق محفوظة</small>
-    <div class="socials">
-      <a href="#" title="فيسبوك">📘</a>
-      <a href="#" title="إنستغرام">📸</a>
-      <a href="#" title="واتساب">💬</a>
+    <div class="foot-grid">
+      <div class="foot-brand">
+        <div class="brand" style="justify-content:flex-start"><span class="dot">🛍️</span> زبون</div>
+        <p>منصة التجارة الإلكترونية الأولى في واسط — الكوت. نوصل طلبك لحد بابك، وتدفع كاش عند الاستلام.</p>
+        <div class="socials" style="margin-top:14px">
+          <a href="https://wa.me/9647700000000" title="واتساب">💬</a>
+          <a href="https://facebook.com" title="فيسبوك">📘</a>
+          <a href="https://instagram.com" title="إنستغرام">📸</a>
+          <a href="https://t.me" title="تيليغرام">✈️</a>
+        </div>
+      </div>
+      <div>
+        <h5>التسوق</h5>
+        <a href="/store">المتجر الإلكتروني</a>
+        <a href="/store/offers">العروض الحارة</a>
+        <a href="/store/points">نقاطي والمزايا</a>
+        <a href="/store/orders">طلباتي</a>
+        <a href="/download">تحميل التطبيق</a>
+      </div>
+      <div>
+        <h5>المنصة</h5>
+        <a href="/store">منطقة الزبون</a>
+        <a href="/store/vendor">منطقة التاجر</a>
+        <a href="/store/delivery">منطقة المندوب</a>
+        <a href="/admin">لوحة الإدارة</a>
+        <a href="#terms">الشروط والسياسة</a>
+      </div>
+      <div>
+        <h5>تواصل ويا المنصة</h5>
+        <a class="foot-contact" href="tel:+9647700000000"><span>📞</span> 0770 000 0000</a>
+        <a class="foot-contact" href="mailto:info@zaboon.app"><span>✉️</span> info@zaboon.app</a>
+        <a class="foot-contact" href="https://wa.me/9647700000000"><span>💬</span> واتساب مباشر</a>
+        <a class="foot-contact" href="#faq"><span>❓</span> الأسئلة الشائعة</a>
+        <div style="margin-top:10px;font-size:12.5px">📍 واسط · الكوت — العراق</div>
+      </div>
+    </div>
+    <div class="foot-bottom">
+      <small>© 2026 منصة زبون · جميع الحقوق محفوظة</small>
+      <small>صُنع بكل ❤️ في الكوت</small>
     </div>
   </div>
 </footer>

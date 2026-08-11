@@ -308,7 +308,7 @@ class _CategoryProductsScreenState extends State<CategoryProductsScreen> {
                     child: products.isEmpty
                         ? ListView(children: const [
                             SizedBox(height: 120),
-                            EmptyState(icon: '📦', title: 'ماكو منتجات مطابقة للفلترة'),
+                            EmptyState(icon: '📦', title: 'ماكو منتجات مطابقة للفلترة', lottie: 'no_results'),
                           ])
                         : GridView.builder(
                             padding: EdgeInsets.zero,
@@ -352,12 +352,12 @@ class _CategoryProductsScreenState extends State<CategoryProductsScreen> {
                                         ],
                                         const SizedBox(height: 2),
                                         Row(children: [
-                                          Expanded(child: Text(money(p.displayPrice), style: A.t(13.5, c: A.accent, w: FontWeight.w900), maxLines: 1, overflow: TextOverflow.ellipsis)),
+                                          Expanded(child: Text(money(p.displayPrice), style: A.t(13.5, c: A.ink, w: FontWeight.w900), maxLines: 1, overflow: TextOverflow.ellipsis)),
                                           GestureDetector(
                                             onTap: () => quickAdd(context, m),
                                             child: Container(
                                               width: 28, height: 28,
-                                              decoration: BoxDecoration(gradient: A.gradSun, borderRadius: BorderRadius.circular(9)),
+                                              decoration: BoxDecoration(color: A.primary, borderRadius: BorderRadius.circular(9)),
                                               alignment: Alignment.center,
                                               child: const Icon(Icons.add_rounded, size: 17, color: Colors.white),
                                             ),

@@ -705,6 +705,65 @@ r.patch('/users/:id/points', async (req, res) => {
   res.json({ ok: true, balance: (target.points || 0) + pts });
 });
 
+// ═══════════ مراجعة التقييمات ═══════════
+r.get('/reviews', async (req, res) => {
+  const rows = await q(`SELECT rv.*, u.name AS user_name, u.phone AS user_phone,
+      s.name AS store_name, o.code AS order_code,
+      (SELECT p.name FROM products p JOIN order_items oi ON oi.product_id=p.id WHERE oi.order_id=rv.order_id LIMIT 1) AS product_name
+    FROM reviews rv
+    JOIN stores s ON s.id=rv.store_id
+    LEFT JOIN users u ON u.id=rv.user_id
+    LEFT JOIN orders o ON o.id=rv.order_id
+    ORDER BY rv.id DESC LIMIT 100`);
+  res.json({ reviews: rows });
+});
+
+r.delete('/reviews/:id', async (req, res) => {
+  const rv = await one('SELECT * FROM reviews WHERE id=$1', [req.params.id]);
+  if (!rv) return res.status(404).json({ error: 'التقييم غير موجود' });
+  await q(`DELETE FROM reviews WHERE id=$1`, [rv.id]);
+  await audit(req.user.id, 'review_delete', 'reviews', rv.id, null, { reason: String(req.query.reason || '') });
+  res.json({ ok: true });
+});
+
+// ═══════════ طلبات الإرجاع (إشراف الأدمن) ═══════════
+r.get('/refunds', async (req, res) => {
+  const rows = await q(`SELECT rf.*, o.code AS order_code, o.total, o.store_id, u.name AS user_name, u.phone AS user_phone,
+      s.name AS store_name
+    FROM refund_requests rf
+    JOIN orders o ON o.id=rf.order_id
+    JOIN users u ON u.id=o.user_id
+    LEFT JOIN stores s ON s.id=o.store_id
+    ORDER BY rf.id DESC LIMIT 100`);
+  res.json({ refunds: rows });
+});
+
+r.patch('/refunds/:id', async (req, res) => {
+  const { status, reason = '' } = req.body;
+  const rf = await one(`SELECT rf.*, o.user_id, o.status AS order_status, o.store_id FROM refund_requests rf JOIN orders o ON o.id=rf.order_id WHERE rf.id=$1`, [req.params.id]);
+  if (!rf) return res.status(404).json({ error: 'الطلب غير موجود' });
+  if (rf.status !== 'pending') return res.status(400).json({ error: 'الطلب انحسم مسبقاً' });
+  const accepted = status === 'accepted';
+  await tx(async (c) => {
+    await c.query(`UPDATE refund_requests SET status=$1, resolved_at=now() WHERE id=$2`, [status, rf.id]);
+    if (accepted) {
+      if (!['returned', 'cancelled'].includes(rf.order_status))
+        await c.query(`UPDATE orders SET status='returned', updated_at=now() WHERE id=$1`, [rf.order_id]);
+      await c.query(`INSERT INTO order_status_history (order_id, from_status, to_status, by_role, note) VALUES ($1,$2,'returned','admin',$3)`,
+        [rf.order_id, rf.order_status, reason || 'قرار الأدمن']);
+      await c.query(`UPDATE product_variants v SET stock = v.stock + oi.qty
+        FROM order_items oi WHERE oi.order_id=$1 AND oi.variant_id IS NOT NULL AND v.id=oi.variant_id`, [rf.order_id]);
+      await c.query(`INSERT INTO notifications (user_id, type, title, body) VALUES ($1,'refund','قبلنا إرجاعك ✓',$2)`,
+        [rf.user_id, rf.type === 'exchange' ? 'الاستبدال مقبول — تعال المحل' : 'استلمنا طلبك — تعال المحل نكمل معاك']);
+    } else {
+      await c.query(`INSERT INTO notifications (user_id, type, title, body) VALUES ($1,'refund','مرفوض ${rf.type === 'exchange' ? 'الاستبدال' : 'الإرجاع'}',$2)`,
+        [rf.user_id, reason || '']);
+    }
+  });
+  await audit(req.user.id, 'refund_decision', 'refund_requests', rf.id, null, { status, reason });
+  res.json({ ok: true });
+});
+
 // ═══════════ سجل العمليات ═══════════
 r.get('/audit', async (req, res) => {
   res.json({ logs: await q(`SELECT a.*, u.name AS admin_name FROM audit_logs a LEFT JOIN users u ON u.id=a.admin_id ORDER BY a.id DESC LIMIT 100`) });

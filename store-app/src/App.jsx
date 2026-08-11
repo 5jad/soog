@@ -21,7 +21,14 @@ import Notifications from './pages/Notifications';
 import Favorites from './pages/Favorites';
 import Account from './pages/Account';
 import Logout from './pages/Logout';
+import VendorDashboard from './pages/VendorDashboard';
+import DeliveryDashboard from './pages/DeliveryDashboard';
 import ComingSoon from './pages/ComingSoon';
+
+function AdminRedirect() {
+  window.location.href = '/admin';
+  return null;
+}
 
 export default function App() {
   const { toast, loginOpen, setLoginOpen } = useApp();
@@ -50,9 +57,9 @@ export default function App() {
             <Route path="/fav" element={<Favorites />} />
             <Route path="/account" element={<Account />} />
             <Route path="/logout" element={<Logout />} />
-            <Route path="/vendor" element={<ComingSoon area="vendor" />} />
-            <Route path="/delivery" element={<ComingSoon area="delivery" />} />
-            <Route path="/admin" element={<ComingSoon area="admin" />} />
+            <Route path="/vendor" element={<VendorDashboard />} />
+            <Route path="/delivery" element={<DeliveryDashboard />} />
+            <Route path="/admin" element={<AdminRedirect />} />
           </Routes>
         </Suspense>
       </main>

@@ -9,6 +9,9 @@ const VIEWS = {
   geo: { title: 'المحافظات والأحياء 🗺', icon: '🗺', render: () => renderGeo() },
   notify: { title: 'الإشعارات الجماعية 🔔', icon: '🔔', render: () => renderNotify() },
   settings: { title: 'الإعدادات ⚙️', icon: '⚙️', render: () => renderSettings() },
+  coupons: { title: 'الكوبونات 🏷', icon: '🏷', render: () => renderCoupons() },
+  reviews: { title: 'التقييمات ⭐', icon: '⭐', render: () => renderReviews() },
+  refunds: { title: 'الإرجاعات 🔄', icon: '🔄', render: () => renderRefunds() },
   audit: { title: 'سجل العمليات 🕵️', icon: '🕵️', render: () => renderAudit() },
 };
 

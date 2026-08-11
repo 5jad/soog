@@ -57,9 +57,28 @@ class _OrderListScreenState extends State<OrderListScreen> {
 
   Future<void> _load() async {
     try {
-      final ep = widget.role == 'customer' ? '/api/customer/orders' : widget.role == 'vendor' ? '/api/vendor/orders' : '/api/delivery/orders';
-      final d = await Api.get(ep);
-      orders = (d['orders'] ?? []) as List;
+      if (widget.role == 'delivery') {
+        final tripD = await Api.get('/api/delivery/trip');
+        final availD = await Api.get('/api/delivery/available');
+        final seen = <int>{};
+        final merged = <Map>[];
+        final trip = tripD['trip'];
+        if (trip != null) {
+          final t = Map<String, dynamic>.from(trip as Map);
+          final oid = t['order_id'];
+          if (oid != null) seen.add((oid as num).toInt());
+          merged.add(t);
+        }
+        for (final x in (availD['orders'] ?? []) as List) {
+          final a = Map<String, dynamic>.from(x as Map);
+          if (seen.add((a['id'] as num).toInt())) merged.add(a);
+        }
+        orders = merged;
+      } else {
+        final ep = widget.role == 'customer' ? '/api/customer/orders' : '/api/vendor/orders';
+        final d = await Api.get(ep);
+        orders = (d['orders'] ?? []) as List;
+      }
       if (widget.initialCode != null && mounted) {
         final o = orders.where((x) => x['code'] == widget.initialCode).toList();
         if (o.isNotEmpty) _open(o.first);
@@ -71,7 +90,7 @@ class _OrderListScreenState extends State<OrderListScreen> {
 
   void _open(dynamic o) {
     Navigator.push(context, MaterialPageRoute(
-      builder: (_) => OrderDetailScreen(orderId: o['id'], role: widget.role, onChanged: _load),
+      builder: (_) => OrderDetailScreen(orderId: (o['order_id'] ?? o['id']) as int, role: widget.role, onChanged: _load),
     ));
   }
 
@@ -88,6 +107,7 @@ class _OrderListScreenState extends State<OrderListScreen> {
         icon: widget.role == 'vendor' ? '🗃' : '🧾',
         title: widget.role == 'vendor' ? 'لا طلبات على متجرك' : 'ماكو طلبات',
         sub: selGroup.$2.isEmpty ? 'رح تظهر الطلبات هنا' : 'هذي الفئة مافيها طلبات — جرب فئة ثانية أو «الكل»',
+        lottie: widget.role == 'vendor' ? null : 'orders_empty',
       );
     } else {
       body = RefreshIndicator(
@@ -236,9 +256,9 @@ class _OrderDetailScreenState extends State<OrderDetailScreen> {
           ? '/api/customer/orders/${widget.orderId}'
           : widget.role == 'vendor'
               ? '/api/vendor/orders/${widget.orderId}'
-              : '/api/delivery/trip/${widget.orderId}';
+              : '/api/delivery/orders/${widget.orderId}/trip';
       final d = await Api.get(ep);
-      o = d['order'];
+      o = widget.role == 'delivery' ? d['trip'] : d['order'];
       if (widget.role == 'delivery') _loadTrip();
     } catch (_) {
       // يحاول نقطة أخرى

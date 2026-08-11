@@ -1,8 +1,9 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 
 /// ═══════════════════════════════════════════════════════════════
 /// هوية «زبون» v2 — النظام التصميمي المثبت من الدراسة
-/// (كحلي ليلي + برتقالي CTA وحيد + محايدات دافئة + شبكة 8pt + Tajawal)
+/// (كحلي ليلي + برتقالي CTA وحيد + محايدات دافئة + شبكة 8pt + IBM Plex Sans Arabic للواجهة + El Messiri للشعار)
 /// ═══════════════════════════════════════════════════════════════
 class A {
   /* ── الألوان (قاعدة 60-30-10) ── */
@@ -107,8 +108,8 @@ class A {
       TextStyle(fontSize: s, color: c ?? text, fontWeight: w, height: h, decoration: decoration);
 }
 
-/// زر دائري/مربع بأيقونة صلبة (بدل الزجاج) — هدف لمس ≥40
-class IconGlass extends StatelessWidget {
+/// زر دائري/مربع بأيقونة صلبة (بدل الزجاج) — هدف لمس ≥40، انضغاط فوري عند اللمس
+class IconGlass extends StatefulWidget {
   final IconData icon;
   final VoidCallback? onTap;
   final double size;
@@ -117,16 +118,32 @@ class IconGlass extends StatelessWidget {
   const IconGlass({super.key, required this.icon, this.onTap, this.size = 40, this.color = A.text, this.radius = 12, this.iconColor});
   final Color? iconColor;
   @override
+  State<IconGlass> createState() => _IconGlassState();
+}
+
+class _IconGlassState extends State<IconGlass> {
+  bool _pressed = false;
+  @override
   Widget build(BuildContext context) {
-    return GestureDetector(
-      onTap: onTap,
-      behavior: HitTestBehavior.opaque,
-      child: Container(
-        width: size,
-        height: size,
-        decoration: A.card(radius: radius),
-        alignment: Alignment.center,
-        child: Icon(icon, color: iconColor ?? color, size: size * 0.45),
+    return Listener(
+      onPointerDown: (_) => setState(() => _pressed = true),
+      onPointerUp: (_) => setState(() => _pressed = false),
+      onPointerCancel: (_) => setState(() => _pressed = false),
+      child: GestureDetector(
+        onTap: widget.onTap,
+        behavior: HitTestBehavior.opaque,
+        child: AnimatedScale(
+          scale: _pressed ? 0.88 : 1,
+          duration: _pressed ? const Duration(milliseconds: 90) : const Duration(milliseconds: 220),
+          curve: _pressed ? Curves.easeOut : Curves.easeOutBack,
+          child: Container(
+            width: widget.size,
+            height: widget.size,
+            decoration: A.card(radius: widget.radius),
+            alignment: Alignment.center,
+            child: Icon(widget.icon, color: widget.iconColor ?? widget.color, size: widget.size * 0.45),
+          ),
+        ),
       ),
     );
   }
@@ -268,7 +285,7 @@ ThemeData buildTheme() {
       surface: A.bg,
     ),
     scaffoldBackgroundColor: A.bg,
-    fontFamily: 'Tajawal',
+    fontFamily: 'IBMPlexSansArabic',
     appBarTheme: const AppBarTheme(
       backgroundColor: Colors.transparent,
       elevation: 0,

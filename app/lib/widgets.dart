@@ -3,11 +3,16 @@ import 'dart:math' as math;
 import 'dart:typed_data';
 import 'dart:ui' as ui;
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:url_launcher/url_launcher.dart';
 import 'theme.dart';
 import 'api.dart';
 import 'screens/cart_screen.dart';
 import 'screens/notifications_screen.dart';
+import 'lottie_box.dart';
+
+/// مفتاح زر السلة العائم — لاستهداف نقطة هبوط حركة «المنتج يطير للسلة»
+final GlobalKey cartFabKey = GlobalKey();
 
 /// هل القيمة غلاف صورة حقيقي (رابط/بايت) وليس بانر CSS قديم؟
 bool isUrlCover(String v) =>
@@ -112,6 +117,46 @@ class GlassCard extends StatelessWidget {
   }
 }
 
+/// غلاف التفاعل اللمسي الموحد — انضغاط فوري عند اللمس + رجوع ناعم + اهتزاز اختياري
+/// (القرار: كل عنصر تفاعلي يرد خلال ≤100ms — الدراسة)
+class TapScale extends StatefulWidget {
+  final Widget child;
+  final VoidCallback? onTap;
+  final double down;
+  final bool haptic;
+  const TapScale({super.key, required this.child, this.onTap, this.down = 0.94, this.haptic = false});
+
+  @override
+  State<TapScale> createState() => _TapScaleState();
+}
+
+class _TapScaleState extends State<TapScale> {
+  bool _d = false;
+  void _set(bool v) => setState(() => _d = v);
+
+  @override
+  Widget build(BuildContext context) {
+    return Listener(
+      onPointerDown: (_) => _set(true),
+      onPointerUp: (_) => _set(false),
+      onPointerCancel: (_) => _set(false),
+      child: GestureDetector(
+        behavior: HitTestBehavior.opaque,
+        onTap: () {
+          if (widget.haptic) HapticFeedback.lightImpact();
+          widget.onTap?.call();
+        },
+        child: AnimatedScale(
+          scale: _d ? widget.down : 1,
+          duration: _d ? const Duration(milliseconds: 90) : const Duration(milliseconds: 220),
+          curve: _d ? Curves.easeOut : Curves.easeOutBack,
+          child: widget.child,
+        ),
+      ),
+    );
+  }
+}
+
 /// أزرار الحالة (Chip)
 class StatusChip extends StatelessWidget {
   final String status;
@@ -164,35 +209,40 @@ class MoneyBox extends StatelessWidget {
 }
 
 /// زر كتفي صلب — ارتفاع 52 + قبعة (Capsule) + CTA البرتقالي للشراء عبر color
+/// الرِبل مرئي الآن: Material بلون الزر + InkWell فوقه (سابقاً كان تحت الخلفية المطلية)
 class SolidBtn extends StatelessWidget {
   final String label;
   final VoidCallback onTap;
   final bool loading;
   final bool disabled;
   final Color? color;
-  const SolidBtn({super.key, required this.label, required this.onTap, this.loading = false, this.disabled = false, this.color});
+
+  /// اهتزاز خفيف عند الضغط — للأزرار الحرجة فقط (إتمام/أضف للسلة) حتى لا يخزّز
+  final bool haptic;
+  const SolidBtn({super.key, required this.label, required this.onTap, this.loading = false, this.disabled = false, this.color, this.haptic = false});
 
   @override
   Widget build(BuildContext context) {
     final bg = disabled ? const Color(0xFFB9C0CC) : (color ?? A.primary);
-    return Container(
-      decoration: BoxDecoration(
-        color: bg,
+    return Material(
+      color: bg,
+      borderRadius: BorderRadius.circular(A.pill),
+      elevation: disabled ? 0 : 5,
+      shadowColor: bg.withValues(alpha: 0.35),
+      child: InkWell(
         borderRadius: BorderRadius.circular(A.pill),
-        boxShadow: disabled
-            ? const []
-            : [
-                BoxShadow(color: bg.withOpacity(0.25), blurRadius: 16, offset: const Offset(0, 6)),
-              ],
-      ),
-      child: Material(
-        color: Colors.transparent,
-        child: InkWell(
-          borderRadius: BorderRadius.circular(A.pill),
-          onTap: (loading || disabled) ? null : onTap,
-          child: Container(
-            height: 52,
-            alignment: Alignment.center,
+        splashColor: Colors.white.withValues(alpha: 0.28),
+        highlightColor: Colors.white.withValues(alpha: 0.14),
+        onTap: (loading || disabled)
+            ? null
+            : () {
+                if (haptic) HapticFeedback.lightImpact();
+                onTap();
+              },
+        child: SizedBox(
+          height: 52,
+          width: double.infinity,
+          child: Center(
             child: loading
                 ? const SizedBox(width: 22, height: 22, child: CircularProgressIndicator(color: Colors.white, strokeWidth: 2.5))
                 : Text(label, style: A.t(15.5, c: Colors.white, w: FontWeight.w700)),
@@ -207,20 +257,33 @@ class EmptyState extends StatelessWidget {
   final String icon;
   final String title;
   final String? sub;
-  const EmptyState({super.key, required this.icon, required this.title, this.sub});
+  final String? action;
+  final VoidCallback? onAction;
+  final String? lottie; // مفتاح في LottieAssets — إن سُجّل يلعب بدل الإيموجي
+  const EmptyState({super.key, required this.icon, required this.title, this.sub, this.action, this.onAction, this.lottie});
 
   @override
   Widget build(BuildContext context) {
     return Center(
-      child: Column(mainAxisAlignment: MainAxisAlignment.center, children: [
-        Text(icon, style: A.t(52)),
-        const SizedBox(height: 12),
-        Text(title, style: A.t(17)),
-        if (sub != null) ...[
-          const SizedBox(height: 6),
-          Text(sub!, style: A.t(12.5, c: A.muted)),
-        ],
-      ]),
+      child: Padding(
+        padding: const EdgeInsets.symmetric(horizontal: 32),
+        child: Column(mainAxisAlignment: MainAxisAlignment.center, children: [
+          if (lottie != null)
+            LottieBox(assetKey: lottie!, width: 120, height: 120, fallback: Text(icon, style: A.t(52)))
+          else
+            Text(icon, style: A.t(52)),
+          const SizedBox(height: 12),
+          Text(title, style: A.t(17)),
+          if (sub != null) ...[
+            const SizedBox(height: 6),
+            Text(sub!, style: A.t(12.5, c: A.muted), textAlign: TextAlign.center),
+          ],
+          if (action != null && onAction != null) ...[
+            const SizedBox(height: 22),
+            SolidBtn(label: action!, onTap: onAction!, haptic: true),
+          ],
+        ]),
+      ),
     );
   }
 }
@@ -248,10 +311,16 @@ class Loader extends StatelessWidget {
   const Loader({super.key});
   @override
   Widget build(BuildContext context) {
-    return const Center(
+    return Center(
       child: Padding(
-        padding: EdgeInsets.all(40),
-        child: CircularProgressIndicator(color: A.primary),
+        padding: const EdgeInsets.all(40),
+        child: LottieBox(
+          assetKey: 'loading',
+          loop: true,
+          width: 96,
+          height: 96,
+          fallback: const CircularProgressIndicator(color: A.primary),
+        ),
       ),
     );
   }
@@ -272,7 +341,8 @@ class CountBadge extends StatelessWidget {
 }
 
 /// شريط سفلي صلب (بدل الزجاج/الـ blur) — ارتفاع 64 + شارات + خط مؤشر
-class GlassBottomNav extends StatelessWidget {
+/// تفاعل: انضغاط فوري (0.86) + نبضة الأيقونة (1.16 بمنحنى ارتداد) + نبضة الشارة + اهتزاز لتبويب السلة
+class GlassBottomNav extends StatefulWidget {
   final int index;
   final List<(IconData, String)> items;
   final ValueChanged<int> onTap;
@@ -296,61 +366,118 @@ class GlassBottomNav extends StatelessWidget {
   });
 
   @override
+  State<GlassBottomNav> createState() => _GlassBottomNavState();
+}
+
+class _GlassBottomNavState extends State<GlassBottomNav> {
+  @override
   Widget build(BuildContext context) {
     return Container(
       decoration: BoxDecoration(
         color: Colors.white,
-        border: Border(top: BorderSide(color: A.line, width: 1)),
-        boxShadow: [BoxShadow(color: A.ink.withOpacity(0.05), blurRadius: 16, offset: const Offset(0, -4))],
+        boxShadow: [BoxShadow(color: A.ink.withValues(alpha: 0.05), blurRadius: 16, offset: const Offset(0, -4))],
       ),
       child: SafeArea(
         top: false,
         child: Padding(
           padding: const EdgeInsets.symmetric(vertical: 8),
           child: Row(
-            children: List.generate(items.length, (i) {
-              final selected = i == index;
-              final badge = i == badgeIndex ? badgeCount : (extraBadges[i] ?? 0);
-              final showBadge = badge > 0;
+            children: List.generate(widget.items.length, (i) {
+              final badge = i == widget.badgeIndex ? widget.badgeCount : (widget.extraBadges[i] ?? 0);
               return Expanded(
-                child: InkWell(
-                  onTap: () => onTap(i),
-                  child: Column(mainAxisSize: MainAxisSize.min, children: [
-                    Stack(
-                      clipBehavior: Clip.none,
-                      children: [
-                        AnimatedContainer(
-                          duration: const Duration(milliseconds: 200),
-                          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 5),
-                          decoration: BoxDecoration(
-                            color: selected ? A.primary.withOpacity(0.10) : Colors.transparent,
-                            borderRadius: BorderRadius.circular(A.r12),
-                          ),
-                          child: Icon(items[i].$1,
-                              color: selected ? A.primary : A.muted, size: 24),
-                        ),
-                        if (showBadge)
-                          Positioned(
-                            right: -1,
-                            top: -3,
-                            child: Container(
-                              padding: const EdgeInsets.symmetric(horizontal: 4.5, vertical: 1),
-                              decoration: const BoxDecoration(color: A.accent, shape: BoxShape.circle),
-                              child: Text('$badge',
-                                  style: const TextStyle(color: Colors.white, fontSize: 9, fontWeight: FontWeight.w700)),
-                            ),
-                          ),
-                      ],
-                    ),
-                    const SizedBox(height: 2),
-                    Text(items[i].$2,
-                        style: A.t(10.5, c: selected ? A.primary : A.muted, w: selected ? FontWeight.w700 : FontWeight.w500)),
-                  ]),
+                child: _NavItem(
+                  icon: widget.items[i].$1,
+                  label: widget.items[i].$2,
+                  selected: i == widget.index,
+                  badge: badge,
+                  haptic: i == widget.badgeIndex,
+                  onTap: () => widget.onTap(i),
                 ),
               );
             }),
           ),
         ),
+      ),
+    );
+  }
+}
+
+class _NavItem extends StatefulWidget {
+  final IconData icon;
+  final String label;
+  final bool selected;
+  final int badge;
+  final bool haptic;
+  final VoidCallback onTap;
+  const _NavItem({required this.icon, required this.label, required this.selected, required this.badge, required this.haptic, required this.onTap});
+
+  @override
+  State<_NavItem> createState() => _NavItemState();
+}
+
+class _NavItemState extends State<_NavItem> {
+  bool _pressed = false;
+  bool _popped = false;
+
+  void _tap() {
+    if (widget.haptic) HapticFeedback.lightImpact();
+    setState(() => _popped = true);
+    Future.delayed(const Duration(milliseconds: 150), () {
+      if (mounted) setState(() => _popped = false);
+    });
+    widget.onTap();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final showBadge = widget.badge > 0;
+    return Listener(
+      onPointerDown: (_) => setState(() => _pressed = true),
+      onPointerUp: (_) => setState(() => _pressed = false),
+      onPointerCancel: (_) => setState(() => _pressed = false),
+      child: GestureDetector(
+        behavior: HitTestBehavior.opaque,
+        onTap: _tap,
+        child: Column(mainAxisSize: MainAxisSize.min, children: [
+          Stack(
+            clipBehavior: Clip.none,
+            children: [
+              AnimatedScale(
+                scale: _pressed ? 0.86 : (_popped ? 1.16 : 1.0),
+                duration: _pressed ? const Duration(milliseconds: 80) : const Duration(milliseconds: 260),
+                curve: _pressed ? Curves.easeOut : Curves.easeOutBack,
+                child: AnimatedContainer(
+                  duration: const Duration(milliseconds: 200),
+                  padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 5),
+                  decoration: BoxDecoration(
+                    color: widget.selected ? A.primary.withValues(alpha: 0.10) : Colors.transparent,
+                    borderRadius: BorderRadius.circular(A.r12),
+                  ),
+                  child: Icon(widget.icon, color: widget.selected ? A.primary : A.muted, size: 24),
+                ),
+              ),
+              if (showBadge)
+                Positioned(
+                  right: -1,
+                  top: -3,
+                  child: AnimatedScale(
+                    scale: _popped ? 1.4 : 1.0,
+                    duration: const Duration(milliseconds: 260),
+                    curve: Curves.easeOutBack,
+                    child: Container(
+                      padding: const EdgeInsets.symmetric(horizontal: 4.5, vertical: 1),
+                      decoration: const BoxDecoration(color: A.accent, shape: BoxShape.circle),
+                      child: Text('$widget.badge',
+                          style: const TextStyle(color: Colors.white, fontSize: 9, fontWeight: FontWeight.w700)),
+                    ),
+                  ),
+                ),
+            ],
+          ),
+          const SizedBox(height: 2),
+          Text(widget.label,
+              style: A.t(10.5, c: widget.selected ? A.primary : A.muted, w: widget.selected ? FontWeight.w700 : FontWeight.w500)),
+        ]),
       ),
     );
   }
@@ -362,6 +489,202 @@ void toast(BuildContext context, String msg, {bool error = false}) {
     backgroundColor: error ? A.danger : A.ink,
     duration: const Duration(seconds: 2),
   ));
+}
+
+/// تفاعل «انضاف للسلة» — بوب مركزي فوق كل شي: صغرة المنتج + اسمه +
+/// علامة ✓ برتقالية تنبض، يطفو للأعلى ويتلاشى + طيران المنتج لزر السلة
+void addPop(BuildContext context, String name, {String? img, String sub = 'انضاف للسلة', Offset? origin}) {
+  final overlay = Overlay.of(context);
+  late final OverlayEntry entry;
+  entry = OverlayEntry(builder: (_) => _AddPop(name: name, img: img, sub: sub, remove: () => entry.remove()));
+  overlay.insert(entry);
+  _flyToCart(overlay, img: img, origin: origin);
+}
+
+/// صورة المنتج تطير من موضع الإضافة إلى زر السلة العائم بمسار منحني
+void _flyToCart(OverlayState overlay, {String? img, Offset? origin}) {
+  final from = origin;
+  if (from == null) return;
+  final box = cartFabKey.currentContext?.findRenderObject() as RenderBox?;
+  final Offset dest;
+  if (box != null && box.hasSize) {
+    dest = box.localToGlobal(Offset.zero) + Offset(box.size.width / 2, box.size.height / 2);
+  } else {
+    final size = MediaQuery.sizeOf(overlay.context);
+    dest = Offset(size.width - 46, size.height - 114);
+  }
+  late final OverlayEntry fly;
+  fly = OverlayEntry(builder: (_) => _FlyToCart(
+        from: from,
+        to: dest,
+        img: img,
+        remove: () => fly.remove(),
+        onDone: () => _burstAtCart(overlay, dest),
+      ));
+  overlay.insert(fly);
+}
+
+/// لحظة هبوط المنتج — انفجار Lottie حول زر السلة
+void _burstAtCart(OverlayState overlay, Offset dest) {
+  late final OverlayEntry e;
+  e = OverlayEntry(builder: (_) => IgnorePointer(
+        child: Positioned(
+          left: dest.dx - 58,
+          top: dest.dy - 58,
+          child: LottieBox(assetKey: 'cart_ok', width: 116, height: 116, fallback: const SizedBox.shrink()),
+        ),
+      ));
+  overlay.insert(e);
+  Future.delayed(const Duration(milliseconds: 2300), () => e.remove());
+}
+
+class _FlyToCart extends StatefulWidget {
+  final Offset from;
+  final Offset to;
+  final String? img;
+  final VoidCallback remove;
+  final VoidCallback onDone;
+  const _FlyToCart({required this.from, required this.to, this.img, required this.remove, required this.onDone});
+
+  @override
+  State<_FlyToCart> createState() => _FlyToCartState();
+}
+
+class _FlyToCartState extends State<_FlyToCart> with SingleTickerProviderStateMixin {
+  late final AnimationController _c =
+      AnimationController(vsync: this, duration: const Duration(milliseconds: 620));
+  late final Animation<double> _t = CurvedAnimation(parent: _c, curve: Curves.easeInCubic);
+
+  @override
+  void initState() {
+    super.initState();
+    _c.forward().then((_) {
+      widget.remove();
+      widget.onDone();
+    });
+  }
+
+  @override
+  void dispose() {
+    _c.dispose();
+    super.dispose();
+  }
+
+  Offset _quad(Offset a, Offset c, Offset b, double t) {
+    final mt = 1 - t;
+    return a * (mt * mt) + c * (2 * mt * t) + b * (t * t);
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final t = _t.value;
+    final mid = Offset(
+      (widget.from.dx + widget.to.dx) / 2,
+      math.min(widget.from.dy, widget.to.dy) - 120,
+    );
+    final pos = _quad(widget.from, mid, widget.to, t);
+    return Positioned(
+      left: pos.dx - 22,
+      top: pos.dy - 22,
+      child: IgnorePointer(
+        child: Transform.scale(scale: 1 - 0.45 * _t.value, child: productImage(widget.img, size: 44, radius: 14)),
+      ),
+    );
+  }
+}
+
+class _AddPop extends StatefulWidget {
+  final String name;
+  final String? img;
+  final String sub;
+  final VoidCallback remove;
+  const _AddPop({required this.name, this.img, required this.sub, required this.remove});
+  @override
+  State<_AddPop> createState() => _AddPopState();
+}
+
+class _AddPopState extends State<_AddPop> with SingleTickerProviderStateMixin {
+  late final AnimationController _c =
+      AnimationController(vsync: this, duration: const Duration(milliseconds: 1600));
+  late final Animation<double> _scale =
+      CurvedAnimation(parent: _c, curve: const Interval(0, 0.22, curve: Curves.easeOutBack));
+  late final Animation<double> _op =
+      CurvedAnimation(parent: _c, curve: const Interval(0.25, 1, curve: Curves.easeIn));
+  late final Animation<double> _up =
+      Tween(begin: 0.0, end: -16.0).animate(CurvedAnimation(parent: _c, curve: const Interval(0.25, 1, curve: Curves.easeIn)));
+
+  @override
+  void initState() {
+    super.initState();
+    HapticFeedback.lightImpact();
+    _c.forward().then((_) {
+      if (mounted) widget.remove();
+    });
+  }
+
+  @override
+  void dispose() {
+    _c.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Positioned.fill(
+      child: IgnorePointer(
+        child: Center(
+          child: FadeTransition(
+            opacity: _op,
+            child: AnimatedBuilder(
+              animation: _up,
+              builder: (_, child) => Transform.translate(offset: Offset(0, _up.value), child: child),
+              child: ScaleTransition(
+                scale: _scale,
+                child: Container(
+                  margin: const EdgeInsets.symmetric(horizontal: 24),
+                  padding: const EdgeInsets.fromLTRB(10, 10, 16, 10),
+                  decoration: BoxDecoration(
+                    color: Colors.white,
+                    borderRadius: BorderRadius.circular(18),
+                    boxShadow: [
+                      BoxShadow(color: A.ink.withValues(alpha: 0.14), blurRadius: 26, offset: const Offset(0, 10)),
+                    ],
+                  ),
+                  child: Row(mainAxisSize: MainAxisSize.min, children: [
+                    Stack(clipBehavior: Clip.none, children: [
+                      productImage(widget.img, size: 44, radius: 12),
+                      Positioned(
+                        left: -5,
+                        bottom: -5,
+                        child: LottieBox(
+                          assetKey: 'cart_ok',
+                          width: 30,
+                          height: 30,
+                          fallback: Container(
+                            width: 20,
+                            height: 20,
+                            decoration: const BoxDecoration(color: A.accent, shape: BoxShape.circle),
+                            child: const Icon(Icons.check_rounded, size: 14, color: Colors.white),
+                          ),
+                        ),
+                      ),
+                    ]),
+                    const SizedBox(width: 12),
+                    Column(crossAxisAlignment: CrossAxisAlignment.start, mainAxisSize: MainAxisSize.min, children: [
+                      Text(widget.name,
+                          style: A.t(12.5, w: FontWeight.w800, c: A.ink), maxLines: 1, overflow: TextOverflow.ellipsis),
+                      const SizedBox(height: 2),
+                      Text(widget.sub, style: A.t(10.5, c: A.muted, w: FontWeight.w600)),
+                    ]),
+                  ]),
+                ),
+              ),
+            ),
+          ),
+        ),
+      ),
+    );
+  }
 }
 
 /// مودال عام
@@ -399,9 +722,27 @@ class SheetTitle extends StatelessWidget {
 
 /// زر السلة العائم — يظهر تلقائياً بالزاوية اليمنى السفلى بمجرد إضافة منتج،
 /// ويختفي عند فراغ السلة. يوضع داخل Stack في جسم الشاشة.
-class FloatingCartFab extends StatelessWidget {
+/// تفاعل: انضغاط 0.9 + نبضة 1.12 + نبضة الشارة + اهتزاز
+class FloatingCartFab extends StatefulWidget {
   final double bottom; // الارتفاع عن الحافة السفلى (فوق الشريط عند الحاجة)
   const FloatingCartFab({super.key, this.bottom = 88});
+
+  @override
+  State<FloatingCartFab> createState() => _FloatingCartFabState();
+}
+
+class _FloatingCartFabState extends State<FloatingCartFab> {
+  bool _pressed = false;
+  bool _popped = false;
+
+  void _open() {
+    HapticFeedback.lightImpact();
+    setState(() => _popped = true);
+    Future.delayed(const Duration(milliseconds: 150), () {
+      if (mounted) setState(() => _popped = false);
+    });
+    Navigator.of(context).push(MaterialPageRoute(builder: (_) => const CartScreen()));
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -411,37 +752,54 @@ class FloatingCartFab extends StatelessWidget {
         if (count <= 0) return const SizedBox.shrink();
         return Positioned(
           right: 16,
-          bottom: bottom,
-          child: Material(
-            color: Colors.transparent,
-            child: InkWell(
-              borderRadius: BorderRadius.circular(30),
-              onTap: () {
-                // فتح السلة
-                Navigator.of(context).push(MaterialPageRoute(builder: (_) => const CartScreen()));
-              },
-              child: Ink(
-                decoration: BoxDecoration(
-                  color: A.primary,
-                  shape: BoxShape.circle,
-                  boxShadow: [BoxShadow(color: A.primary.withOpacity(0.3), blurRadius: 16, offset: const Offset(0, 6))],
-                ),
-                width: 60,
-                height: 60,
-                child: Stack(alignment: Alignment.center, children: [
-                  const Icon(Icons.shopping_cart_rounded, color: Colors.white, size: 27),
-                  if (count > 0)
-                    Positioned(
-                      left: 6,
-                      top: 6,
-                      child: Container(
-                        padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
-                        decoration: const BoxDecoration(color: A.accent, shape: BoxShape.circle),
-                        child: Text('$count', style: const TextStyle(color: Colors.white, fontSize: 10, fontWeight: FontWeight.w700)),
+          bottom: widget.bottom,
+          child: TweenAnimationBuilder<double>(
+            key: ValueKey('fabBump$count'),
+            tween: Tween(begin: 0.0, end: 1.0),
+            duration: const Duration(milliseconds: 420),
+            curve: Curves.easeOutBack,
+            builder: (_, v, child) => Transform.scale(scale: 1 + 0.2 * (1 - v), child: child),
+            child: Listener(
+              key: cartFabKey,
+              onPointerDown: (_) => setState(() => _pressed = true),
+            onPointerUp: (_) => setState(() => _pressed = false),
+            onPointerCancel: (_) => setState(() => _pressed = false),
+            child: GestureDetector(
+              behavior: HitTestBehavior.opaque,
+              onTap: _open,
+              child: AnimatedScale(
+                scale: _pressed ? 0.9 : (_popped ? 1.12 : 1.0),
+                duration: _pressed ? const Duration(milliseconds: 90) : const Duration(milliseconds: 240),
+                curve: _pressed ? Curves.easeOut : Curves.easeOutBack,
+                child: Container(
+                  decoration: BoxDecoration(
+                    color: A.primary,
+                    shape: BoxShape.circle,
+                    boxShadow: [BoxShadow(color: A.primary.withValues(alpha: 0.3), blurRadius: 16, offset: const Offset(0, 6))],
+                  ),
+                  width: 60,
+                  height: 60,
+                  child: Stack(alignment: Alignment.center, children: [
+                    const Icon(Icons.shopping_cart_rounded, color: Colors.white, size: 27),
+                    if (count > 0)
+                      Positioned(
+                        left: 6,
+                        top: 6,
+                        child: AnimatedScale(
+                          scale: _popped ? 1.4 : 1.0,
+                          duration: const Duration(milliseconds: 240),
+                          curve: Curves.easeOutBack,
+                          child: Container(
+                            padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                            decoration: const BoxDecoration(color: A.accent, shape: BoxShape.circle),
+                            child: Text('$count', style: const TextStyle(color: Colors.white, fontSize: 10, fontWeight: FontWeight.w700)),
+                          ),
+                        ),
                       ),
-                    ),
-                ]),
+                  ]),
+                ),
               ),
+            ),
             ),
           ),
         );
@@ -675,26 +1033,37 @@ class _CropScreenState extends State<CropScreen> {
   }
 }
 
-/// الشريط العلوي الموحد: واسط·الكوت + عدد المتاجر (يظهر بكل الصفحات)
+/// الشعار الموحد: مربع كحلي بأيقونة سلة + نقطة برتقالية (نقطة «الزاي» — توقيع الهوية) + «زبون»
 class TopBarPill extends StatelessWidget {
   const TopBarPill({super.key});
   @override
   Widget build(BuildContext context) {
-    return Row(children: [
+    return Row(mainAxisSize: MainAxisSize.min, children: [
       Container(
-        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-        decoration: A.card(radius: A.pill),
-        child: Row(mainAxisSize: MainAxisSize.min, children: [
-          const Icon(Icons.location_on_rounded, color: A.primary, size: 15),
-          const SizedBox(width: 5),
-          Text('واسط · الكوت', style: A.t(12.5, c: A.primary, w: FontWeight.w700)),
+        width: 34,
+        height: 34,
+        decoration: BoxDecoration(
+          gradient: A.gradNavy,
+          borderRadius: BorderRadius.circular(12),
+          boxShadow: [BoxShadow(color: A.primary.withValues(alpha: 0.28), blurRadius: 10, offset: const Offset(0, 3))],
+        ),
+        child: Stack(clipBehavior: Clip.none, children: [
+          const Center(child: Icon(Icons.storefront_rounded, size: 18, color: Colors.white)),
+          // نقطة «الزاي» البرتقالية — توقيع الهوية (نقطة واحدة فوق حرف ز)
+          Positioned(
+            left: 5,
+            top: 4,
+            child: Container(
+              width: 7,
+              height: 7,
+              decoration: const BoxDecoration(color: A.accent, shape: BoxShape.circle),
+            ),
+          ),
         ]),
       ),
-      const SizedBox(width: 8),
-      ValueListenableBuilder<num>(
-        valueListenable: AppState.i.storesCount,
-        builder: (_, v, __) => Text('${v.toInt()} متجر متاح', style: A.t(11, c: A.muted, w: FontWeight.w500)),
-      ),
+      const SizedBox(width: 9),
+      Text('زبون',
+          style: A.t(20, c: A.ink, w: FontWeight.w700).copyWith(fontFamily: 'ElMessiri')),
     ]);
   }
 }
@@ -724,7 +1093,7 @@ class NotifBell extends StatelessWidget {
 /* ═══════════ نظام تحديث النسخ — الشريط يفتح تحميل النسخة الأحدث من الموقع ═══════════ */
 /// نسخة التطبيق الحالية (مطابقة app-version.json على السيرفر)
 const String kAppVersion = '1.0.0';
-const int kAppBuild = 5;
+const int kAppBuild = 23;
 
 class UpdateBanner extends StatefulWidget {
   const UpdateBanner({super.key});
@@ -764,9 +1133,9 @@ class _UpdateBannerState extends State<UpdateBanner> {
       margin: const EdgeInsets.fromLTRB(16, 8, 16, 0),
       padding: const EdgeInsets.all(14),
       decoration: BoxDecoration(
-        gradient: A.gradSun,
+        gradient: A.gradNavy,
         borderRadius: BorderRadius.circular(16),
-        boxShadow: [BoxShadow(color: A.accent.withOpacity(0.3), blurRadius: 14, offset: const Offset(0, 5))],
+        boxShadow: [BoxShadow(color: A.primary.withOpacity(0.3), blurRadius: 14, offset: const Offset(0, 5))],
       ),
       child: Row(children: [
         Text('📦', style: A.t(24)),

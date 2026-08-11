@@ -67,6 +67,7 @@ const STORE_DIST = fs.existsSync(path.join(PUBLIC_DIR, 'store')) ? path.join(PUB
 if (fs.existsSync(STORE_DIST)) {
   app.use('/store', express.static(STORE_DIST));
   app.get('/store', (_req, res) => res.sendFile(path.join(STORE_DIST, 'index.html')));
+  app.get('/store/*splat', (_req, res) => res.sendFile(path.join(STORE_DIST, 'index.html')));
 }
 
 // الصفحة الرسمية: / = الموقع (الرئيسية)، واللوحة على /admin فقط

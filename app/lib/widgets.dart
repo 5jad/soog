@@ -90,14 +90,14 @@ Widget productImageBox(String? image, {String? base}) {
   return ph(url.length > 6 ? url.substring(0, 4) : url);
 }
 
-/// بطاقة زجاجية
+/// بطاقة صلبة (بدل الزجاج) — أبيض + حد + ظل ناعم
 class GlassCard extends StatelessWidget {
   final Widget child;
   final EdgeInsets padding;
   final double radius;
   final bool solid;
   final VoidCallback? onTap;
-  const GlassCard({super.key, required this.child, this.padding = const EdgeInsets.all(16), this.radius = 18, this.solid = false, this.onTap});
+  const GlassCard({super.key, required this.child, this.padding = const EdgeInsets.all(16), this.radius = 16, this.solid = false, this.onTap});
 
   @override
   Widget build(BuildContext context) {
@@ -105,7 +105,7 @@ class GlassCard extends StatelessWidget {
       onTap: onTap,
       child: Container(
         padding: padding,
-        decoration: solid ? A.glassSolid(radius: radius) : A.glass(radius: radius),
+        decoration: A.card(radius: radius),
         child: child,
       ),
     );
@@ -163,7 +163,7 @@ class MoneyBox extends StatelessWidget {
   }
 }
 
-/// زر كتفي (قفا) بظل — «المال صلب»
+/// زر كتفي صلب — ارتفاع 52 + قبعة (Capsule) + CTA البرتقالي للشراء عبر color
 class SolidBtn extends StatelessWidget {
   final String label;
   final VoidCallback onTap;
@@ -174,30 +174,28 @@ class SolidBtn extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final grad = disabled
-        ? const LinearGradient(colors: [Color(0xFFB9C0CC), Color(0xFF9AA3B1)])
-        : LinearGradient(colors: [color ?? A.primaryDeep, color ?? A.primary]);
+    final bg = disabled ? const Color(0xFFB9C0CC) : (color ?? A.primary);
     return Container(
       decoration: BoxDecoration(
-        gradient: grad,
-        borderRadius: BorderRadius.circular(14),
+        color: bg,
+        borderRadius: BorderRadius.circular(A.pill),
         boxShadow: disabled
             ? const []
             : [
-                BoxShadow(color: (color ?? A.primary).withOpacity(0.35), blurRadius: 16, offset: const Offset(0, 6)),
+                BoxShadow(color: bg.withOpacity(0.25), blurRadius: 16, offset: const Offset(0, 6)),
               ],
       ),
       child: Material(
         color: Colors.transparent,
         child: InkWell(
-          borderRadius: BorderRadius.circular(14),
+          borderRadius: BorderRadius.circular(A.pill),
           onTap: (loading || disabled) ? null : onTap,
           child: Container(
-            height: 50,
+            height: 52,
             alignment: Alignment.center,
             child: loading
                 ? const SizedBox(width: 22, height: 22, child: CircularProgressIndicator(color: Colors.white, strokeWidth: 2.5))
-                : Text(label, style: A.t(15, c: Colors.white, w: FontWeight.w800)),
+                : Text(label, style: A.t(15.5, c: Colors.white, w: FontWeight.w700)),
           ),
         ),
       ),
@@ -273,7 +271,7 @@ class CountBadge extends StatelessWidget {
   }
 }
 
-/// إطار زجاجي حقيقي فوق شريط السفلي — مع حركة قفز للأيقونة النشطة وخط مؤشر
+/// شريط سفلي صلب (بدل الزجاج/الـ blur) — ارتفاع 64 + شارات + خط مؤشر
 class GlassBottomNav extends StatelessWidget {
   final int index;
   final List<(IconData, String)> items;
@@ -299,62 +297,58 @@ class GlassBottomNav extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return ClipRRect(
-      borderRadius: const BorderRadius.vertical(top: Radius.circular(22)),
-      child: BackdropFilter(
-        filter: ui.ImageFilter.blur(sigmaX: 18, sigmaY: 18),
-        child: Container(
-          decoration: BoxDecoration(
-            color: Colors.white.withOpacity(0.75),
-            border: Border(top: BorderSide(color: Colors.white.withOpacity(0.9), width: 1.2)),
-          ),
-          child: SafeArea(
-            top: false,
-            child: Padding(
-              padding: const EdgeInsets.symmetric(vertical: 6),
-              child: Row(
-                children: List.generate(items.length, (i) {
-                  final selected = i == index;
-                  final badge = i == badgeIndex ? badgeCount : (extraBadges[i] ?? 0);
-                  final showBadge = badge > 0;
-                  return Expanded(
-                    child: InkWell(
-                      onTap: () => onTap(i),
-                      child: Column(mainAxisSize: MainAxisSize.min, children: [
-                        Stack(
-                          clipBehavior: Clip.none,
-                          children: [
-                            AnimatedContainer(
-                              duration: const Duration(milliseconds: 250),
-                              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 5),
-                              decoration: BoxDecoration(
-                                color: selected ? A.primary.withOpacity(0.12) : Colors.transparent,
-                                borderRadius: BorderRadius.circular(14),
-                              ),
-                              child: Icon(items[i].$1,
-                                  color: selected ? A.primary : A.muted, size: 22),
-                            ),
-                            if (showBadge)
-                              Positioned(
-                                right: -1,
-                                top: -3,
-                                child: Container(
-                                  padding: const EdgeInsets.symmetric(horizontal: 4.5, vertical: 1),
-                                  decoration: const BoxDecoration(color: A.danger, shape: BoxShape.circle),
-                                  child: Text('$badge',
-                                      style: const TextStyle(color: Colors.white, fontSize: 8.5, fontWeight: FontWeight.w900)),
-                                ),
-                              ),
-                          ],
+    return Container(
+      decoration: BoxDecoration(
+        color: Colors.white,
+        border: Border(top: BorderSide(color: A.line, width: 1)),
+        boxShadow: [BoxShadow(color: A.ink.withOpacity(0.05), blurRadius: 16, offset: const Offset(0, -4))],
+      ),
+      child: SafeArea(
+        top: false,
+        child: Padding(
+          padding: const EdgeInsets.symmetric(vertical: 8),
+          child: Row(
+            children: List.generate(items.length, (i) {
+              final selected = i == index;
+              final badge = i == badgeIndex ? badgeCount : (extraBadges[i] ?? 0);
+              final showBadge = badge > 0;
+              return Expanded(
+                child: InkWell(
+                  onTap: () => onTap(i),
+                  child: Column(mainAxisSize: MainAxisSize.min, children: [
+                    Stack(
+                      clipBehavior: Clip.none,
+                      children: [
+                        AnimatedContainer(
+                          duration: const Duration(milliseconds: 200),
+                          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 5),
+                          decoration: BoxDecoration(
+                            color: selected ? A.primary.withOpacity(0.10) : Colors.transparent,
+                            borderRadius: BorderRadius.circular(A.r12),
+                          ),
+                          child: Icon(items[i].$1,
+                              color: selected ? A.primary : A.muted, size: 24),
                         ),
-                        Text(items[i].$2,
-                            style: A.t(10, c: selected ? A.primary : A.muted, w: FontWeight.w800)),
-                      ]),
+                        if (showBadge)
+                          Positioned(
+                            right: -1,
+                            top: -3,
+                            child: Container(
+                              padding: const EdgeInsets.symmetric(horizontal: 4.5, vertical: 1),
+                              decoration: const BoxDecoration(color: A.accent, shape: BoxShape.circle),
+                              child: Text('$badge',
+                                  style: const TextStyle(color: Colors.white, fontSize: 9, fontWeight: FontWeight.w700)),
+                            ),
+                          ),
+                      ],
                     ),
-                  );
-                }),
-              ),
-            ),
+                    const SizedBox(height: 2),
+                    Text(items[i].$2,
+                        style: A.t(10.5, c: selected ? A.primary : A.muted, w: selected ? FontWeight.w700 : FontWeight.w500)),
+                  ]),
+                ),
+              );
+            }),
           ),
         ),
       ),
@@ -428,22 +422,22 @@ class FloatingCartFab extends StatelessWidget {
               },
               child: Ink(
                 decoration: BoxDecoration(
-                  gradient: const LinearGradient(colors: [Color(0xFF1E3A8A), Color(0xFF3B82F6)]),
+                  color: A.primary,
                   shape: BoxShape.circle,
-                  boxShadow: const [BoxShadow(color: Colors.black38, blurRadius: 14, offset: Offset(0, 4))],
+                  boxShadow: [BoxShadow(color: A.primary.withOpacity(0.3), blurRadius: 16, offset: const Offset(0, 6))],
                 ),
                 width: 60,
                 height: 60,
                 child: Stack(alignment: Alignment.center, children: [
-                  const Icon(Icons.shopping_cart_rounded, color: Colors.white, size: 26),
+                  const Icon(Icons.shopping_cart_rounded, color: Colors.white, size: 27),
                   if (count > 0)
                     Positioned(
                       left: 6,
                       top: 6,
                       child: Container(
-                        padding: const EdgeInsets.symmetric(horizontal: 5, vertical: 1.5),
-                        decoration: const BoxDecoration(color: A.danger, shape: BoxShape.circle),
-                        child: Text('$count', style: const TextStyle(color: Colors.white, fontSize: 9.5, fontWeight: FontWeight.w900)),
+                        padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                        decoration: const BoxDecoration(color: A.accent, shape: BoxShape.circle),
+                        child: Text('$count', style: const TextStyle(color: Colors.white, fontSize: 10, fontWeight: FontWeight.w700)),
                       ),
                     ),
                 ]),
@@ -689,17 +683,17 @@ class TopBarPill extends StatelessWidget {
     return Row(children: [
       Container(
         padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-        decoration: A.glass(radius: 999, soft: true),
+        decoration: A.card(radius: A.pill),
         child: Row(mainAxisSize: MainAxisSize.min, children: [
-          const Icon(Icons.location_on_rounded, color: A.primary, size: 14),
+          const Icon(Icons.location_on_rounded, color: A.primary, size: 15),
           const SizedBox(width: 5),
-          Text('واسط · الكوت', style: A.t(12, c: A.primary, w: FontWeight.w800)),
+          Text('واسط · الكوت', style: A.t(12.5, c: A.primary, w: FontWeight.w700)),
         ]),
       ),
       const SizedBox(width: 8),
       ValueListenableBuilder<num>(
         valueListenable: AppState.i.storesCount,
-        builder: (_, v, __) => Text('${v.toInt()} متجر متاح', style: A.t(10.5, c: A.muted, w: FontWeight.w600)),
+        builder: (_, v, __) => Text('${v.toInt()} متجر متاح', style: A.t(11, c: A.muted, w: FontWeight.w500)),
       ),
     ]);
   }

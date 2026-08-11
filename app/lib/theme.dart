@@ -1,25 +1,42 @@
 import 'package:flutter/material.dart';
 
-/// هوية «أفق» — الألوان الرسمية للمنصة (مطابقة لتصميم الـ demo)
+/// ═══════════════════════════════════════════════════════════════
+/// هوية «زبون» v2 — النظام التصميمي المثبت من الدراسة
+/// (كحلي ليلي + برتقالي CTA وحيد + محايدات دافئة + شبكة 8pt + Tajawal)
+/// ═══════════════════════════════════════════════════════════════
 class A {
-  static const primary = Color(0xFF1D4ED8); // أزرق داكن (محيط)
-  static const primaryDeep = Color(0xFF1E3A8A); // أزرق أعمق
-  static const primaryLight = Color(0xFF38BDF8); // أزرق سماوي
-  static const cyan = Color(0xFF06B6D4);
-  static const accent = Color(0xFFF97316); // برتقالي شمسي
-  static const accentDeep = Color(0xFFEA580C);
-  static const ink = Color(0xFF0A1120);
-  static const bg = Color(0xFFFAF9F6); // خلفية دافئة فاتحة
-  static const text = Color(0xFF101828);
-  static const muted = Color(0xFF475467);
-  static const line = Color(0xFFE4E7EC);
-  static const success = Color(0xFF15803D);
+  /* ── الألوان (قاعدة 60-30-10) ── */
+  static const primary = Color(0xFF12294E); // كحلي ليلي — الأساسي الوحيد
+  static const primaryDeep = Color(0xFF0B1B36); // كحلي أعمق — تدرجات/حالات مضغوطة
+  static const primaryLight = Color(0xFF4A6FA5); // كحلي فاتح — ثانوي محايد
+  static const accent = Color(0xFFF2560F); // برتقالي شمسي — CTA الشراء الحصري
+  static const accentDeep = Color(0xFFC2410C); // برتقالي غامق — ضغوط التدريب
+  static const cyan = Color(0xFF1789A6); // سماوي هادئ — حالات «جاهز»
+
+  static const ink = Color(0xFF171D26); // نص أساسي (بدل الأسود الصافي)
+  static const bg = Color(0xFFFAFAF7); // خلفية دافئة فاتحة
+  static const surface = Color(0xFFFFFFFF); // أسطح البطاقات
+  static const text = Color(0xFF171D26);
+  static const muted = Color(0xFF5C6570);
+  static const line = Color(0xFFE7E9EC);
+  static const success = Color(0xFF1F9D55);
   static const warning = Color(0xFFB45309);
-  static const danger = Color(0xFFDC2626);
+  static const danger = Color(0xFFD92D20);
   static const info = Color(0xFF0284C7);
   static const star = Color(0xFFF5A623);
   static const white = Colors.white;
 
+  /* ── شبكة المسافات الثابتة (8pt — القيم الحصرية للنظام) ── */
+  static const double s4 = 4, s8 = 8, s12 = 12, s16 = 16, s20 = 20;
+  static const double s24 = 24, s32 = 32, s40 = 40, s48 = 48, s64 = 64, s96 = 96;
+
+  /* ── الزوايا (Concentric على 8pt) ── */
+  static const double r12 = 12; // شارات/حقول داخلية
+  static const double r16 = 16; // بطاقات
+  static const double r20 = 20; // بطاقات كبيرة/شيتات
+  static const double pill = 999; // أزرار CTA قبعة
+
+  /* ── تدرجات ممنوعة يومياً — للأحداث والإعلانات فقط ── */
   static const gradNavy = LinearGradient(
     begin: Alignment.topLeft,
     end: Alignment.bottomRight,
@@ -28,37 +45,50 @@ class A {
   static const gradSun = LinearGradient(
     begin: Alignment.topLeft,
     end: Alignment.bottomRight,
-    colors: [accent, Color(0xFFFB923C)],
+    colors: [accent, Color(0xFFF97316)],
   );
   static const gradSky = LinearGradient(
     begin: Alignment.topLeft,
     end: Alignment.bottomRight,
-    colors: [primaryLight, cyan],
+    colors: [primaryLight, Color(0xFF7FA3CC)],
   );
 
-  /// زجاج «المال صلب، الجمال زجاج» — روّق شفاف مثل الديمو
-  static BoxDecoration glass({double radius = 20, Color? tint, bool soft = false, bool dark = false}) {
-    final t = tint ?? (soft ? A.bg : A.white);
+  /// بطاقة صلبة (بدل الزجاج) — الخلفية الثابتة المختارة: أبيض + حد + ظل ناعم
+  static BoxDecoration card({
+    double radius = r16,
+    Color? color,
+    bool raised = false,
+    Color? border,
+  }) {
     return BoxDecoration(
-      gradient: LinearGradient(
-        begin: Alignment.topLeft,
-        end: Alignment.bottomRight,
-        colors: [
-          t.withOpacity(soft ? 0.55 : 0.62),
-          t.withOpacity(soft ? 0.4 : 0.74),
-        ],
-      ),
-      border: Border.all(
-        color: dark ? Colors.white.withOpacity(0.12) : Colors.white.withOpacity(0.45),
-        width: 1,
-      ),
+      color: color ?? surface,
       borderRadius: BorderRadius.circular(radius),
+      border: Border.all(color: border ?? line, width: 1),
+      boxShadow: raised
+          ? [
+              BoxShadow(
+                color: primary.withOpacity(0.06),
+                blurRadius: 20,
+                offset: const Offset(0, 8),
+              ),
+            ]
+          : null,
+    );
+  }
+
+  /// زجاج خفيف مخصص للشيتات/الأعلى فقط — لا يُستخدم للبطاقات اليومية
+  static BoxDecoration glass({double radius = 20, Color? tint, bool soft = false, bool dark = false}) {
+    final t = tint ?? (soft ? bg : white);
+    return BoxDecoration(
+      color: t.withOpacity(0.92),
+      borderRadius: BorderRadius.circular(radius),
+      border: Border.all(color: dark ? Colors.white.withOpacity(0.12) : Colors.white.withOpacity(0.45), width: 1),
       boxShadow: soft
           ? []
           : [
               BoxShadow(
-                color: A.primary.withOpacity(0.12),
-                blurRadius: 24,
+                color: primary.withOpacity(0.08),
+                blurRadius: 20,
                 offset: const Offset(0, 8),
               ),
             ],
@@ -67,9 +97,9 @@ class A {
 
   static BoxDecoration glassSolid({double radius = 20}) {
     return BoxDecoration(
-      gradient: const LinearGradient(colors: [Color(0xFFEFF6FF), Color(0xFFF0F9FF)]),
-      border: Border.all(color: Colors.white.withOpacity(0.55), width: 1.1),
+      color: const Color(0xFFF4F7FB),
       borderRadius: BorderRadius.circular(radius),
+      border: Border.all(color: line, width: 1),
     );
   }
 
@@ -77,30 +107,32 @@ class A {
       TextStyle(fontSize: s, color: c ?? text, fontWeight: w, height: h, decoration: decoration);
 }
 
-/// زر زجاجي دائري / مربع بأيقونة (icon-button مثل الديمو)
+/// زر دائري/مربع بأيقونة صلبة (بدل الزجاج) — هدف لمس ≥40
 class IconGlass extends StatelessWidget {
   final IconData icon;
   final VoidCallback? onTap;
   final double size;
   final Color? color;
   final double radius;
-  const IconGlass({super.key, required this.icon, this.onTap, this.size = 40, this.color = A.text, this.radius = 14, this.iconColor});
+  const IconGlass({super.key, required this.icon, this.onTap, this.size = 40, this.color = A.text, this.radius = 12, this.iconColor});
   final Color? iconColor;
   @override
   Widget build(BuildContext context) {
     return GestureDetector(
       onTap: onTap,
+      behavior: HitTestBehavior.opaque,
       child: Container(
         width: size,
         height: size,
-        decoration: A.glass(radius: radius, soft: true),
+        decoration: A.card(radius: radius),
+        alignment: Alignment.center,
         child: Icon(icon, color: iconColor ?? color, size: size * 0.45),
       ),
     );
   }
 }
 
-/// شريحة (chip) زجاجية للفئات والأزرار المصغرة
+/// شريحة (chip) صلبة للفئات — نشطة: كحلي، غير نشطة: أبيض بحد
 class ChipG extends StatelessWidget {
   final String label;
   final bool active;
@@ -114,20 +146,19 @@ class ChipG extends StatelessWidget {
       child: AnimatedContainer(
         duration: const Duration(milliseconds: 140),
         curve: Curves.easeOut,
-        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
-        decoration: active
-            ? BoxDecoration(
-                gradient: A.gradNavy,
-                borderRadius: BorderRadius.circular(999),
-              )
-            : A.glass(radius: 999, soft: true),
+        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+        decoration: BoxDecoration(
+          color: active ? A.primary : A.surface,
+          borderRadius: BorderRadius.circular(A.pill),
+          border: Border.all(color: active ? A.primary : A.line, width: 1),
+        ),
         child: Row(
           mainAxisSize: MainAxisSize.min,
           children: [
-            if (icon != null) ...[Text(icon!, style: const TextStyle(fontSize: 12)), const SizedBox(width: 4)],
+            if (icon != null) ...[Text(icon!, style: const TextStyle(fontSize: 12)), const SizedBox(width: 6)],
             Text(
               label,
-              style: A.t(12, c: active ? Colors.white : A.muted, w: FontWeight.w800),
+              style: A.t(13, c: active ? Colors.white : A.text, w: FontWeight.w700),
             ),
           ],
         ),
@@ -136,7 +167,7 @@ class ChipG extends StatelessWidget {
   }
 }
 
-/// شريط بحث زجاجي (غير قابل للكتابة إلا عبر callback)
+/// شريط بحث صلب (ارتفاع 48 — ضمن القياس الثابت)
 class SearchGlass extends StatelessWidget {
   final VoidCallback onTap;
   final String hint;
@@ -146,14 +177,15 @@ class SearchGlass extends StatelessWidget {
     return GestureDetector(
       onTap: onTap,
       child: Container(
-        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 13),
-        decoration: A.glass(radius: 16, soft: false),
+        height: 48,
+        padding: const EdgeInsets.symmetric(horizontal: 16),
+        decoration: A.card(radius: A.r16),
         child: Row(
           children: [
-            const Icon(Icons.search_rounded, size: 18, color: A.muted),
-            const SizedBox(width: 9),
+            const Icon(Icons.search_rounded, size: 20, color: A.muted),
+            const SizedBox(width: 10),
             Expanded(
-              child: Text(hint, style: A.t(12.5, c: A.muted, w: FontWeight.w600), maxLines: 1, overflow: TextOverflow.ellipsis),
+              child: Text(hint, style: A.t(14, c: A.muted, w: FontWeight.w500), maxLines: 1, overflow: TextOverflow.ellipsis),
             ),
           ],
         ),
@@ -170,17 +202,17 @@ class DotChip extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 11, vertical: 4),
+      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 5),
       decoration: BoxDecoration(
-        gradient: LinearGradient(colors: [color, color.withOpacity(0.85)]),
-        borderRadius: BorderRadius.circular(999),
+        color: color,
+        borderRadius: BorderRadius.circular(A.pill),
       ),
       child: Row(
         mainAxisSize: MainAxisSize.min,
         children: [
           Container(width: 6, height: 6, decoration: const BoxDecoration(color: Colors.white, shape: BoxShape.circle)),
-          const SizedBox(width: 4),
-          Text(label, style: const TextStyle(fontSize: 10, fontWeight: FontWeight.w800, color: Colors.white)),
+          const SizedBox(width: 6),
+          Text(label, style: const TextStyle(fontSize: 11, fontWeight: FontWeight.w700, color: Colors.white)),
         ],
       ),
     );
@@ -198,12 +230,12 @@ class VerifiedTag extends StatelessWidget {
       mainAxisSize: MainAxisSize.min,
       children: [
         Container(
-          width: 13, height: 13,
+          width: 14, height: 14,
           decoration: BoxDecoration(color: A.success, borderRadius: BorderRadius.circular(4)),
-          child: const Icon(Icons.check_rounded, size: 10, color: Colors.white),
+          child: const Icon(Icons.check_rounded, size: 11, color: Colors.white),
         ),
-        const SizedBox(width: 2),
-        const Text('موثق', style: TextStyle(fontSize: 9, fontWeight: FontWeight.w800, color: A.success)),
+        const SizedBox(width: 3),
+        const Text('موثق', style: TextStyle(fontSize: 10, fontWeight: FontWeight.w700, color: A.success)),
       ],
     );
   }
@@ -219,9 +251,9 @@ class StarsTag extends StatelessWidget {
     return Row(
       mainAxisSize: MainAxisSize.min,
       children: [
-        const Icon(Icons.star_rounded, size: 12, color: A.star),
+        const Icon(Icons.star_rounded, size: 13, color: A.star),
         const SizedBox(width: 2),
-        Text(rating.toStringAsFixed(1), style: const TextStyle(fontSize: 10, fontWeight: FontWeight.w800, color: A.muted)),
+        Text(rating.toStringAsFixed(1), style: const TextStyle(fontSize: 11, fontWeight: FontWeight.w700, color: A.muted)),
       ],
     );
   }
@@ -236,13 +268,13 @@ ThemeData buildTheme() {
       surface: A.bg,
     ),
     scaffoldBackgroundColor: A.bg,
-    fontFamily: 'default',
+    fontFamily: 'Tajawal',
     appBarTheme: const AppBarTheme(
       backgroundColor: Colors.transparent,
       elevation: 0,
       centerTitle: true,
       iconTheme: IconThemeData(color: A.ink),
-      titleTextStyle: TextStyle(color: A.ink, fontWeight: FontWeight.w900, fontSize: 18),
+      titleTextStyle: TextStyle(color: A.ink, fontWeight: FontWeight.w700, fontSize: 17),
     ),
     inputDecorationTheme: InputDecorationTheme(
       filled: true,
@@ -250,15 +282,15 @@ ThemeData buildTheme() {
       hintStyle: const TextStyle(color: A.muted, fontSize: 14),
       contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
       border: OutlineInputBorder(
-        borderRadius: BorderRadius.circular(16),
+        borderRadius: BorderRadius.circular(A.r16),
         borderSide: const BorderSide(color: A.line),
       ),
       enabledBorder: OutlineInputBorder(
-        borderRadius: BorderRadius.circular(16),
+        borderRadius: BorderRadius.circular(A.r16),
         borderSide: const BorderSide(color: A.line),
       ),
       focusedBorder: OutlineInputBorder(
-        borderRadius: BorderRadius.circular(16),
+        borderRadius: BorderRadius.circular(A.r16),
         borderSide: const BorderSide(color: A.primary, width: 1.6),
       ),
     ),
@@ -266,25 +298,25 @@ ThemeData buildTheme() {
       style: ElevatedButton.styleFrom(
         backgroundColor: A.primaryDeep,
         foregroundColor: Colors.white,
-        padding: const EdgeInsets.symmetric(vertical: 15),
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-        elevation: 4,
-        shadowColor: A.primary.withOpacity(0.4),
-        textStyle: const TextStyle(fontSize: 15, fontWeight: FontWeight.w800),
+        padding: const EdgeInsets.symmetric(vertical: 16),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(A.pill)),
+        elevation: 0,
+        shadowColor: A.primary.withOpacity(0.2),
+        textStyle: const TextStyle(fontSize: 15.5, fontWeight: FontWeight.w700),
       ),
     ),
     textButtonTheme: TextButtonThemeData(
       style: TextButton.styleFrom(
         foregroundColor: A.primary,
-        textStyle: const TextStyle(fontWeight: FontWeight.w800),
+        textStyle: const TextStyle(fontWeight: FontWeight.w700),
       ),
     ),
     chipTheme: ChipThemeData(
       backgroundColor: Colors.white,
       selectedColor: A.primaryDeep,
       side: const BorderSide(color: A.line),
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-      labelStyle: const TextStyle(fontWeight: FontWeight.w700, fontSize: 12.5, color: A.text),
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(A.r12)),
+      labelStyle: const TextStyle(fontWeight: FontWeight.w500, fontSize: 13, color: A.text),
     ),
     dividerColor: A.line,
     snackBarTheme: const SnackBarThemeData(
@@ -293,14 +325,14 @@ ThemeData buildTheme() {
     ),
     dialogTheme: const DialogThemeData(
       backgroundColor: Colors.white,
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.all(Radius.circular(22))),
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.all(Radius.circular(A.r20))),
     ),
     bottomNavigationBarTheme: const BottomNavigationBarThemeData(
       type: BottomNavigationBarType.fixed,
       backgroundColor: Colors.white,
       selectedItemColor: A.primary,
       unselectedItemColor: A.muted,
-      elevation: 14,
+      elevation: 8,
     ),
   );
   return base;

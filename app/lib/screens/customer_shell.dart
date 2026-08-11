@@ -694,7 +694,7 @@ class HomeScreenState extends State<HomeScreen> {
                           separatorBuilder: (_, __) => const SizedBox(width: 11),
                           itemBuilder: (_, i) {
                             final s = stores[i];
-                            const covers = [Color(0xFF1D4ED8), Color(0xFFF97316), Color(0xFF15803D), Color(0xFFB45309)];
+                            const covers = [Color(0xFF12294E), Color(0xFFF2560F), Color(0xFF1F9D55), Color(0xFF1789A6)];
                             return _StoreMiniCard(
                               data: Map<String, dynamic>.from(s as Map),
                               cover: covers[i % covers.length],
@@ -1922,6 +1922,7 @@ class _ProductScreenState extends State<ProductScreen> {
                   : hasVariant && !_variantReady
                       ? 'اختر اللون والمقاس أولاً 👆'
                       : 'أضف للسلة · ${money(prod.displayPrice * qty)}',
+              color: prod.outOfStock || (hasVariant && !_variantReady) ? A.primary : A.accent,
               disabled: prod.outOfStock || (hasVariant && !_variantReady),
               onTap: _addToCart,
             ),

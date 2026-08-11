@@ -117,9 +117,9 @@ export default function Home() {
     return (
       <div className="strip" style={{ height: h }}>
         {Array.from({ length: pages }).map((_, pi) => (
-          <div key={pi} style={{ display: 'flex', flexDirection: 'column', gap: 8, width: 'min(46vw, 178px)' }}>
+          <div key={pi} className="s2p">
             {[0, 1].map(r => list[pi * 4 + r * 2] ? (
-              <div key={r} style={{ display: 'flex', gap: 8 }}>
+              <div key={r} className="s2r">
                 <ProductCard p={list[pi * 4 + r * 2]} />
                 {list[pi * 4 + r * 2 + 1] ? <ProductCard p={list[pi * 4 + r * 2 + 1]} /> : null}
               </div>

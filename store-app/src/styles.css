@@ -448,7 +448,8 @@ select.inp { appearance: none; background-image: url("data:image/svg+xml,%3Csvg 
   .hero-d { font-size: var(--t-hd); }
   .all-its { grid-template-columns: repeat(3, 1fr); }
   .g2 { display: grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap: var(--sp-4); padding: 8px calc(var(--sp-7) + var(--sp-6)) 0; }
-  .g2 .strip, .g2 .strip > div, .g2 .strip > div > div { display: contents; }
+  .g2 .strip, .g2 .s2p, .g2 .s2r { display: contents; }
+  .g2 .s2p { width: auto; }
   .g2 .strip { height: auto !important; }
   .strip .deal-c { width: 200px; }
   .strip .sm { width: 270px; height: 158px; }
@@ -525,6 +526,8 @@ select.inp { appearance: none; background-image: url("data:image/svg+xml,%3Csvg 
 .strip { display: flex; gap: 10px; overflow-x: auto; padding: 0 var(--sp-2); scroll-snap-type: x proximity; scrollbar-width: none; }
 .strip::-webkit-scrollbar { display: none; }
 .strip > * { scroll-snap-align: start; }
+.s2p { display: flex; flex-direction: column; gap: 8px; width: min(46vw, 178px); }
+.s2r { display: flex; gap: 8px; }
 
 /* ═══ 31. الأساسيات العامة ═══ */
 .card { background: var(--white); border: 1px solid var(--line); border-radius: var(--r-lg); }
@@ -625,7 +628,7 @@ select.inp { appearance: none; background-image: url("data:image/svg+xml,%3Csvg 
 .rvn { display: flex; align-items: center; gap: 7px; font-size: var(--t-c1); font-weight: 900; color: var(--ink); }
 .rvt { font-size: var(--t-fn); color: var(--text); line-height: 1.7; margin-top: 4px; }
 .rvd { font-size: var(--t-c2); font-weight: 700; color: var(--muted); margin-top: 4px; }
-.pg-foot { position: fixed; bottom: calc(56px + env(safe-area-inset-bottom)); left: 0; right: 0; z-index: 95; background: rgba(255,255,255,.96); backdrop-filter: blur(16px); border-top: 1px solid var(--line); display: flex; gap: var(--sp-3); padding: var(--sp-3) var(--sp-4); }
+.pg-foot { position: fixed; bottom: calc(60px + env(safe-area-inset-bottom)); left: 0; right: 0; z-index: 95; background: rgba(255,255,255,.96); backdrop-filter: blur(16px); border-top: 1px solid var(--line); display: flex; gap: var(--sp-3); padding: var(--sp-3) var(--sp-4); }
 .qty { display: inline-flex; align-items: center; gap: 2px; background: var(--bg); border: 1px solid var(--line); border-radius: var(--r-md); padding: 3px; }
 .qty button { width: 40px; height: 40px; border: 0; background: transparent; color: var(--text); font-size: var(--t-hd); font-weight: 800; cursor: pointer; border-radius: 9px; display: inline-flex; align-items: center; justify-content: center; }
 .qty b { min-width: 26px; text-align: center; font-size: var(--t-fn); }
@@ -698,7 +701,7 @@ select.inp { appearance: none; background-image: url("data:image/svg+xml,%3Csvg 
 .mi { flex: 1; min-width: 0; }
 .pr { font-size: var(--t-fn); font-weight: 900; color: var(--ink); margin-top: 5px; }
 .x { align-self: flex-start; border: 0; background: transparent; color: var(--muted); cursor: pointer; padding: 4px; display: flex; }
-.cart-foot { position: fixed; bottom: calc(56px + env(safe-area-inset-bottom)); left: 0; right: 0; z-index: 95; background: rgba(255,255,255,.97); backdrop-filter: blur(16px); border-top: 1px solid var(--line); display: flex; align-items: center; gap: var(--sp-3); padding: var(--sp-3) var(--sp-4); }
+.cart-foot { position: fixed; bottom: calc(60px + env(safe-area-inset-bottom)); left: 0; right: 0; z-index: 95; background: rgba(255,255,255,.97); backdrop-filter: blur(16px); border-top: 1px solid var(--line); display: flex; align-items: center; gap: var(--sp-3); padding: var(--sp-3) var(--sp-4); }
 .cart-total { display: flex; flex-direction: column; line-height: 1.35; white-space: nowrap; }
 .cart-total b { font-size: var(--t-c1); color: var(--muted); font-weight: 800; }
 .cart-total span { font-size: var(--t-h2); font-weight: 900; color: var(--ink); }

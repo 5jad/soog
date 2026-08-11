@@ -78,14 +78,14 @@ select.inp { appearance: none; background-image: url("data:image/svg+xml,%3Csvg 
 
 /* ═══ 7. الترويسة ═══ */
 .top { position: sticky; top: 0; z-index: 90; background: rgba(250,250,247,.92); backdrop-filter: blur(16px); border-bottom: 1px solid var(--line); }
-.top-in { width: 100%; padding: var(--sp-2) var(--sp-4); display: flex; align-items: center; gap: var(--sp-2); min-width: 0; }
+.top-in { width: 100%; padding: var(--sp-2) var(--sp-4); display: flex; align-items: center; gap: var(--sp-2); min-width: 0; flex-wrap: wrap; }
 .hbrand { display: none; align-items: center; gap: 8px; cursor: pointer; text-decoration: none; flex: none; }
 .hb-logo { width: 38px; height: 38px; border-radius: var(--r-md); background: linear-gradient(135deg, var(--trust-deep), var(--trust)); color: #fff; font-family: var(--f-disp); font-size: 20px; font-weight: 700; display: inline-flex; align-items: center; justify-content: center; box-shadow: var(--sh-trust); }
 .hb-t { font-family: var(--f-disp); font-size: 22px; font-weight: 700; color: var(--trust-deep); line-height: 1; }
-.hsearch { display: none; }
-.cart-sink { display: inline-flex; }
-.cart-sink > * { animation: cbump .45s cubic-bezier(.3,1.4,.5,1); }
-@keyframes cbump { 0% { transform: scale(1); } 40% { transform: scale(1.4) rotate(-10deg); } 100% { transform: scale(1); } }
+.hsearch { display: flex; align-items: center; gap: 8px; order: 5; flex-basis: 100%; margin: 0 0 2px; background: #fff; border: 1.2px solid var(--line); border-radius: var(--r-md); padding: 0 8px 0 16px; }
+.hsearch input { flex: 1; border: 0; background: transparent; padding: 10px 2px; font-size: var(--t-fn); font-weight: 700; color: var(--ink); outline: none; min-width: 0; }
+.hsearch input::placeholder { color: var(--muted); font-weight: 600; }
+.hsearch button { border: 0; background: var(--cta); color: #fff; width: 34px; height: 34px; border-radius: 50%; cursor: pointer; display: inline-flex; align-items: center; justify-content: center; box-shadow: var(--sh-cta); }
 .top-pill { display: inline-flex; align-items: center; gap: 5px; padding: var(--sp-2) var(--sp-3); border-radius: var(--r-full); background: #fff; border: 1px solid var(--line); font-size: var(--t-c1); font-weight: 800; color: var(--trust); white-space: nowrap; flex: none; }
 .top-count { font-size: var(--t-c2); font-weight: 700; color: var(--muted); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; min-width: 0; }
 .top-acts { margin-inline-start: auto; display: flex; align-items: center; gap: var(--sp-2); flex: none; }
@@ -444,11 +444,9 @@ select.inp { appearance: none; background-image: url("data:image/svg+xml,%3Csvg 
 }
 
 @media (min-width: 900px) {
+  .top-in { flex-wrap: nowrap; }
   .hbrand { display: inline-flex; }
-  .hsearch { display: flex; align-items: center; gap: 8px; flex: 1; max-width: 420px; margin-inline-start: var(--sp-4); background: #fff; border: 1.2px solid var(--line); border-radius: var(--r-full); padding: 0 8px 0 16px; }
-  .hsearch input { flex: 1; border: 0; background: transparent; padding: 10px 2px; font-size: var(--t-fn); font-weight: 700; color: var(--ink); outline: none; min-width: 0; }
-  .hsearch input::placeholder { color: var(--muted); font-weight: 600; }
-  .hsearch button { border: 0; background: var(--cta); color: #fff; width: 34px; height: 34px; border-radius: 50%; cursor: pointer; display: inline-flex; align-items: center; justify-content: center; box-shadow: var(--sh-cta); }
+  .hsearch { order: 0; flex-basis: auto; flex: 1; max-width: 420px; margin-inline-start: var(--sp-4); border-radius: var(--r-full); }
   .dnav { justify-content: center; gap: var(--sp-2); }
   .dnav a { padding: var(--sp-3) var(--sp-3); font-size: var(--t-fn); }
   .bnav, .fab, .bottom-nav { display: none !important; }

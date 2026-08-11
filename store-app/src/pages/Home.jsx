@@ -139,28 +139,6 @@ export default function Home() {
 
   return (
     <div className="sect" style={{ paddingTop: 12 }}>
-      {/* البحث + الفلتر */}
-      <form className="search-row" onSubmit={search}>
-        <div className="search-f">
-          <button type="submit" className="go"><M n="search" s={20} w={600} /></button>
-          <input value={q} onChange={(e) => { setQ(e.target.value); }} placeholder="ابحث عن قميص، فستان، شنطة، مكياج... 🔍" />
-          {q ? <button type="button" className="clr" onClick={() => setQ('')}><M n="close" s={19} w={500} /></button> : null}
-        </div>
-        <button type="button" className={`flt-btn ${hasFilters ? 'on' : ''}`} onClick={() => setFltOpen(true)}>
-          <M n="tune" s={22} w={600} />
-          {hasFilters ? <span className="fb">{fCount}</span> : null}
-        </button>
-      </form>
-
-      {/* شرائح الفئات */}
-      {cats.length ? (
-        <div className="cats-row" style={{ paddingTop: 12 }}>
-          {cats.map(c => (
-            <CatIcon key={c.id} c={c} on={selCat.id === c.id} onClick={() => pickCat(c)} />
-          ))}
-        </div>
-      ) : null}
-
       {/* الهيرو */}
       <Promo ads={ads} stores={stores} />
 

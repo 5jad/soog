@@ -413,7 +413,7 @@ class _VendorProdCard extends StatelessWidget {
     return GestureDetector(
       onTap: onEdit,
       child: Container(
-        decoration: A.glass(radius: 0),
+        decoration: BoxDecoration(color: A.surface),
         clipBehavior: Clip.antiAlias,
         child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
           AspectRatio(

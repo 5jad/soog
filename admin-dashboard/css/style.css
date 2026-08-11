@@ -1,12 +1,12 @@
 /* ═══════════════════════════════════════════════════════════
-   زبون — هوية «أفق» Horizon — داشبورد الإدارة (ويب)
-   نيلي ملكي + سماوي كهربائي + برتقالي دافئ — زجاجية Apple
+   زبون v2 — هوية صلب في الليل — داشبورد الإدارة (ويب)
+   كحلي ليلي + برتقالي CTA حصري + محايدات دافئة
    ═══════════════════════════════════════════════════════════ */
 :root{
-  --primary:#1D4ED8; --primary-deep:#1E3A8A; --primary-light:#38BDF8;
-  --cyan:#06B6D4; --accent:#F97316; --accent-deep:#EA580C; --ink:#0A1120;
-  --bg:#FAF9F6; --text:#101828; --muted:#475467;
-  --success:#15803D; --warning:#B45309; --danger:#DC2626; --info:#0284C7; --star:#F5A623;
+  --primary:#12294E; --primary-deep:#0B1B36; --primary-light:#4A6FA5;
+  --cyan:#1789A6; --accent:#F2560F; --accent-deep:#C2410C; --ink:#171D26;
+  --bg:#FAFAF7; --text:#171D26; --muted:#5C6570;
+  --success:#1F9D55; --warning:#B45309; --danger:#D92D20; --info:#0284C7; --star:#F5A623;
   --glass-l1:rgba(238,244,255,.6); --glass-l2:rgba(255,255,255,.7); --glass-l3:rgba(255,255,255,.82);
   --glass-border:rgba(255,255,255,.45); --glass-border-dark:rgba(255,255,255,.12);
   --quick:140ms; --base:260ms; --slow:420ms;

@@ -299,7 +299,7 @@ class _CartScreenState extends State<CartScreen> {
                 onTap: () => setQty(it['id'], qty - 1).then((_) => (qty <= 1) ? removeItem(it['id']) : null),
                 child: Container(
                   width: 26, height: 26,
-                  decoration: A.glass(radius: 9, soft: true),
+                  decoration: BoxDecoration(color: A.surface, borderRadius: BorderRadius.circular(9), border: Border.all(color: A.line)),
                   alignment: Alignment.center,
                   child: const Icon(Icons.remove_rounded, size: 15, color: A.muted),
                 ),
@@ -576,9 +576,9 @@ class _CartScreenState extends State<CartScreen> {
                       child: Ink(
                         height: 52,
                         decoration: BoxDecoration(
-                          gradient: const LinearGradient(colors: [A.primaryDeep, A.primary]),
+                          color: A.accent,
                           borderRadius: BorderRadius.circular(16),
-                          boxShadow: [BoxShadow(color: A.primary.withOpacity(0.35), blurRadius: 14, offset: const Offset(0, 5))],
+                          boxShadow: [BoxShadow(color: A.accent.withOpacity(0.35), blurRadius: 14, offset: const Offset(0, 5))],
                         ),
                         child: const Center(
                           child: Text('إتمام الطلب ✓ — ادفع عند الاستلام',

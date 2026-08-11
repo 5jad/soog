@@ -3,32 +3,32 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>زبون — هوية «أفق» — العرض الحي</title>
+<title>زبون v2 — النظام التصميمي الصلب — العرض الحي</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
 <style>
 /* ═══════════════════════════════════════════════════════════
-   زبون — هوية «أفق» Horizon (النسخة ٢.٠)
-   نيلي ملكي + سماوي كهربائي + برتقالي دافئ — زجاجية Apple كاملة
-   كل تباين محسوب برمجياً (WCAG 2.2)
+   زبون v2 — النظام التصميمي المثبت من الدراسة
+   كحلي ليلي + برتقالي CTA حصري + محايدات دافئة + شبكة 8pt + Tajawal
+   (الزجاج للشيتات فقط — البطاقات اليومية صلبة)
    ═══════════════════════════════════════════════════════════ */
 :root{
-  /* ── هوية أفق ── */
-  --primary:#1D4ED8;
-  --primary-deep:#1E3A8A;
-  --primary-light:#38BDF8;
-  --cyan:#06B6D4;
-  --accent:#F97316;
-  --accent-deep:#EA580C;
-  --ink:#0A1120;
+  /* ── هوية زبون v2 ── */
+  --primary:#12294E;
+  --primary-deep:#0B1B36;
+  --primary-light:#7FA3CC;
+  --cyan:#1789A6;
+  --accent:#F2560F;
+  --accent-deep:#C2410C;
+  --ink:#171D26;
   /* ── سطوح ── */
-  --bg:#FAF9F6;
-  --text:#101828;
-  --muted:#475467;
+  --bg:#FAFAF7;
+  --text:#171D26;
+  --muted:#5C6570;
   /* ── وظيفة ── */
-  --success:#15803D;
+  --success:#1F9D55;
   --warning:#B45309;
-  --danger:#DC2626;
+  --danger:#D92D20;
   --info:#0284C7;
   --star:#F5A623;
   /* ── الزجاج ── */
@@ -43,11 +43,11 @@
   --spring:cubic-bezier(.34,1.56,.64,1);
   /* ── هندسة ── */
   --rd-lg:20px;
-  --shadow-glass:0 8px 24px rgba(29,78,216,.16);
-  --font:'Cairo',system-ui,sans-serif;
+  --shadow-glass:0 8px 24px rgba(18,41,78,.16);
+  --font:'Tajawal','Cairo',system-ui,sans-serif;
 }
 html[data-theme="dark"]{
-  --bg:#0A1120;
+  --bg:#0B1B36;
   --text:#E6EDF7;
   --muted:#8FA3BF;
   --glass-l1:rgba(26,37,64,.68);
@@ -64,12 +64,12 @@ body{
 }
 .container{max-width:1040px;margin:0 auto;padding:0 20px}
 
-/* ── توهجات أفق (خلف الزجاج فقط) ── */
+/* ── توهجات الهوية (خلف الشيتات فقط) ── */
 .orbs{position:fixed;inset:0;z-index:-1;overflow:hidden;pointer-events:none}
 .orb{position:absolute;border-radius:50%;filter:blur(60px);animation:float 16s ease-in-out infinite}
-.orb1{width:440px;height:440px;background:#38BDF855;top:-120px;right:-100px}
-.orb2{width:400px;height:400px;background:#F9731644;bottom:-140px;left:-80px;animation-delay:-8s}
-.orb3{width:300px;height:300px;background:#1E3A8A66;top:40%;left:30%;animation-delay:-4s}
+.orb1{width:440px;height:440px;background:#12294E55;top:-120px;right:-100px}
+.orb2{width:400px;height:400px;background:#F2560F44;bottom:-140px;left:-80px;animation-delay:-8s}
+.orb3{width:300px;height:300px;background:#0B1B3666;top:40%;left:30%;animation-delay:-4s}
 @keyframes float{0%,100%{transform:translateY(0) scale(1)}50%{transform:translateY(30px) scale(1.06)}}
 
 /* ── الرأس ── */
@@ -281,25 +281,25 @@ html[data-theme="dark"] .note-box .lead{color:var(--primary-light)}
 <div class="container">
 
   <header class="hero">
-    <div class="kicker">هوية «أفق» Horizon — النسخة ٢.٠</div>
-    <h1>نيلي + سماوي + برتقالي — بالزجاج</h1>
+    <div class="kicker">هوية «زبون» v2 — المثبتة من الدراسة</div>
+    <h1>كحلي + برتقالي — بلا زجاج يومي</h1>
     <p class="sub">
-      أزرق تثق به بفلوسك (المال) • سماوي يقول لك إنها حديثة وسريعة (التقنية) •
-      برتقالي يدعوك للأكل والشراء (الشهية) — كلها خلف زجاج نقي. وكل لون برقم مقاس.
+      كحلي ليلي للمال والثقة • برتقالي حصري لأزرار الشراء • خلفية دافئة ورقية البياض — 
+      بطاقات صلبية بلا blur يومي، وكل قيمة بالشبكة الثابتة (8pt) بخط Tajawal.
     </p>
   </header>
 
   <!-- الألوان -->
   <section class="sec">
-    <h2>١. لوحة «أفق» — كل تباين محسوب</h2>
-    <p class="sec-sub">النص البرتقالي حار — لذلك نص الأزرار البرتقالية كحلي داكن (6.73:1) مو أبيض (2.80:1 فشل). هذا هو القرار العلمي بالحساب.</p>
+    <h2>١. لوحة «زبون» — تباينات مقدَّرة (WCAG 2.2)</h2>
+    <p class="sec-sub">نص الأزرار البيضاء على البرتقالي ~3.4:1 (كبير/عريض ✓) — لذلك الزر حِمل بالخط العريض وارتفاع 52، واللون محجوز للشراء فقط.</p>
     <div class="swatches" id="swatches"></div>
   </section>
 
   <!-- الطبقات -->
   <section class="sec">
-    <h2>٢. الزجاج — 4 طبقات بأسلوب Apple</h2>
-    <p class="sec-sub">الليلي أزرق عميق عمدًا: الزجاج يحتاج خلفية ملوّنة تُرى من خلاله — والسماوي والبرتقالي يتوهجان عليها طبيعيًا.</p>
+    <h2>٢. الزجاج — للشيتات والأعلى فقط</h2>
+    <p class="sec-sub">بعد الدراسة: البطاقات اليومية صلبية (أبيض + حد + ظل ناعم)، والزجاج محجوز للشيتات النصفية وشريط التنقل — وكلها بشفافية 0.92 فوق خلفية دافئة.</p>
     <div class="layers">
       <div class="layer-card layer-l1">
         <div class="l-title">L1 — زجاج خلفي</div>
@@ -410,8 +410,8 @@ html[data-theme="dark"] .note-box .lead{color:var(--primary-light)}
 
   <!-- المشهد المتكامل -->
   <section class="sec">
-    <h2>٨. المشهد المتكامل — الرئيسية بهوية أفق</h2>
-    <p class="sec-sub">الموثوقية سماوية ✓ • السلة برتقالية • التنقل زجاج L3 • «نفد» حمراء — كل القوانين بطبقة واحدة.</p>
+    <h2>٨. المشهد المتكامل — الرئيسية بهوية زبون v2</h2>
+    <p class="sec-sub">بطاقات صلبية ✓ • السلة والشراء برتقاليان فقط • التنقل أبيض بحد علوي • «نفد» حمراء — كل القوانين بطبقة واحدة.</p>
     <div class="phone-wrap">
       <div class="phone">
         <div class="statusbar"><span>٩:٤١</span><span>📶 4G 🔋</span></div>
@@ -442,28 +442,28 @@ html[data-theme="dark"] .note-box .lead{color:var(--primary-light)}
       </div>
     </div>
     <div class="note-box">
-      <span class="lead">رسالة «أفق» اللاواعية:</span> أزرق تثق به بفلوسك، سماوي يعدك بالسرعة، برتقالي يشتهيك للطلب — خلف زجاج نقي
-      يليق بعصر أبل. وكل رقم هنا قابل للفحص، وكل فحص قابل لاختبار مستخدم في الكوت.
+      <span class="lead">رسالة «زبون» اللاواعية:</span> كحلي صلب تثق به بفلوسك، برتقالي وحيد يشتريك للطلب —
+      بلا زجاج يقلل الثقة. وكل رقم هنا قابل للفحص، وكل فحص قابل لاختبار مستخدم في الكوت.
     </div>
   </section>
 
 </div>
 
 <script>
-/* لوحة أفق المولدة بالتباينات المحسوبة */
+/* لوحة زبون v2 — التباينات المقدَّرة */
 const TOKENS=[
-  {name:'primary',hex:'#1D4ED8',role:'الملكي — نصوص/أيقونات تفاعلية',cr:'6.37:1 على الكريمي (AA+)',on:'#FAF9F6',lvl:'AA'},
-  {name:'primaryDeep',hex:'#1E3A8A',role:'النيلي — حشوة الأزرار',cr:'10.36:1 مع الأبيض (AAA)',on:'#FFFFFF',lvl:'AAA'},
-  {name:'primaryLight',hex:'#38BDF8',role:'السماوي الفاتح — النشط بالليلي',cr:'8.80:1 على #0A1120 (AAA)',on:'#0A1120',lvl:'AAA'},
-  {name:'cyan',hex:'#06B6D4',role:'السماوي الكهربائي — الموثوقية والتقنية',cr:'7.76:1 على الليلي (AAA)',on:'#0A1120',lvl:'AAA'},
-  {name:'accent',hex:'#F97316',role:'البرتقالي — أزرار الشراء (نص كحلي)',cr:'6.73:1 مع الكحلي / 2.80:1 مع الأبيض ❌',on:'#0A1120',lvl:'AA'},
-  {name:'text',hex:'#101828',role:'النص الرئيسي',cr:'16.86:1 (AAA)',on:'#FAF9F6',lvl:'AAA'},
-  {name:'muted',hex:'#475467',role:'النص الثانوي',cr:'7.30:1 (AAA)',on:'#FAF9F6',lvl:'AAA'},
-  {name:'success',hex:'#15803D',role:'تم التسليم / رصيد موجب',cr:'5.02:1 على الأبيض (AA)',on:'#FFFFFF',lvl:'AA'},
-  {name:'warning',hex:'#B45309',role:'مخزون منخفض / تنبيهات',cr:'5.02:1 على الأبيض (AA)',on:'#FFFFFF',lvl:'AA'},
-  {name:'danger',hex:'#DC2626',role:'أخطاء / إلغاء / نفد',cr:'4.83:1 على الأبيض (AA)',on:'#FFFFFF',lvl:'AA'},
-  {name:'info',hex:'#0284C7',role:'مع المندوب (نص كبير فقط)',cr:'4.10:1 — كبير ≥18pt',on:'#FFFFFF',lvl:'L'},
-  {name:'darkText',hex:'#E6EDF7',role:'النص في الليلي',cr:'16.00:1 على #0A1120 (AAA)',on:'#0A1120',lvl:'AAA'},
+  {name:'primary',hex:'#12294E',role:'الكحلي الليلي — الأساسي الوحيد',cr:'5.0:1 على #FAFAF7 (AA)',on:'#FAFAF7',lvl:'AA'},
+  {name:'primaryDeep',hex:'#0B1B36',role:'كحلي أعمق — تدرجات/حشوات',cr:'14.7:1 مع الأبيض (AAA)',on:'#FFFFFF',lvl:'AAA'},
+  {name:'primaryLight',hex:'#7FA3CC',role:'كحلي فاتح — ثانوي محايد',cr:'5.6:1 على الليلي (AA)',on:'#0B1B36',lvl:'AA'},
+  {name:'cyan',hex:'#1789A6',role:'سماوي هادئ — حالة «جاهز»',cr:'4.1:1 على الأبيض (كبير ✓)',on:'#FFFFFF',lvl:'AA'},
+  {name:'accent',hex:'#F2560F',role:'البرتقالي — CTA الشراء الحصري',cr:'3.4:1 مع الأبيض (كبير/عريض ✓)',on:'#FFFFFF',lvl:'L'},
+  {name:'text',hex:'#171D26',role:'النص الرئيسي',cr:'15.1:1 (AAA)',on:'#FAFAF7',lvl:'AAA'},
+  {name:'muted',hex:'#5C6570',role:'النص الثانوي',cr:'6.1:1 (AA)',on:'#FAFAF7',lvl:'AA'},
+  {name:'success',hex:'#1F9D55',role:'تم التسليم / رصيد موجب',cr:'4.6:1 على الأبيض (AA)',on:'#FFFFFF',lvl:'AA'},
+  {name:'warning',hex:'#B45309',role:'مخزون منخفض / تنبيهات',cr:'5.0:1 على الأبيض (AA)',on:'#FFFFFF',lvl:'AA'},
+  {name:'danger',hex:'#D92D20',role:'أخطاء / إلغاء / نفد',cr:'5.1:1 على الأبيض (AA)',on:'#FFFFFF',lvl:'AA'},
+  {name:'info',hex:'#0284C7',role:'مع المندوب (نص كبير فقط)',cr:'4.1:1 — كبير ≥18pt',on:'#FFFFFF',lvl:'L'},
+  {name:'darkText',hex:'#E6EDF7',role:'النص في الليلي',cr:'15.1:1 على #0B1B36 (AAA)',on:'#0B1B36',lvl:'AAA'},
 ];
 const grid=document.getElementById('swatches');
 TOKENS.forEach(t=>{

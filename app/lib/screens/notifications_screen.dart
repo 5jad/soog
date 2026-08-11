@@ -100,7 +100,7 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
                         child: Container(
                           padding: const EdgeInsets.fromLTRB(12, 11, 12, 11),
                           decoration: read
-                              ? A.glass(radius: 16, soft: true)
+                              ? A.card(radius: A.r16)
                               : BoxDecoration(
                                   color: tc.withOpacity(0.06),
                                   borderRadius: BorderRadius.circular(16),

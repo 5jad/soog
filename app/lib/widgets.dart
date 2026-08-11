@@ -19,7 +19,7 @@ Widget storeLogo(String logo, {double size = 52, double radius = 14}) {
     return Container(
       width: size, height: size,
       decoration: BoxDecoration(
-        gradient: const LinearGradient(colors: [Color(0xFFE0E7FF), Color(0xFFCFFAFE)]),
+        gradient: const LinearGradient(colors: [Color(0xFFF1F0EC), Color(0xFFE8E6E0)]),
         borderRadius: BorderRadius.circular(radius),
       ),
       alignment: Alignment.center,
@@ -55,7 +55,7 @@ Widget productImage(String? image, {double size = 80, double radius = 14}) {
     width: size,
     height: size,
     decoration: BoxDecoration(
-      gradient: const LinearGradient(colors: [Color(0xFFFFF7ED), Color(0xFFF0FDFA)]),
+      gradient: const LinearGradient(colors: [Color(0xFFF1F0EC), Color(0xFFE8E6E0)]),
       borderRadius: BorderRadius.circular(radius),
     ),
     alignment: Alignment.center,
@@ -69,7 +69,7 @@ Widget productImageBox(String? image, {String? base}) {
   final url = (image ?? '').trim();
   Widget ph(String emoji) => Container(
         decoration: const BoxDecoration(
-          gradient: LinearGradient(colors: [Color(0xFFFFF7ED), Color(0xFFF0FDFA)]),
+          gradient: LinearGradient(colors: [Color(0xFFF1F0EC), Color(0xFFE8E6E0)]),
         ),
         alignment: Alignment.center,
         child: Text(emoji, style: A.t(48)),

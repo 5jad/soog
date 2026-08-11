@@ -78,7 +78,7 @@ class _StoresScreenState extends State<StoresScreen> {
         title: Row(children: [
           Container(
             padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-            decoration: A.glass(radius: 999, soft: true),
+            decoration: BoxDecoration(color: A.surface, borderRadius: BorderRadius.circular(A.pill), border: Border.all(color: A.line)),
             child: Row(mainAxisSize: MainAxisSize.min, children: [
               const Icon(Icons.location_on_rounded, color: A.primary, size: 14),
               const SizedBox(width: 5),
@@ -189,7 +189,7 @@ class _StoresScreenState extends State<StoresScreen> {
                             child: Container(
                               width: 150,
                               padding: const EdgeInsets.all(10),
-                              decoration: A.glass(radius: 16),
+                              decoration: A.card(radius: A.r16),
                               child: Row(children: [
                                 storeLogo('${f['store_logo'] ?? ''}', size: 44, radius: 12),
                                 const SizedBox(width: 10),
@@ -236,7 +236,7 @@ class _StoresScreenState extends State<StoresScreen> {
       onTap: () => widget.onOpen(s),
       child: Container(
         clipBehavior: Clip.antiAlias,
-        decoration: A.glass(radius: 0),
+        decoration: BoxDecoration(color: A.surface),
         child: Column(crossAxisAlignment: CrossAxisAlignment.stretch, children: [
           AspectRatio(
             aspectRatio: 1,

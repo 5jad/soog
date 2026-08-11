@@ -326,7 +326,7 @@ class _CategoryProductsScreenState extends State<CategoryProductsScreen> {
                               return GestureDetector(
                                 onTap: () => pushProduct(context, storeId, p.id),
                                 child: Container(
-                                  decoration: A.glass(radius: 0),
+                                  decoration: BoxDecoration(color: A.surface),
                                   clipBehavior: Clip.antiAlias,
                                   child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
                                     AspectRatio(

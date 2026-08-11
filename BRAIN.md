@@ -110,7 +110,7 @@ flutter build apk --debug
 - `api.dart` — عميل HTTP الوحيد: `Api.base = http://192.168.1.137:4000` (**IP جهاز التطوير الحالي — يُغيَّر عند نقل الجهاز**)؛ كل طلب مع `Authorization: Bearer`.
   - `Api.load()` في `main.dart` قبل `runApp` — إذا انتهى التوكن يـ `clear()`.
   - `AppState.i` — حالة مشتركة: `cartCount` (ValueNotifier)، `guestCart`، عداد إشعارات.
-- `theme.dart` — هوية «أفق» (الاسم القديم في التعليق — انظر العيوب): `A.primary=1D4ED8`، `A.glass()`، `IconGlass`، `ChipG`، `GlassCard`، `SolidBtn`، `SheetTitle`…
+- `theme.dart` — هوية «زبون» v2 (قرار الدراسة 2026-08-11): `A.primary=12294E`، `A.accent=F2560F` (CTA شراء حصري)، `A.card()` صلب، `A.glass()` للشيتات فقط، شبكة 8pt، Tajawal، `IconGlass`، `ChipG`، `GlassCard`، `SolidBtn` (52px)، `SheetTitle`…
 - `widgets.dart` — `GlassBottomNav` (شريط سفلي موحّد، شارات عبر `badgeIndex`/`badgeCount`)، عنصر زر عائم، زر دفع عادي… — *مهم جداً*: ممنوع أي `margin` سالب (يوجب red screen في debug).
 
 ### 4.2 4 واجهات بالأدوار (`shell.dart` يوجّه):
@@ -165,6 +165,9 @@ flutter build apk --debug
 | 2026-08-09 | **زر المشاركة**: استبدال نسخ الرابط بـ share_plus 10.1.4 (13.3.0 كسر بناء Kotlin → أنزلت) — يفتح نافذة اختيار Android |
 | 2026-08-09 | **صور متعددة للمنتج**: عمود `images TEXT[]` + رفع صور من معرض الجهاز عبر `POST /api/uploads/upload` (JSON base64 — multer سبّب قطع RST غامض) → ملف في `backend/public/uploads` يُخدَّم بـ `/uploads/*`. واجهة التاجر: منطقة «صور المنتج (8)» بمعاينة + حذف + زر «أضف صور» (image_picker). صفحة المنتج: سلايدر PageView + نقاط مؤشر (الانتقاد: الدوائر/الشارة فوق الصورة) |
 | 2026-08-09 | **باسوردات الديمو بإعادة البذر**: التاجر/المندوب = `vendor123` — (القبل كانت OTP–only); التبديل بالأدوار |
+| 2026-08-11 | **دراسة تصميم «زبون» v2 (قرار نهائي)** — بيانات: Ipsos العراق 2025 (21% تسوق أونلاين، 82% سوشل ميديا، 91% جنوب العراق = سوشل كومرس)، Baymard (70% هجر سلة)، سيكولوجية لون 2026 (كحلي+أبيض+برتقالي أفضل تحويل، برتقالي CTA +32.5%)، Apple HIG 8pt/44pt، Fitts/إبهام. **المقرَّر**: كحلي ليلي `#12294E` + برتقالي CTA وحيد `#F2560F` (60-30-10) + أبيض دافئ `#FAFAF7` + Tajawal + شبكة 8pt حصرية (4..96) + زوايا 12/16/20/pill + زجاج للشيتات فقط (البطاقات اليومية صلبة) + أزرار شراء 52px مثبتة أسفل. حذف اسم «أفق» نهائياً |
+| 2026-08-11 | **تنفيذ هوية v2 في التطبيق**: `theme.dart` أُعيدت كتابته (ثوابت A الجديدة + BuildTheme Tajawal)، `widgets.dart` (SolidBtn 52/capsule، GlassBottomNav صلب بلا blur، GlassCard صلب)، إزالة كل `A.glass` من البطاقات اليومية (customer_shell/stores/account/vendor/favorites/notifications/category/cart)، أزرار الشراء (أضف للسلة/إتمام الطلب ×3) صارت `A.accent` برتقالي. `flutter analyze` 0 أخطاء + `flutter build apk --debug` ✓ |
+| 2026-08-11 | **توحيد الاسم + الهوية خارج التطبيق**: `admin-dashboard/` و`backend/public/admin` CSS vars → v2، `landing/index.html` كامل الألوان → v2 (Tajawal، hero كحلي، CTA برتقالي، header صلب)، ديمو HTML (design-system + app-pages) نُقلت ألوانها لنظام v2 (متبقي: إعادة توليد بنيوية كاملة للديمو الزجاجي القديم)، `PROJECT/BRAIN/README/schema.sql` بلا «أفق» |
 
 ---
 
@@ -186,7 +189,7 @@ flutter build apk --debug
 ## 8) عيوب وملاحظات مفتوحة (من فحص 2026-08-09 — لم تُيَعْتَدَّ بعد)
 
 ### التناقضات:
-1. **هويّة الأسماء**: تعليقات «أفق» في `app/lib/theme.dart:3` و `README.md:63-64` — والاسم الفعلي في كل يشغل **زبون**. → توحيدهما.
+1. ~~هويّة الأسماء~~ ✅ (2026-08-11): أُنجز توحيد الاسم مع دراسة الهوية الجديدة — «أفق» حُذفت من الكود/الوثائق (ديمو HTML تحتاج إعادة توليد كاملة للهوية v2 الصلبة — لونياً نُقلت، بنيوياً بقي الديمو الزجاجي القديم).
 2. `app/lib/models.dart:40` — `Store.open` يقبل `'active'` في حين سكيما المتاجر لا تعرف هذه القيمة (الفحص `CHECK` يقبل `pending|approved|rejected|suspended`) — تسامح فارغ.
 
 ### التكرار:

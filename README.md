@@ -90,8 +90,8 @@ backend/               الباك اند (Express 5 + PostgreSQL + Socket.io)
   src/schema.sql       الجداول (27 جدول)
   src/seed.js          بيانات الكوت: واسط+8 أحياء، بغداد، 10 أقسام، 5 متاجر
   src/routes/          auth · public · customer · vendor · delivery · admin
-admin-dashboard/       لوحة آدمن ويب (هوية أفق، RTL، HTML/JS نقي)
-app/                   تطبيق Flutter (هوية أفق، زجاجي، 4 أدوار)
+admin-dashboard/       لوحة آدمن ويب (هوية زبون v2، RTL، HTML/JS نقي)
+app/                   تطبيق Flutter (هوية زبون v2 صلبية، 4 أدوار)
 infra/                 قاعدة بيانات المشروع المحلية (منفذ 5434)
 ```
 

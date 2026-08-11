@@ -1112,7 +1112,7 @@ class _ProdMiniCard extends StatelessWidget {
       child: Container(
         width: 158,
         padding: const EdgeInsets.all(10),
-        decoration: A.glass(radius: 20),
+        decoration: A.card(radius: A.r20),
         child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
           productImage(prod.image, size: 92, radius: 15),
           const SizedBox(height: 8),
@@ -1155,7 +1155,7 @@ class _ProdCard extends StatelessWidget {
     return GestureDetector(
       onTap: onOpen,
       child: Container(
-        decoration: A.glass(radius: 0),
+        decoration: BoxDecoration(color: A.surface),
         clipBehavior: Clip.antiAlias,
         child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
           AspectRatio(

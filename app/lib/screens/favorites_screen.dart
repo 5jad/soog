@@ -106,7 +106,7 @@ class _FavoritesScreenState extends State<FavoritesScreen> {
                       return GestureDetector(
                         onTap: () => pushProduct(context, storeId, prod.id),
                         child: Container(
-                          decoration: A.glass(radius: 0),
+                          decoration: BoxDecoration(color: A.surface),
                           clipBehavior: Clip.antiAlias,
                           child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
                             AspectRatio(

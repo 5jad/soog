@@ -218,7 +218,7 @@ class _AccountScreenState extends State<AccountScreen> {
           const SizedBox(height: 18),
           // ═══ قائمة سريعة ═══
           Container(
-            decoration: A.glass(radius: 22),
+            decoration: A.card(radius: A.r20),
             child: Column(children: [
               _tile(Icons.notifications_rounded, 'الإشعارات 🔔', () => Navigator.push(context, MaterialPageRoute(builder: (_) => const NotificationsScreen()))),
               _div(),

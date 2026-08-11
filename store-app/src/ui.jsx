@@ -1,5 +1,12 @@
-import React from 'react';
+import React, { useEffect } from 'react';
 import { U } from './api';
+
+/* عنوان الصفحة في شريط المتصفح */
+export const useTitle = (t, extra = '') => {
+  useEffect(() => {
+    document.title = t ? (extra ? `${t} — ${extra}` : `${t} | زبون`) : 'زبون — كل ما تتمناه بمكان واحد';
+  }, [t, extra]);
+};
 
 /* ═══ أيقونة Material Symbols — مطابقة أيقونات التطبيق ═══ */
 export const M = ({ n, s = 20, c = 'currentColor', fill = false, w = 400, cls = '', style = {} }) => (

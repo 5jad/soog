@@ -2,10 +2,11 @@ import React, { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { api } from '../api';
 import { useApp } from '../ctx';
-import { Empty, SkeGrid } from '../ui';
+import { Empty, SkeGrid, useTitle } from '../ui';
 import { ProductCard } from '../components/Cards';
 
 export default function Favorites() {
+  useTitle('المفضلة');
   const { token, favs, refreshFav, setLoginOpen } = useApp();
   const nav = useNavigate();
   const [loading, setLoading] = useState(true);

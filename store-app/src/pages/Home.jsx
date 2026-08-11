@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { api } from '../api';
-import { Loader, Empty, M } from '../ui';
+import { Loader, Empty, M, useTitle } from '../ui';
 import Promo from '../components/Promo';
 import { ProductCard, StoreCard, DealCard, CatIcon, DOT } from '../components/Cards';
 
@@ -9,6 +9,7 @@ const COVERS = ['linear-gradient(135deg,#1D4ED8,#38BDF8)', 'linear-gradient(135d
 const SORTS = [['newest', 'الأحدث'], ['best', 'الأفضل تقييماً'], ['discount', 'الأكثر خصماً'], ['price_asc', 'السعر: من الأقل'], ['price_desc', 'السعر: من الأعلى']];
 
 export default function Home() {
+  useTitle('الرئيسية', 'زبون — تسوق من متاجر الكوت');
   const nav = useNavigate();
   const [loading, setLoading] = useState(true);
   const [ads, setAds] = useState([]);

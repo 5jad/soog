@@ -2,9 +2,10 @@ import React, { useEffect, useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { api } from '../api';
 import { useApp } from '../ctx';
-import { Empty, Loader } from '../ui';
+import { Empty, Loader, useTitle } from '../ui';
 
 export default function Account() {
+  useTitle('حسابي');
   const { token, me, logout, notify, setLoginOpen } = useApp();
   const nav = useNavigate();
   const [pts, setPts] = useState(null);

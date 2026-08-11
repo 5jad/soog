@@ -1,12 +1,13 @@
 import React, { useEffect, useState } from 'react';
 import { api, fmt, copy, timeAgo } from '../api';
 import { useApp } from '../ctx';
-import { Loader, Empty } from '../ui';
+import { Loader, Empty, useTitle } from '../ui';
 
 const SEGS = [100, 20, 0, 50, 200, 30, 100, 20, 50, 30];
 const COLORS = ['#1D4ED8', '#38BDF8', '#F97316', '#6366F1', '#06B6D4', '#8B5CF6', '#F59E0B', '#2563EB', '#0EA5E9', '#FB923C'];
 
 export default function Points() {
+  useTitle('نقاطي');
   const { token, notify, setLoginOpen } = useApp();
   const [data, setData] = useState(null);
   const [spin, setSpin] = useState(null);

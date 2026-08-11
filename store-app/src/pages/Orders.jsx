@@ -2,7 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { api, fmt, timeAgo } from '../api';
 import { useApp } from '../ctx';
-import { Loader, Empty } from '../ui';
+import { Loader, Empty, useTitle } from '../ui';
 
 export const STATUS = {
   pending: { t: 'في الانتظار', e: '🕐', c: 'pill-bg' },
@@ -17,6 +17,7 @@ export const STATUS = {
 export const OKISH = ['accepted', 'processing', 'assigned', 'on_the_way', 'delivered'];
 
 export default function Orders() {
+  useTitle('طلباتي');
   const { token, setLoginOpen } = useApp();
   const nav = useNavigate();
   const [orders, setOrders] = useState(null);

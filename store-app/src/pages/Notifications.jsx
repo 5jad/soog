@@ -2,9 +2,10 @@ import React, { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { api, timeAgo } from '../api';
 import { useApp } from '../ctx';
-import { Loader, Empty } from '../ui';
+import { Loader, Empty, useTitle } from '../ui';
 
 export default function Notifications() {
+  useTitle('الإشعارات');
   const { token, notify, setNotifN, setLoginOpen } = useApp();
   const nav = useNavigate();
   const [list, setList] = useState(null);

@@ -884,3 +884,35 @@ select.inp { appearance: none; background-image: url("data:image/svg+xml,%3Csvg 
 .trip-stop { display: flex; align-items: center; gap: 10px; background: rgba(255,255,255,.09); border-radius: 12px; padding: 10px; }
 .trip-line { width: 2px; height: 16px; background: rgba(255,255,255,.3); margin-inline-start: 20px; }
 .badge { position: static !important; display: inline-flex; align-items: center; background: var(--disc); color: #fff; font-size: 10px; font-weight: 900; border-radius: 20px; padding: 1px 6px; min-width: 16px; }
+
+/* ═══ 28. الفوتر ═══ */
+.foot { border-top: 1px solid var(--line); background: #fff; margin-top: 24px; padding: var(--sp-6) var(--sp-4) 88px; }
+.foot-in { display: grid; gap: var(--sp-5); max-width: 1240px; margin-inline: auto; }
+.foot-brand b, .foot-col b { display: block; font-size: var(--t-hd); font-weight: 900; color: var(--ink); margin-bottom: 10px; }
+.foot-logo { display: flex; align-items: center; gap: 10px; }
+.foot-b { width: 42px; height: 42px; border-radius: var(--r-md); background: linear-gradient(135deg, var(--trust), var(--trust-light)); color: #fff; font-size: 22px; font-weight: 900; display: inline-flex; align-items: center; justify-content: center; font-family: var(--f-disp); }
+.foot-logo b { font-size: var(--t-h2); margin: 0; line-height: 1.2; }
+.foot-logo span:last-child { font-size: var(--t-c1); color: var(--muted); font-weight: 700; display: block; }
+.foot-brand p { font-size: var(--t-fn); line-height: 1.8; color: var(--muted); font-weight: 600; margin: 12px 0 0; max-width: 46ch; }
+.foot-perks { display: flex; flex-wrap: wrap; gap: var(--sp-2); margin-top: var(--sp-3); }
+.foot-perks span { display: inline-flex; align-items: center; gap: 5px; font-size: var(--t-c1); font-weight: 800; color: var(--ink); background: var(--bg); border: 1px solid var(--line); border-radius: var(--r-full); padding: 6px 12px; }
+.foot-col a { display: block; font-size: var(--t-fn); font-weight: 700; color: var(--text); padding: 5px 0; cursor: pointer; text-decoration: none; }
+.foot-col a:hover { color: var(--trust); }
+.foot-bar { text-align: center; font-size: var(--t-c2); color: var(--muted); font-weight: 700; border-top: 1px solid var(--line); margin-top: var(--sp-5); padding-top: var(--sp-4); }
+@media (min-width: 700px) {
+  .foot-in { grid-template-columns: 1.6fr 1fr 1fr 1fr; }
+  .foot { padding: var(--sp-7) var(--sp-6) 40px; margin-top: 40px; }
+}
+@media (min-width: 900px) {
+  .foot-in { grid-template-columns: 2fr 1fr 1fr 1fr; }
+  .foot { margin-top: 64px; }
+}
+
+/* ═══ 29. فتات التنقل (breadcrumbs) ═══ */
+.crumb { display: flex; align-items: center; gap: 6px; flex-wrap: wrap; font-size: var(--t-c1); font-weight: 800; color: var(--muted); margin: var(--sp-3) var(--sp-4) 0; }
+.crumb a { color: var(--muted); cursor: pointer; text-decoration: none; }
+.crumb a:hover { color: var(--trust); }
+.crumb .sep { opacity: .5; }
+.crumb .cur { color: var(--ink); font-weight: 900; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; max-width: 180px; }
+@media (min-width: 660px) { .crumb { margin-inline: var(--sp-6); } }
+@media (min-width: 900px) { .crumb { margin-inline: calc(var(--sp-7) + var(--sp-6)); } }

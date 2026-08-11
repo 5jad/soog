@@ -2,9 +2,10 @@ import React, { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { api, fmt, priceOf } from '../api';
 import { useApp } from '../ctx';
-import { Empty, Loader, M } from '../ui';
+import { Empty, Loader, M, useTitle } from '../ui';
 
 export default function CartPage() {
+  useTitle('سلة التسوق');
   const { token, cartN, setCartN, notify, setLoginOpen } = useApp();
   const nav = useNavigate();
   const [items, setItems] = useState(null);

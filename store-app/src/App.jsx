@@ -2,6 +2,7 @@ import React, { Suspense } from 'react';
 import { Routes, Route } from 'react-router-dom';
 import { useApp } from './ctx';
 import Layout from './components/Layout';
+import Footer from './components/Footer';
 import LoginModal from './components/LoginModal';
 import { Loader } from './ui';
 
@@ -63,6 +64,7 @@ export default function App() {
           </Routes>
         </Suspense>
       </main>
+      <Footer />
       <LoginModal open={loginOpen} onClose={() => setLoginOpen(false)} />
       {toast && <div className={`toast ${toast.kind}`}>{toast.msg}</div>}
     </>

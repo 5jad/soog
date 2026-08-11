@@ -3,7 +3,7 @@ import { useNavigate, useParams } from 'react-router-dom';
 import { api, fmt, U } from '../api';
 import { useApp } from '../ctx';
 import { ProductCard } from '../components/Cards';
-import { Stars, SkeGrid, Empty, Loader, M } from '../ui';
+import { Stars, SkeGrid, Empty, Loader, M, useTitle } from '../ui';
 
 export default function StorePage() {
   const { id } = useParams();
@@ -20,6 +20,7 @@ export default function StorePage() {
   const [followed, setFollowed] = useState(false);
   const [busyF, setBusyF] = useState(false);
   const [tab, setTab] = useState('prods');
+  useTitle(st ? st.name : 'المتجر', 'متجر على زبون');
 
   useEffect(() => {
     setSt(null); setProds(null);
@@ -49,6 +50,13 @@ export default function StorePage() {
 
   return (
     <div className="pg">
+      <div className="crumb">
+        <a onClick={() => nav('/')}>الرئيسية</a>
+        <span className="sep">/</span>
+        <a onClick={() => nav('/stores')}>المتاجر</a>
+        <span className="sep">/</span>
+        <span className="cur">{st.name}</span>
+      </div>
       {/* هيرو المتجر — غلاف يملأ الأعلى */}
       <div className="st-hero">
         {U(st.cover) ? <img className="bg" src={st.cover} alt="" /> : <div className="bg" style={{ background: 'linear-gradient(135deg,#1E3A8A,#1D4ED8,#06B6D4)' }} />}

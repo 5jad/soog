@@ -2,11 +2,12 @@ import React, { useEffect, useState } from 'react';
 import { useSearchParams, useParams, useNavigate } from 'react-router-dom';
 import { api } from '../api';
 import { ProductCard } from '../components/Cards';
-import { SkeGrid, Empty, M } from '../ui';
+import { SkeGrid, Empty, M, useTitle } from '../ui';
 
 const SORTS = [['all', 'الكل'], ['best', 'الأفضل'], ['low', 'السعر: أدنى'], ['high', 'السعر: أعلى'], ['discount', 'الأكثر خصماً']];
 
 export default function ProductsPage({ mode }) {
+  useTitle(mode === 'offers' ? 'العروض' : mode === 'search' ? 'نتائج البحث' : mode === 'cat' ? 'تصنيف المنتجات' : 'كل المنتجات');
   const [sp] = useSearchParams();
   const { id } = useParams();
   const nav = useNavigate();

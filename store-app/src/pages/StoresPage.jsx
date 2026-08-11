@@ -2,11 +2,12 @@ import React, { useEffect, useState } from 'react';
 import { api } from '../api';
 import { useApp } from '../ctx';
 import { StoreCard } from '../components/Cards';
-import { Empty, M, SkeGrid } from '../ui';
+import { Empty, M, SkeGrid, useTitle } from '../ui';
 
 const COVERS = ['linear-gradient(135deg,#1D4ED8,#38BDF8)', 'linear-gradient(135deg,#F97316,#FB923C)', 'linear-gradient(135deg,#15803D,#4ADE80)', 'linear-gradient(135deg,#B45309,#F59E0B)'];
 
 export default function StoresPage() {
+  useTitle('المتاجر', 'جميع متاجر الكوت');
   const [stores, setStores] = useState(null);
   const [cats, setCats] = useState([]);
   const [catSel, setCatSel] = useState(null);

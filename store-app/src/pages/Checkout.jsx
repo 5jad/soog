@@ -2,9 +2,10 @@ import React, { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { api, fmt, priceOf } from '../api';
 import { useApp } from '../ctx';
-import { Loader, Empty } from '../ui';
+import { Loader, Empty, useTitle } from '../ui';
 
 export default function Checkout() {
+  useTitle('إتمام الطلب');
   const { token, me, setLoginOpen, refreshCart, notify } = useApp();
   const nav = useNavigate();
   const [step, setStep] = useState(1);

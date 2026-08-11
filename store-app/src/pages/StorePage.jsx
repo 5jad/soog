@@ -59,7 +59,7 @@ export default function StorePage() {
       </div>
       {/* هيرو المتجر — غلاف يملأ الأعلى */}
       <div className="st-hero">
-        {U(st.cover) ? <img className="bg" src={st.cover} alt="" /> : <div className="bg" style={{ background: 'linear-gradient(135deg,#1E3A8A,#1D4ED8,#06B6D4)' }} />}
+        {U(st.cover) ? <img className="bg" src={st.cover} alt="" /> : <div className="bg" style={{ background: 'linear-gradient(135deg,#0B1B36,#12294E,#1789A6)' }} />}
         <div className="ov" />
         <div className="st-hero-in">
           <div className="st-htop">
@@ -74,7 +74,7 @@ export default function StorePage() {
           <div style={{ display: 'flex', alignItems: 'center', gap: 14 }}>
             <div className="st-logo">{U(st.logo) ? <img src={st.logo} alt="" /> : (st.logo || '🏪')}</div>
             <div>
-              <div className="st-sn">{st.name} {st.verified ? <M n="verified" s={17} fill c="#38BDF8" w={700} /> : null}</div>
+              <div className="st-sn">{st.name} {st.verified ? <M n="verified" s={17} fill c="#4A6FA5" w={700} /> : null}</div>
               <div className="st-sr">
                 <M n="star" fill s={14} c="var(--star)" w={700} />
                 <b>{Number(st.rating || 0) > 0 ? Number(st.rating).toFixed(1) : 'جديد'}</b>

@@ -1,8 +1,9 @@
 import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
-import { api, fmt, pct, timeAgo } from '../api';
+import { api, fmt, pct, timeAgo, U } from '../api';
 import { useApp } from '../ctx';
 import { Empty, Loader, M, Stars, useTitle } from '../ui';
+import { flyToCart } from '../fly';
 
 const COLOR_DOT = {
   'أحمر': '#E7352B', 'احمر': '#E7352B', 'red': '#E7352B',
@@ -111,6 +112,7 @@ export default function ProductPage() {
   const add = async () => {
     if (p.out_of_stock || (variants.length && !ready)) return;
     setBusy(true);
+    flyToCart(document.querySelector('.pg-lg .pg-img')?.getBoundingClientRect(), U(imgs[imgIdx]) ? imgs[imgIdx] : null);
     await addToCart(p.id, selVariant ? selVariant.id : null, selVariant ? (noColor ? selVariant.name : `${selColor} · ${selVariant.name}`) : null, qty);
     setBusy(false);
   };
@@ -134,22 +136,23 @@ export default function ProductPage() {
         <span className="sep">/</span>
         <span className="cur">{p.name}</span>
       </div>
-      <div className="pg-img" onMouseDown={nudge} onMouseUp={nudge}>
-        {imgs.length ? <img src={imgs[imgIdx]} alt={p.name} onClick={() => setImgIdx((imgIdx + 1) % imgs.length)} style={{ cursor: 'zoom-in' }} onError={(e) => { e.currentTarget.style.display = 'none'; }} /> : <span>🛍️</span>}
-        {imgs.length > 1 ? (
-          <div className="pg-dots">
-            {imgs.map((_, i) => <i key={i} className={i === imgIdx ? 'on' : ''} onClick={() => setImgIdx(i)} style={{ cursor: 'pointer' }} />)}
-          </div>
-        ) : null}
-      </div>
-
-      <div className="pg-bar">
-        <button className="i-btn" onClick={() => nav(-1)}><M n="arrow_back_ios_new" s={17} w={600} /></button>
-        <span className="sp" />
-        <button className="i-btn" onClick={share}><M n="share" s={17} w={600} /></button>
-        <button className="i-btn" onClick={doFav} style={{ color: isFav ? 'var(--danger)' : 'var(--ink)' }}>
-          <M n="favorite" fill={isFav} s={18} c={isFav ? 'var(--danger)' : 'currentColor'} w={600} />
-        </button>
+      <div className="pg-lg">
+        <div className="pg-bar">
+          <button className="i-btn" onClick={() => nav(-1)}><M n="arrow_back_ios_new" s={17} w={600} /></button>
+          <span className="sp" />
+          <button className="i-btn" onClick={share}><M n="share" s={17} w={600} /></button>
+          <button className="i-btn" onClick={doFav} style={{ color: isFav ? 'var(--danger)' : 'var(--ink)' }}>
+            <M n="favorite" fill={isFav} s={18} c={isFav ? 'var(--danger)' : 'currentColor'} w={600} />
+          </button>
+        </div>
+        <div className="pg-img" onMouseDown={nudge} onMouseUp={nudge}>
+          {imgs.length ? <img src={imgs[imgIdx]} alt={p.name} onClick={() => setImgIdx((imgIdx + 1) % imgs.length)} style={{ cursor: 'zoom-in' }} onError={(e) => { e.currentTarget.style.display = 'none'; }} /> : <span>🛍️</span>}
+          {imgs.length > 1 ? (
+            <div className="pg-dots">
+              {imgs.map((_, i) => <i key={i} className={i === imgIdx ? 'on' : ''} onClick={() => setImgIdx(i)} style={{ cursor: 'pointer' }} />)}
+            </div>
+          ) : null}
+        </div>
       </div>
 
       <div className="pg-in">

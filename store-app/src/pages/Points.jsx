@@ -4,7 +4,7 @@ import { useApp } from '../ctx';
 import { Loader, Empty, useTitle } from '../ui';
 
 const SEGS = [100, 20, 0, 50, 200, 30, 100, 20, 50, 30];
-const COLORS = ['#1D4ED8', '#38BDF8', '#F97316', '#6366F1', '#06B6D4', '#8B5CF6', '#F59E0B', '#2563EB', '#0EA5E9', '#FB923C'];
+const COLORS = ['#12294E', '#4A6FA5', '#F97316', '#6366F1', '#1789A6', '#8B5CF6', '#F59E0B', '#2563EB', '#0EA5E9', '#FB923C'];
 
 export default function Points() {
   useTitle('نقاطي');

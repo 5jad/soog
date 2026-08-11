@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { fmt, priceOf, pct, U } from '../api';
 import { useApp } from '../ctx';
 import { Img, M } from '../ui';
+import { flyToCart, srcRectOf } from '../fly';
 
 export const DOT = (name) => {
   const n = String(name || '').toLowerCase().trim();
@@ -39,6 +40,7 @@ export function ProductCard({ p, cols = 2 }) {
     e.stopPropagation();
     if (variants.length) { nav('/product/' + p.id); return; }
     if (!token) { notify('سجل دخولك أولاً', 'err'); setLoginOpen(true); return; }
+    flyToCart(srcRectOf(e.currentTarget), U(p.image) ? p.image : null);
     await addToCart(p.id, null, null, 1);
   };
   return (
@@ -101,6 +103,7 @@ export function DealCard({ d }) {
     e.stopPropagation();
     if (variants.length) { nav('/product/' + prod.id); return; }
     if (!token) { setLoginOpen(true); return; }
+    flyToCart(srcRectOf(e.currentTarget), U(prod.image) ? prod.image : null);
     addToCart(prod.id, null, null, 1);
   };
   return (

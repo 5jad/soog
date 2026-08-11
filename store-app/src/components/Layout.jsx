@@ -7,6 +7,7 @@ import { M } from '../ui';
 export default function Layout() {
   const { me, cartN, favs, notifN, setLoginOpen } = useApp();
   const [storesN, setStoresN] = useState(0);
+  const [sq, setSq] = useState('');
   const nav = useNavigate();
   const loc = useLocation();
   const p = loc.pathname;
@@ -16,23 +17,44 @@ export default function Layout() {
 
   const go = (x) => nav(x);
   const hasRoles = me && me.roles && me.roles.filter(r => r !== 'customer').length;
+  const doSearch = (e) => {
+    e.preventDefault();
+    const q = sq.trim();
+    if (!q) return;
+    setSq('');
+    nav('/search?q=' + encodeURIComponent(q));
+  };
 
   return (
     <>
       <header className="top">
         <div className="top-in">
+          <a className="hbrand" title="زبون — الرئيسية" onClick={() => go('/')}>
+            <span className="hb-logo">ز</span>
+            <span className="hb-t">زبون</span>
+          </a>
           <div className="top-pill"><M n="location_on" s={14} c="var(--primary)" w={600} />واسط · الكوت</div>
           <span className="top-count">{storesN} متجر متاح</span>
+          <form className="hsearch" onSubmit={doSearch} role="search">
+            <M n="search" s={19} c="var(--muted)" w={600} />
+            <input value={sq} onChange={e => setSq(e.target.value)} placeholder="ابحث عن منتج أو متجر…" aria-label="بحث" />
+            <button type="submit" aria-label="بحث"><M n="arrow_forward" s={18} w={600} /></button>
+          </form>
           <div className="top-acts">
             <button className="i-btn" title="الإشعارات" onClick={() => go('/notifications')}><M n="notifications" s={20} w={500} />{notifN ? <span className="badge">{notifN}</span> : null}</button>
-            <button className="i-btn" title="السلة" onClick={() => go('/cart')}><M n="shopping_cart" s={20} w={500} />{cartN ? <span className="badge">{cartN}</span> : null}</button>
+            <button className="i-btn" title="السلة" onClick={() => go('/cart')}>
+              <span id="cartSink" key={cartN} className="cart-sink"><M n="shopping_cart" s={20} w={500} /></span>
+              {cartN ? <span className="badge">{cartN}</span> : null}
+            </button>
             <button className="i-btn" title="حسابي" onClick={() => me ? go('/account') : setLoginOpen(true)}>
               <M n={me ? "person" : "person_outline"} s={20} w={500} />
             </button>
           </div>
         </div>
-        <div className="dnav">
+        <nav className="dnav" aria-label="التنقل الرئيسي">
           <a className={is('/') && !is('/cart') ? 'on' : ''} onClick={() => go('/')}><M n="home" s={17} />الرئيسية</a>
+          <a className={is('/prods') ? 'on' : ''} onClick={() => go('/prods')}><M n="inventory_2" s={17} />المنتجات</a>
+          <a className={is('/offers') ? 'on' : ''} onClick={() => go('/offers')}><M n="local_fire_department" s={17} />العروض</a>
           <a className={is('/stores') && !is('/stores/') ? 'on' : ''} onClick={() => go('/stores')}><M n="storefront" s={17} />المتاجر</a>
           <a className={is('/cart') ? 'on' : ''} onClick={() => go('/cart')}><M n="shopping_cart" s={17} />السلة{cartN ? ` (${cartN})` : ''}</a>
           <a className={is('/fav') ? 'on' : ''} onClick={() => go('/fav')}><M n="favorite" s={17} fill={is('/fav')} />المفضلة{favs.length ? ` (${favs.length})` : ''}</a>
@@ -45,7 +67,7 @@ export default function Layout() {
               لوحة {r === 'vendor' ? 'التاجر' : r === 'delivery' ? 'المندوب' : 'الأدمن'}
             </a>
           )) : null}
-        </div>
+        </nav>
       </header>
       <BottomNav />
       <CartFab />

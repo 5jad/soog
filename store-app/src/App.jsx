@@ -4,7 +4,7 @@ import { useApp } from './ctx';
 import Layout from './components/Layout';
 import Footer from './components/Footer';
 import LoginModal from './components/LoginModal';
-import { Loader } from './ui';
+import { Loader, M } from './ui';
 
 import Home from './pages/Home';
 import CartPage from './pages/CartPage';
@@ -66,7 +66,7 @@ export default function App() {
       </main>
       <Footer />
       <LoginModal open={loginOpen} onClose={() => setLoginOpen(false)} />
-      {toast && <div className={`toast ${toast.kind}`}>{toast.msg}</div>}
+      {toast && <div className={`toast show ${toast.kind}`}>{toast.kind === 'ok' ? <M n="check_circle" fill c="#4ADE80" w={700} /> : toast.kind === 'err' ? <M n="error" fill c="#F87171" w={700} /> : null}{toast.msg}</div>}
     </>
   );
 }

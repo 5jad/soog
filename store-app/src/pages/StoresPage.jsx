@@ -4,7 +4,7 @@ import { useApp } from '../ctx';
 import { StoreCard } from '../components/Cards';
 import { Empty, M, SkeGrid, useTitle } from '../ui';
 
-const COVERS = ['linear-gradient(135deg,#1D4ED8,#38BDF8)', 'linear-gradient(135deg,#F97316,#FB923C)', 'linear-gradient(135deg,#15803D,#4ADE80)', 'linear-gradient(135deg,#B45309,#F59E0B)'];
+const COVERS = ['linear-gradient(135deg,#0B1B36,#12294E)', 'linear-gradient(135deg,#F97316,#FB923C)', 'linear-gradient(135deg,#15803D,#4ADE80)', 'linear-gradient(135deg,#B45309,#F59E0B)'];
 
 export default function StoresPage() {
   useTitle('المتاجر', 'جميع متاجر الكوت');

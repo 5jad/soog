@@ -219,7 +219,7 @@ export default function Home() {
                   {expBest ? 'عرض أقل' : 'عرض الكل'}<M n={expBest ? 'keyboard_arrow_up' : 'keyboard_arrow_down'} s={15} w={700} />
                 </span>
               </div>
-              {expBest ? <div style={{ marginTop: 8 }}>{gridX(best)}</div> : strip2(best, 640)}
+              {expBest ? <div style={{ marginTop: 8 }}>{gridX(best)}</div> : <div className="g2">{strip2(best, 640)}</div>}
             </>
           ) : null}
           {/* أشرطة الفئات + عرض الكل */}
@@ -231,7 +231,7 @@ export default function Home() {
                   {expCat && expCat.id === c.id ? 'عرض أقل' : 'عرض الكل'}<M n={expCat && expCat.id === c.id ? 'keyboard_arrow_up' : 'keyboard_arrow_down'} s={15} w={700} />
                 </span>
               </div>
-              {expCat && expCat.id === c.id ? <div style={{ marginTop: 8 }}>{gridX(catProds[c.id])}</div> : strip2(catProds[c.id], 640)}
+              {expCat && expCat.id === c.id ? <div style={{ marginTop: 8 }}>{gridX(catProds[c.id])}</div> : <div className="g2">{strip2(catProds[c.id], 640)}</div>}
             </div>
           ) : null)}
         </>

@@ -447,6 +447,11 @@ select.inp { appearance: none; background-image: url("data:image/svg+xml,%3Csvg 
   .hero { height: 320px; }
   .hero-d { font-size: var(--t-hd); }
   .all-its { grid-template-columns: repeat(3, 1fr); }
+  .g2 { display: grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap: var(--sp-4); padding: 8px calc(var(--sp-7) + var(--sp-6)) 0; }
+  .g2 .strip, .g2 .strip > div, .g2 .strip > div > div { display: contents; }
+  .g2 .strip { height: auto !important; }
+  .strip .deal-c { width: 200px; }
+  .strip .sm { width: 270px; height: 158px; }
 }
 
 @media (min-width: 1280px) {

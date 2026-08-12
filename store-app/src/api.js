@@ -16,6 +16,13 @@ export const pct = (a, b) => {
   return a && b && b > 0 && b < a ? Math.round(100 - (b / a) * 100) : 0;
 };
 export const U = (s) => s && s.startsWith('data:') ? s : (s && s.startsWith('/') ? s : null);
+/* مصدر صورة: يقبل data:/رابط/مسار أو base64 خام (/9j…) مثل الموبايل */
+export const S = (v) => {
+  if (!v) return '';
+  if (v.startsWith('data:') || v.startsWith('/') || v.startsWith('http')) return v;
+  if (v.length > 30 && /^[A-Za-z0-9+/=]+$/.test(v)) return 'data:image/jpeg;base64,' + v;
+  return '';
+};
 export const STAT = {
   new: ['جديد', 'st-new'], pending: ['قيد التحضير', 'st-pending'], ready: ['جاهز', 'st-ready'],
   delivering: ['بالتوصيل', 'st-delivering'], delivered: ['تم التسليم', 'st-delivered'],

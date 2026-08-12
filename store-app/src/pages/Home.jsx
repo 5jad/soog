@@ -163,7 +163,7 @@ export default function Home() {
       {stores.length && !gridMode ? (
         <>
           <div className="sst"><span className="sst-t">محلات مميزة</span></div>
-          <div className="strip" style={{ height: 128, paddingTop: 12 }}>
+          <div className="strip st-strip">
             {stores.map((s, i) => <StoreCard key={s.id} s={s} cover={COVERS[i % 4]} />)}
           </div>
         </>

@@ -48,7 +48,7 @@ function AccountDropdown() {
 }
 
 export default function Layout() {
-  const { cartN, notifN } = useApp();
+  const { cartN, notifN, me, setLoginOpen } = useApp();
   const [sq, setSq] = useState('');
   const nav = useNavigate();
   const loc = useLocation();
@@ -102,9 +102,10 @@ export default function Layout() {
         </form>
         <nav className="desktop-nav" aria-label="التنقل الرئيسي">
           <a className={is('/') && !is('/cart') ? 'on' : ''} onClick={() => go('/')}>الرئيسية</a>
-          <a className={is('/prods') ? 'on' : ''} onClick={() => go('/prods')}>المنتجات</a>
           <a className={is('/offers') ? 'on' : ''} onClick={() => go('/offers')}>العروض</a>
           <a className={is('/stores') && !is('/stores/') ? 'on' : ''} onClick={() => go('/stores')}>المتاجر</a>
+          <a className={is('/fav') ? 'on' : ''} onClick={() => go('/fav')}>المفضلة</a>
+          <a className={is('/account') ? 'on' : ''} onClick={() => me ? go('/account') : setLoginOpen(true)}>حسابي</a>
         </nav>
       </header>
       <BottomNav />

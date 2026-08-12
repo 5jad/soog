@@ -1,6 +1,6 @@
 import React from 'react';
 import { useNavigate } from 'react-router-dom';
-import { fmt, priceOf, pct, U } from '../api';
+import { fmt, priceOf, pct, U, S } from '../api';
 import { useApp } from '../ctx';
 import { Img, M } from '../ui';
 import { flyToCart, srcRectOf } from '../fly';
@@ -73,13 +73,15 @@ export function ProductCard({ p, cols = 2 }) {
 /* ═══ بطاقة محل مصغرة — الغلاف يملأ البوكس (132×122) ═══ */
 export function StoreCard({ s, cover }) {
   const nav = useNavigate();
-  const hasCover = U(s.cover);
+  const hasCover = !!S(s.cover);
+  const coverSrc = S(s.cover) || cover;
+  const logoSrc = S(s.logo);
   return (
     <div className="sm" onClick={() => nav('/stores/' + s.id)}>
-      {hasCover ? <img className="sm-cover" src={s.cover} alt={s.name} loading="lazy" onError={(e) => { e.currentTarget.style.display = 'none'; }} /> : <div className="sm-cover" style={{ background: cover }} />}
+      {hasCover ? <img className="sm-cover" src={coverSrc} alt={s.name} loading="lazy" onError={(e) => { e.currentTarget.style.display = 'none'; }} /> : <div className="sm-cover" style={{ background: cover }} />}
       <div className="sm-ov" />
       <div className="sm-logo">
-        {U(s.logo) ? <img src={s.logo} alt="" onError={(e) => { e.currentTarget.style.display = 'none'; }} /> : <span style={{ fontSize: 16 }}>{s.logo || '🏪'}</span>}
+        {logoSrc ? <img src={logoSrc} alt="" onError={(e) => { e.currentTarget.style.display = 'none'; }} /> : <span style={{ fontSize: 16 }}>{s.logo || '🏪'}</span>}
       </div>
       <div className="sm-info">
         <div className="sm-n">{s.name}</div>

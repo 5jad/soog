@@ -451,6 +451,12 @@ select.inp { appearance: none; background-image: url("data:image/svg+xml,%3Csvg 
   .dnav { justify-content: center; gap: var(--space-2); }
   .dnav a { padding: var(--space-3) var(--space-3); font-size: var(--t-fn); }
   .bnav, .fab, .bottom-nav { display: none !important; }
+  .desktop-nav { display: flex; flex-wrap: wrap; justify-content: center; gap: 2px; padding: 0 var(--space-4) var(--space-2); }
+  .desktop-nav a { display: inline-flex; align-items: center; gap: 6px; padding: 8px 15px; font-size: var(--t-fn); font-weight: 800; color: var(--muted); cursor: pointer; border-radius: var(--radius-pill); white-space: nowrap; text-decoration: none; }
+  .desktop-nav a:hover { color: var(--primary); background: var(--bg-soft); }
+  .desktop-nav a.on { color: #fff; background: linear-gradient(135deg, var(--primary-deep), var(--primary)); box-shadow: var(--shadow-primary); }
+  .desktop-search { display: flex; }
+  .mobile-search { display: none !important; }
   .toast { bottom: 24px; }
   .sect { padding: var(--space-6) calc(var(--space-7) + var(--space-6)) 140px; }
   .cards-g { padding-inline: calc(var(--space-7) + var(--space-6)); grid-template-columns: repeat(auto-fill, minmax(225px, 1fr)); }
@@ -470,6 +476,9 @@ select.inp { appearance: none; background-image: url("data:image/svg+xml,%3Csvg 
   .g2 .strip { height: auto !important; }
   .strip .deal-c { width: 200px; }
   .strip .sm { width: 270px; height: 158px; }
+  .strip .sm .sm-logo { width: 48px; height: 48px; top: 12px; inset-inline-start: 12px; }
+  .strip .sm .sm-n { font-size: var(--t-hd); }
+  .strip .sm .sm-r { font-size: var(--t-fn); }
 }
 
 @media (min-width: 1280px) {
@@ -543,6 +552,7 @@ select.inp { appearance: none; background-image: url("data:image/svg+xml,%3Csvg 
 .strip { display: flex; gap: 10px; overflow-x: auto; padding: 0 var(--space-2); scroll-snap-type: x proximity; scrollbar-width: none; }
 .strip::-webkit-scrollbar { display: none; }
 .strip > * { scroll-snap-align: start; }
+.st-strip { padding: 12px var(--space-2) 14px; }
 .s2p { display: flex; flex-direction: column; gap: 8px; width: min(46vw, 178px); }
 .s2r { display: flex; gap: 8px; }
 

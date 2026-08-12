@@ -73,7 +73,7 @@ export default function VendorDashboard() {
     <div className="sect">
       <div className="dash-head">
         <div>
-          <div className="dash-title">{store ? store.name : 'واجهة التاجر'}{store && store.verified ? <M n="verified" fill s={18} c="var(--cta)" /> : null}</div>
+          <div className="dash-title">{store ? store.name : 'واجهة التاجر'}{store && store.verified ? <M n="verified" fill s={18} c="var(--accent)" /> : null}</div>
           <div className="dash-sub">{store ? `${store.category_name || ''} · ${store.district_name || ''} · ${STAT[store.status] ? STAT[store.status][0] : store.status}` : 'سجّل متجرك من صفحة متجري'}</div>
         </div>
         <div className="dash-btns">
@@ -105,10 +105,10 @@ export default function VendorDashboard() {
 /* ══════════ نظرة عامة ══════════ */
 function Overview({ store, stats, week, products, goto }) {
   const cards = [
-    ['receipt_long', 'طلبات اليوم', stats ? stats.today_orders : 0, 'var(--trust)'],
-    ['payments', 'مبيعات اليوم', stats ? fmt(stats.today_sales) : 0, 'var(--ok)'],
-    ['monitoring', 'طلبات جديدة', stats ? stats.new_orders : 0, 'var(--disc)'],
-    ['inventory_2', 'المنتجات', products.length, 'var(--warn)'],
+    ['receipt_long', 'طلبات اليوم', stats ? stats.today_orders : 0, 'var(--primary)'],
+    ['payments', 'مبيعات اليوم', stats ? fmt(stats.today_sales) : 0, 'var(--success)'],
+    ['monitoring', 'طلبات جديدة', stats ? stats.new_orders : 0, 'var(--danger)'],
+    ['inventory_2', 'المنتجات', products.length, 'var(--warning)'],
   ];
   return (
     <>
@@ -121,14 +121,14 @@ function Overview({ store, stats, week, products, goto }) {
         ))}
       </div>
       <div className="card" style={{ margin: '14px 16px 0', padding: 16 }}>
-        <div className="card-h"><M n="calendar_today" s={18} c="var(--ok)" />مستحقاتك هذا الأسبوع</div>
-        <div style={{ fontSize: 24, fontWeight: 900, color: 'var(--ok)', marginTop: 6 }}>
+        <div className="card-h"><M n="calendar_today" s={18} c="var(--success)" />مستحقاتك هذا الأسبوع</div>
+        <div style={{ fontSize: 24, fontWeight: 900, color: 'var(--success)', marginTop: 6 }}>
           {week ? fmt(week.net_due) : '—'}
         </div>
         <div className="muted-l" style={{ marginTop: 2 }}>بعد خصم عمولة المنصة ({store ? store.commission_rate : 10}%)</div>
         <div className="mini-row">
           <span>إجمالي المبيعات: <b>{week ? fmt(week.gross) : '—'}</b></span>
-          <span>عمولة المنصة: <b style={{ color: 'var(--disc)' }}>{week ? '−' + fmt(week.commission_due) : '—'}</b></span>
+          <span>عمولة المنصة: <b style={{ color: 'var(--danger)' }}>{week ? '−' + fmt(week.commission_due) : '—'}</b></span>
         </div>
       </div>
       <Empty icon="📈" msg="التقارير التفصيلية تظهر هنا قريباً"
@@ -195,7 +195,7 @@ function OrdersTab({ reload, notify: toast }) {
                   </div>
                 ))}
                 <div className="mini-row"><span>رسوم التوصيل</span><b>{fmt(o.delivery_fee || 0)}</b></div>
-                <div className="mini-row ord-total"><span>الإجمالي</span><b style={{ color: 'var(--cta)' }}>{fmt(o.total)}</b></div>
+                <div className="mini-row ord-total"><span>الإجمالي</span><b style={{ color: 'var(--accent)' }}>{fmt(o.total)}</b></div>
                 <div className="muted-l" style={{ margin: '8px 0' }}>الزبون: {o.user_phone || ''} · {o.address_text || ''}</div>
                 {['new', 'preparing'].includes(o.status) && (
                   <div className="ord-actions">
@@ -260,7 +260,7 @@ function ProductRow({ p, reload, toast, onEdit }) {
         <b>{p.name}</b>
         <div className="muted-l">{p.variants ? p.variants.length : 0} متغير · مخزون {p.stock ?? 0}</div>
         {p.has_offer
-          ? <div><s className="muted-l">{fmt(p.price)}</s> <b style={{ color: 'var(--cta)' }}>{fmt(priceOf(p))}</b></div>
+          ? <div><s className="muted-l">{fmt(p.price)}</s> <b style={{ color: 'var(--accent)' }}>{fmt(priceOf(p))}</b></div>
           : <b>{fmt(p.price)}</b>}
       </div>
       <div className="prod-acts">
@@ -371,7 +371,7 @@ function ProductForm({ product, onClose, reload, toast }) {
             <input className="inp" placeholder="اللون (أحمر/أسود)" value={v.color} onChange={e => setVariants(l => l.map((x, j) => j === i ? { ...x, color: e.target.value } : x))} />
             <input className="inp" placeholder="المقاس" value={v.name} onChange={e => setVariants(l => l.map((x, j) => j === i ? { ...x, name: e.target.value } : x))} />
             <input className="inp" type="number" placeholder="الكمية" value={v.stock} onChange={e => setVariants(l => l.map((x, j) => j === i ? { ...x, stock: e.target.value } : x))} />
-            <button className="i-btn" onClick={() => setVariants(l => l.filter((x, j) => j !== i))}><M n="close" s={18} c="var(--disc)" /></button>
+            <button className="i-btn" onClick={() => setVariants(l => l.filter((x, j) => j !== i))}><M n="close" s={18} c="var(--danger)" /></button>
           </div>
         ))}
 
@@ -421,15 +421,15 @@ function WalletTab({ wallet, tx, week, reload, notify: toast }) {
           <button className="btn btn-sm" style={{ background: 'rgba(255,255,255,.16)', boxShadow: 'none' }} onClick={openAd}><M n="campaign" s={17} />إعلان 📣</button>
         </div>
         {week && <div className="mini-row" style={{ marginTop: 12, justifyContent: 'center', gap: 18 }}>
-          <span>أسبوعي: <b style={{ color: 'var(--ok)' }}>{fmt(week.net_due)}</b></span>
+          <span>أسبوعي: <b style={{ color: 'var(--success)' }}>{fmt(week.net_due)}</b></span>
         </div>}
       </div>
       <div className="card" style={{ margin: '14px 16px 0', padding: 14 }}>
         <div className="card-h">الحركات</div>
         {tx.length === 0 ? <Empty icon="🧾" msg="لا حركات بعد" /> : tx.map((t, i) => (
           <div key={i} className="mini-row" style={{ padding: '7px 0', borderBottom: '1px solid var(--line)' }}>
-            <span><M n={t.type === 'credit' ? 'arrow_downward' : 'arrow_upward'} s={15} c={t.type === 'credit' ? 'var(--ok)' : 'var(--disc)'} /> {t.note} <small className="muted-l">({timeAgo(t.created_at)})</small></span>
-            <b style={{ color: t.type === 'credit' ? 'var(--ok)' : 'var(--disc)' }}>{t.type === 'credit' ? '+' : '−'}{fmt(t.amount)}</b>
+            <span><M n={t.type === 'credit' ? 'arrow_downward' : 'arrow_upward'} s={15} c={t.type === 'credit' ? 'var(--success)' : 'var(--danger)'} /> {t.note} <small className="muted-l">({timeAgo(t.created_at)})</small></span>
+            <b style={{ color: t.type === 'credit' ? 'var(--success)' : 'var(--danger)' }}>{t.type === 'credit' ? '+' : '−'}{fmt(t.amount)}</b>
           </div>
         ))}
       </div>
@@ -554,7 +554,7 @@ function CouponsTab({ notify: toast }) {
             <b className="coupon-code">{c.code}</b>
             <span className="muted-l"> — {c.percent ? c.percent + '%' : fmt(c.flat)} خصم{c.min_total ? ` من ${fmt(c.min_total)}` : ''}{c.uses_left ? ` · متبقي ${c.uses_left}` : ''}{c.active ? '' : ' · متوقف'}</span>
           </div>
-          <button className="i-btn" onClick={() => del(c.id)}><M n="delete" s={18} c="var(--disc)" /></button>
+          <button className="i-btn" onClick={() => del(c.id)}><M n="delete" s={18} c="var(--danger)" /></button>
         </div>
       ))}
       <Modal open={open} onClose={() => setOpen(false)}>

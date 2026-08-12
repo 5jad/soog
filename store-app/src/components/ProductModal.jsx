@@ -28,7 +28,7 @@ export default function ProductModal({ id, onClose }) {
       {p && (
         <div style={{ display: 'flex', flexWrap: 'wrap', gap: 22 }}>
           <div style={{ flex: '1 1 260px', minWidth: 240 }}>
-            <div style={{ aspectRatio: 1, borderRadius: 16, background: '#EEF3FB', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 72, overflow: 'hidden', position: 'relative' }}>
+            <div style={{ aspectRatio: 1, borderRadius: 16, background: 'var(--bg-blue-soft)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 72, overflow: 'hidden', position: 'relative' }}>
               <Img src={p.image} fontSize="72px" />
               {p.has_offer ? <span className="dc" style={{ position: 'absolute', top: 10, right: 10 }}>-{Math.round(p.offer_percent)}%</span> : null}
             </div>

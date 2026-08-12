@@ -5,7 +5,7 @@ import { Loader, Empty, M, useTitle } from '../ui';
 import Promo from '../components/Promo';
 import { ProductCard, StoreCard, DealCard, CatIcon, DOT } from '../components/Cards';
 
-const COVERS = ['linear-gradient(135deg,#0B1B36,#12294E)', 'linear-gradient(135deg,#F97316,#FB923C)', 'linear-gradient(135deg,#15803D,#4ADE80)', 'linear-gradient(135deg,#B45309,#F59E0B)'];
+const COVERS = ['linear-gradient(135deg,var(--primary-deep),var(--primary))', 'linear-gradient(135deg,var(--accent-light),var(--orange-soft))', 'linear-gradient(135deg,var(--success-deep),var(--success-light))', 'linear-gradient(135deg,var(--warning),var(--star))'];
 const SORTS = [['newest', 'الأحدث'], ['best', 'الأفضل تقييماً'], ['discount', 'الأكثر خصماً'], ['price_asc', 'السعر: من الأقل'], ['price_desc', 'السعر: من الأعلى']];
 
 export default function Home() {

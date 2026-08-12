@@ -1,43 +1,119 @@
+/* ═══════════════════════════════════════════════════════════════════════════
+   «زبون» ويب — DESIGN TOKENS v5 · المصدر الوحيد  (Single Source of Truth)
+   ─ مرآة حرفية لنظام التصميم في تطبيق الموبايل (zaboon_design_system.dart):
+     الألوان = AppColors · القياسات = شبكة 4pt (AppMetrics) ·
+     الزوايا = AppRadius · الخطوط = AppType · الظلال = AppShadows
+   ═══════════════════════════════════════════════════════════════════════════ */
 :root {
-  /* Spacing */
+  /* ═══ 1. الألوان — مطابقة AppColors (الموبايل) ═══ */
+  /* Primary (60%) — الكحلي الداكن */
+  --primary: #12294E;
+  --primary-deep: #0B1B36;
+  --primary-light: #4A6FA5;
+
+  /* Accent / CTA (10%) — البرتقالي الحصري */
+  --accent: #F2560F;
+  --accent-deep: #C2410C;
+  --accent-light: #F97316;
+
+  /* Neutral (30%) */
+  --ink: #171D26;
+  --bg: #FAFAF7;
+  --surface: #FFFFFF;
+  --muted: #5C6570;
+  --line: #E7E9EC;
+  --line-strong: #D1D5DB;
+
+  /* Semantic — ألوان الحالات */
+  --success: #1F9D55;
+  --success-deep: #15803D;
+  --success-light: #4ADE80;
+  --warning: #B45309;
+  --danger: #D92D20;
+  --info: #0284C7;
+  --star: #F5A623;
+  --cyan: #1789A6;
+  --gold: #D4AF37;
+
+  /* درجات برتقالية مساعدة (شارات/تدرجات) */
+  --orange-soft: #FB923C;
+  --orange-deep: #EA580C;
+
+  /* خلفيات ناعمة */
+  --bg-soft: #F5F5F5;
+  --bg-blue-soft: #EEF3FB;
+  --bg-map: #E8ECF1;
+
+  /* عجلة الحظ — ألوان الفواصل (تعددية زخرفية) */
+  --wheel-indigo: #6366F1;
+  --wheel-purple: #8B5CF6;
+  --wheel-blue: #2563EB;
+  --wheel-sky: #0EA5E9;
+
+  /* أبيض ثابت (شارات فوق الصور وأسطح) */
+  --white: #FFFFFF;
+
+  /* ═══ 2. التدرجات (للعنوان والبانر فقط) ═══ */
+  --grad-navy: linear-gradient(135deg, var(--primary-deep), var(--primary));
+  --grad-sun: linear-gradient(135deg, var(--accent), var(--accent-light));
+
+  /* ═══ 3. القياسات — شبكة 4pt (AppMetrics) ═══ */
   --space-1: 4px;
   --space-2: 8px;
   --space-3: 12px;
   --space-4: 16px;
   --space-5: 24px;
   --space-6: 32px;
-  --space-8: 48px;
+  --space-7: 48px;
+  --space-8: 64px;
 
-  /* Radius */
+  /* أهداف اللمس (Apple HIG: min 44px) */
+  --hit-min: 44px;
+  --button-h: 52px;
+  --input-h: 48px;
+
+  /* ═══ 4. الزوايا (AppRadius) ═══ */
   --radius-sm: 8px;
-  --radius-md: 16px;
-  --radius-lg: 24px;
+  --radius-md: 12px;
+  --radius-lg: 16px;
+  --radius-xl: 20px;
+  --radius-xxl: 24px;
+  --radius-pill: 999px;
 
-  /* Icon sizes */
-  --icon-sm: 16px;
-  --icon-md: 20px;
-  --icon-lg: 28px;
+  /* ═══ 5. الخطوط (AppType) ═══ */
+  --t-c2: 11px;
+  --t-c1: 12px;
+  --t-fn: 13px;
+  --t-ui: 14px;
+  --t-bd: 15px;
+  --t-hd: 17px;
+  --t-h3: 18px;
+  --t-h2: 20px;
+  --t-h1: 24px;
+  --t-hg: 28px;
+  --t-hx: 34px;
 
-  /* Typography */
-  --text-xs: 11px;
-  --text-sm: 12px;
-  --text-base: 14px;
-  --text-md: 16px;
-  --text-lg: 18px;
-  --text-xl: 22px;
-  --text-2xl: 28px;
-  --text-hero: 45px;
+  --f-ui: 'IBM Plex Sans Arabic', 'Cairo', Tahoma, sans-serif;
+  --f-disp: 'El Messiri', 'Reem Kufi', 'IBM Plex Sans Arabic', 'Cairo', sans-serif;
 
-  /* Font weights */
   --weight-regular: 400;
   --weight-semibold: 600;
   --weight-bold: 700;
 
-  /* Shadow/Glassmorphism */
+  /* ═══ 6. الظلال (AppShadows) ═══ */
+  --shadow-sm: 0 1px 3px rgba(23, 29, 38, .07);
+  --shadow-md: 0 4px 14px rgba(23, 29, 38, .09);
+  --shadow-primary: 0 6px 18px rgba(18, 41, 78, .22);
+  --shadow-accent: 0 6px 18px rgba(242, 86, 15, .30);
   --shadow-opacity: 0.12;
 
-  /* Liquid Glass — مستويات الزجاج الموحدة (طبقة التنقل فقط:
-     Header، قوائم منسدلة، BottomSheet، FAB، Toast — ممنوعة على المحتوى) */
+  /* ═══ 7. أيقونات (AppIcons) ═══ */
+  --icon-sm: 16px;
+  --icon-md: 20px;
+  --icon-lg: 28px;
+
+  /* ═══ 8. الزجاجية (AppGlass) — طبقة التنقل فقط ═══
+     غير مسموح: بطاقات المحتوى (سعر/وصف/اسم) — النص يبقى على أسطح صلبة */
   --glass-blur-sm: blur(10px);
   --glass-blur-md: blur(20px);
   --glass-blur-lg: blur(30px);

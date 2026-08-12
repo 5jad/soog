@@ -9,14 +9,14 @@ const COLOR_DOT = {
   'أحمر': '#E7352B', 'احمر': '#E7352B', 'red': '#E7352B',
   'أزرق': '#2453CB', 'ازرق': '#2453CB', 'blue': '#2453CB',
   'أسود': '#202126', 'اسود': '#202126', 'black': '#202126',
-  'أبيض': '#F5F5F5', 'ابيض': '#F5F5F5', 'white': '#F5F5F5',
+  'أبيض': 'var(--bg-soft)', 'ابيض': 'var(--bg-soft)', 'white': 'var(--bg-soft)',
   'أخضر': '#1E8A4C', 'اخضر': '#1E8A4C', 'green': '#1E8A4C',
   'أصفر': '#F2C513', 'اصفر': '#F2C513', 'yellow': '#F2C513',
   'بنفسجي': '#7C3AED', 'purple': '#7C3AED',
   'وردي': '#F472B6', 'pink': '#F472B6',
   'رمادي': '#9CA3AF', 'grey': '#9CA3AF',
   'بني': '#7C4A23', 'brown': '#7C4A23',
-  'برتقالي': '#F97316', 'orange': '#F97316',
+  'برتقالي': 'var(--accent-light)', 'orange': 'var(--accent-light)',
 };
 const cd = (n) => { const s = String(n || '').toLowerCase().trim(); for (const k of Object.keys(COLOR_DOT)) if (s.includes(k)) return COLOR_DOT[k]; return '#D9DEE7'; };
 const ATTR = {
@@ -191,7 +191,7 @@ export default function ProductPage() {
                 <div className="v-wrap">
                   {distinct.map(c => (
                     <span key={c} className={`vc ${selColor === c ? 'on' : ''}`} onClick={() => { setSelColor(selColor === c ? '' : c); setSelSize(-1); }}>
-                      <i className="vd" style={{ background: cd(c), borderColor: selColor === c ? '#fff' : 'var(--line2)' }} />{c || 'قياسي'}
+                      <i className="vd" style={{ background: cd(c), borderColor: selColor === c ? '#fff' : 'var(--line-strong)' }} />{c || 'قياسي'}
                     </span>
                   ))}
                 </div>
@@ -250,7 +250,7 @@ export default function ProductPage() {
         <div style={{ marginTop: 22 }}>
           <div className="sst" style={{ padding: 0 }}>
             <span className="sst-t">⭐ التقييمات والمراجعات</span>
-            {Number(store.rating || 0) > 0 ? <span style={{ color: '#FBBF24', fontWeight: 900, fontSize: 14 }}>{Number(store.rating).toFixed(1)} ★</span> : null}
+            {Number(store.rating || 0) > 0 ? <span style={{ color: 'var(--star)', fontWeight: 900, fontSize: 14 }}>{Number(store.rating).toFixed(1)} ★</span> : null}
           </div>
           {!reviews.length ? (
             <div className="pg-box" style={{ textAlign: 'center', padding: '20px 0', marginTop: 10 }}>

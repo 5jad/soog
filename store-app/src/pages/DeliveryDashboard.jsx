@@ -94,7 +94,7 @@ export default function DeliveryDashboard() {
           <div className="dash-title">لوحة المندوب 🛵</div>
           <div className="dash-sub">{me.name} · اليوم: {stats ? stats.today_orders : 0} طلب ({stats ? stats.delivered : 0} مسلّم)</div>
         </div>
-        <button className={`btn btn-sm ${online ? 'btn-o' : ''}`} style={online ? {} : { background: 'linear-gradient(135deg, #15803D, #22C55E)', boxShadow: 'none' }} onClick={toggleOnline}>
+        <button className={`btn btn-sm ${online ? 'btn-o' : ''}`} style={online ? {} : { background: 'linear-gradient(135deg, var(--success-deep), var(--success-light))', boxShadow: 'none' }} onClick={toggleOnline}>
           <span className="online-dot on" />{online ? 'متصل ✓' : 'فعّل الاتصال'}
         </button>
       </div>
@@ -102,7 +102,7 @@ export default function DeliveryDashboard() {
       <div className="del-tiles">
         <div className="del-tile"><b>{stats ? stats.delivered : 0}</b><small>مسلّم اليوم</small></div>
         <div className="del-tile"><b>{available.length}</b><small>طلبات متاحة</small></div>
-        <div className="del-tile"><b style={{ color: 'var(--ok)' }}>{wallet ? fmt(wallet.balance) : '—'}</b><small>رصيد كاش</small></div>
+        <div className="del-tile"><b style={{ color: 'var(--success)' }}>{wallet ? fmt(wallet.balance) : '—'}</b><small>رصيد كاش</small></div>
       </div>
 
       {!online && (
@@ -158,8 +158,8 @@ export default function DeliveryDashboard() {
           <div className="card-h">تقارير الكاش اليومية</div>
           {wallet.reports.length === 0 ? <div className="muted-l" style={{ marginTop: 8 }}>لا تقارير بعد</div> : wallet.reports.slice(0, 5).map(r => (
             <div key={r.id} className="mini-row" style={{ padding: '7px 0', borderBottom: '1px solid var(--line)' }}>
-              <span><M n="payments" s={15} c="var(--ok)" /> تقرير {r.receipt_no || ''} <small className="muted-l">({timeAgo(r.created_at)})</small></span>
-              <b style={{ color: 'var(--ok)' }}>+{fmt(r.net)}</b>
+              <span><M n="payments" s={15} c="var(--success)" /> تقرير {r.receipt_no || ''} <small className="muted-l">({timeAgo(r.created_at)})</small></span>
+              <b style={{ color: 'var(--success)' }}>+{fmt(r.net)}</b>
             </div>
           ))}
         </div>
@@ -195,7 +195,7 @@ function TripCard({ trip, pickup, delivered, openGmaps }) {
 
       <div className="trip-stops">
         <div className="trip-stop">
-          <M n="storefront" s={18} c="var(--warn)" />
+          <M n="storefront" s={18} c="var(--warning)" />
           <div className="prod-info">
             <b style={{ color: '#fff' }}>{trip.store_name}</b>
             <div style={{ color: 'rgba(255,255,255,.75)', fontSize: 12 }}>{trip.store_address}</div>

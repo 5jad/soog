@@ -59,22 +59,22 @@ export default function StorePage() {
       </div>
       {/* هيرو المتجر — غلاف يملأ الأعلى */}
       <div className="st-hero">
-        {U(st.cover) ? <img className="bg" src={st.cover} alt="" /> : <div className="bg" style={{ background: 'linear-gradient(135deg,#0B1B36,#12294E,#1789A6)' }} />}
+        {U(st.cover) ? <img className="bg" src={st.cover} alt="" /> : <div className="bg" style={{ background: 'linear-gradient(135deg,var(--primary-deep),var(--primary),var(--cyan))' }} />}
         <div className="ov" />
         <div className="st-hero-in">
           <div className="st-htop">
             <button className="i-btn" onClick={() => nav(-1)} style={{ background: 'rgba(255,255,255,.16)', border: '1px solid rgba(255,255,255,.35)', color: '#fff' }}><M n="arrow_back_ios_new" s={17} w={600} /></button>
             <div className="st-cs">
               {open
-                ? <span className="cv"><M n="check_circle" s={13} fill c="#4ADE80" w={700} />{st.on_vacation ? 'ويا إجازة' : 'مفتوح'}</span>
+                ? <span className="cv"><M n="check_circle" s={13} fill c="var(--success-light)" w={700} />{st.on_vacation ? 'ويا إجازة' : 'مفتوح'}</span>
                 : <span className="cv"><M n="cancel" s={13} c="var(--danger)" fill w={700} />مغلق{st.on_vacation ? ' — إجازة' : ''}</span>}
-              <span className="cv"><M n="verified_user" s={13} c="#4ADE80" fill w={700} />ضمان {st.warranty_days ?? 3} يوم</span>
+              <span className="cv"><M n="verified_user" s={13} c="var(--success-light)" fill w={700} />ضمان {st.warranty_days ?? 3} يوم</span>
             </div>
           </div>
           <div style={{ display: 'flex', alignItems: 'center', gap: 14 }}>
             <div className="st-logo">{U(st.logo) ? <img src={st.logo} alt="" /> : (st.logo || '🏪')}</div>
             <div>
-              <div className="st-sn">{st.name} {st.verified ? <M n="verified" s={17} fill c="#4A6FA5" w={700} /> : null}</div>
+              <div className="st-sn">{st.name} {st.verified ? <M n="verified" s={17} fill c="var(--primary-light)" w={700} /> : null}</div>
               <div className="st-sr">
                 <M n="star" fill s={14} c="var(--star)" w={700} />
                 <b>{Number(st.rating || 0) > 0 ? Number(st.rating).toFixed(1) : 'جديد'}</b>
@@ -157,7 +157,7 @@ export default function StorePage() {
                 <div key={i} className="rv">
                   <div className="rvn"><M n="person" s={14} c="var(--muted)" w={600} /> {r.user_name}</div>
                   <Stars n={r.rating} size={13} />
-                  {r.comment ? <div style={{ fontSize: 12.5, color: 'var(--text)', marginTop: 4, lineHeight: 1.7 }}>{r.comment}</div> : null}
+                  {r.comment ? <div style={{ fontSize: 12.5, color: 'var(--ink)', marginTop: 4, lineHeight: 1.7 }}>{r.comment}</div> : null}
                   <div className="rvd">{r.created_at ? new Date(r.created_at).toLocaleDateString('ar-IQ') : ''}</div>
                 </div>
               )) : <Empty icon="⭐" msg="ماكو تقييمات بعد — كن أول من يقيّم!" />}

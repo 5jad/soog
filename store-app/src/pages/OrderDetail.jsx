@@ -68,7 +68,7 @@ export default function OrderDetail() {
             </div>
           ))}
         </div>
-        {bad ? <div className="note" style={{ marginTop: 12, color: 'var(--err)' }}>
+        {bad ? <div className="note" style={{ marginTop: 12, color: 'var(--danger)' }}>
           {o.status === 'rejected' ? '❌ رُفض الطلب — تأكد من العنوان أو راسل المحل.' : '🚫 الطلب ملغي.'}</div> : null}
       </div>
 

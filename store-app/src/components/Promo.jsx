@@ -3,7 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { U } from '../api';
 import { M } from '../ui';
 
-const COVERS = ['linear-gradient(135deg,#0B1B36,#12294E)', 'linear-gradient(135deg,#F97316,#FB923C)', 'linear-gradient(135deg,#15803D,#4ADE80)', 'linear-gradient(135deg,#B45309,#F59E0B)'];
+const COVERS = ['linear-gradient(135deg,var(--primary-deep),var(--primary))', 'linear-gradient(135deg,var(--accent-light),var(--orange-soft))', 'linear-gradient(135deg,var(--success-deep),var(--success-light))', 'linear-gradient(135deg,var(--warning),var(--star))'];
 
 export default function Promo({ ads, stores }) {
   const nav = useNavigate();
@@ -40,7 +40,7 @@ export default function Promo({ ads, stores }) {
           const a = list[page];
           const sun = a.theme === 'sun';
           const img = imgOf(a);
-          const grad = img ? '' : (sun ? 'linear-gradient(135deg,#EA580C,#FB923C)' : 'linear-gradient(135deg,#0B1B36,#12294E,#1789A6)');
+          const grad = img ? '' : (sun ? 'linear-gradient(135deg,var(--orange-deep),var(--orange-soft))' : 'linear-gradient(135deg,var(--primary-deep),var(--primary),var(--cyan))');
           return (
             <>
               {img ? <div className="hero-bg" style={{ backgroundImage: `url(${img})` }} /> : <div className="hero-bg" style={{ background: grad }} />}

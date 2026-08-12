@@ -4,7 +4,7 @@ import { useApp } from '../ctx';
 import { Loader, Empty, useTitle } from '../ui';
 
 const SEGS = [100, 20, 0, 50, 200, 30, 100, 20, 50, 30];
-const COLORS = ['#12294E', '#4A6FA5', '#F97316', '#6366F1', '#1789A6', '#8B5CF6', '#F59E0B', '#2563EB', '#0EA5E9', '#FB923C'];
+const COLORS = ['var(--primary)', 'var(--primary-light)', 'var(--accent-light)', 'var(--wheel-indigo)', 'var(--cyan)', 'var(--wheel-purple)', 'var(--star)', 'var(--wheel-blue)', 'var(--wheel-sky)', 'var(--orange-soft)'];
 
 export default function Points() {
   useTitle('نقاطي');
@@ -66,7 +66,7 @@ export default function Points() {
             <div className="wheel-ptr">🎯</div>
             <div id="wheel" className={`wheel ${spin.used_today && !win ? 'dim' : ''}`} style={{ background: `conic-gradient(${SEGS.map((v, i) => `${COLORS[i]} ${i * 36}deg ${(i + 1) * 36}deg`).join(',')})` }}>
               {SEGS.map((v, i) => (
-                <span key={i} className="seg" style={{ transform: `rotate(${i * 36}deg) translateY(-86px)`, color: v === 200 ? '#FFD700' : '#fff', fontWeight: v >= 100 ? 900 : 600 }}>{v}</span>
+                <span key={i} className="seg" style={{ transform: `rotate(${i * 36}deg) translateY(-86px)`, color: v === 200 ? 'var(--gold)' : '#fff', fontWeight: v >= 100 ? 900 : 600 }}>{v}</span>
               ))}
             </div>
           </div>
@@ -94,7 +94,7 @@ export default function Points() {
               <b style={{ color: 'var(--ink)' }}>{t.note || t.type}</b>
               <div style={{ color: 'var(--muted)', fontSize: 11 }}>{timeAgo(t.created_at)}</div>
             </div>
-            <b style={{ color: t.points >= 0 ? 'var(--success)' : 'var(--err)' }}>{t.points >= 0 ? '+' : ''}{t.points}</b>
+            <b style={{ color: t.points >= 0 ? 'var(--success)' : 'var(--danger)' }}>{t.points >= 0 ? '+' : ''}{t.points}</b>
           </div>
         ))}
       </div>

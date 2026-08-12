@@ -51,7 +51,7 @@ export default function Track() {
         mCou.current = mp.marker([t.courier_lat, t.courier_lng], { icon: ic(t.status === 'on_the_way' ? '🚚' : '🛵') }).addTo(mapRef.current).bindPopup('<b>' + (t.courier_name || 'المندوب') + '</b>');
       }
       if (pathRef.current) { mapRef.current.removeLayer(pathRef.current); pathRef.current = null; }
-      if ((t.path || []).length) pathRef.current = Lm.polyline(t.path, { color: '#12294E', weight: 4, opacity: 0.8, dashArray: '8 6' }).addTo(mapRef.current);
+      if ((t.path || []).length) pathRef.current = Lm.polyline(t.path, { color: 'var(--primary)', weight: 4, opacity: 0.8, dashArray: '8 6' }).addTo(mapRef.current);
       const pts = [[t.store_lat, t.store_lng], [t.user_lat, t.user_lng]];
       if (mCou.current) pts.push([t.courier_lat, t.courier_lng]);
       mapRef.current.fitBounds(Lm.latLngBounds(pts).pad(0.2));
@@ -75,7 +75,7 @@ export default function Track() {
         <span className={`pill ${st.c}`}>{st.e} {st.t}</span></div>
 
       <div className="card" style={{ padding: 0, overflow: 'hidden', marginBottom: 14 }}>
-        <div ref={mapEl} style={{ height: 300, width: '100%', background: '#e8ecf1' }}></div>
+        <div ref={mapEl} style={{ height: 300, width: '100%', background: 'var(--bg-map)' }}></div>
         <div className="track-legend">
           <span><b>🏬</b> المتجر</span><span><b>📍</b> عنوانك</span><span><b>🛵</b> المندوب</span>
         </div>

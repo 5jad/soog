@@ -54,7 +54,7 @@ export const Stars = ({ n = 0, size = 15, color = 'var(--star)' }) => {
   return (
     <span className="stars" style={{ fontSize: size }}>
       {Array.from({ length: v }).map((_, i) => <M key={i} n="star" fill s={size} c={color} w={700} />)}
-      {Array.from({ length: 5 - v }).map((_, i) => <M key={i} n="star" s={size} c="var(--line2)" w={400} />)}
+      {Array.from({ length: 5 - v }).map((_, i) => <M key={i} n="star" s={size} c="var(--line-strong)" w={400} />)}
     </span>
   );
 };
@@ -66,7 +66,7 @@ export const Empty = ({ icon = '📭', msg, sub = '', action = null, lottie = nu
       ? <LottiePlayer src={lottie} size={lottieSize} loop={false} />
       : <span className="e">{icon}</span>
     }
-    <div style={{ fontWeight: 800, fontSize: 15, color: 'var(--text)' }}>{msg}</div>
+    <div style={{ fontWeight: 800, fontSize: 15, color: 'var(--ink)' }}>{msg}</div>
     {sub && <div style={{ fontSize: 12.5, marginTop: 5 }}>{sub}</div>}
     {action}
   </div>

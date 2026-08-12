@@ -100,7 +100,7 @@ class _StoreScreenState extends State<StoreScreen> {
         'qty': qty,
         if (variant != null) 'variant': variant,
       });
-      AppState.i.setCart(AppState.i.cartCount.value + 1);
+      AppState.i.setCart(AppState.i.cartCount.value + qty);
       if (!mounted) return;
       // زر «+» السريع: يفتح السلة مباشرة بعد الإضافة
       Navigator.of(

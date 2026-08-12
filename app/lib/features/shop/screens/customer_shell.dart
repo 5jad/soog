@@ -37,7 +37,7 @@ class _CustomerShellState extends State<CustomerShell> {
       Api.get('/api/customer/cart')
           .then((d) {
             final items = d['cart'] ?? d['items'] ?? [];
-            AppState.i.setCart((items as List).length);
+            AppState.i.setCart(cartTotalQty(items));
           })
           .catchError((_) {});
       Api.get('/api/customer/favorites')

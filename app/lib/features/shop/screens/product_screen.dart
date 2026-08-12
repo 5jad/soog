@@ -143,7 +143,7 @@ class _ProductScreenState extends State<ProductScreen> {
           'qty': qty,
           'variant': label,
         });
-        AppState.i.setCart(AppState.i.guestCart.length);
+        AppState.i.setCart(cartTotalQty(AppState.i.guestCart));
       }
       addPop(context);
       return;
@@ -155,7 +155,7 @@ class _ProductScreenState extends State<ProductScreen> {
         if (variantId != null) 'variant_id': variantId,
         if (label != null) 'variant_label': label,
       });
-      AppState.i.setCart(AppState.i.cartCount.value + 1);
+      AppState.i.setCart(AppState.i.cartCount.value + qty);
       if (!mounted) return;
       addPop(context);
     } on ApiException catch (e) {

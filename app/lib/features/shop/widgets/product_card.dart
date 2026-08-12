@@ -247,13 +247,13 @@ void quickAdd(
         'variant': null,
       });
     }
-    AppState.i.setCart(AppState.i.guestCart.length);
+    AppState.i.setCart(cartTotalQty(AppState.i.guestCart));
     addPop(context);
     return;
   }
   Api.post('/api/customer/cart', {'product_id': pid, 'qty': qty})
       .then((_) {
-        AppState.i.setCart(AppState.i.cartCount.value + 1);
+        AppState.i.setCart(AppState.i.cartCount.value + qty);
         addPop(context);
       })
       .catchError((e) {

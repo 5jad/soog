@@ -172,6 +172,12 @@ class ApiException implements Exception {
   String toString() => message;
 }
 
+/// مجموع القطع في السلة (وليس عدد أصناف السلة) — يغذّي شارة السلة
+int cartTotalQty(List items) => items.fold(0, (a, b) {
+      final qty = (b as Map)['qty'];
+      return a + ((qty is num) ? qty.toInt() : 1);
+    });
+
 /// حالة التطبيق المشتركة (زر/عربة/تبويبات)
 class AppState extends ChangeNotifier {
   static final AppState i = AppState._();

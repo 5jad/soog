@@ -1,0 +1,278 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="description" content="تطبيق زبون — منصة التجارة الإلكترونية الأولى في واسط (الكوت). اطلب من متاجر مدينتك، وادفع كاش عند التوصيل، وخلّ مندوبنا يوصّل طلبك لحد بابك.">
+<title>زبون | منصة متاجر الكوت</title>
+<style>
+  :root{
+    --primary:#12294E; --deep:#0B1B36; --sky:#7FA3CC; --cyan:#1789A6;
+    --accent:#F2560F; --accentDeep:#C2410C; --ink:#171D26; --bg:#FAFAF7;
+    --text:#171D26; --muted:#5C6570; --line:#E7E9EC; --success:#1F9D55;
+    --white:#fff;
+    --shadow:0 10px 30px rgba(18,41,78,.08);
+    --radius:20px;
+  }
+  *{margin:0;padding:0;box-sizing:border-box}
+  html{scroll-behavior:smooth}
+  body{font-family:'Tajawal','Segoe UI',Tahoma,'Noto Kufi Arabic',sans-serif;background:var(--bg);color:var(--text);line-height:1.7}
+  img{max-width:100%}
+  .wrap{max-width:1120px;margin:0 auto;padding:0 20px}
+
+  /* ═══ الهيدر ═══ */
+  header{background:rgba(255,255,255,.92);position:sticky;top:0;z-index:50;border-bottom:1px solid var(--line)}
+  .nav{display:flex;align-items:center;justify-content:space-between;height:68px}
+  .brand{display:flex;align-items:center;gap:10px;font-weight:900;font-size:22px;color:var(--deep)}
+  .brand .dot{width:38px;height:38px;border-radius:12px;background:linear-gradient(135deg,var(--deep),var(--primary));color:#fff;display:grid;place-items:center;font-size:20px;box-shadow:var(--shadow)}
+  .nav-links{display:flex;gap:26px;align-items:center}
+  .nav-links a{text-decoration:none;color:var(--muted);font-weight:700;font-size:14.5px;transition:.2s}
+  .nav-links a:hover{color:var(--primary)}
+  .btn{display:inline-flex;align-items:center;gap:8px;background:linear-gradient(135deg,var(--primary),var(--sky));color:#fff;font-weight:900;padding:12px 26px;border-radius:14px;text-decoration:none;box-shadow:0 8px 20px rgba(18,41,78,.35);transition:.25s;border:none;cursor:pointer;font-size:15px}
+  .btn:hover{transform:translateY(-2px);box-shadow:0 12px 26px rgba(18,41,78,.45)}
+  .btn.sun{background:linear-gradient(135deg,var(--accent),#F97316);box-shadow:0 8px 20px rgba(242,86,15,.35)}
+  .btn.sun:hover{box-shadow:0 12px 26px rgba(242,86,15,.45)}
+  .btn.ghost{background:#fff;color:var(--deep);box-shadow:inset 0 0 0 2px var(--line);border:none}
+  .btn.ghost:hover{box-shadow:inset 0 0 0 2px var(--primary),0 8px 20px rgba(18,41,78,.15)}
+  .btn small{font-weight:400;opacity:.85}
+
+  /* ═══ الهيرو ═══ */
+  .hero{background:linear-gradient(150deg,var(--deep) 0%,var(--primary) 55%,#4A6FA5 130%);color:#fff;padding:84px 0 110px;position:relative;overflow:hidden}
+  .hero::before{content:'';position:absolute;inset:0;background:radial-gradient(circle at 85% 20%,rgba(127,163,204,.25),transparent 45%),radial-gradient(circle at 10% 90%,rgba(242,86,15,.25),transparent 40%)}
+  .hero .wrap{position:relative;display:grid;grid-template-columns:1.1fr .9fr;gap:48px;align-items:center}
+  .hero h1{font-size:46px;font-weight:900;line-height:1.3;margin-bottom:18px}
+  .hero h1 span{color:#F97316}
+  .hero p{font-size:17px;color:rgba(255,255,255,.88);max-width:520px;margin-bottom:28px}
+  .hero-btns{display:flex;gap:14px;flex-wrap:wrap}
+  .stats{display:flex;gap:34px;margin-top:40px;flex-wrap:wrap}
+  .stats .s b{display:block;font-size:26px;font-weight:900}
+  .stats .s span{font-size:13px;color:rgba(255,255,255,.75)}
+  .phone{position:relative;display:flex;justify-content:center}
+  .phone-frame{width:252px;height:512px;border-radius:42px;background:#0B1B36;padding:12px;box-shadow:0 30px 60px rgba(0,0,0,.45);border:3px solid #2A3B56}
+  .phone-screen{width:100%;height:100%;border-radius:30px;overflow:hidden;position:relative;background:#fff}
+  .phone-screen img{width:100%;height:100%;object-fit:cover;display:block;user-select:none}
+  .phone-float{position:absolute;bottom:-26px;right:-14px;background:linear-gradient(135deg,var(--accent),#F97316);border-radius:18px;padding:14px 18px;color:#fff;font-weight:900;font-size:13px;box-shadow:0 14px 30px rgba(242,86,15,.5);display:flex;align-items:center;gap:8px;animation:bob 3s infinite ease-in-out}
+  @keyframes bob{0%,100%{transform:translateY(0)}50%{transform:translateY(-8px)}}
+  .badge{display:inline-block;background:rgba(255,255,255,.15);border:1px solid rgba(255,255,255,.25);padding:6px 14px;border-radius:30px;font-size:12.5px;font-weight:800;margin-bottom:18px}
+
+  /* ═══ معرض الشاشات ═══ */
+  .gallery{display:flex;justify-content:center;gap:22px;flex-wrap:wrap}
+  .shot{width:190px;text-align:center}
+  .shot .frame{width:190px;height:412px;border-radius:34px;background:#0B1B36;padding:9px;box-shadow:0 20px 40px rgba(11,27,54,.35);border:2px solid #2A3B56;transition:.3s}
+  .shot .frame img{width:100%;height:100%;object-fit:cover;border-radius:26px;display:block}
+  .shot:hover .frame{transform:translateY(-8px) rotate(-1deg);box-shadow:0 28px 55px rgba(11,27,54,.45)}
+  .shot b{display:block;margin-top:14px;font-size:14px;color:var(--deep)}
+  .shot span{font-size:12px;color:var(--muted)}
+
+  /* ═══ الأقسام ═══ */
+  section{padding:80px 0}
+  .sec-title{text-align:center;margin-bottom:52px}
+  .sec-title h2{font-size:32px;font-weight:900;color:var(--deep)}
+  .sec-title p{color:var(--muted);margin-top:8px;font-size:15.5px}
+  .kicker{display:inline-block;color:var(--primary);font-weight:900;font-size:13px;background:rgba(18,41,78,.08);padding:5px 14px;border-radius:30px;margin-bottom:12px}
+
+  .cards{display:grid;grid-template-columns:repeat(auto-fit,minmax(250px,1fr));gap:20px}
+  .card{background:#fff;border:1px solid var(--line);border-radius:var(--radius);padding:26px;box-shadow:var(--shadow);transition:.25s}
+  .card:hover{transform:translateY(-5px);box-shadow:0 18px 40px rgba(10,17,32,.12)}
+  .card .ic{width:54px;height:54px;border-radius:16px;display:grid;place-items:center;font-size:26px;margin-bottom:16px}
+  .card h3{font-size:17px;font-weight:900;margin-bottom:8px}
+  .card p{font-size:13.5px;color:var(--muted)}
+  .ic.blue{background:rgba(18,41,78,.1)} .ic.sun{background:rgba(242,86,15,.12)}
+  .ic.green{background:rgba(31,157,85,.1)} .ic.sky{background:rgba(23,137,166,.1)}
+  .ic.purple{background:rgba(147,51,234,.1)} .ic.red{background:rgba(220,38,38,.1)}
+
+  /* ═══ كيف يعمل ═══ */
+  .how{background:linear-gradient(160deg,#0B1B36,#12294E);color:#fff}
+  .how .sec-title h2{color:#fff}
+  .how .sec-title p{color:rgba(255,255,255,.7)}
+  .steps{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:20px}
+  .step{background:rgba(255,255,255,.08);border:1px solid rgba(255,255,255,.14);border-radius:20px;padding:26px;text-align:center;position:relative}
+  .step .n{width:44px;height:44px;border-radius:50%;background:linear-gradient(135deg,var(--accent),#F97316);display:grid;place-items:center;font-weight:900;font-size:18px;margin:0 auto 14px}
+  .step h3{font-size:16px;font-weight:900;margin-bottom:6px}
+  .step p{font-size:13px;color:rgba(255,255,255,.75)}
+
+  /* ═══ المميزات ═══ */
+  .feat{display:grid;grid-template-columns:repeat(auto-fit,minmax(300px,1fr));gap:22px}
+  .f{display:flex;gap:14px;background:#fff;border:1px solid var(--line);border-radius:18px;padding:20px;box-shadow:var(--shadow)}
+  .f .ic{flex:0 0 46px;width:46px;height:46px;border-radius:13px;display:grid;place-items:center;font-size:22px}
+  .f h4{font-size:15px;font-weight:900;margin-bottom:4px}
+  .f p{font-size:13px;color:var(--muted)}
+
+  /* ═══ تحميل ═══ */
+  .dl{background:linear-gradient(150deg,var(--deep),var(--primary) 60%,#4A6FA5);border-radius:30px;color:#fff;text-align:center;padding:60px 30px;position:relative;overflow:hidden}
+  .dl::before{content:'';position:absolute;inset:0;background:radial-gradient(circle at 20% 20%,rgba(242,86,15,.35),transparent 40%)}
+  .dl .wrap{position:relative}
+  .dl h2{font-size:30px;font-weight:900;margin-bottom:12px}
+  .dl p{color:rgba(255,255,255,.85);max-width:520px;margin:0 auto 30px;font-size:15.5px}
+  .dl-btns{display:flex;gap:14px;justify-content:center;flex-wrap:wrap}
+  .dl-note{margin-top:22px;font-size:12.5px;color:rgba(255,255,255,.7)}
+  .dl-note b{color:#F97316}
+  .dl .ver{display:inline-block;background:rgba(255,255,255,.15);border:1px solid rgba(255,255,255,.25);border-radius:10px;padding:5px 14px;font-size:12px;margin-top:14px}
+
+  /* ═══ فوتر ═══ */
+  footer{background:var(--ink);color:rgba(255,255,255,.7);padding:40px 0 28px}
+  footer .wrap{display:flex;justify-content:space-between;align-items:center;gap:20px;flex-wrap:wrap}
+  footer .brand{color:#fff}
+  footer small{font-size:12.5px}
+  .socials{display:flex;gap:10px}
+  .socials a{width:38px;height:38px;border-radius:11px;background:rgba(255,255,255,.1);display:grid;place-items:center;color:#fff;text-decoration:none;font-size:16px;transition:.2s}
+  .socials a:hover{background:var(--primary);transform:translateY(-2px)}
+
+  @media(max-width:860px){
+    .hero{padding:60px 0 90px}
+    .hero .wrap{grid-template-columns:1fr;text-align:center}
+    .hero p{margin-inline:auto}
+    .hero-btns,.stats{justify-content:center}
+    .phone{display:none}
+    .nav-links{display:none}
+    .hero h1{font-size:34px}
+    .sec-title h2{font-size:26px}
+  }
+</style>
+</head>
+<body>
+
+<!-- ═══ الهيدر ═══ -->
+<header>
+  <div class="wrap nav">
+    <div class="brand"><span class="dot">🛍️</span> زبون</div>
+    <nav class="nav-links">
+      <a href="/store">🛍️ تسوق الآن</a>
+      <a href="#features">المميزات</a>
+      <a href="#screens">لقطات</a>
+      <a href="#download">التحميل</a>
+    </nav>
+    <a class="btn sun" href="/store">🛒 افتح المتجر</a>
+  </div>
+</header>
+
+<!-- ═══ الهيرو ═══ -->
+<div class="hero">
+  <div class="wrap">
+    <div>
+      <span class="badge">🇮🇶 منصة التجارة الأولى في واسط · الكوت</span>
+      <h1>كل متاجر مدينتك<br>بس تطبيق واحد — <span>زبون</span></h1>
+      <p>اطلب من متاجر الكوت المفضلة عندك: ملابس، إلكترونيات، صيدليات، مطاعم وأكثر. سلّتك تنحجز وتوصلك لحد بابك، وادفع <b>كاش عند الاستلام</b>.</p>
+      <div class="hero-btns">
+        <a class="btn" href="/store">🛒 تسوق الآن من المتجر</a>
+        <a class="btn ghost" href="#download">⬇ حمّل التطبيق</a>
+      </div>
+      <div class="stats">
+        <div class="s"><b>+9</b><span>متجر مسجّل</span></div>
+        <div class="s"><b>+25</b><span>منتج متاح</span></div>
+        <div class="s"><b>24/7</b><span>توصيل سريع</span></div>
+      </div>
+    </div>
+    <div class="phone">
+      <div class="phone-frame">
+        <div class="phone-screen">
+          <img src="/site/assets/screen_home.webp" alt="الشاشة الرئيسية لتطبيق زبون">
+        </div>
+      </div>
+      <div class="phone-float">🛵 التوصيل لحد بابك</div>
+    </div>
+  </div>
+</div>
+
+<!-- ═══ المميزات ═══ -->
+<section id="features">
+  <div class="wrap">
+    <div class="sec-title">
+      <span class="kicker">لماذا زبون؟</span>
+      <h2>منصة واحدة … لأربعة أدوار</h2>
+      <p>سواء كنت زبون، تاجر، مندوب توصيل أو مشرف — كل شيء مصمم ليك.</p>
+    </div>
+    <div class="cards">
+      <div class="card"><div class="ic blue">🛒</div><h3>للزبون</h3><p>تصفح متاجر ومنتجات مدينتك، أضف للسلة، وادفع كاش عند التوصيل — بدون بطاقة ولا حساب بنكي.</p></div>
+      <div class="card"><div class="ic sun">🏪</div><h3>للتاجر</h3><p>سجّل متجرك، أضف منتجاتك بسماتها (القياسات والمواصفات)، واستلم أرباحك من المحفظة مباشرة.</p></div>
+      <div class="card"><div class="ic green">🛵</div><h3>للمندوب</h3><p>استلم الطلبات الجاهزة، شوف الموقع على خريطة جوجل (من المتجر إلى الزبون)، وسلّم واقبض.</p></div>
+      <div class="card"><div class="ic sky">🛡️</div><h3>للإدارة</h3><p>لوحة تحكم كاملة: اعتمد المتاجر، الإعلانات، تقارير الكاش، وأرقام المبيعات لحظة بلحظة.</p></div>
+    </div>
+  </div>
+</section>
+
+<!-- ═══ كيف يعمل ═══ -->
+<section class="how" id="how">
+  <div class="wrap">
+    <div class="sec-title">
+      <span class="kicker" style="background:rgba(255,255,255,.1);color:#F97316">كيف يعمل؟</span>
+      <h2>ثلاث خطوات وطلبك بيدك 🚀</h2>
+      <p>تجربة طلب بسيطة من البداية للنهاية.</p>
+    </div>
+    <div class="steps">
+      <div class="step"><div class="n">1</div><h3>اختر المتجر</h3><p>تصفح المتاجر والأقسام، وشوف المنتجات بكل تفاصيلها وقياساتها.</p></div>
+      <div class="step"><div class="n">2</div><h3>أكمل السلة</h3><p>أضف ما تريده، حدد عنوانك، واترك ملاحظتك للتاجر.</p></div>
+      <div class="step"><div class="n">3</div><h3>استلم وادفع</h3><p>مندوبنا يوصّل طلبك لبابك، وتسدد كاش عند الاستلام.</p></div>
+    </div>
+  </div>
+</section>
+
+<!-- ═══ مميزات إضافية ═══ -->
+<section>
+  <div class="wrap">
+    <div class="sec-title">
+      <span class="kicker">تزيد غير</span>
+      <h2>مميزات تخليها أحسن</h2>
+    </div>
+    <div class="feat">
+      <div class="f"><div class="ic blue">📍</div><div><h4>موقع المتجر والزبون على الخريطة</h4><p>المندوب يفتح خرائط جوجل مباشرة من نقطة الاستلام إلى باب الزبون.</p></div></div>
+      <div class="f"><div class="ic sun">📐</div><div><h4>سمات لكل منتج</h4><p>القياسات للملابس، المقاسات للأحذية، الضمان للإلكترونيات — كل فئة بتفاصيلها.</p></div></div>
+      <div class="f"><div class="ic green">💵</div><div><h4>كاش عند الاستلام</h4><p>بدون دفع مسبق. استلم طلبك، افحصه، وبعدها ادفع للمندوب.</p></div></div>
+      <div class="f"><div class="ic sky">🔥</div><div><h4>عروض اليوم</h4><p>قسم مخصص للعروض والتخفيضات الحارة من كل المتاجر.</p></div></div>
+      <div class="f"><div class="ic purple">❤️</div><div><h4>المفضلة والسلة الذكية</h4><p>احفظ منتجاتك المفضلة والسلة من أي مكان ودوماً قدامك.</p></div></div>
+      <div class="f"><div class="ic red">🔔</div><div><h4>إشعارات لحظية</h4><p>تابع حالة طلبك خطوة بخطوة: تجهيز، جاهز، على الطريق، وصول.</p></div></div>
+    </div>
+  </div>
+</section>
+
+<!-- ═══ شاشات من التطبيق ═══ -->
+<section id="screens">
+  <div class="wrap">
+    <div class="sec-title">
+      <span class="kicker">شوف بعينك</span>
+      <h2>لقطات حقيقية من التطبيق 📲</h2>
+      <p>هذي فعلياً شاشات التطبيق المثبّت — بالظبط الي راح تدز على يدك.</p>
+    </div>
+    <div class="gallery">
+      <div class="shot"><div class="frame"><img src="/site/assets/screen_home.webp" alt="الرئيسية"></div><b>الرئيسية</b><span>الأقسام والعروض والأفضل تقييماً</span></div>
+      <div class="shot"><div class="frame"><img src="/site/assets/screen_category.webp" alt="منتجات الفئة"></div><b>منتجات الفئة</b><span>كل منتجات قسم معين من كل المتاجر</span></div>
+      <div class="shot"><div class="frame"><img src="/site/assets/screen_product.webp" alt="تفاصيل المنتج"></div><b>تفاصيل المنتج</b><span>السمات: القياسات والخامة وكل المواصفات</span></div>
+      <div class="shot"><div class="frame"><img src="/site/assets/screen_stores.webp" alt="المتاجر"></div><b>المتاجر</b><span>تصفّح المتاجر حسب القسم</span></div>
+      <div class="shot"><div class="frame"><img src="/site/assets/screen_login.webp" alt="تسجيل الدخول"></div><b>حسابات تجريبية</b><span>جرب كل الأدوار بأرقام تجريبية جاهزة</span></div>
+    </div>
+  </div>
+</section>
+
+<!-- ═══ التحميل ═══ -->
+<section id="download">
+  <div class="wrap">
+    <div class="dl">
+      <div class="wrap">
+        <h2>جهّز تطبيق زبون على هاتفك 📲</h2>
+        <p>حمل التطبيق الآن مجاناً. يدعم أندرويد 8 فأعلى، وبأقرب وقت راح يتوفر على المتاجر الرسمية.</p>
+        <div class="dl-btns">
+          <a class="btn" href="/download">⬇ تحميل مباشر <small>(APK · 61MB)</small></a>
+          <a class="btn ghost" href="#how">شلون يعمل؟</a>
+        </div>
+        <div class="ver">الإصدار الحالي: v1.1.1 · محدّث حديثاً</div>
+        <div class="dl-note">💡 بعد التحميل افتح الملف واسمح بالتثبيت من <b>مصادر خارجية</b> إن طلب الجهاز ذلك.</div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ═══ فوتر ═══ -->
+<footer>
+  <div class="wrap">
+    <div class="brand"><span class="dot">🛍️</span> زبون — منصة متاجر الكوت</div>
+    <small>© 2026 منصة زبون · واسط · جميع الحقوق محفوظة</small>
+    <div class="socials">
+      <a href="#" title="فيسبوك">📘</a>
+      <a href="#" title="إنستغرام">📸</a>
+      <a href="#" title="واتساب">💬</a>
+    </div>
+  </div>
+</footer>
+
+</body>
+</html>

@@ -5,7 +5,7 @@ import 'package:zaboon/core/theme/zaboon_design_system.dart';
 import 'package:zaboon/core/widgets/widgets.dart';
 import 'package:zaboon/core/routing/shell.dart';
 
-enum AuthMode { login, register, forgotPhone, forgotReset }
+enum AuthMode { login, register }
 
 class LoginScreen extends StatefulWidget {
   const LoginScreen({super.key});
@@ -40,36 +40,15 @@ class _LoginScreenState extends State<LoginScreen> {
       } else if (mode == AuthMode.register) {
         if (name.text.isEmpty || password.text.isEmpty)
           throw ApiException('الاسم وكلمة المرور مطلوبين', 400);
+        if (code.text.trim().isEmpty)
+          throw ApiException('أرسل رمز التحقق أولاً وتأكد منه', 400);
         final d = await Api.post('/api/auth/register', {
           'name': name.text.trim(),
           'phone': phone.text.trim(),
           'password': password.text,
+          'code': code.text.trim(),
           if (referral.text.trim().isNotEmpty) 'referral': referral.text.trim(),
         });
-        await _onSuccess(d);
-      } else if (mode == AuthMode.forgotPhone) {
-        final d = await Api.post('/api/auth/request-otp', {
-          'phone': phone.text.trim(),
-        });
-        setState(() => mode = AuthMode.forgotReset);
-        if (d['dev_code'] != null) {
-          code.text = '${d['dev_code']}';
-          toast(
-            context,
-            'رمز التطوير: ${d['dev_code']} (التطبيق بالوضع التجريبي)',
-          );
-        } else {
-          toast(context, 'انرسل الرمز لهاتفك');
-        }
-      } else if (mode == AuthMode.forgotReset) {
-        if (code.text.isEmpty || password.text.isEmpty)
-          throw ApiException('أدخل الرمز وكلمة المرور الجديدة', 400);
-        final d = await Api.post('/api/auth/reset-password', {
-          'phone': phone.text.trim(),
-          'code': code.text,
-          'new_password': password.text,
-        });
-        toast(context, 'تم تغيير كلمة المرور بنجاح ✓');
         await _onSuccess(d);
       }
     } on ApiException catch (e) {
@@ -105,6 +84,32 @@ class _LoginScreenState extends State<LoginScreen> {
       toast(context, 'تعذر الاتصال بالخادم', error: true);
     } finally {
       if (mounted) setState(() => linkingTg = false);
+    }
+  }
+
+  // إرسال رمز التحقق لإنشاء حساب جديد — الرقم يجب أن يكون غير مسجل
+  Future<void> _sendCode() async {
+    if (phone.text.trim().length < 10) {
+      toast(context, 'اكتب رقم الهاتف أولاً', error: true);
+      return;
+    }
+    setState(() => loading = true);
+    try {
+      final d = await Api.post('/api/auth/request-otp', {
+        'phone': phone.text.trim(),
+      });
+      if (d['dev_code'] != null) {
+        code.text = '${d['dev_code']}';
+        toast(context, 'رمز التطوير: ${d['dev_code']} (التطبيق بالوضع التجريبي)');
+      } else {
+        toast(context, 'انرسل الرمز لهاتفك');
+      }
+    } on ApiException catch (e) {
+      toast(context, e.message, error: true);
+    } catch (_) {
+      toast(context, 'تعذر الاتصال بالخادم', error: true);
+    } finally {
+      if (mounted) setState(() => loading = false);
     }
   }
 
@@ -208,11 +213,7 @@ class _LoginScreenState extends State<LoginScreen> {
                   ),
                   const SizedBox(height: 22),
                   Text(
-                    mode == AuthMode.login
-                        ? 'تسجيل الدخول'
-                        : mode == AuthMode.register
-                        ? 'إنشاء حساب جديد'
-                        : 'استعادة كلمة المرور',
+                    mode == AuthMode.login ? 'تسجيل الدخول' : 'إنشاء حساب جديد',
                     style: AppType.style(
                       20,
                       color: Colors.white,
@@ -245,17 +246,15 @@ class _LoginScreenState extends State<LoginScreen> {
                           const SizedBox(height: 12),
                         ],
 
-                        if (mode != AuthMode.forgotReset) ...[
-                          _Field(
-                            controller: phone,
-                            hint: 'رقم الهاتف',
-                            icon: Icons.phone_android,
-                            isPhone: true,
-                          ),
-                          const SizedBox(height: 12),
-                        ],
+                        _Field(
+                          controller: phone,
+                          hint: 'رقم الهاتف',
+                          icon: Icons.phone_android,
+                          isPhone: true,
+                        ),
+                        const SizedBox(height: 12),
 
-                        if (mode == AuthMode.forgotReset) ...[
+                        if (mode == AuthMode.register) ...[
                           _Field(
                             controller: code,
                             hint: 'رمز التحقق (●●●●)',
@@ -265,22 +264,20 @@ class _LoginScreenState extends State<LoginScreen> {
                           const SizedBox(height: 12),
                         ],
 
-                        if (mode != AuthMode.forgotPhone) ...[
-                          _Field(
-                            controller: password,
-                            hint: mode == AuthMode.forgotReset
-                                ? 'كلمة المرور الجديدة'
-                                : 'كلمة المرور',
-                            icon: Icons.lock_outline,
-                            isPassword: true,
-                          ),
-                          const SizedBox(height: 16),
-                        ],
+                        _Field(
+                          controller: password,
+                          hint: 'كلمة المرور',
+                          icon: Icons.lock_outline,
+                          isPassword: true,
+                        ),
+                        const SizedBox(height: 16),
 
-                        if (mode != AuthMode.forgotReset) ...[
+                        if (mode == AuthMode.login) ...[
                           OutlinedButton.icon(
-                            onPressed: linkingTg ? null : _linkTelegram,
-                            icon: linkingTg
+                            onPressed: mode == AuthMode.login
+                                ? (linkingTg ? null : _linkTelegram)
+                                : (loading ? null : _sendCode),
+                            icon: (mode == AuthMode.login ? linkingTg : loading)
                                 ? const SizedBox(
                                     width: 16,
                                     height: 16,
@@ -294,9 +291,9 @@ class _LoginScreenState extends State<LoginScreen> {
                                     color: Colors.white,
                                   ),
                             label: Text(
-                              mode == AuthMode.forgotPhone
-                                  ? 'اربط بالتليجرام لاستلام الرمز'
-                                  : 'استلام الرمز عبر تليجرام 📲',
+                              mode == AuthMode.login
+                                  ? 'اربط بالتليجرام لاستلام الرموز 📲'
+                                  : 'أرسل رمز التحقق 📲',
                               style: AppType.style(
                                 13,
                                 color: Colors.white,
@@ -314,13 +311,7 @@ class _LoginScreenState extends State<LoginScreen> {
                         ],
 
                         SolidBtn(
-                          label: mode == AuthMode.login
-                              ? 'دخول'
-                              : mode == AuthMode.register
-                              ? 'سجل الآن'
-                              : mode == AuthMode.forgotPhone
-                              ? 'إرسال الرمز'
-                              : 'حفظ والدخول',
+                          label: mode == AuthMode.login ? 'دخول' : 'سجل الآن',
                           loading: loading,
                           onTap: submit,
                         ),
@@ -328,26 +319,13 @@ class _LoginScreenState extends State<LoginScreen> {
                         const SizedBox(height: 12),
 
                         if (mode == AuthMode.login) ...[
-                          Row(
-                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                            children: [
-                              TextButton(
-                                onPressed: () =>
-                                    setState(() => mode = AuthMode.register),
-                                child: const Text(
-                                  'حساب جديد؟',
-                                  style: TextStyle(color: Colors.white),
-                                ),
-                              ),
-                              TextButton(
-                                onPressed: () =>
-                                    setState(() => mode = AuthMode.forgotPhone),
-                                child: const Text(
-                                  'نسيت الباسوورد؟',
-                                  style: TextStyle(color: Colors.white70),
-                                ),
-                              ),
-                            ],
+                          TextButton(
+                            onPressed: () =>
+                                setState(() => mode = AuthMode.register),
+                            child: const Text(
+                              'حساب جديد؟',
+                              style: TextStyle(color: Colors.white),
+                            ),
                           ),
                         ] else ...[
                           TextButton(

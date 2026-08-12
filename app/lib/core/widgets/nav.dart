@@ -181,20 +181,23 @@ class _NavItemState extends State<_NavItem> {
                       duration: const Duration(milliseconds: 260),
                       curve: Curves.easeOutBack,
                       child: Container(
-                        padding: const EdgeInsets.symmetric(
-                          horizontal: 4.5,
-                          vertical: 1,
+                        constraints: const BoxConstraints(
+                          minWidth: 15,
+                          minHeight: 15,
                         ),
-                        decoration: const BoxDecoration(
+                        padding: const EdgeInsets.symmetric(horizontal: 3.5),
+                        decoration: BoxDecoration(
                           color: AppColors.accent,
-                          shape: BoxShape.circle,
+                          borderRadius: BorderRadius.circular(8),
                         ),
+                        alignment: Alignment.center,
                         child: Text(
-                          '$widget.badge',
+                          widget.badge > 99 ? '99+' : '$widget.badge',
                           style: const TextStyle(
                             color: Colors.white,
                             fontSize: 9,
-                            fontWeight: FontWeight.w700,
+                            fontWeight: FontWeight.w800,
+                            height: 1,
                           ),
                         ),
                       ),
@@ -304,20 +307,25 @@ class _FloatingCartFabState extends State<FloatingCartFab> {
                               duration: const Duration(milliseconds: 240),
                               curve: Curves.easeOutBack,
                               child: Container(
+                                constraints: const BoxConstraints(
+                                  minWidth: 17,
+                                  minHeight: 17,
+                                ),
                                 padding: const EdgeInsets.symmetric(
-                                  horizontal: 6,
-                                  vertical: 2,
+                                  horizontal: 4,
                                 ),
-                                decoration: const BoxDecoration(
+                                decoration: BoxDecoration(
                                   color: AppColors.accent,
-                                  shape: BoxShape.circle,
+                                  borderRadius: BorderRadius.circular(9),
                                 ),
+                                alignment: Alignment.center,
                                 child: Text(
-                                  '$count',
+                                  count > 99 ? '99+' : '$count',
                                   style: const TextStyle(
                                     color: Colors.white,
                                     fontSize: 10,
-                                    fontWeight: FontWeight.w700,
+                                    fontWeight: FontWeight.w800,
+                                    height: 1,
                                   ),
                                 ),
                               ),

@@ -131,19 +131,8 @@ class ProdCard extends StatelessWidget {
                           ),
                         ),
                         Builder(
-                          builder: (btnCtx) => GestureDetector(
-                            onTap: () {
-                              final box =
-                                  btnCtx.findRenderObject() as RenderBox?;
-                              quickAdd(
-                                context,
-                                product,
-                                origin: box != null
-                                    ? box.localToGlobal(Offset.zero) +
-                                          const Offset(13, 13)
-                                    : null,
-                              );
-                            },
+                          builder: (_) => GestureDetector(
+                            onTap: () => quickAdd(context, product),
                             child: Container(
                               width: 26,
                               height: 26,
@@ -224,7 +213,6 @@ void quickAdd(
   BuildContext context,
   Map<String, dynamic> prod, {
   int qty = 1,
-  Offset? origin,
 }) {
   final variants = prod['variants'];
   if (variants is List && variants.isNotEmpty) {
@@ -260,13 +248,13 @@ void quickAdd(
       });
     }
     AppState.i.setCart(AppState.i.guestCart.length);
-    addPop(context, '${prod['name']}', img: prod['image'], origin: origin);
+    addPop(context);
     return;
   }
   Api.post('/api/customer/cart', {'product_id': pid, 'qty': qty})
       .then((_) {
         AppState.i.setCart(AppState.i.cartCount.value + 1);
-        addPop(context, '${prod['name']}', img: prod['image'], origin: origin);
+        addPop(context);
       })
       .catchError((e) {
         toast(context, '${e is ApiException ? e.message : e}', error: true);

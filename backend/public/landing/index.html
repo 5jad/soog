@@ -7,60 +7,60 @@
 <title>زبون | منصة متاجر الكوت</title>
 <style>
   :root{
-    --primary:#1D4ED8; --deep:#1E3A8A; --sky:#38BDF8; --cyan:#06B6D4;
-    --accent:#F97316; --accentDeep:#EA580C; --ink:#0A1120; --bg:#F5F6FA;
-    --text:#101828; --muted:#475467; --line:#E4E7EC; --success:#16A34A;
+    --primary:#12294E; --deep:#0B1B36; --sky:#7FA3CC; --cyan:#1789A6;
+    --accent:#F2560F; --accentDeep:#C2410C; --ink:#171D26; --bg:#FAFAF7;
+    --text:#171D26; --muted:#5C6570; --line:#E7E9EC; --success:#1F9D55;
     --white:#fff;
-    --shadow:0 10px 30px rgba(10,17,32,.08);
+    --shadow:0 10px 30px rgba(18,41,78,.08);
     --radius:20px;
   }
   *{margin:0;padding:0;box-sizing:border-box}
   html{scroll-behavior:smooth}
-  body{font-family:'Segoe UI',Tahoma,'Noto Kufi Arabic',sans-serif;background:var(--bg);color:var(--text);line-height:1.7}
+  body{font-family:'Tajawal','Segoe UI',Tahoma,'Noto Kufi Arabic',sans-serif;background:var(--bg);color:var(--text);line-height:1.7}
   img{max-width:100%}
   .wrap{max-width:1120px;margin:0 auto;padding:0 20px}
 
   /* ═══ الهيدر ═══ */
-  header{background:rgba(255,255,255,.85);backdrop-filter:blur(12px);position:sticky;top:0;z-index:50;border-bottom:1px solid var(--line)}
+  header{background:rgba(255,255,255,.92);position:sticky;top:0;z-index:50;border-bottom:1px solid var(--line)}
   .nav{display:flex;align-items:center;justify-content:space-between;height:68px}
   .brand{display:flex;align-items:center;gap:10px;font-weight:900;font-size:22px;color:var(--deep)}
   .brand .dot{width:38px;height:38px;border-radius:12px;background:linear-gradient(135deg,var(--deep),var(--primary));color:#fff;display:grid;place-items:center;font-size:20px;box-shadow:var(--shadow)}
   .nav-links{display:flex;gap:26px;align-items:center}
   .nav-links a{text-decoration:none;color:var(--muted);font-weight:700;font-size:14.5px;transition:.2s}
   .nav-links a:hover{color:var(--primary)}
-  .btn{display:inline-flex;align-items:center;gap:8px;background:linear-gradient(135deg,var(--primary),var(--sky));color:#fff;font-weight:900;padding:12px 26px;border-radius:14px;text-decoration:none;box-shadow:0 8px 20px rgba(29,78,216,.35);transition:.25s;border:none;cursor:pointer;font-size:15px}
-  .btn:hover{transform:translateY(-2px);box-shadow:0 12px 26px rgba(29,78,216,.45)}
-  .btn.sun{background:linear-gradient(135deg,var(--accent),#FB923C);box-shadow:0 8px 20px rgba(249,115,22,.35)}
-  .btn.sun:hover{box-shadow:0 12px 26px rgba(249,115,22,.45)}
+  .btn{display:inline-flex;align-items:center;gap:8px;background:linear-gradient(135deg,var(--primary),var(--sky));color:#fff;font-weight:900;padding:12px 26px;border-radius:14px;text-decoration:none;box-shadow:0 8px 20px rgba(18,41,78,.35);transition:.25s;border:none;cursor:pointer;font-size:15px}
+  .btn:hover{transform:translateY(-2px);box-shadow:0 12px 26px rgba(18,41,78,.45)}
+  .btn.sun{background:linear-gradient(135deg,var(--accent),#F97316);box-shadow:0 8px 20px rgba(242,86,15,.35)}
+  .btn.sun:hover{box-shadow:0 12px 26px rgba(242,86,15,.45)}
   .btn.ghost{background:#fff;color:var(--deep);box-shadow:inset 0 0 0 2px var(--line);border:none}
-  .btn.ghost:hover{box-shadow:inset 0 0 0 2px var(--primary),0 8px 20px rgba(29,78,216,.15)}
+  .btn.ghost:hover{box-shadow:inset 0 0 0 2px var(--primary),0 8px 20px rgba(18,41,78,.15)}
   .btn small{font-weight:400;opacity:.85}
 
   /* ═══ الهيرو ═══ */
-  .hero{background:linear-gradient(150deg,var(--deep) 0%,var(--primary) 55%,var(--sky) 130%);color:#fff;padding:84px 0 110px;position:relative;overflow:hidden}
-  .hero::before{content:'';position:absolute;inset:0;background:radial-gradient(circle at 85% 20%,rgba(56,189,248,.25),transparent 45%),radial-gradient(circle at 10% 90%,rgba(249,115,22,.2),transparent 40%)}
+  .hero{background:linear-gradient(150deg,var(--deep) 0%,var(--primary) 55%,#4A6FA5 130%);color:#fff;padding:84px 0 110px;position:relative;overflow:hidden}
+  .hero::before{content:'';position:absolute;inset:0;background:radial-gradient(circle at 85% 20%,rgba(127,163,204,.25),transparent 45%),radial-gradient(circle at 10% 90%,rgba(242,86,15,.25),transparent 40%)}
   .hero .wrap{position:relative;display:grid;grid-template-columns:1.1fr .9fr;gap:48px;align-items:center}
   .hero h1{font-size:46px;font-weight:900;line-height:1.3;margin-bottom:18px}
-  .hero h1 span{color:#FB923C}
+  .hero h1 span{color:#F97316}
   .hero p{font-size:17px;color:rgba(255,255,255,.88);max-width:520px;margin-bottom:28px}
   .hero-btns{display:flex;gap:14px;flex-wrap:wrap}
   .stats{display:flex;gap:34px;margin-top:40px;flex-wrap:wrap}
   .stats .s b{display:block;font-size:26px;font-weight:900}
   .stats .s span{font-size:13px;color:rgba(255,255,255,.75)}
   .phone{position:relative;display:flex;justify-content:center}
-  .phone-frame{width:252px;height:512px;border-radius:42px;background:#0A1120;padding:12px;box-shadow:0 30px 60px rgba(0,0,0,.45);border:3px solid #24344d}
+  .phone-frame{width:252px;height:512px;border-radius:42px;background:#0B1B36;padding:12px;box-shadow:0 30px 60px rgba(0,0,0,.45);border:3px solid #2A3B56}
   .phone-screen{width:100%;height:100%;border-radius:30px;overflow:hidden;position:relative;background:#fff}
   .phone-screen img{width:100%;height:100%;object-fit:cover;display:block;user-select:none}
-  .phone-float{position:absolute;bottom:-26px;right:-14px;background:linear-gradient(135deg,var(--accent),#FB923C);border-radius:18px;padding:14px 18px;color:#fff;font-weight:900;font-size:13px;box-shadow:0 14px 30px rgba(249,115,22,.5);display:flex;align-items:center;gap:8px;animation:bob 3s infinite ease-in-out}
+  .phone-float{position:absolute;bottom:-26px;right:-14px;background:linear-gradient(135deg,var(--accent),#F97316);border-radius:18px;padding:14px 18px;color:#fff;font-weight:900;font-size:13px;box-shadow:0 14px 30px rgba(242,86,15,.5);display:flex;align-items:center;gap:8px;animation:bob 3s infinite ease-in-out}
   @keyframes bob{0%,100%{transform:translateY(0)}50%{transform:translateY(-8px)}}
   .badge{display:inline-block;background:rgba(255,255,255,.15);border:1px solid rgba(255,255,255,.25);padding:6px 14px;border-radius:30px;font-size:12.5px;font-weight:800;margin-bottom:18px}
 
   /* ═══ معرض الشاشات ═══ */
   .gallery{display:flex;justify-content:center;gap:22px;flex-wrap:wrap}
   .shot{width:190px;text-align:center}
-  .shot .frame{width:190px;height:412px;border-radius:34px;background:#0A1120;padding:9px;box-shadow:0 20px 40px rgba(10,17,32,.35);border:2px solid #24344d;transition:.3s}
+  .shot .frame{width:190px;height:412px;border-radius:34px;background:#0B1B36;padding:9px;box-shadow:0 20px 40px rgba(11,27,54,.35);border:2px solid #2A3B56;transition:.3s}
   .shot .frame img{width:100%;height:100%;object-fit:cover;border-radius:26px;display:block}
-  .shot:hover .frame{transform:translateY(-8px) rotate(-1deg);box-shadow:0 28px 55px rgba(10,17,32,.45)}
+  .shot:hover .frame{transform:translateY(-8px) rotate(-1deg);box-shadow:0 28px 55px rgba(11,27,54,.45)}
   .shot b{display:block;margin-top:14px;font-size:14px;color:var(--deep)}
   .shot span{font-size:12px;color:var(--muted)}
 
@@ -69,7 +69,7 @@
   .sec-title{text-align:center;margin-bottom:52px}
   .sec-title h2{font-size:32px;font-weight:900;color:var(--deep)}
   .sec-title p{color:var(--muted);margin-top:8px;font-size:15.5px}
-  .kicker{display:inline-block;color:var(--primary);font-weight:900;font-size:13px;background:rgba(29,78,216,.08);padding:5px 14px;border-radius:30px;margin-bottom:12px}
+  .kicker{display:inline-block;color:var(--primary);font-weight:900;font-size:13px;background:rgba(18,41,78,.08);padding:5px 14px;border-radius:30px;margin-bottom:12px}
 
   .cards{display:grid;grid-template-columns:repeat(auto-fit,minmax(250px,1fr));gap:20px}
   .card{background:#fff;border:1px solid var(--line);border-radius:var(--radius);padding:26px;box-shadow:var(--shadow);transition:.25s}
@@ -77,17 +77,17 @@
   .card .ic{width:54px;height:54px;border-radius:16px;display:grid;place-items:center;font-size:26px;margin-bottom:16px}
   .card h3{font-size:17px;font-weight:900;margin-bottom:8px}
   .card p{font-size:13.5px;color:var(--muted)}
-  .ic.blue{background:rgba(29,78,216,.1)} .ic.sun{background:rgba(249,115,22,.12)}
-  .ic.green{background:rgba(22,163,74,.1)} .ic.sky{background:rgba(6,182,212,.1)}
+  .ic.blue{background:rgba(18,41,78,.1)} .ic.sun{background:rgba(242,86,15,.12)}
+  .ic.green{background:rgba(31,157,85,.1)} .ic.sky{background:rgba(23,137,166,.1)}
   .ic.purple{background:rgba(147,51,234,.1)} .ic.red{background:rgba(220,38,38,.1)}
 
   /* ═══ كيف يعمل ═══ */
-  .how{background:linear-gradient(160deg,#0F1D3D,#1E3A8A);color:#fff}
+  .how{background:linear-gradient(160deg,#0B1B36,#12294E);color:#fff}
   .how .sec-title h2{color:#fff}
   .how .sec-title p{color:rgba(255,255,255,.7)}
   .steps{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:20px}
   .step{background:rgba(255,255,255,.08);border:1px solid rgba(255,255,255,.14);border-radius:20px;padding:26px;text-align:center;position:relative}
-  .step .n{width:44px;height:44px;border-radius:50%;background:linear-gradient(135deg,var(--accent),#FB923C);display:grid;place-items:center;font-weight:900;font-size:18px;margin:0 auto 14px}
+  .step .n{width:44px;height:44px;border-radius:50%;background:linear-gradient(135deg,var(--accent),#F97316);display:grid;place-items:center;font-weight:900;font-size:18px;margin:0 auto 14px}
   .step h3{font-size:16px;font-weight:900;margin-bottom:6px}
   .step p{font-size:13px;color:rgba(255,255,255,.75)}
 
@@ -99,14 +99,14 @@
   .f p{font-size:13px;color:var(--muted)}
 
   /* ═══ تحميل ═══ */
-  .dl{background:linear-gradient(150deg,var(--deep),var(--primary) 60%,var(--sky));border-radius:30px;color:#fff;text-align:center;padding:60px 30px;position:relative;overflow:hidden}
-  .dl::before{content:'';position:absolute;inset:0;background:radial-gradient(circle at 20% 20%,rgba(249,115,22,.35),transparent 40%)}
+  .dl{background:linear-gradient(150deg,var(--deep),var(--primary) 60%,#4A6FA5);border-radius:30px;color:#fff;text-align:center;padding:60px 30px;position:relative;overflow:hidden}
+  .dl::before{content:'';position:absolute;inset:0;background:radial-gradient(circle at 20% 20%,rgba(242,86,15,.35),transparent 40%)}
   .dl .wrap{position:relative}
   .dl h2{font-size:30px;font-weight:900;margin-bottom:12px}
   .dl p{color:rgba(255,255,255,.85);max-width:520px;margin:0 auto 30px;font-size:15.5px}
   .dl-btns{display:flex;gap:14px;justify-content:center;flex-wrap:wrap}
   .dl-note{margin-top:22px;font-size:12.5px;color:rgba(255,255,255,.7)}
-  .dl-note b{color:#FB923C}
+  .dl-note b{color:#F97316}
   .dl .ver{display:inline-block;background:rgba(255,255,255,.15);border:1px solid rgba(255,255,255,.25);border-radius:10px;padding:5px 14px;font-size:12px;margin-top:14px}
 
   /* ═══ فوتر ═══ */
@@ -118,28 +118,6 @@
   .socials a{width:38px;height:38px;border-radius:11px;background:rgba(255,255,255,.1);display:grid;place-items:center;color:#fff;text-decoration:none;font-size:16px;transition:.2s}
   .socials a:hover{background:var(--primary);transform:translateY(-2px)}
 
-  @media(max-width:860px){
-    .foot-grid{grid-template-columns:1fr 1fr;gap:28px}
-  }
-  /* ═══ الأسئلة الشائعة ═══ */
-  .faq{max-width:760px;margin:0 auto;display:flex;flex-direction:column;gap:12px}
-  .faq-item{background:#fff;border:1px solid var(--line);border-radius:16px;overflow:hidden;box-shadow:var(--shadow)}
-  .faq-q{width:100%;display:flex;justify-content:space-between;align-items:center;gap:12px;padding:16px 20px;background:none;border:0;cursor:pointer;font-size:15px;font-weight:900;color:var(--ink);font-family:inherit;text-align:right}
-  .faq-q .arr{transition:.25s;color:var(--primary);font-weight:900}
-  .faq-item.open .faq-q .arr{transform:rotate(180deg)}
-  .faq-a{max-height:0;overflow:hidden;transition:max-height .3s ease;font-size:13.5px;color:var(--muted);line-height:1.9}
-  .faq-item.open .faq-a{max-height:260px}
-  .faq-a p{padding:0 20px 18px}
-  /* ═══ الفوتر الكامل ═══ */
-  footer{background:var(--ink);color:rgba(255,255,255,.65);padding:56px 0 0}
-  .foot-grid{display:grid;grid-template-columns:2fr 1fr 1fr 1.3fr;gap:36px;padding-bottom:40px}
-  footer h5{color:#fff;font-size:14px;font-weight:900;margin-bottom:16px}
-  footer a{color:rgba(255,255,255,.65);text-decoration:none;display:block;padding:5px 0;font-size:13.5px;transition:.2s}
-  footer a:hover{color:#FB923C}
-  .foot-brand p{font-size:13px;margin-top:10px;max-width:280px;line-height:1.9}
-  .foot-contact a{display:flex;align-items:center;gap:8px}
-  .foot-bottom{border-top:1px solid rgba(255,255,255,.1);padding:18px 0;display:flex;justify-content:space-between;align-items:center;gap:12px;flex-wrap:wrap;font-size:12.5px}
-  .foot-bottom .socials a{width:36px;height:36px}
   @media(max-width:860px){
     .hero{padding:60px 0 90px}
     .hero .wrap{grid-template-columns:1fr;text-align:center}
@@ -161,7 +139,7 @@
     <nav class="nav-links">
       <a href="/store">🛍️ تسوق الآن</a>
       <a href="#features">المميزات</a>
-      <a href="#faq">الأسئلة</a>
+      <a href="#screens">لقطات</a>
       <a href="#download">التحميل</a>
     </nav>
     <a class="btn sun" href="/store">🛒 افتح المتجر</a>
@@ -217,7 +195,7 @@
 <section class="how" id="how">
   <div class="wrap">
     <div class="sec-title">
-      <span class="kicker" style="background:rgba(255,255,255,.1);color:#FB923C">كيف يعمل؟</span>
+      <span class="kicker" style="background:rgba(255,255,255,.1);color:#F97316">كيف يعمل؟</span>
       <h2>ثلاث خطوات وطلبك بيدك 🚀</h2>
       <p>تجربة طلب بسيطة من البداية للنهاية.</p>
     </div>
@@ -273,65 +251,12 @@
         <h2>جهّز تطبيق زبون على هاتفك 📲</h2>
         <p>حمل التطبيق الآن مجاناً. يدعم أندرويد 8 فأعلى، وبأقرب وقت راح يتوفر على المتاجر الرسمية.</p>
         <div class="dl-btns">
-          <a class="btn" href="/download">⬇ تحميل مباشر <small>(APK · 50MB)</small></a>
+          <a class="btn" href="/download">⬇ تحميل مباشر <small>(APK · 61MB)</small></a>
           <a class="btn ghost" href="#how">شلون يعمل؟</a>
         </div>
-        <div class="ver">الإصدار الحالي: v1.0.0 · محدّث حديثاً</div>
+        <div class="ver">الإصدار الحالي: v1.1.1 · محدّث حديثاً</div>
         <div class="dl-note">💡 بعد التحميل افتح الملف واسمح بالتثبيت من <b>مصادر خارجية</b> إن طلب الجهاز ذلك.</div>
       </div>
-    </div>
-  </div>
-</section>
-
-<!-- ═══ الأسئلة الشائعة ═══ -->
-<section id="faq">
-  <div class="wrap">
-    <div class="sec-title">
-      <span class="kicker">أسئلة تتكرر</span>
-      <h2>الأسئلة الشائعة 🤔</h2>
-      <p>إجابات سريعة لأكثر الأسئلة وصولة — وإن ما لقيت جوابك تواصل ويا الإدارة.</p>
-    </div>
-    <div class="faq">
-      <div class="faq-item open">
-        <button class="faq-q" onclick="this.parentElement.classList.toggle('open')">هل الدفع مسبق؟ <span class="arr">▼</span></button>
-        <div class="faq-a"><p>لا — الدفع <b>كاش عند الاستلام</b>. تستلم طلبك، تفحصه، وبعدها تدفع للمندوب. بدون بطاقة ولا حساب بنكي.</p></div>
-      </div>
-      <div class="faq-item">
-        <button class="faq-q" onclick="this.parentElement.classList.toggle('open')">شنو مدى التوصيل؟ <span class="arr">▼</span></button>
-        <div class="faq-a"><p>نغطي محافظة واسط — الكوت والمناطق المجاورة. بوقت ما تنحجز السلة، المندوب المتاح ياخذ طلبك ويوصله لبابك غالباً بنفس اليوم.</p></div>
-      </div>
-      <div class="faq-item">
-        <button class="faq-q" onclick="this.parentElement.classList.toggle('open')">أبي أفتح متجر على المنصة — شلون؟ <span class="arr">▼</span></button>
-        <div class="faq-a"><p>سجّل حسابك كتاجر، أنشئ متجرك من تبويب «متجري» داخل التطبيق، ارفع مستندات توثيق، وبعد موافقة الإدارة تستقبل الطلبات وتحوّل أرباحك من المحفظة.</p></div>
-      </div>
-      <div class="faq-item">
-        <button class="faq-q" onclick="this.parentElement.classList.toggle('open')">أبي أشتغل مندوب توصيل؟ <span class="arr">▼</span></button>
-        <div class="faq-a"><p>تواصل مع الإدارة لتسجيلك كمندوب. بعدها بتتحكم بحالة اتصالك، تستلم الطلبات الجاهزة، وترسل تقرير الكاش اليومي من تطبيقك.</p></div>
-      </div>
-      <div class="faq-item">
-        <button class="faq-q" onclick="this.parentElement.classList.toggle('open')">صار طلب مكسور أو غلط — شلون أرجعه؟ <span class="arr">▼</span></button>
-        <div class="faq-a"><p>من تفاصيل الطلب داخل التطبيق اضغط «إرجاع/استبدال» وفصّل السبب. التاجر يرد عليك خلال مدة الإرجاع، ونظام النقاط والتقييم يحمي كل الطرفين.</p></div>
-      </div>
-      <div class="faq-item">
-        <button class="faq-q" onclick="this.parentElement.classList.toggle('open')">شنو يعني نظام النقاط؟ <span class="arr">▼</span></button>
-        <div class="faq-a"><p>كل طلب يوصلك يوفر لك نقاط (نقطة لكل 1000 د.ع من قيمة الطلب). تقدر تستبدلها بخصم على طلباتك الجاية، وأكو عجلة حظ يومية تكسب منها نقاط إضافية.</p></div>
-      </div>
-    </div>
-  </div>
-</section>
-
-<!-- ═══ سياسة وشروط ═══ -->
-<section id="terms" style="background:#fff;border-top:1px solid var(--line);border-bottom:1px solid var(--line)">
-  <div class="wrap">
-    <div class="sec-title">
-      <span class="kicker">وثائق المنصة</span>
-      <h2>الشروط والسياسة 📜</h2>
-    </div>
-    <div style="max-width:760px;margin:0 auto;display:flex;flex-direction:column;gap:16px;font-size:13.5px;color:var(--muted)">
-      <div class="card"><h3>🔒 الخصوصية والبيانات</h3><p style="margin-top:6px">نحتفظ ببياناتك (الاسم، الهاتف، العنوان) لغرض توصيل طلباتك فقط، ولا نشاركها مع أي طرف ثالث. بياناتك التصفحية تُستخدم لتحسين الخدمة. تقدر تطلب حذف حسابك وأي وقت بمراسلة الإدارة.</p></div>
-      <div class="card"><h3>💰 الدفع والإرجاع</h3><p style="margin-top:6px">الدفع كاش عند الاستلام. فترة الإرجاع والاستبدال صفحة من تاريخ التسليم (حسب إعدادات المنصة)، وعليها ترسل طلب الإرجاع من التطبيق مع السبب. التاجر يقرر، وبتأكيده يُرجع المخزون ويُحدّث طلبك.</p></div>
-      <div class="card"><h3>🏪 مسؤولية المتاجر</h3><p style="margin-top:6px">كل متجر مسؤول عن جودة منتجاته ومطابقتها للوصف والصور المنشورة. المنصة وسيط للتوصيل والدفع، وتتحفظ بحق إيقاف أي حساب يخالف سياساتها.</p></div>
-      <div class="card"><h3>🛵 التوصيل</h3><p style="margin-top:6px">رسوم التوصيل تحددها كل متجر وتعرض قبل تأكيد الطلب. المندوب يلتزم بتسليم الطلب للعنوان المحدد وبنفس حالة الاستلام، وبتجاوز أي خرق يحاسب.</p></div>
     </div>
   </div>
 </section>
@@ -339,45 +264,12 @@
 <!-- ═══ فوتر ═══ -->
 <footer>
   <div class="wrap">
-    <div class="foot-grid">
-      <div class="foot-brand">
-        <div class="brand" style="justify-content:flex-start"><span class="dot">🛍️</span> زبون</div>
-        <p>منصة التجارة الإلكترونية الأولى في واسط — الكوت. نوصل طلبك لحد بابك، وتدفع كاش عند الاستلام.</p>
-        <div class="socials" style="margin-top:14px">
-          <a href="https://wa.me/9647700000000" title="واتساب">💬</a>
-          <a href="https://facebook.com" title="فيسبوك">📘</a>
-          <a href="https://instagram.com" title="إنستغرام">📸</a>
-          <a href="https://t.me" title="تيليغرام">✈️</a>
-        </div>
-      </div>
-      <div>
-        <h5>التسوق</h5>
-        <a href="/store">المتجر الإلكتروني</a>
-        <a href="/store/offers">العروض الحارة</a>
-        <a href="/store/points">نقاطي والمزايا</a>
-        <a href="/store/orders">طلباتي</a>
-        <a href="/download">تحميل التطبيق</a>
-      </div>
-      <div>
-        <h5>المنصة</h5>
-        <a href="/store">منطقة الزبون</a>
-        <a href="/store/vendor">منطقة التاجر</a>
-        <a href="/store/delivery">منطقة المندوب</a>
-        <a href="/admin">لوحة الإدارة</a>
-        <a href="#terms">الشروط والسياسة</a>
-      </div>
-      <div>
-        <h5>تواصل ويا المنصة</h5>
-        <a class="foot-contact" href="tel:+9647700000000"><span>📞</span> 0770 000 0000</a>
-        <a class="foot-contact" href="mailto:info@zaboon.app"><span>✉️</span> info@zaboon.app</a>
-        <a class="foot-contact" href="https://wa.me/9647700000000"><span>💬</span> واتساب مباشر</a>
-        <a class="foot-contact" href="#faq"><span>❓</span> الأسئلة الشائعة</a>
-        <div style="margin-top:10px;font-size:12.5px">📍 واسط · الكوت — العراق</div>
-      </div>
-    </div>
-    <div class="foot-bottom">
-      <small>© 2026 منصة زبون · جميع الحقوق محفوظة</small>
-      <small>صُنع بكل ❤️ في الكوت</small>
+    <div class="brand"><span class="dot">🛍️</span> زبون — منصة متاجر الكوت</div>
+    <small>© 2026 منصة زبون · واسط · جميع الحقوق محفوظة</small>
+    <div class="socials">
+      <a href="#" title="فيسبوك">📘</a>
+      <a href="#" title="إنستغرام">📸</a>
+      <a href="#" title="واتساب">💬</a>
     </div>
   </div>
 </footer>

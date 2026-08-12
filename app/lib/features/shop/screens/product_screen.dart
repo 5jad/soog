@@ -93,7 +93,7 @@ class _ProductScreenState extends State<ProductScreen> {
     }
   }
 
-  Future<void> _addToCart([Offset? origin]) async {
+  Future<void> _addToCart() async {
     final variants = p['variants'] is List
         ? (p['variants'] as List).cast<Map>()
         : <Map>[];
@@ -145,7 +145,7 @@ class _ProductScreenState extends State<ProductScreen> {
         });
         AppState.i.setCart(AppState.i.guestCart.length);
       }
-      addPop(context, '${p['name']}', img: p['image'], origin: origin);
+      addPop(context);
       return;
     }
     try {
@@ -157,7 +157,7 @@ class _ProductScreenState extends State<ProductScreen> {
       });
       AppState.i.setCart(AppState.i.cartCount.value + 1);
       if (!mounted) return;
-      addPop(context, '${p['name']}', img: p['image'], origin: origin);
+      addPop(context);
     } on ApiException catch (e) {
       toast(context, e.message, error: true);
     }
@@ -1255,15 +1255,7 @@ class _ProductScreenState extends State<ProductScreen> {
                       haptic: true,
                       disabled:
                           prod.outOfStock || (hasVariant && !_variantReady),
-                      onTap: () {
-                        final box = btnCtx.findRenderObject() as RenderBox?;
-                        _addToCart(
-                          box != null
-                              ? box.localToGlobal(Offset.zero) +
-                                    const Offset(0, 24)
-                              : null,
-                        );
-                      },
+                      onTap: () => _addToCart(),
                     ),
                   ),
                 ),

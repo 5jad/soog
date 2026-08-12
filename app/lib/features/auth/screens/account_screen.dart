@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
-import 'package:latlong2/latlong.dart';
 import 'package:zaboon/core/api/api.dart';
-import 'package:zaboon/features/shop/screens/map_screen.dart';
+import 'package:zaboon/features/cart_checkout/screens/cart_screen.dart';
 import 'package:zaboon/core/theme/zaboon_design_system.dart';
 import 'package:zaboon/core/widgets/widgets.dart';
 import 'package:zaboon/features/orders/screens/orders_screen.dart';
@@ -339,13 +338,19 @@ class _AccountScreenState extends State<AccountScreen> {
               ),
               const SizedBox(width: 12),
               Expanded(
-                child: _statCard(
-                  Icons.location_on_rounded,
-                  'عناويني',
-                  '${_addrCount}',
-                  '📍',
-                  AppColors.cyan,
-                  () => _addresses(),
+                child: ValueListenableBuilder<int>(
+                  valueListenable: AppState.i.cartCount,
+                  builder: (_, count, __) => _statCard(
+                    Icons.shopping_cart_rounded,
+                    'السلة',
+                    '$count',
+                    '🛒',
+                    AppColors.primary,
+                    () => Navigator.push(
+                      context,
+                      MaterialPageRoute(builder: (_) => const CartScreen()),
+                    ),
+                  ),
                 ),
               ),
             ],
@@ -473,153 +478,6 @@ class _AccountScreenState extends State<AccountScreen> {
       ),
     );
   }
-
-  Future<void> _addresses() async {
-    try {
-      final d = await Api.get('/api/customer/addresses');
-      final addrs = (d['addresses'] ?? []) as List;
-      _addrCount = addrs.length;
-      if (mounted) setState(() {});
-      final ctrl = TextEditingController();
-      double? alat;
-      double? alng;
-      await showSheet(
-        context,
-        StatefulBuilder(
-          builder: (context, setS) => Padding(
-            padding: const EdgeInsets.fromLTRB(20, 4, 20, 28),
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              crossAxisAlignment: CrossAxisAlignment.stretch,
-              children: [
-                const SheetTitle('عناويني 📍'),
-                if (addrs.isNotEmpty) ...[
-                  for (final a in addrs)
-                    Container(
-                      margin: const EdgeInsets.only(bottom: 8),
-                      padding: const EdgeInsets.symmetric(
-                        horizontal: 14,
-                        vertical: 12,
-                      ),
-                      decoration: BoxDecoration(
-                        color: const Color(0xFFF7F8FA),
-                        borderRadius: BorderRadius.circular(14),
-                        border: Border.all(color: AppColors.line),
-                      ),
-                      child: Row(
-                        children: [
-                          const Icon(
-                            Icons.location_on_rounded,
-                            color: AppColors.primary,
-                            size: 20,
-                          ),
-                          const SizedBox(width: 10),
-                          Expanded(
-                            child: Text(
-                              '${a['address']}',
-                              style: AppType.style(13, weight: FontWeight.w700),
-                            ),
-                          ),
-                          IconButton(
-                            icon: const Icon(
-                              Icons.delete_outline_rounded,
-                              color: AppColors.danger,
-                              size: 19,
-                            ),
-                            onPressed: () async {
-                              await Api.del(
-                                '/api/customer/addresses/${a['id']}',
-                              );
-                              setS(() {});
-                              Navigator.pop(context);
-                              _addresses();
-                            },
-                          ),
-                        ],
-                      ),
-                    ),
-                  const Divider(height: 22, color: AppColors.line),
-                ] else
-                  const Padding(
-                    padding: EdgeInsets.only(bottom: 8),
-                    child: Text(
-                      'لا عناوين محفوظة — أضف أول عنوان',
-                      style: TextStyle(color: AppColors.muted, fontSize: 12.5),
-                    ),
-                  ),
-                Row(
-                  children: [
-                    Expanded(
-                      child: TextField(
-                        controller: ctrl,
-                        style: const TextStyle(fontSize: 13),
-                        decoration: InputDecoration(
-                          hintText: 'عنوان جديد...',
-                          filled: true,
-                          fillColor: const Color(0xFFF7F8FA),
-                          border: OutlineInputBorder(
-                            borderRadius: BorderRadius.circular(14),
-                            borderSide: const BorderSide(color: AppColors.line),
-                          ),
-                        ),
-                      ),
-                    ),
-                    const SizedBox(width: 10),
-                    SolidBtn(
-                      label: 'أضف',
-                      onTap: () async {
-                        if (ctrl.text.isEmpty) return;
-                        await Api.post('/api/customer/addresses', {
-                          'details': ctrl.text,
-                          if (alat != null) 'lat': alat,
-                          if (alng != null) 'lng': alng,
-                        });
-                        Navigator.pop(context);
-                        _addresses();
-                      },
-                    ),
-                  ],
-                ),
-                const SizedBox(height: 12),
-                OutlinedButton.icon(
-                  style: OutlinedButton.styleFrom(
-                    foregroundColor: AppColors.primary,
-                    side: const BorderSide(
-                      color: AppColors.primary,
-                      width: 1.2,
-                    ),
-                  ),
-                  onPressed: () async {
-                    final picked = await Navigator.push<Object?>(
-                      context,
-                      MaterialPageRoute(
-                        builder: (_) => PickMapScreen(lat: alat, lng: alng),
-                      ),
-                    );
-                    if (picked != null && picked is LatLng) {
-                      setS(() {
-                        alat = picked.latitude;
-                        alng = picked.longitude;
-                      });
-                    }
-                  },
-                  icon: const Icon(Icons.map_rounded),
-                  label: Text(
-                    alat != null
-                        ? 'الموقع محدد ✓ (${alat!.toStringAsFixed(4)}, ${alng!.toStringAsFixed(4)})'
-                        : 'حدد موقعك على الخريطة 🗺',
-                    style: const TextStyle(fontWeight: FontWeight.w800),
-                  ),
-                ),
-              ],
-            ),
-          ),
-        ),
-      );
-    } catch (_) {}
-  }
-
-  int _addrCount = 0;
 
   Widget _statCard(
     IconData icon,

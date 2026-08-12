@@ -1,0 +1,378 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>زبون - التصميم التجريبي</title>
+    <link href="https://fonts.googleapis.com/css2?family=Tajawal:wght@400;500;700&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            /* 1. الألوان الأساسية الأربعة (صارمة) */
+            --primary: #12294E;     /* للثقة والتفاصيل الأساسية */
+            --secondary: #F2560F;   /* لأزرار الشراء والأفعال الحرجة */
+            --success: #1F9D55;     /* للتوثيق والدفع عند الاستلام */
+            --danger: #D92D20;      /* حصراً للأخطاء أو الحذف */
+            
+            /* ألوان السطح والنصوص (تباين عالي) */
+            --bg: #F0F3F8;
+            --surface: #FFFFFF;
+            --text-main: #171D26;
+            --text-muted: #5C6570;
+            --line: #E7E9EC;
+
+            /* 2. نظام المسافات (مضاعفات الـ 8) */
+            --sp-4: 4px;
+            --sp-8: 8px;
+            --sp-16: 16px;
+            --sp-24: 24px;
+            --sp-32: 32px;
+
+            /* 3. الزوايا */
+            --rad-sm: 8px;
+            --rad-md: 16px;
+            --rad-lg: 24px;
+            --rad-pill: 999px;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            font-family: 'Tajawal', sans-serif;
+            -webkit-tap-highlight-color: transparent;
+        }
+
+        body {
+            background-color: #333;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        /* محاكي شاشة الجوال */
+        .mobile-frame {
+            width: 390px;
+            height: 844px;
+            background-color: var(--bg);
+            border-radius: 40px;
+            overflow: hidden;
+            position: relative;
+            box-shadow: 0 25px 50px rgba(0,0,0,0.5);
+            border: 8px solid #111;
+        }
+
+        /* --- Header (Glassmorphism) --- */
+        .header {
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 72px;
+            padding: var(--sp-16) var(--sp-16) 0 var(--sp-16);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            background: rgba(255, 255, 255, 0.75);
+            backdrop-filter: blur(20px);
+            -webkit-backdrop-filter: blur(20px);
+            border-bottom: 1px solid rgba(255, 255, 255, 0.5);
+            z-index: 100;
+        }
+
+        .location-text {
+            font-size: 14px;
+            font-weight: 500;
+            color: var(--text-main);
+            display: flex;
+            align-items: center;
+            gap: var(--sp-4);
+        }
+
+        .location-text span {
+            color: var(--primary);
+            font-weight: 700;
+        }
+
+        .icon-btn {
+            width: 40px;
+            height: 40px;
+            border-radius: var(--rad-pill);
+            background: var(--surface);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            border: 1px solid var(--line);
+            color: var(--text-main);
+            font-weight: bold;
+            cursor: pointer;
+        }
+
+        /* --- Content Area --- */
+        .content {
+            height: 100%;
+            overflow-y: auto;
+            padding-top: 88px; /* Header height + spacing */
+            padding-bottom: 100px; /* Bottom nav spacing */
+        }
+
+        .section-title {
+            font-size: 18px;
+            font-weight: 700;
+            color: var(--text-main);
+            margin: var(--sp-16) var(--sp-16) var(--sp-8) var(--sp-16);
+        }
+
+        /* --- Solid Cards (No Glass) --- */
+        .trust-banner {
+            background: var(--surface);
+            margin: 0 var(--sp-16) var(--sp-16) var(--sp-16);
+            padding: var(--sp-12) var(--sp-16);
+            border-radius: var(--rad-md);
+            display: flex;
+            align-items: center;
+            gap: var(--sp-8);
+            border: 1px solid var(--success);
+            box-shadow: 0 4px 12px rgba(31, 157, 85, 0.08);
+        }
+
+        .trust-icon {
+            background: rgba(31, 157, 85, 0.15);
+            color: var(--success);
+            width: 32px;
+            height: 32px;
+            border-radius: var(--rad-pill);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            font-size: 16px;
+        }
+
+        .trust-text {
+            font-size: 13px;
+            font-weight: 700;
+            color: var(--success);
+        }
+
+        /* --- Product Grid --- */
+        .product-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: var(--sp-16);
+            padding: 0 var(--sp-16);
+        }
+
+        .product-card {
+            background: var(--surface);
+            border-radius: var(--rad-md);
+            overflow: hidden;
+            border: 1px solid var(--line);
+            box-shadow: 0 4px 12px rgba(18, 41, 78, 0.03);
+            transition: transform 0.2s;
+        }
+
+        .product-card:hover {
+            transform: translateY(-4px);
+        }
+
+        .product-img {
+            width: 100%;
+            height: 140px;
+            background-color: #E2E8F0;
+            object-fit: cover;
+        }
+
+        .product-info {
+            padding: var(--sp-12);
+        }
+
+        /* Visual Hierarchy: Price > Title > Details */
+        .product-price {
+            font-size: 18px;
+            font-weight: 700;
+            color: var(--primary);
+            margin-bottom: var(--sp-4);
+        }
+
+        .product-title {
+            font-size: 13px;
+            font-weight: 500;
+            color: var(--text-main);
+            margin-bottom: var(--sp-8);
+            line-height: 1.4;
+            height: 36px;
+            overflow: hidden;
+        }
+
+        .product-rating {
+            display: flex;
+            align-items: center;
+            gap: var(--sp-4);
+            font-size: 12px;
+            font-weight: 500;
+            color: var(--text-muted);
+        }
+
+        .star { color: #F5A623; }
+
+        /* --- Floating Bottom CTA (Glassmorphism) --- */
+        .bottom-bar {
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            height: 90px;
+            padding: var(--sp-16);
+            display: flex;
+            align-items: center;
+            background: rgba(255, 255, 255, 0.85);
+            backdrop-filter: blur(24px);
+            -webkit-backdrop-filter: blur(24px);
+            border-top: 1px solid rgba(255, 255, 255, 0.5);
+            z-index: 100;
+            gap: var(--sp-16);
+        }
+
+        /* Huge Orange Button (Fitts's Law) */
+        .btn-buy {
+            flex: 1;
+            height: 52px;
+            background-color: var(--secondary);
+            color: white;
+            border: none;
+            border-radius: var(--rad-pill);
+            font-size: 16px;
+            font-weight: 700;
+            cursor: pointer;
+            box-shadow: 0 8px 24px rgba(242, 86, 15, 0.25);
+            transition: opacity 0.2s;
+        }
+        
+        .btn-buy:hover { opacity: 0.9; }
+
+        .cart-btn {
+            width: 52px;
+            height: 52px;
+            border-radius: var(--rad-pill);
+            background: var(--surface);
+            border: 1px solid var(--line);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            font-size: 20px;
+            color: var(--primary);
+            position: relative;
+        }
+
+        .cart-badge {
+            position: absolute;
+            top: 0;
+            right: 0;
+            background: var(--danger);
+            color: white;
+            font-size: 10px;
+            font-weight: 700;
+            width: 18px;
+            height: 18px;
+            border-radius: 50%;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            border: 2px solid var(--surface);
+        }
+
+        /* Hide scrollbar */
+        ::-webkit-scrollbar { display: none; }
+    </style>
+</head>
+<body>
+
+    <div class="mobile-frame">
+        
+        <!-- Header (Glass) -->
+        <header class="header">
+            <div class="location-text">
+                📍 التوصيل إلى: <span>حي الزهراء، الكوت ▾</span>
+            </div>
+            <div class="icon-btn">🔔</div>
+        </header>
+
+        <!-- Content (Solid) -->
+        <div class="content">
+            
+            <!-- Trust Banner -->
+            <div class="trust-banner">
+                <div class="trust-icon">💵</div>
+                <div class="trust-text">متوفر الدفع نقداً عند الاستلام</div>
+            </div>
+
+            <h2 class="section-title">وصل حديثاً من متاجر واسط</h2>
+
+            <!-- Grid -->
+            <div class="product-grid">
+                
+                <!-- Card 1 -->
+                <div class="product-card">
+                    <img class="product-img" src="https://images.unsplash.com/photo-1523275335684-37898b6baf30?w=300&q=80" alt="Product">
+                    <div class="product-info">
+                        <div class="product-price">35,000 د.ع</div>
+                        <div class="product-title">ساعة ذكية رياضية مقاومة للماء مع شاشة لمس</div>
+                        <div class="product-rating">
+                            <span class="star">★</span> 4.8 <span>(120 تقييم)</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Card 2 -->
+                <div class="product-card">
+                    <img class="product-img" src="https://images.unsplash.com/photo-1542291026-7eec264c27ff?w=300&q=80" alt="Product">
+                    <div class="product-info">
+                        <div class="product-price">45,000 د.ع</div>
+                        <div class="product-title">حذاء رياضي مريح للمشي والركض (أحمر)</div>
+                        <div class="product-rating">
+                            <span class="star">★</span> 4.5 <span>(85 تقييم)</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Card 3 -->
+                <div class="product-card">
+                    <img class="product-img" src="https://images.unsplash.com/photo-1505740420928-5e560c06d30e?w=300&q=80" alt="Product">
+                    <div class="product-info">
+                        <div class="product-price">25,000 د.ع</div>
+                        <div class="product-title">سماعات رأس لاسلكية بخاصية عزل الضوضاء</div>
+                        <div class="product-rating">
+                            <span class="star">★</span> 4.9 <span>(200 تقييم)</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Card 4 -->
+                <div class="product-card">
+                    <img class="product-img" src="https://images.unsplash.com/photo-1611186871348-b1ce696e52c9?w=300&q=80" alt="Product">
+                    <div class="product-info">
+                        <div class="product-price">110,000 د.ع</div>
+                        <div class="product-title">لابتوب ماك بوك أبل إصدار حديث</div>
+                        <div class="product-rating">
+                            <span class="star">★</span> 5.0 <span>(10 تقييم)</span>
+                        </div>
+                    </div>
+                </div>
+
+            </div>
+        </div>
+
+        <!-- Floating Bottom Actions (Glass) -->
+        <div class="bottom-bar">
+            <button class="btn-buy">شراء الآن</button>
+            <div class="cart-btn">
+                🛒
+                <div class="cart-badge">2</div>
+            </div>
+        </div>
+
+    </div>
+
+</body>
+</html>

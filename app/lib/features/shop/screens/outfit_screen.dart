@@ -107,12 +107,7 @@ class _OutfitScreenState extends State<OutfitScreen> {
     if (!mounted) return;
     if (added > 0) {
       HapticFeedback.lightImpact();
-      addPop(
-        context,
-        'انضافت الإطلالة للسلة',
-        img: widget.seedImage,
-        sub: '$added قطع من متاجر مختلفة',
-      );
+      addPop(context);
       Navigator.pop(context, true);
     } else {
       toast(context, 'ما انضافت القطع — جرب مرة ثانية', error: true);

@@ -74,10 +74,10 @@ flutter build apk --debug
 - `GET /api/ads` ، `GET /api/offers` ، `GET /api/settings`
 
 **المصادقة (auth):**
-- `POST /api/auth/register` (دور **customer ثابت دائماً** — ثغرة رفع الصلاحية مسدودة) + نقاط دعوة: 100 للداعي / 50 للمدعو
+- `POST /api/auth/register` (دور **customer ثابت دائماً** — ثغرة رفع الصلاحية مسدودة + نقاط دعوة: 100 للداعي / 50 للمدعو) — يتطلب رمز OTP مؤكد للهاتف (يُرسل عبر `request-otp` قبل التسجيل)
 - `POST /api/auth/login` (بكلمة مرور فقط لحساب كلمته مسجلة)
-- `POST /api/auth/request-otp` (Otp لنسيت كلمة السر؛ طلب `role:admin` يرد `mode:'password'`)
-- `POST /api/auth/reset-password` ، `GET /me` ، `PATCH /profile` ، `GET /search` (أدمن فقط)
+- `POST /api/auth/request-otp` (OTP للمستخدم **الجديد فقط** — يرفض الأرقام المسجلة مسبقاً؛ يُوصّل عبر تليجرام أو SMS)
+- `GET /me` ، `PATCH /profile` ، `GET /search` (أدمن فقط)
 
 **الزبون (customer):** سلة (GET/POST/PATCH-DELETE مع `item_id,qty` و `variant_id`)، عنوان، مفضلة منتجات + متابعة متاجر، طلب (منفرد + مجموعة بالـ `group_id`)، تفاصيل طلب، كوبون، نقاط (تسخير/السحب/العجلة)، QA، مراجعات، محادثات، إشعارات.
 

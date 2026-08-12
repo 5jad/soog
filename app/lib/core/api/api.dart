@@ -162,6 +162,44 @@ class Api {
     final d = await post('/api/uploads/upload', {'files': files});
     return ((d?['urls'] ?? []) as List).cast<String>();
   }
+
+  /// بدء جلسة تحقق الهاتف عبر تلغرام — الرقم من التوكن، لا من البادي
+  static Future<Map<String, dynamic>> verifyStart() async {
+    final d = await post('/api/telegram/verify-start', {});
+    return (d ?? {}) as Map<String, dynamic>;
+  }
+
+  /// حالة جلسة التحقق — يستدعيها الـ polling كل 2.5 ثانية
+  static Future<String> verifyStatus(String token) async {
+    final d = await get('/api/telegram/verify-status?token=$token');
+    return (d is Map ? d['status']?.toString() : 'expired') ?? 'expired';
+  }
+
+  /// بدء التسجيل الجديد: بلا رقم مكتوب إطلاقاً — الحساب يتثبت بزر مشاركة الرقم داخل تلغرام
+  static Future<Map<String, dynamic>> registerStart({
+    required String name,
+    required String password,
+    String referral = '',
+  }) async {
+    final d = await post('/api/auth/register-start', {
+      'name': name,
+      'password': password,
+      if (referral.trim().isNotEmpty) 'referral': referral.trim(),
+    });
+    return (d ?? {}) as Map<String, dynamic>;
+  }
+
+  /// حالة جلسة التسجيل — عامة (لا حساب بعد)؛ حمايتها بالتوكن العشوائي نفسه
+  static Future<String> registerStatus(String token) async {
+    final d = await get('/api/telegram/register-status?token=$token');
+    return (d is Map ? d['status']?.toString() : 'expired') ?? 'expired';
+  }
+
+  /// إتمام التسجيل بعد تأكيد تلغرام → توك + حساب مفعّل
+  static Future<Map<String, dynamic>> registerConfirm(String token) async {
+    final d = await post('/api/auth/register-confirm', {'token': token});
+    return (d ?? {}) as Map<String, dynamic>;
+  }
 }
 
 class ApiException implements Exception {

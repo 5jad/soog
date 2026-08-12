@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:zaboon/core/api/api.dart';
-import 'package:zaboon/features/auth/screens/login_screen.dart';
 import 'package:zaboon/core/routing/shell.dart';
 import 'package:zaboon/core/theme/zaboon_design_system.dart';
 

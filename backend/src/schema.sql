@@ -470,3 +470,23 @@ CREATE TABLE IF NOT EXISTS telegram_bindings (
   expires_at TIMESTAMPTZ NOT NULL,
   used BOOLEAN DEFAULT FALSE
 );
+
+-- ── تحقق الهاتف عبر تليجرام (request_contact) — مربوطة بالمستخدم حصراً ──
+CREATE TABLE IF NOT EXISTS phone_verifications (
+  token TEXT PRIMARY KEY,
+  user_id INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+  phone TEXT NOT NULL,
+  status TEXT NOT NULL DEFAULT 'pending'
+    CHECK (status IN ('pending','prompted','verified','mismatch','expired')),
+  purpose TEXT NOT NULL DEFAULT 'order'
+    CHECK (purpose IN ('order','register')),   -- register: تسجيل جديد بدون رقم مكتوب
+  ip TEXT,                                     -- تحديد تردد طلبات التسجيل
+  chat_id BIGINT,
+  contact_phone TEXT,
+  attempts INTEGER NOT NULL DEFAULT 0,
+  created_at TIMESTAMPTZ NOT NULL DEFAULT now(),
+  expires_at TIMESTAMPTZ NOT NULL,
+  verified_at TIMESTAMPTZ
+);
+CREATE INDEX IF NOT EXISTS idx_phone_verif_user ON phone_verifications(user_id);
+CREATE INDEX IF NOT EXISTS idx_phone_verif_chat  ON phone_verifications(chat_id);

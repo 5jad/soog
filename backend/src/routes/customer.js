@@ -148,6 +148,32 @@ r.get('/orders/:id/track', async (req, res) => {
   res.json({ tracking: o });
 });
 
+// ── قواعد التحقق: من جدول settings (الأدمن يعدّلها) مع fallback افتراضي ──
+async function smartRule(key, def) {
+  const row = await one(`SELECT value FROM settings WHERE key=$1`, [key]);
+  return row && row.value !== '' ? parseInt(row.value, 10) : def;
+}
+// هل يحتاج هذا الطلب تحققاً جديداً؟ (أول طلب / سلة كبيرة / رفض سابق)
+async function phoneVerifyNeeded(userId, subtotal) {
+  const threshold = await smartRule('verify_order_threshold', 30000);
+  const refuseRule = await smartRule('verify_refused_rule', 1);
+  if (subtotal >= threshold) return true;
+  const previous = await one('SELECT id FROM orders WHERE user_id=$1 LIMIT 1', [userId]);
+  if (!previous) return true;
+  if (refuseRule) {
+    const refused = await one(`SELECT id FROM orders WHERE user_id=$1 AND status='returned' LIMIT 1`, [userId]);
+    if (refused) return true;
+  }
+  return false;
+}
+// هل يوجد تحقق حديث ناجح (ضمن النافذة)؟
+async function freshVerification(userId, windowMin) {
+  const w = Math.max(1, Math.min(parseInt(windowMin, 10) || 10, 120));
+  return one(`SELECT 1 FROM phone_verifications
+              WHERE user_id=$1 AND status='verified' AND verified_at > now() - ('${w} minutes')::INTERVAL LIMIT 1`,
+             [userId]);
+}
+
 r.post('/orders', async (req, res) => {
   const { store_id, address_id, note = '', address, coupon_code, redeem_points = 0, scheduled_at, group_id, payment_method = 'cod' } = req.body;
   const items = await q(`SELECT c.*, p.name, p.price, p.image, p.store_id, COALESCE(c.variant_label, v.name) AS variant
@@ -164,6 +190,13 @@ r.post('/orders', async (req, res) => {
   const subtotal = items.reduce((a, b) => a + b.price * b.qty, 0);
   const fee = subtotal >= (store.free_delivery_min || 50000) ? 0 : store.delivery_fee;
   const baseDiscount = subtotal >= 50000 ? 5000 : 0;
+
+  // ── حارس التحقق: السيرفر يقرر متى يلزم، والعميل لا يتجاوزه ──
+  const windowMin = await smartRule('verify_window_min', 10);
+  if (await phoneVerifyNeeded(req.user.id, subtotal)) {
+    if (!(await freshVerification(req.user.id, windowMin)))
+      return res.status(403).json({ error: 'أكّد رقم هاتفك أولاً عبر تلغرام', verify_required: true });
+  }
 
   // ── الكوبون ──
   let coupon = null, couponDiscount = 0;

@@ -1,6 +1,32 @@
 import React, { useEffect } from 'react';
 import { U } from './api';
 
+/**
+ * غلاف الـ Lottie Animation — يستخدم dotlottie-player كـ web component.
+ * القواعد:
+ *   loop=true  → loading_splash + main_loader فقط
+ *   loop=false → order_success + cart_confirm + empty_state + no_results
+ *
+ * @param {string} src  - مسار ملف JSON (من public/animations/)
+ * @param {number} size - الحجم بالبكسل (مربع)
+ * @param {boolean} loop - هل يتكرر؟
+ * @param {string} className - كلاسات إضافية
+ */
+export const LottiePlayer = ({ src, size = 120, loop = false, className = '' }) => {
+  // لو prefers-reduced-motion مفعل → لا نعرض الحركة
+  const reduce = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+  if (reduce || !src) return null;
+  return (
+    <dotlottie-player
+      src={src}
+      autoplay
+      loop={loop ? '' : undefined}
+      style={{ width: size, height: size, display: 'block' }}
+      className={className}
+    />
+  );
+};
+
 /* عنوان الصفحة في شريط المتصفح */
 export const useTitle = (t, extra = '') => {
   useEffect(() => {
@@ -34,9 +60,12 @@ export const Stars = ({ n = 0, size = 15, color = 'var(--star)' }) => {
 };
 
 /* علبة فراغ */
-export const Empty = ({ icon = '📭', msg, sub = '', action = null }) => (
+export const Empty = ({ icon = '📭', msg, sub = '', action = null, lottie = null, lottieSize = 120 }) => (
   <div className="empty">
-    <span className="e">{icon}</span>
+    {lottie
+      ? <LottiePlayer src={lottie} size={lottieSize} loop={false} />
+      : <span className="e">{icon}</span>
+    }
     <div style={{ fontWeight: 800, fontSize: 15, color: 'var(--text)' }}>{msg}</div>
     {sub && <div style={{ fontSize: 12.5, marginTop: 5 }}>{sub}</div>}
     {action}
@@ -54,7 +83,14 @@ export const SkeGrid = ({ n = 8 }) => (
 export const SkeRow = ({ n = 6 }) => (
   <div className="skrow">{Array.from({ length: n }).map((_, i) => <i key={i} />)}</div>
 );
-export const Loader = () => <div className="centerload"><div className="spin" /></div>;
+export const Loader = () => (
+  <div className="centerload">
+    <LottiePlayer src="/animations/main_loader.json" size={80} loop={true} />
+    {/* fallback: لو الـ lottie ما شتغل (أوف-لاين/بطيء) نعرض الدائرة */}
+    <style>{`.centerload dotlottie-player:not(:defined) ~ .spin { display: block } .centerload dotlottie-player { display: block }`}</style>
+    <div className="spin" style={{ display: 'none' }} />
+  </div>
+);
 
 /* رأس قسم */
 export const SectHead = ({ title, accent = 'var(--ink)', more, onMore }) => (

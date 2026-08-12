@@ -2,7 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { api, fmt, priceOf } from '../api';
 import { useApp } from '../ctx';
-import { Loader, Empty, useTitle } from '../ui';
+import { Loader, Empty, LottiePlayer, useTitle } from '../ui';
 
 export default function Checkout() {
   useTitle('إتمام الطلب');
@@ -39,7 +39,7 @@ export default function Checkout() {
   }
   if (!cart) return <Loader />;
   if (!cart.length) {
-    return <div className="sect"><Empty icon="🛒" msg="سلتك فاضية" action={<button className="btn btn-p" style={{ marginTop: 14 }} onClick={() => nav('/')}>تسوّق الآن</button>} /></div>;
+    return <div className="sect"><Empty icon="🛒" msg="سلتك فاضية" lottie="/animations/empty_state.json" action={<button className="btn btn-p" style={{ marginTop: 14 }} onClick={() => nav('/')}>تسوّق الآن</button>} /></div>;
   }
 
   const groups = {};
@@ -110,7 +110,10 @@ export default function Checkout() {
     return (
       <div className="sect" style={{ maxWidth: 620 }}>
         <div className="card" style={{ padding: 34, textAlign: 'center' }}>
-          <div style={{ fontSize: 72, marginBottom: 12 }}>🎉</div>
+          {/* confetti — once عند فتح شاشة النجاح */}
+          <div style={{ display: 'flex', justifyContent: 'center', marginBottom: 8 }}>
+            <LottiePlayer src="/animations/order_success.json" size={160} loop={false} />
+          </div>
           <h2 style={{ fontWeight: 900, fontSize: 22 }}>تم استلام طلبك بنجاح!</h2>
           <div className="note" style={{ margin: '16px 0', textAlign: 'right' }}>
             أرقام طلباتك: <b style={{ color: 'var(--primary)' }}>{created.map(c => c.code).join('، ')}</b><br />

@@ -74,6 +74,7 @@ export default function ProductsPage({ mode }) {
       {!prods ? <SkeGrid n={10} />
         : prods.length ? <div className="grid" style={{ paddingInline: 0 }}>{prods.map(p => <ProductCard key={p.id} p={p} />)}</div>
         : <Empty icon="🔍" msg="ما لقينا نتائج" sub="جرّب كلمة أقصر أو أزل التصفية"
+            lottie="/animations/no_results.json"
             action={<button className="btn btn-o btn-sm" style={{ marginTop: 14 }} onClick={() => { setSort('all'); nav('/prods'); }}>كل المنتجات</button>} />}
     </section>
   );

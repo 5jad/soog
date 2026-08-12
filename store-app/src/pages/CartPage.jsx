@@ -29,6 +29,7 @@ export default function CartPage() {
   if (!items) return <Loader />;
   if (!items.length) {
     return <div className="sect"><Empty icon="🛒" msg="سلتك فاضية — أضف ما يعجبك"
+      lottie="/animations/empty_state.json"
       action={<button className="btn btn-p btn-lg" style={{ marginTop: 14 }} onClick={() => nav('/')}>ابدأ التسوق</button>} /></div>;
   }
 

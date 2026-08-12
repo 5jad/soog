@@ -37,6 +37,7 @@ export default function Orders() {
   }
   if (!orders) return <Loader />;
   if (!orders.length) return <div className="sect"><Empty icon="📦" msg="لا توجد طلبات بعد"
+    lottie="/animations/empty_state.json"
     action={<button className="btn btn-p" style={{ marginTop: 14 }} onClick={() => nav('/')}>ابدأ التسوق</button>} /></div>;
 
   return (

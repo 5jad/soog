@@ -1,0 +1,364 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+  <meta charset="UTF-8">
+  <title>زبون ويب - النموذج المبدئي</title>
+  <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans+Arabic:wght@400;600;700&family=El+Messiri:wght@600;700&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Rounded:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200" rel="stylesheet" />
+  <style>
+    :root {
+      --trust: #12294E; --trust-deep: #0B1B36; --trust-light: #4A6FA5;
+      --cta: #F2560F; --cta-deep: #C2410C;
+      --disc: #D92D20; --ok: #1F9D55;
+      --ink: #171D26; --muted: #5C6570;
+      --bg: #F4F6F9; --white: #FFFFFF; --line: #E2E8F0;
+      --f-ui: 'IBM Plex Sans Arabic', sans-serif;
+      --f-disp: 'El Messiri', sans-serif;
+      
+      --sp-2: 8px; --sp-3: 16px; --sp-4: 24px; --sp-5: 32px; --sp-6: 48px;
+      --r-md: 12px; --r-lg: 16px; --r-xl: 24px;
+      
+      --sh-sm: 0 2px 8px rgba(18, 41, 78, 0.05);
+      --sh-md: 0 8px 24px rgba(18, 41, 78, 0.08);
+      --sh-hover: 0 12px 32px rgba(18, 41, 78, 0.12);
+    }
+    
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body { font-family: var(--f-ui); background: var(--bg); color: var(--ink); line-height: 1.6; }
+    a { text-decoration: none; color: inherit; }
+    button { font-family: inherit; cursor: pointer; border: none; background: none; }
+    
+    /* Typography */
+    h1, h2, h3 { font-family: var(--f-disp); color: var(--trust-deep); }
+    .msm { font-family: 'Material Symbols Rounded'; vertical-align: middle; }
+
+    /* Header */
+    .header { 
+      background: rgba(255, 255, 255, 0.85); backdrop-filter: blur(12px);
+      border-bottom: 1px solid var(--line);
+      position: sticky; top: 0; z-index: 100;
+    }
+    .header-in {
+      max-width: 1440px; margin: 0 auto; padding: 0 var(--sp-4);
+      display: flex; align-items: center; justify-content: space-between; height: 80px;
+    }
+    .logo { font-family: var(--f-disp); font-size: 28px; font-weight: 700; color: var(--trust-deep); display: flex; align-items: center; gap: 8px; }
+    .logo span { background: linear-gradient(135deg, var(--trust-deep), var(--trust)); color: #fff; width: 44px; height: 44px; border-radius: var(--r-md); display: flex; align-items: center; justify-content: center; }
+    
+    .nav-links { display: flex; gap: var(--sp-5); font-weight: 600; color: var(--muted); }
+    .nav-links a:hover, .nav-links a.active { color: var(--trust); }
+    
+    .search-bar {
+      display: flex; align-items: center; background: var(--bg); border: 1px solid var(--line);
+      border-radius: 100px; padding: 6px 16px; width: 400px; transition: 0.2s;
+    }
+    .search-bar:focus-within { border-color: var(--trust); background: #fff; box-shadow: 0 0 0 4px rgba(18,41,78,0.1); }
+    .search-bar input { flex: 1; border: none; background: none; padding: 8px; outline: none; font-family: var(--f-ui); font-size: 15px; }
+    
+    .header-actions { display: flex; gap: var(--sp-3); align-items: center; }
+    .icon-btn { width: 48px; height: 48px; border-radius: 50%; border: 1px solid var(--line); display: flex; align-items: center; justify-content: center; color: var(--trust-deep); transition: 0.2s; position: relative; }
+    .icon-btn:hover { background: var(--trust); color: #fff; border-color: var(--trust); }
+    .badge { position: absolute; top: -2px; right: -2px; background: var(--cta); color: #fff; font-size: 11px; font-weight: 700; width: 20px; height: 20px; border-radius: 50%; display: flex; align-items: center; justify-content: center; border: 2px solid #fff; }
+    
+    /* Layout */
+    .container { max-width: 1440px; margin: 0 auto; padding: var(--sp-5) var(--sp-4); }
+    
+    /* Hero */
+    .hero {
+      background: linear-gradient(135deg, var(--trust-deep), var(--trust));
+      border-radius: var(--r-xl); height: 400px; padding: var(--sp-6);
+      display: flex; flex-direction: column; justify-content: center;
+      position: relative; overflow: hidden; color: #fff; margin-bottom: var(--sp-6);
+      box-shadow: var(--sh-md);
+    }
+    .hero::after {
+      content: ''; position: absolute; left: -10%; top: -50%; width: 50%; height: 200%;
+      background: radial-gradient(circle, rgba(255,255,255,0.1) 0%, transparent 70%);
+      transform: rotate(30deg);
+    }
+    .hero h1 { color: #fff; font-size: 48px; margin-bottom: var(--sp-3); max-width: 600px; line-height: 1.2; z-index: 1; }
+    .hero p { font-size: 20px; opacity: 0.9; margin-bottom: var(--sp-5); max-width: 500px; z-index: 1; }
+    .btn-main { background: var(--cta); color: #fff; font-size: 18px; font-weight: 700; padding: 14px 32px; border-radius: 100px; display: inline-flex; align-items: center; gap: 8px; width: fit-content; z-index: 1; transition: 0.2s; }
+    .btn-main:hover { transform: translateY(-2px); box-shadow: 0 8px 20px rgba(242, 86, 15, 0.4); }
+
+    /* Content Area */
+    .content-grid { display: grid; grid-template-columns: 280px 1fr; gap: var(--sp-5); }
+    
+    /* Sidebar */
+    .sidebar { background: #fff; border: 1px solid var(--line); border-radius: var(--r-lg); padding: var(--sp-4); height: fit-content; position: sticky; top: 110px; }
+    .sidebar h3 { font-size: 20px; margin-bottom: var(--sp-4); display: flex; align-items: center; gap: 8px; }
+    .cat-list { list-style: none; display: flex; flex-direction: column; gap: 8px; }
+    .cat-list li a { display: flex; align-items: center; justify-content: space-between; padding: 10px 12px; border-radius: var(--r-md); color: var(--muted); font-weight: 600; transition: 0.2s; }
+    .cat-list li a:hover, .cat-list li a.active { background: rgba(18,41,78,0.05); color: var(--trust); }
+    
+    /* Main Feed */
+    .section-title { font-size: 28px; margin-bottom: var(--sp-4); display: flex; justify-content: space-between; align-items: center; }
+    .section-title a { font-family: var(--f-ui); font-size: 16px; color: var(--trust); font-weight: 600; }
+    
+    .products-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(240px, 1fr)); gap: var(--sp-4); margin-bottom: var(--sp-6); }
+    
+    .product-card {
+      background: #fff; border: 1px solid var(--line); border-radius: var(--r-lg); overflow: hidden;
+      transition: 0.3s cubic-bezier(0.4, 0, 0.2, 1); display: flex; flex-direction: column;
+    }
+    .product-card:hover { transform: translateY(-6px); box-shadow: var(--sh-hover); border-color: transparent; }
+    .pc-img { height: 260px; background: #EEF2F6; position: relative; display: flex; align-items: center; justify-content: center; font-size: 64px; }
+    .pc-badge { position: absolute; top: 12px; right: 12px; background: var(--disc); color: #fff; font-size: 12px; font-weight: 700; padding: 4px 10px; border-radius: 100px; }
+    .pc-info { padding: var(--sp-3); display: flex; flex-direction: column; flex: 1; }
+    .pc-store { font-size: 13px; color: var(--muted); font-weight: 600; margin-bottom: 4px; display: flex; align-items: center; gap: 4px; }
+    .pc-name { font-size: 17px; font-weight: 700; color: var(--ink); margin-bottom: 8px; line-height: 1.4; }
+    .pc-bottom { margin-top: auto; display: flex; justify-content: space-between; align-items: center; }
+    .pc-price { font-size: 20px; font-weight: 700; color: var(--trust-deep); }
+    .btn-add { background: var(--bg); color: var(--trust); width: 44px; height: 44px; border-radius: var(--r-md); display: flex; align-items: center; justify-content: center; transition: 0.2s; }
+    .product-card:hover .btn-add { background: var(--trust); color: #fff; }
+    
+    /* Footer */
+    .footer { background: #fff; border-top: 1px solid var(--line); padding: var(--sp-6) 0 var(--sp-4); margin-top: var(--sp-6); }
+    .footer-in { max-width: 1440px; margin: 0 auto; padding: 0 var(--sp-4); display: grid; grid-template-columns: 2fr 1fr 1fr 1fr; gap: var(--sp-5); }
+    .footer-col h4 { font-size: 18px; margin-bottom: var(--sp-4); }
+    .footer-col p { color: var(--muted); margin-bottom: var(--sp-3); max-width: 300px; }
+    .footer-links { list-style: none; display: flex; flex-direction: column; gap: 12px; }
+    .footer-links a { color: var(--muted); transition: 0.2s; }
+    .footer-links a:hover { color: var(--trust); padding-right: 6px; }
+    .copyright { text-align: center; color: var(--muted); margin-top: var(--sp-6); padding-top: var(--sp-4); border-top: 1px solid var(--line); font-size: 14px; }
+  </style>
+</head>
+<body>
+
+  <header class="header">
+    <div class="header-in">
+      <a href="#" class="logo">
+        <span>ز</span> زبون
+      </a>
+      
+      <div class="search-bar">
+        <input type="text" placeholder="ابحث عن منتج، متجر، أو ماركة...">
+        <span class="msm" style="color: var(--muted)">search</span>
+      </div>
+      
+      <nav class="nav-links">
+        <a href="#" class="active">الرئيسية</a>
+        <a href="#">المتاجر</a>
+        <a href="#">العروض</a>
+        <a href="#">الماركات</a>
+      </nav>
+      
+      <div class="header-actions">
+        <button class="icon-btn"><span class="msm">favorite</span></button>
+        <button class="icon-btn">
+          <span class="msm">shopping_cart</span>
+          <span class="badge">3</span>
+        </button>
+        <button class="icon-btn" style="background: rgba(18,41,78,0.05); border: none;"><span class="msm">person</span></button>
+      </div>
+    </div>
+  </header>
+
+  <div class="container">
+    <div class="hero">
+      <h1>تشكيلة الصيف الجديدة من أشهر متاجر الكوت</h1>
+      <p>اكتشف أحدث المنتجات بأسعار تنافسية وتوصيل سريع لباب بيتك، الدفع عند الاستلام متاح لجميع الطلبات.</p>
+      <button class="btn-main">تسوّق العروض الآن <span class="msm">arrow_back</span></button>
+    </div>
+    
+    <div class="content-grid">
+      <aside class="sidebar">
+        <h3><span class="msm">category</span> التصنيفات</h3>
+        <ul class="cat-list">
+          <li><a href="#" class="active"><span>🔥 أحدث العروض</span></a></li>
+          <li><a href="#"><span>👕 ملابس رجالية</span> <span>120</span></a></li>
+          <li><a href="#"><span>👗 أزياء نسائية</span> <span>85</span></a></li>
+          <li><a href="#"><span>👟 أحذية وحقائب</span> <span>42</span></a></li>
+          <li><a href="#"><span>📱 إلكترونيات</span> <span>210</span></a></li>
+          <li><a href="#"><span>💄 عطور وتجميل</span> <span>67</span></a></li>
+        </ul>
+        
+        <h3 style="margin-top: 32px;"><span class="msm">tune</span> تصفية</h3>
+        <div style="margin-top: 16px;">
+          <label style="font-size: 14px; font-weight: 600; color: var(--muted); margin-bottom: 8px; display: block;">السعر</label>
+          <div style="display: flex; gap: 8px;">
+            <input type="text" placeholder="من" style="width: 100%; padding: 8px; border: 1px solid var(--line); border-radius: 8px; outline: none;">
+            <input type="text" placeholder="إلى" style="width: 100%; padding: 8px; border: 1px solid var(--line); border-radius: 8px; outline: none;">
+          </div>
+        </div>
+      </aside>
+      
+      <main class="feed">
+        <div class="section-title">
+          <h2>وصل حديثاً</h2>
+          <a href="#">عرض الكل <span class="msm" style="font-size: 16px;">arrow_back</span></a>
+        </div>
+        
+        <div class="products-grid">
+          <!-- Product 1 -->
+          <div class="product-card">
+            <div class="pc-img">
+              👕
+              <span class="pc-badge">جديد</span>
+            </div>
+            <div class="pc-info">
+              <span class="pc-store"><span class="msm" style="font-size: 14px">storefront</span> بوتيك الأناقة</span>
+              <h4 class="pc-name">قميص صيفي كاجوال بألوان متعددة</h4>
+              <div class="pc-bottom">
+                <div class="pc-price">25,000 <span style="font-size: 12px; color: var(--muted); font-weight: normal">د.ع</span></div>
+                <button class="btn-add"><span class="msm">add</span></button>
+              </div>
+            </div>
+          </div>
+          
+          <!-- Product 2 -->
+          <div class="product-card">
+            <div class="pc-img">
+              👟
+              <span class="pc-badge" style="background: var(--cta)">-20%</span>
+            </div>
+            <div class="pc-info">
+              <span class="pc-store"><span class="msm" style="font-size: 14px">storefront</span> عالم الرياضة</span>
+              <h4 class="pc-name">حذاء رياضي مريح للمشي</h4>
+              <div class="pc-bottom">
+                <div class="pc-price">45,000 <span style="font-size: 12px; color: var(--muted); font-weight: normal">د.ع</span></div>
+                <button class="btn-add"><span class="msm">add</span></button>
+              </div>
+            </div>
+          </div>
+
+          <!-- Product 3 -->
+          <div class="product-card">
+            <div class="pc-img">
+              📱
+            </div>
+            <div class="pc-info">
+              <span class="pc-store"><span class="msm" style="font-size: 14px">storefront</span> تكنو ستور</span>
+              <h4 class="pc-name">سماعات بلوتوث عازلة للضوضاء</h4>
+              <div class="pc-bottom">
+                <div class="pc-price">35,000 <span style="font-size: 12px; color: var(--muted); font-weight: normal">د.ع</span></div>
+                <button class="btn-add"><span class="msm">add</span></button>
+              </div>
+            </div>
+          </div>
+
+          <!-- Product 4 -->
+          <div class="product-card">
+            <div class="pc-img">
+              ⌚
+            </div>
+            <div class="pc-info">
+              <span class="pc-store"><span class="msm" style="font-size: 14px">storefront</span> وقت الأناقة</span>
+              <h4 class="pc-name">ساعة ذكية بشاشة أموليد</h4>
+              <div class="pc-bottom">
+                <div class="pc-price">60,000 <span style="font-size: 12px; color: var(--muted); font-weight: normal">د.ع</span></div>
+                <button class="btn-add"><span class="msm">add</span></button>
+              </div>
+            </div>
+          </div>
+          
+          <!-- Product 5 -->
+          <div class="product-card">
+            <div class="pc-img">
+              🎒
+            </div>
+            <div class="pc-info">
+              <span class="pc-store"><span class="msm" style="font-size: 14px">storefront</span> حقيبتي</span>
+              <h4 class="pc-name">حقيبة ظهر للسفر والجامعة</h4>
+              <div class="pc-bottom">
+                <div class="pc-price">22,000 <span style="font-size: 12px; color: var(--muted); font-weight: normal">د.ع</span></div>
+                <button class="btn-add"><span class="msm">add</span></button>
+              </div>
+            </div>
+          </div>
+
+          <!-- Product 6 -->
+          <div class="product-card">
+            <div class="pc-img">
+              🕶️
+            </div>
+            <div class="pc-info">
+              <span class="pc-store"><span class="msm" style="font-size: 14px">storefront</span> نظارات الشرق</span>
+              <h4 class="pc-name">نظارة شمسية كلاسيكية</h4>
+              <div class="pc-bottom">
+                <div class="pc-price">18,000 <span style="font-size: 12px; color: var(--muted); font-weight: normal">د.ع</span></div>
+                <button class="btn-add"><span class="msm">add</span></button>
+              </div>
+            </div>
+          </div>
+        </div>
+        
+        <div class="section-title" style="margin-top: 64px;">
+          <h2>متاجر مميزة</h2>
+          <a href="#">كل المتاجر <span class="msm" style="font-size: 16px;">arrow_back</span></a>
+        </div>
+        
+        <div class="products-grid">
+           <!-- Store 1 -->
+           <div class="product-card" style="align-items: center; padding: 24px; text-align: center;">
+             <div style="width: 80px; height: 80px; border-radius: 20px; background: #EEF2F6; display: flex; align-items: center; justify-content: center; font-size: 32px; margin-bottom: 16px; box-shadow: 0 4px 12px rgba(0,0,0,0.05);">👕</div>
+             <h4 class="pc-name" style="margin-bottom: 4px;">بوتيك الأناقة</h4>
+             <p style="font-size: 13px; color: var(--muted); margin-bottom: 16px;">أحدث صيحات الموضة الرجالية والنسائية</p>
+             <button style="background: rgba(18,41,78,0.05); color: var(--trust); padding: 8px 24px; border-radius: 100px; font-weight: 700; width: 100%;">تصفح المتجر</button>
+           </div>
+           <!-- Store 2 -->
+           <div class="product-card" style="align-items: center; padding: 24px; text-align: center;">
+             <div style="width: 80px; height: 80px; border-radius: 20px; background: #EEF2F6; display: flex; align-items: center; justify-content: center; font-size: 32px; margin-bottom: 16px; box-shadow: 0 4px 12px rgba(0,0,0,0.05);">👟</div>
+             <h4 class="pc-name" style="margin-bottom: 4px;">عالم الرياضة</h4>
+             <p style="font-size: 13px; color: var(--muted); margin-bottom: 16px;">مستلزمات وأحذية رياضية أصلية 100%</p>
+             <button style="background: rgba(18,41,78,0.05); color: var(--trust); padding: 8px 24px; border-radius: 100px; font-weight: 700; width: 100%;">تصفح المتجر</button>
+           </div>
+           <!-- Store 3 -->
+           <div class="product-card" style="align-items: center; padding: 24px; text-align: center;">
+             <div style="width: 80px; height: 80px; border-radius: 20px; background: #EEF2F6; display: flex; align-items: center; justify-content: center; font-size: 32px; margin-bottom: 16px; box-shadow: 0 4px 12px rgba(0,0,0,0.05);">📱</div>
+             <h4 class="pc-name" style="margin-bottom: 4px;">تكنو ستور</h4>
+             <p style="font-size: 13px; color: var(--muted); margin-bottom: 16px;">أجهزة ذكية وملحقاتها بأسعار تنافسية</p>
+             <button style="background: rgba(18,41,78,0.05); color: var(--trust); padding: 8px 24px; border-radius: 100px; font-weight: 700; width: 100%;">تصفح المتجر</button>
+           </div>
+        </div>
+      </main>
+    </div>
+  </div>
+
+  <footer class="footer">
+    <div class="footer-in">
+      <div class="footer-col">
+        <a href="#" class="logo" style="margin-bottom: 24px;"><span>ز</span> زبون</a>
+        <p>المنصة الأولى للتسوق من أفضل المحلات في مدينتك. تسوق براحة واستلم طلبك بسرعة.</p>
+        <div style="display: flex; gap: 12px; margin-top: 16px;">
+          <button style="width: 40px; height: 40px; border-radius: 50%; background: #EEF2F6; color: var(--trust-deep); display: flex; align-items: center; justify-content: center;">f</button>
+          <button style="width: 40px; height: 40px; border-radius: 50%; background: #EEF2F6; color: var(--trust-deep); display: flex; align-items: center; justify-content: center;">in</button>
+        </div>
+      </div>
+      
+      <div class="footer-col">
+        <h4>روابط سريعة</h4>
+        <ul class="footer-links">
+          <li><a href="#">الرئيسية</a></li>
+          <li><a href="#">كل المتاجر</a></li>
+          <li><a href="#">أحدث العروض</a></li>
+          <li><a href="#">انضم كتاجر</a></li>
+        </ul>
+      </div>
+      
+      <div class="footer-col">
+        <h4>خدمة العملاء</h4>
+        <ul class="footer-links">
+          <li><a href="#">تتبع طلبك</a></li>
+          <li><a href="#">سياسة الاسترجاع</a></li>
+          <li><a href="#">الأسئلة الشائعة</a></li>
+          <li><a href="#">اتصل بنا</a></li>
+        </ul>
+      </div>
+      
+      <div class="footer-col">
+        <h4>تواصل معنا</h4>
+        <ul class="footer-links">
+          <li style="display: flex; gap: 8px; color: var(--muted)"><span class="msm">location_on</span> الكوت، شارع الهورة</li>
+          <li style="display: flex; gap: 8px; color: var(--muted)"><span class="msm">call</span> 0780 123 4567</li>
+          <li style="display: flex; gap: 8px; color: var(--muted)"><span class="msm">mail</span> support@zaboon.iq</li>
+        </ul>
+      </div>
+    </div>
+    <div class="copyright">
+      جميع الحقوق محفوظة © 2026 زبون
+    </div>
+  </footer>
+
+</body>
+</html>

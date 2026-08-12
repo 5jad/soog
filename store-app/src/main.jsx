@@ -4,6 +4,7 @@ import { HashRouter } from 'react-router-dom';
 import { AppProvider } from './ctx';
 import App from './App';
 import 'leaflet/dist/leaflet.css';
+import './styles/tokens.css';
 import './styles.css';
 
 // لا تعرض أبداً نسخة قديمة عند الرجوع للصفحة من ذاكرة المتصفح

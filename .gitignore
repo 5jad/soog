@@ -24,3 +24,6 @@ app/ios/.symlinks/
 zaboon-demo.apk
 
 # ملفات كبيرة للتطبيق (لا ترفع لـ git)
+store-app/node_modules/
+app/lib.zip
+app/.directory

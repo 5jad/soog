@@ -1,9 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
-import 'api.dart';
-import 'screens/login_screen.dart';
-import 'screens/shell.dart';
-import 'theme.dart';
+import 'package:zaboon/core/api/api.dart';
+import 'package:zaboon/features/auth/screens/login_screen.dart';
+import 'package:zaboon/core/routing/shell.dart';
+import 'package:zaboon/core/theme/zaboon_design_system.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -22,9 +22,9 @@ class _ZaboonAppState extends State<ZaboonApp> {
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
-      title: 'زبون — الكوت',
+      title: 'زبون',
       debugShowCheckedModeBanner: false,
-      theme: buildTheme(),
+      theme: buildZaboonTheme(),
       locale: const Locale('ar'),
       supportedLocales: const [Locale('ar')],
       localizationsDelegates: const [

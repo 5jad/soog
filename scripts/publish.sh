@@ -19,8 +19,8 @@ CHANGELOG="${2:-تحديث جديد}"
 echo "📦 نشر الإصدار $VERSION (build $BUILD): $CHANGELOG"
 
 # 1) الإصدار في الكود
-sed -i "s/const String kAppVersion = '[^']*';/const String kAppVersion = '$VERSION';/" app/lib/widgets.dart
-sed -i "s/const int kAppBuild = [0-9]*;/const int kAppBuild = $BUILD;/" app/lib/widgets.dart
+sed -i "s/const String kAppVersion = '[^']*';/const String kAppVersion = '$VERSION';/" app/lib/core/widgets/states.dart
+sed -i "s/const int kAppBuild = [0-9]*;/const int kAppBuild = $BUILD;/" app/lib/core/widgets/states.dart
 
 # 2) ملف الإصدار على السيرفر (ينتشر مع الـ API للزبائن)
 python3 - "$VERSION" "$BUILD" "$CHANGELOG" << 'EOF'

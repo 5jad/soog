@@ -1,5 +1,11 @@
 {
   "version": 2,
-  "builds": [{ "src": "api/index.js", "use": "@vercel/node" }],
-  "routes": [{ "src": "/(.*)", "dest": "api/index.js" }]
+  "builds": [
+    { "src": "api/index.js", "use": "@vercel/node" },
+    { "src": "src/public/landing/downloads/zaboon-app.apk", "use": "@vercel/static" }
+  ],
+  "routes": [
+    { "src": "/download", "dest": "/src/public/landing/downloads/zaboon-app.apk" },
+    { "src": "/(.*)", "dest": "api/index.js" }
+  ]
 }

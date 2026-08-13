@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:url_launcher/url_launcher.dart';
 import 'package:zaboon/core/api/api.dart';
 import 'package:zaboon/features/cart_checkout/screens/cart_screen.dart';
 import 'package:zaboon/core/theme/zaboon_design_system.dart';
@@ -401,10 +402,19 @@ class _AccountScreenState extends State<AccountScreen> {
                   onTap: () async {
                     try {
                       final d = await Api.get('/api/app/version');
-                      final v = d['version'] ?? kAppVersion;
-                      toast(context, 'أحدث نسخة على الموقع: v$v');
+                      if (!context.mounted) return;
+                      final latest = (d['version'] ?? '').toString();
+                      final build = (d['build'] as num?)?.toInt() ?? 0;
+                      if (build > kAppBuild) {
+                        toast(context, 'توجد نسخة أحدث v$latest — جاري فتح التحميل...');
+                        final u = Uri.parse(Api.base + (d['download_url'] ?? '/download'));
+                        launchUrl(u, mode: LaunchMode.externalApplication);
+                      } else {
+                        toast(context, 'إصدارك v$kAppVersion — هو آخر إصدار ✓');
+                      }
                     } catch (_) {
-                      toast(context, 'أحدث نسخة على الموقع: v$kAppVersion');
+                      if (!context.mounted) return;
+                      toast(context, 'إصدارك: v$kAppVersion');
                     }
                   },
                 ),

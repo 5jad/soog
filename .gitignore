@@ -20,10 +20,13 @@ app/ios/.symlinks/
 
 # عام
 .DS_Store
-*.loglanding/downloads/*.apk
-zaboon-demo.apk
+*.log
 
 # ملفات كبيرة للتطبيق (لا ترفع لـ git)
+landing/downloads/*.apk
+backend/public/landing/downloads/*.apk
+zaboon-v*.apk
+zaboon-demo.apk
 store-app/node_modules/
 app/lib.zip
 app/.directory

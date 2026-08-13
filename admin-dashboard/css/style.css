@@ -243,3 +243,72 @@ html[data-theme="dark"] .skel::after{background:linear-gradient(90deg,transparen
 @media(max-width:1100px){.grid2,.grid3,.grid2-1{grid-template-columns:1fr}.sidebar{transform:translateX(100%)}.main{margin-inline-start:0}.burger{display:flex}.menu-open .sidebar{transform:none}}
 @media(max-width:640px){.kpi-grid{grid-template-columns:1fr 1fr}.main{padding:0 14px 30px}}
 @media (prefers-reduced-motion: reduce){.orb{animation:none}*{transition-duration:.01ms!important;animation-duration:.01ms!important}}
+
+/* ═══════════════════════════════════════════════════════════
+   زبون v2.1 — تجميل: قائمة مجموعات + زر ليلي + لمسات تنظيم
+   ═══════════════════════════════════════════════════════════ */
+
+/* ── القائمة الجانبية: مجموعات مرتّبة ── */
+.menu-sec{
+  font-size:10px;font-weight:900;letter-spacing:.4px;color:var(--muted);
+  opacity:.72;padding:15px 13px 6px;
+}
+.menu-sec:first-child{padding-top:4px}
+.menu-item{position:relative}
+.menu-item.active{
+  background:linear-gradient(135deg,var(--primary-deep),var(--primary));color:#fff;
+}
+.menu-item.active::before{
+  content:'';position:absolute;left:-14px;top:22%;bottom:22%;width:4px;border-radius:99px;
+  background:var(--accent);box-shadow:0 0 10px var(--accent);
+}
+html[data-theme="dark"] .menu-item.active{background:linear-gradient(135deg,var(--primary),var(--cyan))}
+
+/* ── زر الوضع الليلي ── */
+.topbar-left{display:flex;align-items:center;gap:10px;flex:none}
+.theme-btn{
+  width:40px;height:40px;border-radius:12px;border:1px solid var(--glass-border);
+  background:var(--glass-l3);font-size:16px;cursor:pointer;
+  display:flex;align-items:center;justify-content:center;flex:none;
+  transition:transform var(--quick) var(--ease),filter var(--quick) var(--ease);
+}
+.theme-btn:hover{transform:translateY(-1px);filter:brightness(1.06)}
+.theme-btn:active{transform:scale(.92)}
+
+/* ── بطاقات/KPI ── */
+.kpi{border-top:3px solid transparent}
+.kpi:nth-child(1){border-top-color:var(--accent)}
+.kpi:nth-child(2){border-top-color:var(--success)}
+.kpi:nth-child(3){border-top-color:var(--cyan)}
+.kpi:nth-child(4){border-top-color:var(--warning)}
+.kpi:nth-child(5){border-top-color:var(--info)}
+.kpi:nth-child(6){border-top-color:var(--star)}
+.kpi .kl{font-size:11px}
+.chip.active{box-shadow:0 4px 12px rgba(30,58,138,.25)}
+html[data-theme="dark"] .chip.active{background:linear-gradient(135deg,var(--primary),var(--cyan))}
+
+/* ── الجداول ── */
+.tbl th{letter-spacing:.3px;border-bottom:2px solid rgba(255,255,255,.12)}
+.tbl tr{transition:background var(--quick) var(--ease)}
+.tbl tr:nth-child(even) td{background:rgba(56,189,248,.028)}
+.tbl tr:hover td{background:rgba(56,189,248,.08)!important}
+html[data-theme="dark"] .tbl tr:nth-child(even) td{background:rgba(56,189,248,.045)}
+
+/* ── ملاحظات/تنبيهات ── */
+.note{
+  background:var(--glass-l1);border-radius:12px;padding:10px 12px;
+  font-size:11px;color:var(--muted);font-weight:700;line-height:1.7;
+}
+
+/* ── لمسات عامة ── */
+.btn:hover{transform:translateY(-1px)}
+.btn:focus-visible,.f-input:focus-visible,.f-select:focus-visible,.chip:focus-visible,
+.theme-btn:focus-visible,.burger:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+.card{transition:border-color var(--quick) var(--ease)}
+.card-title .more{transition:opacity var(--quick);opacity:.9}
+.card-title .more:hover{opacity:1;text-decoration:underline}
+.main{scrollbar-width:thin;scrollbar-color:var(--glass-border) transparent}
+.main::-webkit-scrollbar{width:8px}
+.main::-webkit-scrollbar-thumb{background:var(--glass-border);border-radius:99px}
+.modal .mt{padding-bottom:10px;border-bottom:1px solid var(--glass-border-dark);margin-bottom:14px}
+.menu-item .mi-badge{color:var(--ink)}

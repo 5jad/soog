@@ -4,6 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>لوحة الإدارة — زبون 👑</title>
+<script>try{var t=localStorage.getItem('zaboon_theme');if(t==='dark'||(!t&&matchMedia('(prefers-color-scheme: dark)').matches))document.documentElement.setAttribute('data-theme','dark')}catch(e){}</script>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="css/style.css">
@@ -53,7 +54,10 @@
     <header class="topbar">
       <button class="burger" onclick="document.body.classList.toggle('menu-open')">☰</button>
       <h2 id="pageTitle">نظرة عامة</h2>
-      <div class="topbar-date" id="todayDate"></div>
+      <div class="topbar-left">
+        <button class="theme-btn" id="themeBtn" onclick="toggleTheme()" title="الوضع الليلي">🌙</button>
+        <div class="topbar-date" id="todayDate"></div>
+      </div>
     </header>
     <div class="content" id="content"></div>
   </main>

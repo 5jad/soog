@@ -458,6 +458,17 @@ r.delete('/favorites/:product_id', async (req, res) => {
 });
 
 // ═══════════ الإشعارات ═══════════
+r.get('/notifications/count', async (req, res) => {
+  const row = await one(`SELECT
+      (SELECT count(*)::int FROM notifications WHERE (user_id=$1 OR (role=$2 AND user_id IS NULL)) AND read_at IS NULL) AS count,
+      (SELECT to_json(t) FROM (
+         SELECT id, title, body, type, created_at FROM notifications
+         WHERE (user_id=$1 OR (role=$2 AND user_id IS NULL)) AND read_at IS NULL
+         ORDER BY id DESC LIMIT 1
+       ) t) AS latest`,
+    [req.user.id, req.user.role]);
+  res.json({ count: row?.count ?? 0, latest: row?.latest ?? null });
+});
 r.get('/notifications', async (req, res) => {
   const rows = await q(`SELECT *, (read_at IS NOT NULL) AS read FROM notifications WHERE user_id=$1 OR (role=$2 AND user_id IS NULL) ORDER BY id DESC LIMIT 50`,
     [req.user.id, req.user.role]);

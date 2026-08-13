@@ -231,6 +231,9 @@ class AppState extends ChangeNotifier {
   final ValueNotifier<int> unreadNotifs = ValueNotifier(
     0,
   ); // عدّاد الإشعارات غير المقروءة
+  final ValueNotifier<int> notifReload = ValueNotifier(
+    0,
+  ); // إشارة لتحديث شاشة الإشعارات عند وصول جديد
   final ValueNotifier<int> favsCount = ValueNotifier(
     0,
   ); // عدّاد المفضلة — شارة تبويب المفضلة

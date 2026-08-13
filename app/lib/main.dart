@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:zaboon/core/api/api.dart';
+import 'package:zaboon/core/notifications/notif_push.dart';
 import 'package:zaboon/core/routing/shell.dart';
 import 'package:zaboon/core/theme/zaboon_design_system.dart';
 
@@ -8,6 +9,7 @@ void main() async {
   WidgetsFlutterBinding.ensureInitialized();
   await Api.load();
   AppState.i.refreshStores(); // عدد المتاجر للشريط العلوي — يعمل بالخلفية
+  NotifPusher.i.start(); // محرك الإشعارات — جلب دوري + نوافذ منبثقة
   runApp(const ZaboonApp());
 }
 
@@ -23,6 +25,7 @@ class _ZaboonAppState extends State<ZaboonApp> {
     return MaterialApp(
       title: 'زبون',
       debugShowCheckedModeBanner: false,
+      navigatorKey: appNavigatorKey,
       theme: buildZaboonTheme(),
       locale: const Locale('ar'),
       supportedLocales: const [Locale('ar')],

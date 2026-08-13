@@ -17,6 +17,14 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
   void initState() {
     super.initState();
     _load();
+    // تحديث فوري عند وصول إشعار جديد عبر محرك الإشعارات
+    AppState.i.notifReload.addListener(_load);
+  }
+
+  @override
+  void dispose() {
+    AppState.i.notifReload.removeListener(_load);
+    super.dispose();
   }
 
   Future<void> _load() async {

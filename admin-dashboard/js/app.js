@@ -96,7 +96,10 @@ async function buildMenu() {
       await buildMenu();
       await router.go('overview');
       return;
-    } catch { API.clear(); }
+    } catch (e) {
+      // فقط رمز فعلاً مرفوض يمسح الجلسة — انقطاع الشبكة يبقيها محفوظة
+      if (e && e.unauthorized) API.clear();
+    }
   }
   showLogin();
 })();

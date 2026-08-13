@@ -90,7 +90,7 @@ class _PointsScreenState extends State<PointsScreen> {
         .toString();
 
     return Scaffold(
-      appBar: AppBar(title: const Text('نقاطي وهداياي 🎁')),
+      appBar: AppBar(title: const ScreenTitle(Icons.stars_rounded, 'نقاطي وهداياي')),
       body: ListView(
         padding: const EdgeInsets.fromLTRB(16, 6, 16, 24),
         children: [
@@ -277,6 +277,49 @@ class _PointsScreenState extends State<PointsScreen> {
           ],
           const SizedBox(height: 18),
           Text(
+            'كيف تربح النقاط؟ 🎯',
+            style: AppType.style(
+              13,
+              color: AppColors.muted,
+              weight: FontWeight.w800,
+            ),
+          ),
+          const SizedBox(height: 8),
+          GlassCard(
+            child: Column(
+              children: [
+                _howRow(
+                  Icons.receipt_long_rounded,
+                  'من طلباتك',
+                  'كل 1000 د.ع قيمة طلب = 1 نقطة تتصلك أوتوماتيك بعد التسليم',
+                  AppColors.primary,
+                ),
+                const Divider(height: 18),
+                _howRow(
+                  Icons.casino_rounded,
+                  'عجلة الحظ',
+                  'دور يومياً واكسب حتى 200 نقطة مجاناً',
+                  AppColors.warning,
+                ),
+                const Divider(height: 18),
+                _howRow(
+                  Icons.group_add_rounded,
+                  'دعوة الأصدقاء',
+                  'كل صديق يسجل برمزك: ${(referral?['points_referrer'] ?? 100)} نقطة لك و${(referral?['points_new'] ?? 50)} له',
+                  AppColors.success,
+                ),
+                const Divider(height: 18),
+                _howRow(
+                  Icons.wallet_giftcard_rounded,
+                  'استبدال الخصم',
+                  'كل ${data?['rate'] ?? 100} نقطة = 1000 د.ع خصم من طلبك الجاي',
+                  AppColors.accent,
+                ),
+              ],
+            ),
+          ),
+          const SizedBox(height: 18),
+          Text(
             'سجل النقاط 🧾',
             style: AppType.style(
               13,
@@ -349,6 +392,40 @@ class _PointsScreenState extends State<PointsScreen> {
               ),
         ],
       ),
+    );
+  }
+
+  Widget _howRow(
+    IconData icon,
+    String title,
+    String sub,
+    Color color,
+  ) {
+    return Row(
+      children: [
+        Container(
+          padding: const EdgeInsets.all(9),
+          decoration: BoxDecoration(
+            color: color.withOpacity(0.1),
+            borderRadius: BorderRadius.circular(11),
+          ),
+          child: Icon(icon, color: color, size: 20),
+        ),
+        const SizedBox(width: 12),
+        Expanded(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(title, style: AppType.style(12.5, weight: FontWeight.w900)),
+              const SizedBox(height: 2),
+              Text(
+                sub,
+                style: AppType.style(10.5, color: AppColors.muted, height: 1.4),
+              ),
+            ],
+          ),
+        ),
+      ],
     );
   }
 

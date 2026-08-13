@@ -17,7 +17,7 @@ class _AdminShellState extends State<AdminShell> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: const Text('لوحة التحكم 🛡'),
+        title: const ScreenTitle(Icons.admin_panel_settings_rounded, 'لوحة التحكم'),
         actions: [
           IconButton(
             onPressed: widget.onExit,

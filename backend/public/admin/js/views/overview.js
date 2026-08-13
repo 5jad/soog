@@ -97,7 +97,7 @@ async function renderOverview() {
       <div class="card">
         <div class="card-title"><span>المبيعات حسب القسم</span><span class="more">اليوم</span></div>
         ${sales.categories.length ? sales.categories.map(c => `
-          <div class="cat-row"><span class="cn">${c.icon} ${c.name}</span><div class="ct"><div class="cf" style="width:${Math.max(3, c.total / catMax * 100)}%"></div></div><span class="cv">${fmt(c.total)}</span></div>
+          <div class="cat-row"><span class="cn">${esc(c.icon)} ${esc(c.name)}</span><div class="ct"><div class="cf" style="width:${Math.max(3, c.total / catMax * 100)}%"></div></div><span class="cv">${fmt(c.total)}</span></div>
         `).join('') : '<div class="empty"><span class="ic">📊</span>لا مبيعات اليوم بعد</div>'}
       </div>
 
@@ -106,7 +106,7 @@ async function renderOverview() {
         ${sales.top_stores.map((s, i) => `
           <div class="lb-row glass">
             <div class="rank">${i + 1}</div>
-            <div class="lic">${s.logo}</div>
+            <div class="lic">${esc(s.logo)}</div>
             <div class="lt"><div class="a">${esc(s.name)}</div><div class="b">عمولته: ${fmt(s.sales * s.commission_rate / 100)} د.ع</div></div>
             <div class="lv"><div class="a">${fmt(s.sales)}</div><div class="b" style="color:var(--muted)">مبيعات</div></div>
           </div>`).join('')}

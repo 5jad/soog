@@ -57,6 +57,17 @@ Widget productImage(String? image, {double size = 80, double radius = 14}) {
       );
     } catch (_) {}
   }
+  // مسارات ملفات مخدومة (/uploads) أو روابط — نفس معالجة productImageBox
+  if (image != null && (image.startsWith('/') || image.startsWith('http'))) {
+    return ClipRRect(
+      borderRadius: BorderRadius.circular(radius),
+      child: SizedBox(
+        width: size,
+        height: size,
+        child: productImageBox(image),
+      ),
+    );
+  }
   return Container(
     width: size,
     height: size,

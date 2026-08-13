@@ -37,7 +37,7 @@ class _ChatListScreenState extends State<ChatListScreen> {
     final logoOf = (c) => null;
 
     return Scaffold(
-      appBar: AppBar(title: Text('المحادثات 💬')),
+      appBar: AppBar(title: const ScreenTitle(Icons.chat_bubble_rounded, 'المحادثات')),
       body: loading
           ? const Loader()
           : conversations.isEmpty

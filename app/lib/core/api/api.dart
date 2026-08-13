@@ -77,24 +77,36 @@ class Api {
     if (auth && _token != null) 'Authorization': 'Bearer $_token',
   };
 
+  // مهلة لكل طلب — الشبكة الضعيفة ما تعلّق الشاشة على دوران للأبد
+  static const Duration _t = Duration(seconds: 12);
+
   static Future<dynamic> get(String path) async {
     debugPrint('[API] GET $path → $base$path');
     try {
-      final r = await http.get(Uri.parse('$base$path'), headers: _headers());
+      final r = await http
+          .get(Uri.parse('$base$path'), headers: _headers())
+          .timeout(_t);
       debugPrint('[API] ← ${r.statusCode} $path');
       return _handle(r);
     } catch (e) {
       debugPrint('[API] ❌ $path :: $e');
-      rethrow;
+      if (e is ApiException) rethrow;
+      throw ApiException('تعذر الاتصال بالخادم — تحقق من شبكة الإنترنت', 0);
     }
   }
 
-  static Future<dynamic> post(String path, [Map<String, dynamic>? body]) async {
-    final r = await http.post(
-      Uri.parse('$base$path'),
-      headers: _headers(),
-      body: body == null ? null : jsonEncode(body),
-    );
+  static Future<dynamic> post(
+    String path, [
+    Map<String, dynamic>? body,
+    Duration timeout = _t,
+  ]) async {
+    final r = await http
+        .post(
+          Uri.parse('$base$path'),
+          headers: _headers(),
+          body: body == null ? null : jsonEncode(body),
+        )
+        .timeout(timeout);
     return _handle(r);
   }
 
@@ -102,25 +114,31 @@ class Api {
     String path, [
     Map<String, dynamic>? body,
   ]) async {
-    final r = await http.patch(
-      Uri.parse('$base$path'),
-      headers: _headers(),
-      body: body == null ? null : jsonEncode(body),
-    );
+    final r = await http
+        .patch(
+          Uri.parse('$base$path'),
+          headers: _headers(),
+          body: body == null ? null : jsonEncode(body),
+        )
+        .timeout(_t);
     return _handle(r);
   }
 
   static Future<dynamic> put(String path, [Map<String, dynamic>? body]) async {
-    final r = await http.put(
-      Uri.parse('$base$path'),
-      headers: _headers(),
-      body: body == null ? null : jsonEncode(body),
-    );
+    final r = await http
+        .put(
+          Uri.parse('$base$path'),
+          headers: _headers(),
+          body: body == null ? null : jsonEncode(body),
+        )
+        .timeout(_t);
     return _handle(r);
   }
 
   static Future<dynamic> del(String path) async {
-    final r = await http.delete(Uri.parse('$base$path'), headers: _headers());
+    final r = await http
+        .delete(Uri.parse('$base$path'), headers: _headers())
+        .timeout(_t);
     return _handle(r);
   }
 
@@ -148,7 +166,11 @@ class Api {
       } catch (_) {}
     }
     if (files.isEmpty) return [];
-    final d = await post('/api/uploads/upload', {'files': files});
+    final d = await post(
+      '/api/uploads/upload',
+      {'files': files},
+      const Duration(seconds: 120),
+    );
     return ((d?['urls'] ?? []) as List).cast<String>();
   }
 
@@ -159,7 +181,11 @@ class Api {
         .map((b) => 'data:image/jpeg;base64,${base64Encode(b)}')
         .toList();
     if (files.isEmpty) return [];
-    final d = await post('/api/uploads/upload', {'files': files});
+    final d = await post(
+      '/api/uploads/upload',
+      {'files': files},
+      const Duration(seconds: 120),
+    );
     return ((d?['urls'] ?? []) as List).cast<String>();
   }
 

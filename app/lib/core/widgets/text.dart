@@ -27,6 +27,24 @@ class SectionTitle extends StatelessWidget {
     );
   }
 }
+
+/// عنوان شاشة بأيقونة خطية موحّدة (بدل الإيموجي) — نمط الهوية للعناوين
+class ScreenTitle extends StatelessWidget {
+  final IconData icon;
+  final String title;
+  const ScreenTitle(this.icon, this.title, {super.key});
+  @override
+  Widget build(BuildContext context) {
+    return Row(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        Icon(icon, color: AppColors.primary, size: 22),
+        const SizedBox(width: 8),
+        Text(title, style: AppType.style(15.5, weight: FontWeight.w900)),
+      ],
+    );
+  }
+}
 class SheetTitle extends StatelessWidget {
   final String title;
   const SheetTitle(this.title, {super.key});

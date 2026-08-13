@@ -12,3 +12,7 @@ GeneratedPluginRegistrant.java
 key.properties
 **/*.keystore
 **/*.jks
+
+# مخرجات البناء — لا تُرفع للنت
+/build/
+app/**/build/

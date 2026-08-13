@@ -1,3 +1,6 @@
+import java.util.Properties
+import java.io.FileInputStream
+
 plugins {
     id("com.android.application")
     // The Flutter Gradle Plugin must be applied after the Android and Kotlin Gradle plugins.
@@ -26,11 +29,24 @@ android {
         versionName = flutter.versionName
     }
 
+    // ═══ إعداد توقيع الإصدار من key.properties (مستثنى من git) ═══
+    signingConfigs {
+        create("release") {
+            val props = Properties().apply {
+                val f = rootProject.file("key.properties")
+                if (f.exists()) FileInputStream(f).use { load(it) }
+            }
+            storeFile = file("zaboon-release.jks")
+            storePassword = props.getProperty("storePassword") ?: "missing"
+            keyAlias = props.getProperty("keyAlias") ?: "missing"
+            keyPassword = props.getProperty("keyPassword") ?: "missing"
+        }
+    }
+
     buildTypes {
         release {
-            // TODO: Add your own signing config for the release build.
-            // Signing with the debug keys for now, so `flutter run --release` works.
-            signingConfig = signingConfigs.getByName("debug")
+            // ═══ توقيع release بمفتاح خاص (zaboon-release.jks) — مو debug ═══
+            signingConfig = signingConfigs.getByName("release")
         }
     }
 }

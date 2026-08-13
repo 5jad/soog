@@ -322,7 +322,7 @@ class _StoreScreenState extends State<StoreScreen> {
                     ),
                   ),
                 ),
-                // ═══════ شريط التوصيل ═══════
+                // ═══════ شريط دوام المحل ═══════
                 SliverToBoxAdapter(
                   child: Padding(
                     padding: const EdgeInsets.fromLTRB(16, 12, 16, 0),
@@ -333,28 +333,6 @@ class _StoreScreenState extends State<StoreScreen> {
                       ),
                       child: Row(
                         children: [
-                          _infoIcon(
-                            Icons.delivery_dining_rounded,
-                            'توصيل',
-                            s['delivery_fee'] != null
-                                ? formatMoney(
-                                    (s['delivery_fee'] ?? 0).toDouble(),
-                                  )
-                                : '—',
-                            AppColors.primary,
-                          ),
-                          const _vdiv(),
-                          _infoIcon(
-                            Icons.card_giftcard_rounded,
-                            'مجاني فوق',
-                            s['free_delivery_min'] != null
-                                ? formatMoney(
-                                    (s['free_delivery_min'] ?? 0).toDouble(),
-                                  )
-                                : '—',
-                            AppColors.accent,
-                          ),
-                          const _vdiv(),
                           _infoIcon(
                             Icons.storefront_rounded,
                             'العدوان',
@@ -1107,12 +1085,5 @@ class _StoreScreenState extends State<StoreScreen> {
         ],
       ),
     );
-  }
-}
-
-class _vdiv extends StatelessWidget {
-  const _vdiv();
-  @override
-  Widget build(BuildContext context) =>
-      Container(width: 1, height: 30, color: AppColors.line);
+   }
 }

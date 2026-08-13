@@ -224,7 +224,9 @@ class _PickMapScreenState extends State<PickMapScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: const Text('تحديد الموقع على الخريطة 📍')),
+      appBar: AppBar(
+        title: const ScreenTitle(Icons.my_location_rounded, 'تحديد الموقع على الخريطة'),
+      ),
       body: Stack(
         children: [
           FlutterMap(
@@ -907,7 +909,9 @@ class _CourierMapScreenState extends State<CourierMapScreen> {
           )
         : null;
     return Scaffold(
-      appBar: AppBar(title: const Text('خريطة التوصيل 🗺️')),
+      appBar: AppBar(
+        title: const ScreenTitle(Icons.delivery_dining_rounded, 'خريطة التوصيل'),
+      ),
       body: Stack(
         children: [
           FlutterMap(
@@ -1166,7 +1170,9 @@ class _RoutePreviewScreenState extends State<RoutePreviewScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: const Text('معاينة المسار 🗺️')),
+      appBar: AppBar(
+        title: const ScreenTitle(Icons.route_rounded, 'معاينة المسار'),
+      ),
       body: Stack(
         children: [
           FlutterMap(

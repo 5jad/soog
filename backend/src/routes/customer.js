@@ -94,15 +94,18 @@ r.delete('/addresses/:id', async (req, res) => {
 
 // ═══════════ الطلبات ═══════════
 r.get('/orders', async (req, res) => {
+  const limit = Math.max(1, Math.min(100, Number(req.query.limit) || 30));
+  const offset = Math.max(0, Number(req.query.offset) || 0);
+  const total = (await one(`SELECT count(*)::int AS n FROM orders WHERE user_id=$1`, [req.user.id])).n;
   const orders = await q(`SELECT o.*, s.name AS store_name, s.logo AS store_logo,
       c.name AS courier_name, u.name AS user_name
     FROM orders o
     JOIN stores s ON s.id=o.store_id
     LEFT JOIN users c ON c.id=o.courier_id
     LEFT JOIN users u ON u.id=o.user_id
-    WHERE o.user_id=$1 ORDER BY o.id DESC LIMIT 50`, [req.user.id]);
-  const items = await q(`SELECT oi.*, o.id AS order_id FROM order_items oi JOIN orders o ON o.id=oi.order_id WHERE o.user_id=$1 ORDER BY oi.id`, [req.user.id]);
-  res.json({ orders: orders.map(o => ({ ...o, items: items.filter(i => i.order_id === o.id) })) });
+    WHERE o.user_id=$1 ORDER BY o.id DESC LIMIT $2 OFFSET $3`, [req.user.id, limit, offset]);
+  const items = await q(`SELECT oi.*, o.id AS order_id FROM order_items oi JOIN orders o ON o.id=oi.order_id WHERE o.user_id=$1 AND o.id = ANY($2::int[])`, [req.user.id, orders.map(o => o.id)]);
+  res.json({ orders: orders.map(o => ({ ...o, items: items.filter(i => i.order_id === o.id) })), total });
 });
 
 r.get('/orders/:id', async (req, res) => {

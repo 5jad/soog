@@ -1716,8 +1716,33 @@ class _ProductScreenState extends State<ProductScreen> {
             ),
           ),
           const SizedBox(height: 10),
-          for (final rev in reviews.take(9))
+          for (final rev in reviews.take(3))
             _reviewCard(Map<String, dynamic>.from(rev)),
+          if (reviews.length > 3) ...[
+            const SizedBox(height: 6),
+            GlassCard(
+              onTap: _allReviewsSheet,
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  const Icon(
+                    Icons.reviews_rounded,
+                    color: AppColors.primary,
+                    size: 18,
+                  ),
+                  const SizedBox(width: 8),
+                  Text(
+                    'عرض كل التقييمات (${reviews.length})',
+                    style: AppType.style(
+                      13,
+                      color: AppColors.primary,
+                      weight: FontWeight.w900,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ],
         ],
       ],
     );
@@ -1793,6 +1818,31 @@ class _ProductScreenState extends State<ProductScreen> {
               ],
             ),
           ),
+        ],
+      ),
+    );
+  }
+
+  /// شيت بكامل التقييمات (بدل الاقتصار على 9 في صفحة المنتج)
+  Future<void> _allReviewsSheet() async {
+    final total = (store['rating'] ?? 0) as num;
+    await showSheet(
+      context,
+      Column(
+        mainAxisSize: MainAxisSize.min,
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          const SheetTitle('كل التقييمات ⭐'),
+          if (total > 0) ...[
+            const SizedBox(height: 4),
+            Text(
+              '${total.toStringAsFixed(1)} ★ من ${reviews.length} تقييم',
+              style: AppType.style(11.5, color: AppColors.muted),
+            ),
+          ],
+          const SizedBox(height: 12),
+          for (final rev in reviews)
+            _reviewCard(Map<String, dynamic>.from(rev)),
         ],
       ),
     );

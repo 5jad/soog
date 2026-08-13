@@ -26,7 +26,7 @@ async function renderGeo() {
   }).join('');
 
   const catHtml = c.categories.map(cat => `<tr>
-    <td><div class="c-main"><div class="emoji-box">${cat.icon}</div><div class="nm">${esc(cat.name)}</div></div></td>
+    <td><div class="c-main"><div class="emoji-box">${esc(cat.icon)}</div><div class="nm">${esc(cat.name)}</div></div></td>
     <td class="muted">${cat.sort}</td>
     <td><button class="btn btn-danger btn-sm" onclick="delCat(${cat.id})">حذف</button></td>
   </tr>`).join('');

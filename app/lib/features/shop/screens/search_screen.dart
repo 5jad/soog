@@ -36,6 +36,8 @@ class _SearchScreenState extends State<SearchScreen> {
   List metaSizes = [];
   List gridProducts = [];
   bool gridLoading = false;
+  bool gridLoadingMore = false;
+  int gridTotal = 0;
   bool loading = true;
 
   @override
@@ -111,11 +113,56 @@ class _SearchScreenState extends State<SearchScreen> {
     if (selSizes.isNotEmpty) qs.add('sizes=${selSizes.join(',')}');
     if (offerOnly) qs.add('offer=true');
     try {
-      final d = await Api.get('/api/products?${qs.join('&')}');
+      final d = await Api.get('/api/products?${qs.join('&')}&limit=24');
       gridProducts = d['products'] ?? [];
+      gridTotal = (d['total'] ?? gridProducts.length) as int;
     } catch (_) {
     } finally {
       if (mounted) setState(() => gridLoading = false);
+    }
+  }
+
+  /// يجلب الصفحة التالية من نتائج البحث ويضيفها للشبكة
+  Future<void> _loadGridMore() async {
+    if (gridLoadingMore || gridLoading || gridProducts.length >= gridTotal) {
+      return;
+    }
+    setState(() => gridLoadingMore = true);
+    final qs = <String>[];
+    if (selCats.isNotEmpty) {
+      qs.add('category_id=${selCats.map((c) => c['id']).join(',')}');
+    }
+    if (q.isNotEmpty) qs.add('q=$q');
+    if (sort != 'newest') qs.add('sort=$sort');
+    if (minC.text.trim().isNotEmpty) qs.add('min_price=${minC.text.trim()}');
+    if (maxC.text.trim().isNotEmpty) qs.add('max_price=${maxC.text.trim()}');
+    if (selColors.isNotEmpty) qs.add('colors=${selColors.join(',')}');
+    if (selSizes.isNotEmpty) qs.add('sizes=${selSizes.join(',')}');
+    if (offerOnly) qs.add('offer=true');
+    try {
+      final d = await Api.get(
+        '/api/products?${qs.join('&')}&limit=24&offset=${gridProducts.length}',
+      );
+      final more = d['products'] ?? [];
+      if (!mounted) return;
+      setState(() {
+        if (more.isEmpty) {
+          gridTotal = gridProducts.length;
+        } else {
+          final seen = <int>{for (final p in gridProducts) p['id'] as int};
+          gridProducts = [
+            ...gridProducts,
+            ...[
+              for (final p in more)
+                if (seen.add(p['id'] as int)) p
+            ],
+          ];
+          gridTotal = (d['total'] ?? gridProducts.length) as int;
+        }
+      });
+    } catch (_) {
+    } finally {
+      if (mounted) setState(() => gridLoadingMore = false);
     }
   }
 
@@ -984,19 +1031,66 @@ class _SearchScreenState extends State<SearchScreen> {
                   action: 'مسح الفلاتر',
                   onAction: _clearAll,
                 )
-              : GridView.count(
-                  crossAxisCount: 2,
-                  mainAxisSpacing: 0,
-                  crossAxisSpacing: 0,
-                  childAspectRatio: 0.55,
-                  children: gridProducts.map((bp) {
-                    final m = Map<String, dynamic>.from(bp as Map);
-                    return ProdCard(
-                      product: m,
-                      onOpen: () =>
-                          pushProduct(context, m['store_id'], m['id']),
-                    );
-                  }).toList(),
+              : CustomScrollView(
+                  slivers: [
+                    SliverPadding(
+                      padding: const EdgeInsets.only(bottom: 6),
+                      sliver: SliverGrid(
+                        gridDelegate:
+                            const SliverGridDelegateWithFixedCrossAxisCount(
+                          crossAxisCount: 2,
+                          mainAxisSpacing: 0,
+                          crossAxisSpacing: 0,
+                          childAspectRatio: 0.55,
+                        ),
+                        delegate: SliverChildBuilderDelegate(
+                          (context, i) {
+                            final m = Map<String, dynamic>.from(
+                              gridProducts[i] as Map,
+                            );
+                            return ProdCard(
+                              product: m,
+                              onOpen: () => pushProduct(
+                                context,
+                                m['store_id'],
+                                m['id'],
+                              ),
+                            );
+                          },
+                          childCount: gridProducts.length,
+                        ),
+                      ),
+                    ),
+                    // زر عرض المزيد — يتوفر للنصف الثاني من النتائج
+                    if (gridProducts.length < gridTotal)
+                      SliverToBoxAdapter(
+                        child: Padding(
+                          padding: const EdgeInsets.fromLTRB(16, 4, 16, 16),
+                          child: GlassCard(
+                            onTap: gridLoadingMore ? null : _loadGridMore,
+                            child: Center(
+                              child: gridLoadingMore
+                                  ? const SizedBox(
+                                      width: 20,
+                                      height: 20,
+                                      child: CircularProgressIndicator(
+                                        strokeWidth: 2.2,
+                                        color: AppColors.primary,
+                                      ),
+                                    )
+                                  : Text(
+                                      'عرض المزيد (${gridTotal - gridProducts.length} متبقي)',
+                                      style: AppType.style(
+                                        13,
+                                        color: AppColors.primary,
+                                        weight: FontWeight.w900,
+                                      ),
+                                    ),
+                            ),
+                          ),
+                        ),
+                      ),
+                  ],
                 ),
         ),
       ],

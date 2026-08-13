@@ -1,14 +1,86 @@
 import 'dart:async';
+import 'dart:convert';
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
+import 'package:http/http.dart' as http;
+import 'package:shared_preferences/shared_preferences.dart';
+import 'package:workmanager/workmanager.dart';
 import 'package:zaboon/core/api/api.dart';
 import 'package:zaboon/features/notifications/screens/notifications_screen.dart';
 
 final GlobalKey<NavigatorState> appNavigatorKey = GlobalKey<NavigatorState>();
 
-/// محرك الإشعارات — جلب دوري خفيف كل 8 ثوانٍ:
-/// يفحص عدد غير المقروء + آخر إشعار، وعند أي جديد يعرض:
-/// 1) نافذة منبثقة داخل التطبيق  2) إشعار نظام حقيقي على الهاتف
+/// مفتاح آخر إشعار تم عرضه على هذا الجهاز (يُخزن محلياً لتفادي التكرار)
+const _lastShownKey = 'zaboon_last_notif_id';
+
+const _channel = AndroidNotificationDetails(
+  'zaboon_channel',
+  'إشعارات زبون',
+  channelDescription: 'إشعارات الطلبات والتحديثات من زبون',
+  importance: Importance.max,
+  priority: Priority.high,
+  playSound: true,
+  enableVibration: true,
+);
+
+/// ═══════════ المهمة الخلفية (تشتغل حتى لو التطبيق مقفول) ═══════════
+/// تستيقظ كل 15 دقيقة، تجلب عدد الإشعارات غير المقروءة،
+/// وإذا فيه إشعار جديد يعرض إشعار نظام حقيقي على الهاتف.
+@pragma('vm:entry-point')
+void notifBackgroundDispatcher() {
+  Workmanager().executeTask((task, inputData) async {
+    WidgetsFlutterBinding.ensureInitialized();
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      final token = prefs.getString('zaboon_token');
+      var base = prefs.getString('zaboon_base') ?? '';
+      if (token == null || token.isEmpty) return true;
+      if (base.isEmpty) base = Api.cloud;
+      final r = await httpGet('$base/api/customer/notifications/count', token);
+      if (r == null) return true;
+      final latest = r['latest'];
+      if (latest is! Map || latest.isEmpty) return true;
+      final id = (latest['id'] as num?)?.toInt() ?? 0;
+      final lastShown = prefs.getInt(_lastShownKey) ?? 0;
+      if (id <= lastShown) return true;
+      await prefs.setInt(_lastShownKey, id);
+
+      final plugin = FlutterLocalNotificationsPlugin();
+      const init = InitializationSettings(
+        android: AndroidInitializationSettings('ic_notification'),
+        iOS: DarwinInitializationSettings(),
+      );
+      await plugin.initialize(init);
+      await plugin.show(
+        id,
+        '${latest['title'] ?? 'إشعار جديد'}',
+        '${latest['body'] ?? ''}',
+        const NotificationDetails(android: _channel),
+      );
+    } catch (_) {
+      // لا اتصال أو خطأ — نتجاهل بهدوء، يعيد المحاولة الجولة الجاية
+    }
+    return true;
+  });
+}
+
+Future<Map<String, dynamic>?> httpGet(String url, String token) async {
+  try {
+    final r = await http
+        .get(Uri.parse(url), headers: {'Authorization': 'Bearer $token'})
+        .timeout(const Duration(seconds: 10));
+    if (r.statusCode != 200) return null;
+    return jsonDecode(r.body) as Map<String, dynamic>?;
+  } catch (_) {
+    return null;
+  }
+}
+
+/// محرك الإشعارات:
+/// 1) جلب دوري خفيف كل 8 ثوانٍ (التطبيق مفتوح) — نافذة منبثقة + إشعار نظام
+/// 2) مهمة خلفية كل 15 دقيقة (التطبيق مقفول) — إشعار نظام حقيقي
 class NotifPusher {
   static final NotifPusher i = NotifPusher._();
   NotifPusher._();
@@ -16,17 +88,11 @@ class NotifPusher {
   final _plugin = FlutterLocalNotificationsPlugin();
   Timer? _timer;
   int _lastCount = -1;
+  int _lastShownId = 0;
   bool _permissionAsked = false;
 
-  static const _channel = AndroidNotificationDetails(
-    'zaboon_channel',
-    'إشعارات زبون',
-    channelDescription: 'إشعارات الطلبات والتحديثات من زبون',
-    importance: Importance.max,
-    priority: Priority.high,
-    playSound: true,
-    enableVibration: true,
-  );
+  static const _taskName = 'zaboonNotifSync';
+  static const _taskTag = 'zaboon-notif-sync';
 
   /// يُستدعى مرة واحدة عند إقلاع التطبيق
   Future<void> start() async {
@@ -36,6 +102,20 @@ class NotifPusher {
     );
     await _plugin.initialize(settings);
     _requestPermission();
+
+    // تسجيل المهمة الخلفية (مرة واحدة تكفي — أندرويد يخلّيها حتى بعد إغلاق التطبيق)
+    final prefs = await SharedPreferences.getInstance();
+    _lastShownId = prefs.getInt(_lastShownKey) ?? 0;
+    try {
+      await Workmanager().registerPeriodicTask(
+        _taskName,
+        _taskTag,
+        frequency: const Duration(minutes: 15),
+        constraints: Constraints(networkType: NetworkType.connected),
+        initialDelay: const Duration(minutes: 1),
+      );
+    } catch (_) {}
+
     _timer ??= Timer.periodic(const Duration(seconds: 8), (_) => _tick());
     _tick(); // فحص فوري عند الفتح
   }
@@ -61,9 +141,12 @@ class NotifPusher {
       if (first) return;
       final latest = d?['latest'];
       if (latest is Map && latest.isNotEmpty) {
-        final title = '${latest['title'] ?? 'إشعار جديد'}';
-        final body = '${latest['body'] ?? ''}';
-        _show(title, body);
+        final id = (latest['id'] as num?)?.toInt() ?? 0;
+        if (id <= _lastShownId) return;
+        _lastShownId = id;
+        final prefs = await SharedPreferences.getInstance();
+        await prefs.setInt(_lastShownKey, id);
+        _show('${latest['title'] ?? 'إشعار جديد'}', '${latest['body'] ?? ''}', id);
         AppState.i.notifReload.value++;
       }
     } catch (_) {
@@ -71,9 +154,9 @@ class NotifPusher {
     }
   }
 
-  Future<void> _show(String title, String body) async {
+  Future<void> _show(String title, String body, int id) async {
     showNotifPopup(title, body);
-    await _plugin.show(_lastCount, title, body, const NotificationDetails(android: _channel));
+    await _plugin.show(id, title, body, const NotificationDetails(android: _channel));
   }
 }
 

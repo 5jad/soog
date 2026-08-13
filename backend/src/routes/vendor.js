@@ -7,6 +7,17 @@ r.use(auth, roles('vendor'));
 
 const myStore = async (req) => one('SELECT * FROM stores WHERE owner_id=$1', [req.user.id]);
 
+// تعقيم حقول العرض النصية (شعار/غلاف/فن/صورة إعلان) — يرفض وسوم HTML وعلامات التنصيص
+const displayText = (v, max = 255) => {
+  v = String(v ?? '').trim().slice(0, max);
+  return /[<>"'`]/.test(v) ? null : v;
+};
+// تدرج ألوان CSS آمن: حروف وأرقام وألوان فقط
+const cssSafe = (v, max = 500) => {
+  v = String(v ?? '').trim().slice(0, max);
+  return /^[\w\s#%(),.\-]+$/.test(v) ? v : null;
+};
+
 // ═══════════ المحل ═══════════
 r.get('/store', async (req, res) => {
   const s = await myStore(req);
@@ -26,9 +37,13 @@ r.post('/store', async (req, res) => {
   const s = await myStore(req);
   if (s) return res.status(400).json({ error: 'عندك محل مسجل — كلش ثاني مو مسموح' });
   const gov = await one('SELECT id FROM governorates WHERE is_active ORDER BY id LIMIT 1');
+  const logo = b.logo === undefined || b.logo === '' ? '🏪' : displayText(b.logo, 255);
+  const cover = b.cover === undefined || b.cover === '' ? '' : displayText(b.cover, 2000);
+  if (logo === null) return res.status(400).json({ error: 'الشعار غير صالح — نص فقط بدون وسوم HTML' });
+  if (cover === null) return res.status(400).json({ error: 'الغلاف غير صالح — نص فقط بدون وسوم HTML' });
   const ns = (await q(`INSERT INTO stores (owner_id, governorate_id, district_id, name, category_id, logo, cover, description, address, lat, lng, location_url, phone, delivery_fee, free_delivery_min, open_time, close_time, status)
     VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15,$16,$17,'pending') RETURNING *`,
-    [req.user.id, gov.id, b.district_id || null, b.name, b.category_id || null, b.logo || '🏪', b.cover || '',
+    [req.user.id, gov.id, b.district_id || null, b.name, b.category_id || null, logo, cover,
     b.description || '', b.address || '', b.lat || null, b.lng || null, b.location_url || '', b.phone || '', b.delivery_fee || 2000, b.free_delivery_min || 50000,
     b.open_time || '9ص', b.close_time || '11ل']))[0];
   await q(`INSERT INTO wallets (store_id) VALUES ($1)`, [ns.id]);
@@ -42,7 +57,14 @@ r.patch('/store', async (req, res) => {
   const b = req.body;
   const allowed = ['name', 'logo', 'cover', 'description', 'address', 'phone', 'delivery_fee', 'free_delivery_min', 'open_time', 'close_time', 'is_open', 'category_id', 'district_id', 'lat', 'lng', 'location_url', 'on_vacation', 'warranty_days'];
   const sets = [], p = [];
-  for (const k of allowed) if (b[k] !== undefined) { p.push(b[k]); sets.push(`${k}=$${p.length}`); }
+  for (const k of allowed) if (b[k] !== undefined) {
+    if (k === 'logo' || k === 'cover') {
+      const sv = displayText(b[k], k === 'cover' ? 2000 : 255);
+      if (sv === null) return res.status(400).json({ error: k === 'logo' ? 'الشعار غير صالح — نص فقط بدون وسوم HTML' : 'الغلاف غير صالح — نص فقط بدون وسوم HTML' });
+      b[k] = sv;
+    }
+    p.push(b[k]); sets.push(`${k}=$${p.length}`);
+  }
   if (!sets.length) return res.json({ store: s });
   const ns = (await q(`UPDATE stores SET ${sets.join(', ')} WHERE id=$${p.length + 1} RETURNING *`, [...p, s.id]))[0];
   res.json({ store: ns });
@@ -62,17 +84,20 @@ r.post('/store/documents', async (req, res) => {
 // ═══════════ الطلبات ═══════════
 r.get('/orders', async (req, res) => {
   const s = await myStore(req);
-  if (!s) return res.json({ orders: [] });
+  if (!s) return res.json({ orders: [], total: 0 });
   const { status } = req.query;
+  const limit = Math.max(1, Math.min(100, Number(req.query.limit) || 50));
+  const offset = Math.max(0, Number(req.query.offset) || 0);
   const w = [`o.store_id=${s.id}`];
   const p = [];
   if (status && status !== 'all') { p.push(status); w.push(`o.status=$${p.length}`); }
+  const total = (await one(`SELECT count(*)::int AS n FROM orders o WHERE ${w.join(' AND ')}`, p)).n;
   const orders = await q(`SELECT o.*, u.name AS user_name, u.phone AS user_phone FROM orders o
-    LEFT JOIN users u ON u.id=o.user_id WHERE ${w.join(' AND ')} ORDER BY o.id DESC LIMIT 50`, p);
-  const items = await q(`SELECT oi.*, o.id AS order_id FROM order_items oi JOIN orders o ON o.id=oi.order_id WHERE o.store_id=$1`, [s.id]);
+    LEFT JOIN users u ON u.id=o.user_id WHERE ${w.join(' AND ')} ORDER BY o.id DESC LIMIT $${p.length + 1} OFFSET $${p.length + 2}`, [...p, limit, offset]);
+  const items = await q(`SELECT oi.*, o.id AS order_id FROM order_items oi JOIN orders o ON o.id=oi.order_id WHERE o.store_id=$1 AND o.id = ANY($2::int[])`, [s.id, orders.map(o => o.id)]);
   const returns = await q(`SELECT rf.*, o.code, o.total, u.name AS user_name FROM refund_requests rf
     JOIN orders o ON o.id=rf.order_id JOIN users u ON u.id=o.user_id WHERE o.store_id=$1 ORDER BY rf.id DESC`, [s.id]);
-  res.json({ orders: orders.map(o => ({ ...o, items: items.filter(i => i.order_id === o.id) })), refunds: returns });
+  res.json({ orders: orders.map(o => ({ ...o, items: items.filter(i => i.order_id === o.id) })), refunds: returns, total });
 });
 
 r.get('/orders/:id', async (req, res) => {
@@ -157,19 +182,30 @@ r.post('/products', async (req, res) => {
   const s = await myStore(req);
   if (!s) return res.status(404).json({ error: 'سجل محلك أول' });
   const b = req.body;
-  if (!b.name || !b.price) return res.status(400).json({ error: 'الاسم والسعر مطلوبين' });
-  const images = Array.isArray(b.images) ? b.images.filter((x) => typeof x === 'string' && x.trim()).slice(0, 8) : [];
-  const image = b.image || images[0] || '📦';
+  if (!b.name || !String(b.name).trim()) return res.status(400).json({ error: 'اكتب اسم المنتج' });
+  // الأرقام العربية (٠-٩ / ۰-۹) → لاتينية، والكسور تُقرّب لأقرب دينار
+  const norm = (v) => String(v ?? '').replace(/[٠-٩۰-۹]/g, (d) => '٠١٢٣٤٥٦٧٨٩۰۱۲۳۴۵۶۷۸۹'.indexOf(d) % 10).replace(/,/g, '.');
+  const price = Math.round(Number(norm(b.price)));
+  if (!isFinite(price) || price <= 0) return res.status(400).json({ error: 'اكتب سعر صحيح (أرقام فقط)' });
+  const stock = Math.round(Number(norm(b.stock))) || 0;
+  if (stock < 0) return res.status(400).json({ error: 'الكمية ما تكدر تكون سالبة' });
+  const images = Array.isArray(b.images) ? b.images.filter((x) => typeof x === 'string' && x.trim() && x.startsWith('/uploads/')).slice(0, 8) : [];
+  // إن أرسل المتجر base64 خام مو عبر مسار الرفع — نرفض قبل التخزين (لا نتآمن بسورس العميل)
+  const rawImage = typeof b.image === 'string' && b.image.trim().startsWith('data:');
+  const rawImages = Array.isArray(b.images) && b.images.some((x) => typeof x === 'string' && x.trim().startsWith('data:'));
+  if (rawImage || rawImages) return res.status(400).json({ error: 'الصور لازم تُرفع عبر مسار الرفع أولاً (/api/uploads/upload)' });
+  const image = (typeof b.image === 'string' && b.image.trim().startsWith('/uploads/')) ? b.image : (images[0] || '📦');
   const p = (await q(`INSERT INTO products (store_id, category_id, name, description, price, old_price, image, images, attributes, stock)
     VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10) RETURNING *`,
-    [s.id, b.category_id || null, b.name, b.description || '', b.price, b.old_price || null, image, images, b.attributes || {}, b.stock ?? 0]))[0];
+    [s.id, b.category_id || null, String(b.name).trim(), b.description || '', price, b.old_price || null, image, images, b.attributes || {}, stock]))[0];
   if (Array.isArray(b.variants))
     for (const v of b.variants)
       await q(`INSERT INTO product_variants (product_id, vgroup, color, name, stock) VALUES ($1,$2,$3,$4,$5)`,
-        [p.id, v.vgroup || 'قياس', v.color || '', v.name || 'قياسي', v.stock || 0]);
+        [p.id, v.vgroup || 'قياس', v.color || '', v.name || 'قياسي', Math.round(Number(norm(v.stock))) || 0]);
   // عرض فوري عند الإضافة
-  if (b.offer_price && Number(b.offer_price) > 0 && Number(b.offer_price) < Number(p.price)) {
-    const percent = Math.max(1, Math.min(95, Math.round((1 - Number(b.offer_price) / Number(p.price)) * 100)));
+  const ofp = Number(norm(b.offer_price));
+  if (isFinite(ofp) && ofp > 0 && ofp < price) {
+    const percent = Math.max(1, Math.min(95, Math.round((1 - ofp / price) * 100)));
     await q(`INSERT INTO offers (product_id, percent, active) VALUES ($1,$2,true)
       ON CONFLICT (product_id) DO UPDATE SET percent=EXCLUDED.percent, active=true`, [p.id, percent]);
   }
@@ -182,11 +218,28 @@ r.patch('/products/:id', async (req, res) => {
   const p = await one('SELECT * FROM products WHERE id=$1 AND store_id=$2', [req.params.id, s.id]);
   if (!p) return res.status(404).json({ error: 'المنتج غير موجود' });
   const b = req.body;
+  const norm = (v) => String(v ?? '').replace(/[٠-٩۰-۹]/g, (d) => '٠١٢٣٤٥٦٧٨٩۰۱۲۳۴۵۶۷۸۹'.indexOf(d) % 10).replace(/,/g, '.');
+  if (b.price !== undefined) {
+    const px = Math.round(Number(norm(b.price)));
+    if (!isFinite(px) || px <= 0) return res.status(400).json({ error: 'اكتب سعر صحيح (أرقام فقط)' });
+    b.price = px;
+  }
+  if (b.stock !== undefined) b.stock = Math.round(Number(norm(b.stock))) || 0;
   const allowed = ['name', 'description', 'price', 'old_price', 'image', 'images', 'is_available', 'category_id', 'attributes', 'stock'];
   const sets = [], pp = [];
   for (const k of allowed)
     if (b[k] !== undefined) {
-      pp.push(k === 'images' ? (Array.isArray(b.images) ? b.images.filter((x) => typeof x === 'string' && x.trim()).slice(0, 8) : b.images) : b[k]);
+      // رفض base64 خام يمر خارج مسار الرفع — المتاجر ترفع أولاً عبر /api/uploads/upload
+      if (k === 'images' || k === 'image') {
+        const v = k === 'images' ? b.images : [b.image];
+        if (Array.isArray(v) && v.some((x) => typeof x === 'string' && x.trim().startsWith('data:')))
+          return res.status(400).json({ error: 'الصور لازم تُرفع عبر مسار الرفع أولاً (/api/uploads/upload)' });
+      }
+      pp.push(k === 'images'
+        ? (Array.isArray(b.images) ? b.images.filter((x) => typeof x === 'string' && x.trim() && x.startsWith('/uploads/')).slice(0, 8) : b.images)
+        : k === 'image'
+          ? (typeof b.image === 'string' && b.image.trim().startsWith('/uploads/') ? b.image : (b.image === undefined ? undefined : '📦'))
+          : b[k]);
       sets.push(`${k}=$${pp.length}`);
     }
   if (sets.length) await q(`UPDATE products SET ${sets.join(', ')} WHERE id=$1`, [...pp, p.id]);
@@ -279,23 +332,38 @@ r.get('/ads', async (req, res) => {
 r.post('/ads', async (req, res) => {
   const s = await myStore(req);
   if (!s) return res.status(404).json({ error: 'سجل محلك أول' });
-  const { title, art = '🖼', gradient = '', image = '', package_id } = req.body;
-  if (!title || !package_id) return res.status(400).json({ error: 'العنوان والباقة مطلوبين' });
-
+  const { title, art = '🖼', gradient = '', image = '', package_id, product_id, note = '' } = req.body;
+  const artSafe = displayText(art, 255);
+  const gradSafe = cssSafe(gradient);
+  const imgSafe = displayText(image, 2000);
+  const noteSafe = String(note || '').slice(0, 500);
+  if (artSafe === null) return res.status(400).json({ error: 'فن الإعلان غير صالح — نص فقط بدون وسوم HTML' });
+  if (gradSafe === null) return res.status(400).json({ error: 'تدرج الألوان غير صالح' });
+  if (imgSafe === null) return res.status(400).json({ error: 'صورة الإعلان غير صالحة' });
+  const t = (title || '').toString().trim();
+  if (!t) return res.status(400).json({ error: 'نص الإعلان مطلوب' });
+  if (t.length > 60) return res.status(400).json({ error: 'نص الإعلان أكثر من 60 حرف — خصره لحد 60' });
+  if (!package_id) return res.status(400).json({ error: 'اختر باقة الإعلان' });
+  if (product_id) {
+    const p = await one('SELECT id FROM products WHERE id=$1 AND store_id=$2', [product_id, s.id]);
+    if (!p) return res.status(400).json({ error: 'المنتج المختار ما يخص محلك' });
+  }
   const pkg = await one('SELECT * FROM ad_packages WHERE id=$1 AND active=true', [package_id]);
   if (!pkg) return res.status(404).json({ error: 'الباقة غير متاحة' });
 
   let ad;
   await tx(async (c) => {
-    ad = (await c.query(`INSERT INTO ad_requests (store_id, title, art, image, duration_days, price, gradient, status, starts_at, ends_at, sort) 
-      VALUES ($1,$2,$3,$4,$5,$6,$7,'active',now(),now()+interval '1 day' * $5, COALESCE((SELECT max(sort) FROM ad_requests WHERE status='active'),0)+1) RETURNING *`,
-      [s.id, title, art, image, pkg.days, pkg.price, gradient])).rows[0];
+    // طلب بانتظار موافقة الأدمن — الرصيد يُحجز فوراً ويُرجع لو انرفض
+    ad = (await c.query(`INSERT INTO ad_requests (store_id, title, art, image, duration_days, price, gradient, status, sort, starts_at, ends_at, note, product_id)
+      VALUES ($1,$2,$3,$4,$5,$6,$7,'pending',0,NULL,NULL,$8,$9) RETURNING *`,
+      [s.id, t, artSafe, imgSafe, pkg.days, pkg.price, gradSafe, noteSafe, product_id || null])).rows[0];
 
     await c.query(`UPDATE wallets SET available=available-$1, updated_at=now() WHERE store_id=$2`, [pkg.price, s.id]);
-    await c.query(`INSERT INTO wallet_transactions (store_id, type, amount, note) VALUES ($1,'ad',$2,$3)`, [s.id, -pkg.price, `ترويج منتج: ${title}`]);
+    await c.query(`INSERT INTO wallet_transactions (store_id, type, amount, note) VALUES ($1,'ad',$2,$3)`, [s.id, -pkg.price, `حجز إعلان (بانتظار الموافقة): ${t}`]);
   });
 
-  await q(`INSERT INTO notifications (role, type, title, body, data) VALUES ('admin','ad','إعلان تفعل فوراً 🖼',$1, jsonb_build_object('ad_id',$2::int))`, [`${title} — ${pkg.days} أيام — ${pkg.price.toLocaleString()} د.ع`, ad.id]);
+  await q(`INSERT INTO notifications (role, type, title, body, data) VALUES ('admin','ad','طلب إعلان جديد بانتظارك 🖼',$1, jsonb_build_object('ad_id',$2::int))`,
+    [`${t} — ${pkg.days} أيام — ${pkg.price.toLocaleString()} د.ع`, ad.id]);
   res.status(201).json({ ad });
 });
 

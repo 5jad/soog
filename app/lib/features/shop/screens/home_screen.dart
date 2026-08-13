@@ -115,6 +115,15 @@ class HomeScreenState extends State<HomeScreen> {
                         ads: ads,
                         stores: stores,
                         onOpen: (a) {
+                          final pid = a['product_id'];
+                          if (pid != null) {
+                            pushProduct(
+                              context,
+                              (a['store_id'] as num?)?.toInt() ?? 0,
+                              (pid as num).toInt(),
+                            );
+                            return;
+                          }
                           final sid = a['store_id'];
                           if (sid != null) widget.onGoStore(sid);
                         },

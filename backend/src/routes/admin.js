@@ -408,7 +408,7 @@ r.patch('/documents/:id', async (req, res) => {
 r.get('/ads', async (req, res) => {
   const dAds = await demoCond('ads');
   res.json({
-    ads: await q(`SELECT a.*, s.name AS store_name FROM ad_requests a JOIN stores s ON s.id=a.store_id ${dAds ? `WHERE ${dAds.replaceAll('o.','a.')}` : ''} ORDER BY a.status='pending' DESC, a.id`),
+    ads: await q(`SELECT a.*, s.name AS store_name, p.name AS product_name FROM ad_requests a JOIN stores s ON s.id=a.store_id LEFT JOIN products p ON p.id=a.product_id ${dAds ? `WHERE ${dAds.replaceAll('o.','a.')}` : ''} ORDER BY a.status='pending' DESC, a.id`),
   });
 });
 
@@ -421,10 +421,19 @@ r.patch('/ads/:id', async (req, res) => {
     if (status === 'active') {
       await q(`UPDATE ad_requests SET status='active', starts_at=now(), ends_at=now()+duration_days*interval '1 day', sort=COALESCE((SELECT max(sort) FROM ad_requests WHERE status='active'),0)+1 WHERE id=$1`, [a.id]);
       await q(`INSERT INTO notifications (user_id, type, title, body) VALUES ($1,'ad','إعلانك انقبل ✓','يعرض بالواجهة الرئيسية الآن')`, [a.store_id ? (await one('SELECT owner_id FROM stores WHERE id=$1', [a.store_id])).owner_id : null]);
+    } else if (status === 'rejected') {
+      // استرجاع الرصيد المحجوز + إبلاغ التاجر بالسبب
+      await tx(async (c) => {
+        await c.query(`UPDATE ad_requests SET status='rejected' WHERE id=$1`, [a.id]);
+        await c.query(`UPDATE wallets SET available=available+$1, updated_at=now() WHERE store_id=$2`, [a.price, a.store_id]);
+        await c.query(`INSERT INTO wallet_transactions (store_id, type, amount, note) VALUES ($1,'ad_refund',$2,$3)`, [a.store_id, a.price, `استرجاع إعلان مرفوض: ${a.title}`]);
+      });
+      const owner = await one('SELECT owner_id FROM stores WHERE id=$1', [a.store_id]);
+      const reason = (req.body.reason || '').toString().trim();
+      await q(`UPDATE ad_requests SET reject_reason=$1 WHERE id=$2`, [reason, a.id]);
+      await q(`INSERT INTO notifications (user_id, type, title, body) VALUES ($1,'ad','إعلانك مرفوض ✗',$2)`, [owner?.owner_id, reason ? `السبب: ${reason}` : 'راجع السبب من لوحة المحل']);
     } else {
       await q(`UPDATE ad_requests SET status=$1 WHERE id=$2`, [status, a.id]);
-      if (status === 'rejected')
-        await q(`INSERT INTO notifications (user_id, type, title, body) VALUES ($1,'ad','إعلانك مرفوض ✗','')`, [(await one('SELECT owner_id FROM stores WHERE id=$1', [a.store_id])).owner_id]);
     }
   }
   if (sort !== undefined) {
@@ -440,16 +449,22 @@ r.patch('/ads/:id', async (req, res) => {
 r.post('/ads/:id/decision', async (req, res) => {
   const a = await one('SELECT * FROM ad_requests WHERE id=$1', [req.params.id]);
   if (!a) return res.status(404).json({ error: 'الإعلان غير موجود' });
-  const { action } = req.body;
+  const { action, reason } = req.body;
   const status = action === 'approve' ? 'active' : 'rejected';
   if (status === 'active') {
     await q(`UPDATE ad_requests SET status='active', starts_at=now(), ends_at=now()+duration_days*interval '1 day' WHERE id=$1`, [a.id]);
     const owner = await one('SELECT owner_id FROM stores WHERE id=$1', [a.store_id]);
     await q(`INSERT INTO notifications (user_id, type, title, body) VALUES ($1,'ad','إعلانك انقبل ✓','يعرض بالواجهة الرئيسية الآن')`, [owner?.owner_id]);
   } else {
-    await q(`UPDATE ad_requests SET status='rejected' WHERE id=$1`, [a.id]);
+    await tx(async (c) => {
+      await c.query(`UPDATE ad_requests SET status='rejected' WHERE id=$1`, [a.id]);
+      await c.query(`UPDATE wallets SET available=available+$1, updated_at=now() WHERE store_id=$2`, [a.price, a.store_id]);
+      await c.query(`INSERT INTO wallet_transactions (store_id, type, amount, note) VALUES ($1,'ad_refund',$2,$3)`, [a.store_id, a.price, `استرجاع إعلان مرفوض: ${a.title}`]);
+    });
     const owner = await one('SELECT owner_id FROM stores WHERE id=$1', [a.store_id]);
-    await q(`INSERT INTO notifications (user_id, type, title, body) VALUES ($1,'ad','إعلانك مرفوض ✗','')`, [owner?.owner_id]);
+    const why = (reason || '').toString().trim();
+    await q(`UPDATE ad_requests SET reject_reason=$1 WHERE id=$2`, [why, a.id]);
+    await q(`INSERT INTO notifications (user_id, type, title, body) VALUES ($1,'ad','إعلانك مرفوض ✗',$2)`, [owner?.owner_id, why ? `السبب: ${why}` : 'راجع السبب من لوحة المحل']);
   }
   await audit(req.user.id, 'ad_decision', 'ad_request', a.id, { status: a.status }, { status });
   res.json({ ok: true });

@@ -1,30 +1,33 @@
 import { Router } from 'express';
-import sharp from 'sharp';
 import { auth, roles } from '../middleware.js';
+import { storeImage } from '../image-store.js';
 
 const r = Router();
 
+// ── أمان: rate-limit بسيط (30 طلب/دقيقة لكل IP) ──
+const hits = new Map();
+r.use((req, res, next) => {
+  const ip = req.ip || req.socket.remoteAddress || 'x';
+  const now = Date.now();
+  const arr = (hits.get(ip) || []).filter((t) => now - t < 60_000);
+  if (arr.length >= 30) return res.status(429).json({ error: 'كثرة رفع الصور — حاول بعد دقيقة' });
+  arr.push(now);
+  if (hits.size > 10_000) hits.clear();
+  hits.set(ip, arr);
+  next();
+});
+
 // رفع صور المنتجات/المتاجر:
-// تُضغط بالخادم (أقصى 640px + جودة 74%) وتُرجع data-URI يُحفظ داخل قاعدة البيانات
-// هكذا الصورة تدوم على السحابة (Vercel/Neon) ولا تعتمد على قرص مؤقت أو حاسوب
+// تُضغط بالخادم (أقصى 640px + جودة 74%) وتُحفظ كملف مخدوم في public/uploads
+// وتُرجع المسار `/uploads/xxx.jpg` — وبدل data-URI في قاعدة البيانات هكذا لا يتضخم الجدول.
+// على بيئات مؤقتة القرصي (serverless) ترجع fallback بسورس base64.
 r.post('/upload', auth, roles('vendor'), async (req, res) => {
   const files = Array.isArray(req.body?.files) ? req.body.files : [];
   if (!files.length) return res.status(400).json({ error: 'ماكو صورة مرفوعة' });
   const urls = [];
   for (const f of files.slice(0, 8)) {
-    if (typeof f !== 'string' || f.length < 100) continue;
-    const m = f.match(/^data:image\/(png|jpe?g|webp);base64,(.+)$/is);
-    const b64 = m ? m[2] : f;
-    const raw = Buffer.from(b64, 'base64');
-    if (!raw.length) continue;
-    try {
-      const info = await sharp(raw).rotate().metadata();
-      const maxDim = Math.max(info.width || 0, info.height || 0);
-      let img = sharp(raw).rotate();
-      if (maxDim > 640) img = img.resize({ width: 640, height: 640, fit: 'inside', withoutEnlargement: true });
-      const out = await img.jpeg({ quality: 74 }).toBuffer();
-      urls.push(`data:image/jpeg;base64,${out.toString('base64')}`);
-    } catch (_) { /* صورة تالفة — نتخطاها */ }
+    const url = await storeImage(f);
+    if (url) urls.push(url);
   }
   if (!urls.length) return res.status(400).json({ error: 'الصور غير صالحة — جرّب غيرها' });
   res.json({ urls });

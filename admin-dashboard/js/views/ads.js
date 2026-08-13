@@ -12,8 +12,13 @@ async function renderAds() {
       <div class="card-title"><span>🖼 طلبات بانتظار موافقتك</span><span class="more">${pending.length}</span></div>
       ${pending.length ? pending.map(a => `
         <div class="list-item glass">
-          <div class="lic">${a.art}</div>
-          <div class="lt"><div class="a">${esc(a.store_name)} — ${esc(a.title)}</div><div class="b">المدة: ${a.duration_days} يوم • السعر: ${moneySpan(a.price)} • انرسل ${timeAgo(a.created_at)}</div></div>
+          <div class="lic">${esc(a.art)}</div>
+          <div class="lt">
+            <div class="a">${esc(a.store_name)} — ${esc(a.title)}</div>
+            <div class="b">المدة: ${a.duration_days} يوم • السعر: ${moneySpan(a.price)} • انرسل ${timeAgo(a.created_at)}</div>
+            ${a.product_name ? `<div class="b">📦 المنتج: ${esc(a.product_name)}</div>` : ''}
+            ${a.note ? `<div class="b muted">📝 ملاحظة التاجر: ${esc(a.note)}</div>` : ''}
+          </div>
           <div class="actions">
             <button class="btn btn-success btn-sm" onclick="adDecision(${a.id},'active')">موافقة ✓</button>
             <button class="btn btn-danger btn-sm" onclick="adDecision(${a.id},'rejected')">رفض ✗</button>
@@ -27,7 +32,7 @@ async function renderAds() {
         <tr><th>الترتيب</th><th>المحل</th><th>العنوان</th><th>المدة</th><th>المبلغ</th><th>انتهاء</th><th>إجراءات</th></tr>
         ${active.map((a, i) => `<tr>
           <td><span class="nm">#${i + 1}</span></td>
-          <td><div class="c-main"><div class="emoji-box">${a.art}</div><div class="nm">${esc(a.store_name)}</div></div></td>
+          <td><div class="c-main"><div class="emoji-box">${esc(a.art)}</div><div class="nm">${esc(a.store_name)}</div></div></td>
           <td>${esc(a.title)}</td>
           <td>${a.duration_days} يوم</td>
           <td>${moneySpan(a.price)}</td>
@@ -44,8 +49,12 @@ async function renderAds() {
       <div class="card-title"><span>السجل</span></div>
       ${rest.length ? rest.map(a => `
         <div class="list-item glass" style="opacity:.75">
-          <div class="lic">${a.art}</div>
-          <div class="lt"><div class="a">${esc(a.store_name)} — ${esc(a.title)}</div><div class="b">${moneySpan(a.price)} • ${a.duration_days} يوم</div></div>
+          <div class="lic">${esc(a.art)}</div>
+          <div class="lt">
+            <div class="a">${esc(a.store_name)} — ${esc(a.title)}</div>
+            <div class="b">${moneySpan(a.price)} • ${a.duration_days} يوم</div>
+            ${a.status === 'rejected' ? `<div class="b">↩️ الرصيد استرجع للتاجر${a.reject_reason ? ` — السبب: ${esc(a.reject_reason)}` : ''}</div>` : ''}
+          </div>
           ${statusChip(a.status)}
         </div>`).join('') : '<div class="empty" style="padding:14px">لا سجل</div>'}
     </div>`;
@@ -53,8 +62,13 @@ async function renderAds() {
 
 async function adDecision(id, status) {
   await guard(async () => {
-    await API.patch(`/api/admin/ads/${id}`, { status });
-    toast(status === 'active' ? 'موافقة ✓ — صار يعرض بالرئيسية' : 'تم');
+    const body = { status };
+    if (status === 'rejected') {
+      const reason = prompt('سبب الرفض (يوصله التاجر مع استرجاع الرصيد):') || '';
+      body.reason = reason;
+    }
+    await API.patch(`/api/admin/ads/${id}`, body);
+    toast(status === 'active' ? 'موافقة ✓ — صار يعرض بالرئيسية' : 'مرفوض — رجع الرصيد للتاجر');
     renderAds();
   });
 }

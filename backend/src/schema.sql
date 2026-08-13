@@ -371,10 +371,13 @@ CREATE TABLE ad_requests (
   gradient TEXT DEFAULT 'linear-gradient(120deg,#1E3A8A,#06B6D4)',
   duration_days INTEGER DEFAULT 7,
   price INTEGER DEFAULT 25000,
-  status TEXT DEFAULT 'active' CHECK (status IN ('pending','active','rejected','expired')),
+  status TEXT DEFAULT 'pending' CHECK (status IN ('pending','active','rejected','expired')),
   sort INTEGER DEFAULT 0,
-  starts_at TIMESTAMPTZ DEFAULT now(),
+  starts_at TIMESTAMPTZ,
   ends_at TIMESTAMPTZ,
+  note TEXT DEFAULT '',
+  reject_reason TEXT DEFAULT '',
+  product_id INTEGER REFERENCES products(id) ON DELETE SET NULL,
   created_at TIMESTAMPTZ DEFAULT now()
 );
 
@@ -390,7 +393,7 @@ CREATE TABLE wallets (
 CREATE TABLE wallet_transactions (
   id SERIAL PRIMARY KEY,
   store_id INTEGER NOT NULL REFERENCES stores(id) ON DELETE CASCADE,
-  type TEXT CHECK (type IN ('sale','commission','withdraw','ad','refund','adjust')),
+  type TEXT CHECK (type IN ('sale','commission','withdraw','ad','ad_refund','refund','adjust')),
   amount INTEGER NOT NULL,
   note TEXT DEFAULT '',
   ref TEXT DEFAULT '',

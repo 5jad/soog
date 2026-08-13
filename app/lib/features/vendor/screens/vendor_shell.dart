@@ -24,7 +24,7 @@ class _VendorShellState extends State<VendorShell> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: const Text('واجهة التاجر 🏪'),
+        title: const ScreenTitle(Icons.storefront_rounded, 'واجهة التاجر'),
         actions: [
           IconButton(
             onPressed: widget.onExit,
@@ -79,7 +79,13 @@ class _ProductsTabState extends State<_ProductsTab> {
       final d = await Api.get('/api/vendor/store');
       store = d['store'];
       products = (d['store']['products'] ?? d['products'] ?? []) as List;
-    } catch (_) {
+    } catch (e) {
+      if (mounted)
+        toast(
+          context,
+          e is ApiException ? e.message : 'تعذر تحميل منتجاتك',
+          error: true,
+        );
     } finally {
       if (mounted) setState(() => loading = false);
     }
@@ -239,7 +245,7 @@ class _ProductsTabState extends State<_ProductsTab> {
                                     final cropped = await cropImage(
                                       context,
                                       bytes,
-                                      aspect: 1,
+                                      aspect: 3 / 4,
                                       title: 'قصّ صورة المنتج ✂️',
                                     );
                                     if (cropped != null) out.add(cropped);
@@ -506,7 +512,24 @@ class _ProductsTabState extends State<_ProductsTab> {
                     SolidBtn(
                       label: 'حفظ',
                       onTap: () async {
-                        if (name.text.isEmpty) return;
+                        if (name.text.trim().isEmpty) {
+                          toast(context, 'اكتب اسم المنتج', error: true);
+                          return;
+                        }
+                        // الأرقام العربية (٠-٩ / ۰-۹) تنعدّ أرقاماً عادية
+                        String norm(String s) => s
+                            .replaceAllMapped(
+                              RegExp('[٠-٩۰-۹]'),
+                              (m) =>
+                                  '${'٠١٢٣٤٥٦٧٨٩۰۱۲۳۴۵۶۷۸۹'.indexOf(m.group(0)!) % 10}',
+                            )
+                            .replaceAll(',', '.');
+                        final pv = double.tryParse(norm(price.text));
+                        if (pv == null || pv <= 0) {
+                          toast(context, 'اكتب سعر صحيح (أرقام فقط)', error: true);
+                          return;
+                        }
+                        final ov = double.tryParse(norm(offer.text));
                         final attributes = <String, String>{};
                         if (catId != null) {
                           // بلا المقاس/اللون (صاروا متغيرات منتج)
@@ -531,16 +554,16 @@ class _ProductsTabState extends State<_ProductsTab> {
                         }
                         try {
                           final body = <String, dynamic>{
-                            'name': name.text,
-                            'price': double.tryParse(price.text) ?? 0,
-                            'stock': int.tryParse(stock.text) ?? 1,
+                            'name': name.text.trim(),
+                            'price': pv ?? 0,
+                            'stock': int.tryParse(norm(stock.text)) ?? 1,
                             'description': desc.text,
                             'category_id': catId,
                             'attributes': attributes,
                             if (imgs.isNotEmpty) 'images': imgs,
-                            'has_offer': offer.text.isNotEmpty,
-                            if (offer.text.isNotEmpty)
-                              'offer_price': double.tryParse(offer.text) ?? 0,
+                            'has_offer': offer.text.trim().isNotEmpty,
+                            if (offer.text.trim().isNotEmpty)
+                              'offer_price': ov ?? 0,
                             if (vrows.isNotEmpty)
                               'variants': [
                                 for (final row in vrows)
@@ -810,6 +833,7 @@ class _WalletTab extends StatefulWidget {
 class _WalletTabState extends State<_WalletTab> {
   dynamic w;
   List tx = [];
+  List ads = [];
   int weekNet = 0;
   bool loading = true;
 
@@ -830,6 +854,8 @@ class _WalletTabState extends State<_WalletTab> {
       if (widget.role == 'vendor') {
         final ws = await Api.get('/api/vendor/week-earnings');
         weekNet = ((ws['net_due'] ?? 0) as num).toInt();
+        final adr = await Api.get('/api/vendor/ads');
+        ads = (adr['ads'] ?? []) as List;
       }
     } catch (_) {
     } finally {
@@ -896,6 +922,13 @@ class _WalletTabState extends State<_WalletTab> {
     final title = TextEditingController();
     int? selectedPkg = packages.first['id'];
     Uint8List? adImageBytes;
+    List products = [];
+    try {
+      final pr = await Api.get('/api/vendor/products');
+      products = (pr['products'] ?? []) as List;
+    } catch (_) {}
+    int? selectedProduct;
+    final note = TextEditingController();
 
     if (!mounted) return;
     await showSheet(
@@ -912,8 +945,46 @@ class _WalletTabState extends State<_WalletTab> {
                 children: [
                   TextField(
                     controller: title,
+                    maxLength: 60,
                     decoration: const InputDecoration(
                       labelText: 'نص الإعلان (مثال: خصم 50%)',
+                      counterText: '',
+                    ),
+                  ),
+                  const SizedBox(height: 14),
+                  DropdownButtonFormField<int?>(
+                    value: selectedProduct,
+                    isExpanded: true,
+                    decoration: const InputDecoration(
+                      labelText: 'المنتج المروَّج (اختياري)',
+                    ),
+                    items: [
+                      const DropdownMenuItem<int?>(
+                        value: null,
+                        child: Text('بدون منتج محدد'),
+                      ),
+                      ...products.map(
+                        (p) => DropdownMenuItem<int?>(
+                          value: (p['id'] as num).toInt(),
+                          child: Text(
+                            '${p['name']} — ${formatMoney(p['price'])}',
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                          ),
+                        ),
+                      ),
+                    ],
+                    onChanged: (v) => setS(() => selectedProduct = v),
+                  ),
+                  const SizedBox(height: 14),
+                  TextField(
+                    controller: note,
+                    maxLength: 120,
+                    maxLines: 2,
+                    decoration: const InputDecoration(
+                      labelText: 'ملاحظة للأدمن (اختياري)',
+                      hintText: 'مثال: يريد الإعلان قبل العيد',
+                      counterText: '',
                     ),
                   ),
                   const SizedBox(height: 14),
@@ -1009,9 +1080,9 @@ class _WalletTabState extends State<_WalletTab> {
                   ),
                   const SizedBox(height: 14),
                   SolidBtn(
-                    label: 'ترويج الآن 🚀',
+                    label: 'أرسل الطلب 🚀',
                     onTap: () async {
-                      if (title.text.isEmpty) return;
+                      if (title.text.trim().isEmpty) return;
                       try {
                         var imageUrl = '';
                         if (adImageBytes != null) {
@@ -1022,9 +1093,15 @@ class _WalletTabState extends State<_WalletTab> {
                           'title': title.text,
                           'package_id': selectedPkg,
                           if (imageUrl.isNotEmpty) 'image': imageUrl,
+                          if (selectedProduct != null)
+                            'product_id': selectedProduct,
+                          'note': note.text,
                         });
                         if (!mounted) return;
-                        toast(context, 'تم تفعيل الإعلان بنجاح ✓');
+                        toast(
+                          context,
+                          'انرسل طلب الإعلان — ينتظر موافقة الأدمن ⏳',
+                        );
                         Navigator.pop(context);
                         _load();
                       } on ApiException catch (e) {
@@ -1203,6 +1280,57 @@ class _WalletTabState extends State<_WalletTab> {
               ),
               const SizedBox(height: 8),
             ],
+          if (widget.role == 'vendor') ...[
+            const SizedBox(height: 14),
+            Text('طلبات إعلاناتي', style: AppType.style(14, weight: FontWeight.w900)),
+            const SizedBox(height: 8),
+            if (ads.isEmpty)
+              const EmptyState(icon: '📣', title: 'لا إعلانات بعد — ضغط زر إعلان بالأعلى')
+            else
+              for (final a in ads) ...[
+                GlassCard(
+                  padding: const EdgeInsets.all(12),
+                  child: Row(
+                    children: [
+                      Text(
+                        a['art'] ?? '🖼',
+                        style: AppType.style(22),
+                      ),
+                      const SizedBox(width: 12),
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(
+                              a['title'] ?? '',
+                              style: AppType.style(13, weight: FontWeight.w900),
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis,
+                            ),
+                            const SizedBox(height: 2),
+                            Text(
+                              '${a['duration_days']} أيام • ${formatMoney(a['price'])}',
+                              style: AppType.style(11, color: AppColors.muted),
+                            ),
+                            if ((a['reject_reason'] ?? '') != '')
+                              Text(
+                                'سبب الرفض: ${a['reject_reason']}',
+                                style: AppType.style(
+                                  11,
+                                  color: AppColors.danger,
+                                  weight: FontWeight.w700,
+                                ),
+                              ),
+                          ],
+                        ),
+                      ),
+                      StatusChip(a['status'] ?? 'pending'),
+                    ],
+                  ),
+                ),
+                const SizedBox(height: 8),
+              ],
+          ],
         ],
       ),
     );
@@ -1213,7 +1341,7 @@ class _WalletTabState extends State<_WalletTab> {
     final ok = await showDialog<bool>(
       context: context,
       builder: (_) => AlertDialog(
-        title: const Text('تقرير الكاش اليومي 💵'),
+        title: const ScreenTitle(Icons.payments_rounded, 'تقرير الكاش اليومي'),
         content: TextField(
           controller: amt,
           keyboardType: TextInputType.number,

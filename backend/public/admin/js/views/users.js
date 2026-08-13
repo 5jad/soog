@@ -15,7 +15,7 @@ async function renderUsers() {
       ${d.users.length ? `<div class="table-wrap"><table class="tbl">
         <tr><th>المستخدم</th><th>الدور</th><th>الرقم</th><th>التاريخ</th><th>الحالة</th><th>إجراءات</th></tr>
         ${d.users.map(u => `<tr>
-          <td><div class="c-main"><div class="emoji-box">${u.avatar}</div><div class="nm">${esc(u.name) || 'بدون اسم'}</div></div></td>
+          <td><div class="c-main"><div class="emoji-box">${esc(u.avatar)}</div><div class="nm">${esc(u.name) || 'بدون اسم'}</div></div></td>
           <td>${({ customer: '🛍 زبون', vendor: '🏪 تاجر', delivery: '🛵 مندوب', admin: '👑 أدمن' })[u.role]}</td>
           <td class="muted" dir="ltr">${esc(u.phone)}</td>
           <td class="muted">${new Date(u.created_at).toLocaleDateString('ar-IQ')}</td>

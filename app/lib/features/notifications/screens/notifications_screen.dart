@@ -73,7 +73,7 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
     return Scaffold(
       backgroundColor: AppColors.bg,
       appBar: AppBar(
-        title: const Text('الإشعارات 🔔'),
+        title: const ScreenTitle(Icons.notifications_rounded, 'الإشعارات'),
         actions: const [SizedBox(width: 10)],
       ),
       body: loading

@@ -32,7 +32,7 @@ async function renderCash() {
           <th>إجراء</th>
         </tr>
         ${weekData.map(s => `<tr>
-          <td><div class="c-main"><div class="emoji-box">${s.logo}</div><div class="nm">${esc(s.name)}</div></div></td>
+          <td><div class="c-main"><div class="emoji-box">${esc(s.logo)}</div><div class="nm">${esc(s.name)}</div></div></td>
           <td class="muted">${s.order_count} طلب</td>
           <td>${moneySpan(s.gross)}</td>
           <td><span style="background:var(--glass-l2);padding:3px 8px;border-radius:8px;font-weight:800">${s.commission_rate}%</span></td>

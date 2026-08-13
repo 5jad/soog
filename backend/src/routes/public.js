@@ -79,7 +79,7 @@ r.get('/stores/:id', async (req, res) => {
 
 // ── المنتجات ──
 r.get('/products', async (req, res) => {
-  const { store_id, category_id, q: query, offer, sort, min_price, max_price, colors, sizes, limit } = req.query;
+  const { store_id, category_id, q: query, offer, sort, min_price, max_price, colors, sizes, limit, offset } = req.query;
   const w = [];
   const p = [];
   if (store_id) { p.push(store_id); w.push(`p.store_id=$${p.length}`); }
@@ -118,21 +118,27 @@ r.get('/products', async (req, res) => {
     : sort === 'best' || req.query.best === 'true' ? 'ORDER BY s.rating_avg DESC, p.id DESC'
     : 'ORDER BY p.id DESC';
   const rowLimit = Math.max(1, Math.min(100, Number(limit) || 100));
+  const rowOffset = Math.max(0, Number(offset) || 0);
+  // عدّاد إجمالي لنفس الفلتر — يدعم pagination (load-more) في التطبيق
+  const totalRow = await one(`SELECT count(*)::int AS n FROM products p
+    JOIN stores s ON s.id=p.store_id AND s.status='approved'
+    LEFT JOIN offers pr ON pr.product_id=p.id
+    WHERE ${w.join(' AND ') || 'true'}`, p);
   const sql = `SELECT p.*, s.id AS store_id, s.name AS store_name, s.logo AS store_logo, s.delivery_fee,
       pr.percent AS offer_percent, pr.active AS offer_active,
       (pr.active AND pr.percent>0) AS has_offer, ROUND(${eff}) AS offer_price
     FROM products p
     JOIN stores s ON s.id=p.store_id AND s.status='approved'
     LEFT JOIN offers pr ON pr.product_id=p.id
-    WHERE ${w.join(' AND ') || 'true'} ${orderBy} LIMIT $${p.length + 1}`;
-  p.push(rowLimit);
+    WHERE ${w.join(' AND ') || 'true'} ${orderBy} LIMIT $${p.length + 1} OFFSET $${p.length + 2}`;
+  p.push(rowLimit, rowOffset);
   const products = await q(sql, p);
   const ids = products.map((x) => x.id);
   if (ids.length) {
     const vars = await q(`SELECT v.* FROM product_variants v WHERE v.product_id = ANY($1::int[]) ORDER BY v.id`, [ids]);
     for (const prod of products) prod.variants = vars.filter((v) => v.product_id === prod.id);
   }
-  res.json({ products });
+  res.json({ products, total: totalRow.n });
 });
 
 // ── ألوان ومقاسات متوفرة للفلترة (شي إن/إيباي) ──

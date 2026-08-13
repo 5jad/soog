@@ -28,6 +28,9 @@ class OrderListScreen extends StatefulWidget {
 class _OrderListScreenState extends State<OrderListScreen> {
   List orders = [];
   bool loading = true;
+  bool loadingMore = false;
+  bool expanded = false;
+  int total = 0;
   String filter = 'all';
   Timer? _t;
 
@@ -50,8 +53,9 @@ class _OrderListScreenState extends State<OrderListScreen> {
     super.initState();
     _load();
     // تحديث تلقائي كل 10 ثواني — الحالة تتغير بدون ما تحدث يدوياً
+    // (عند توسيع القائمة بـ "عرض المزيد" يتوقف التلقائي حتى لا يعيدها لأول صفحة)
     _t = Timer.periodic(const Duration(seconds: 10), (_) {
-      if (mounted) _load();
+      if (mounted && !expanded) _load();
     });
   }
 
@@ -84,8 +88,10 @@ class _OrderListScreenState extends State<OrderListScreen> {
         final ep = widget.role == 'customer'
             ? '/api/customer/orders'
             : '/api/vendor/orders';
-        final d = await Api.get(ep);
+        // جلب أول 30 فقط (pagination) — والمتبقي عبر "عرض المزيد"
+        final d = await Api.get(expanded ? '$ep?limit=30&offset=0' : ep);
         orders = (d['orders'] ?? []) as List;
+        total = (d['total'] ?? orders.length) as int;
       }
       if (widget.initialCode != null && mounted) {
         final o = orders.where((x) => x['code'] == widget.initialCode).toList();
@@ -94,6 +100,39 @@ class _OrderListScreenState extends State<OrderListScreen> {
     } catch (_) {
     } finally {
       if (mounted) setState(() => loading = false);
+    }
+  }
+
+  /// يجلب الصفحة التالية ويضيفها للقائمة (load-more بدون إعادة تحميل الكل)
+  Future<void> _loadMore() async {
+    if (loadingMore || loading || orders.length >= total) return;
+    setState(() => loadingMore = true);
+    try {
+      final ep = widget.role == 'customer'
+          ? '/api/customer/orders'
+          : '/api/vendor/orders';
+      final d = await Api.get('$ep?limit=30&offset=${orders.length}');
+      final more = (d['orders'] ?? []) as List;
+      if (!mounted) return;
+      setState(() {
+        if (more.isEmpty) {
+          total = orders.length;
+        } else {
+          expanded = true;
+          final seen = <int>{for (final o in orders) (o['id'] as num).toInt()};
+          orders = [
+            ...orders,
+            ...[
+              for (final o in more)
+                if (seen.add((o['id'] as num).toInt())) o
+            ],
+          ];
+          total = (d['total'] ?? total) as int;
+        }
+      });
+    } catch (_) {
+    } finally {
+      if (mounted) setState(() => loadingMore = false);
     }
   }
 
@@ -133,15 +172,43 @@ class _OrderListScreenState extends State<OrderListScreen> {
         lottie: widget.role == 'vendor' ? null : 'empty_state',
       );
     } else {
+      final hasMore = orders.length < total;
       body = RefreshIndicator(
         onRefresh: _load,
         color: AppColors.primary,
         child: ListView.separated(
           padding: const EdgeInsets.fromLTRB(16, 6, 16, 24),
-          itemCount: list.length,
+          itemCount: list.length + (hasMore ? 1 : 0),
           separatorBuilder: (_, __) => const SizedBox(height: 10),
-          itemBuilder: (_, i) =>
-              _orderCard(Map<String, dynamic>.from(list[i] as Map)),
+          itemBuilder: (_, i) {
+            if (i < list.length)
+              return _orderCard(Map<String, dynamic>.from(list[i] as Map));
+            return Padding(
+              padding: const EdgeInsets.symmetric(vertical: 6),
+              child: GlassCard(
+                onTap: loadingMore ? null : _loadMore,
+                child: Center(
+                  child: loadingMore
+                      ? const SizedBox(
+                          width: 20,
+                          height: 20,
+                          child: CircularProgressIndicator(
+                            strokeWidth: 2.2,
+                            color: AppColors.primary,
+                          ),
+                        )
+                      : Text(
+                          'عرض المزيد (${total - list.length} متبقي)',
+                          style: AppType.style(
+                            13,
+                            color: AppColors.primary,
+                            weight: FontWeight.w900,
+                          ),
+                        ),
+                ),
+              ),
+            );
+          },
         ),
       );
     }
@@ -149,7 +216,7 @@ class _OrderListScreenState extends State<OrderListScreen> {
     if (widget.embedded) return body;
 
     return Scaffold(
-      appBar: AppBar(title: const Text('طلباتي 📦')),
+      appBar: AppBar(title: const ScreenTitle(Icons.receipt_long_rounded, 'طلباتي')),
       body: Column(
         children: [
           if (widget.role == 'customer') _filterBar(),
@@ -261,6 +328,28 @@ class _OrderListScreenState extends State<OrderListScreen> {
                   ),
                 ),
                 const Spacer(),
+                if (order.status == 'delivered' &&
+                    ((o['points_earned'] ?? 0) as num) > 0) ...[
+                  Container(
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 9,
+                      vertical: 4,
+                    ),
+                    decoration: BoxDecoration(
+                      color: AppColors.warning.withValues(alpha: .12),
+                      borderRadius: BorderRadius.circular(999),
+                    ),
+                    child: Text(
+                      '+${o['points_earned']} نقاط ⭐',
+                      style: AppType.style(
+                        10.5,
+                        color: AppColors.warning,
+                        weight: FontWeight.w900,
+                      ),
+                    ),
+                  ),
+                  const SizedBox(width: 8),
+                ],
                 StatusChip(order.status),
               ],
             ),
@@ -741,6 +830,26 @@ class _OrderDetailScreenState extends State<OrderDetailScreen> {
               ),
             const SizedBox(height: 10),
             if (status == 'delivered') ...[
+              if ((o['points_earned'] ?? 0) as num > 0)
+                GlassCard(
+                  child: Row(
+                    children: [
+                      const Icon(
+                        Icons.star_rounded,
+                        color: AppColors.warning,
+                        size: 20,
+                      ),
+                      const SizedBox(width: 10),
+                      Expanded(
+                        child: Text(
+                          'ربحت +${o['points_earned']} نقطة ولاء من هذا الطلب ⭐',
+                          style: AppType.style(12.5, weight: FontWeight.w800),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              if ((o['points_earned'] ?? 0) as num > 0) const SizedBox(height: 10),
               if (o['refund'] != null)
                 _RefundChip(
                   refund: Map<String, dynamic>.from(o['refund'] as Map),

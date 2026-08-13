@@ -87,7 +87,7 @@ class _DeliveryShellState extends State<DeliveryShell> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: const Text('مندوب توصيل 🛵'),
+        title: const ScreenTitle(Icons.delivery_dining_rounded, 'مندوب توصيل'),
         actions: [
           GestureDetector(
             onTap: toggleOnline,
@@ -1092,7 +1092,7 @@ class _WalletTabState extends State<_WalletTab> {
     final ok = await showDialog<bool>(
       context: context,
       builder: (_) => AlertDialog(
-        title: const Text('تقرير الكاش اليومي 💵'),
+        title: const ScreenTitle(Icons.payments_rounded, 'تقرير الكاش اليومي'),
         content: TextField(
           controller: amt,
           keyboardType: TextInputType.number,

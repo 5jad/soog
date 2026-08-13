@@ -91,7 +91,9 @@ r.get('/orders/:id/trip', async (req, res) => {
 r.post('/location', async (req, res) => {
   const { lat, lng } = req.body;
   if (!lat || isNaN(+lat) || !lng || isNaN(+lng)) return res.status(400).json({ error: 'إحداثيات ناقصة' });
-  await q(`UPDATE delivery_trips SET lat=$1, lng=$2, location_updated_at=now() WHERE id=$3`, [+lat, +lng, req.body.trip_id]);
+  const t = await one(`SELECT id FROM delivery_trips WHERE id=$1 AND courier_id=$2 AND delivered_at IS NULL`, [req.body.trip_id, req.user.id]);
+  if (!t) return res.status(403).json({ error: 'الرحلة غير موجودة' });
+  await q(`UPDATE delivery_trips SET lat=$1, lng=$2, location_updated_at=now() WHERE id=$3 AND courier_id=$4`, [+lat, +lng, req.body.trip_id, req.user.id]);
   await q(`INSERT INTO delivery_track_log (trip_id, lat, lng) VALUES ($1,$2,$3)`, [req.body.trip_id, +lat, +lng]);
   res.json({ ok: true });
 });
@@ -105,19 +107,21 @@ r.post('/pickup', async (req, res) => {
 });
 
 r.post('/delivered', async (req, res) => {
-  const t = await one(`SELECT t.*, o.user_id, o.store_id, o.total FROM delivery_trips t JOIN orders o ON o.id=t.order_id WHERE t.id=$1 AND t.courier_id=$2`,
+  const t = await one(`SELECT t.*, o.user_id, o.store_id, o.total FROM delivery_trips t JOIN orders o ON o.id=t.order_id WHERE t.id=$1 AND t.courier_id=$2 AND t.delivered_at IS NULL`,
     [req.body.trip_id, req.user.id]);
   if (!t) return res.status(404).json({ error: 'الرحلة غير موجودة' });
   const ids = (await q('SELECT order_id FROM trip_orders WHERE trip_id=$1', [t.id])).map(r => r.order_id);
   if (!ids.includes(t.order_id)) ids.push(t.order_id);
   const orders = await q(`SELECT * FROM orders WHERE id = ANY($1::int[])`, [ids]);
+  const claim = await q(`UPDATE delivery_trips SET delivered_at=now() WHERE id=$1 AND delivered_at IS NULL RETURNING id`, [t.id]);
+  if (!claim.length) return res.status(409).json({ error: 'الرحلة مسلّمة مسبقاً' });
   await tx(async (c) => {
-    await c.query(`UPDATE delivery_trips SET delivered_at=now() WHERE id=$1`, [t.id]);
     for (const ord of orders) {
-      await c.query(`UPDATE orders SET status='delivered', updated_at=now() WHERE id=$1`, [ord.id]);
-      await c.query(`INSERT INTO order_status_history (order_id, from_status, to_status, by_role) VALUES ($1,'delivering','delivered','delivery')`, [ord.id]);
-      // نقاط الولاء للزبون: 1 نقطة لكل 1000 د.ع من قيمة الطلب
+      if (ord.status === 'delivered') continue;
+      // نقاط الولاء للزبون: 1 نقطة لكل 1000 د.ع من قيمة الطلب (يُحسب قبل التحديث ليُسجل بالطلب)
       const earn = Math.floor(ord.total / 1000);
+      await c.query(`UPDATE orders SET status='delivered', updated_at=now(), points_earned=$2 WHERE id=$1`, [ord.id, earn]);
+      await c.query(`INSERT INTO order_status_history (order_id, from_status, to_status, by_role) VALUES ($1,'delivering','delivered','delivery')`, [ord.id]);
       if (earn > 0) {
         await c.query(`UPDATE users SET points = points + $1 WHERE id=$2`, [earn, t.user_id]);
         await c.query(`INSERT INTO point_transactions (user_id, points, type, note, ref) VALUES ($1,$2,'earn','نقاط من الطلب ✅',$3)`, [t.user_id, earn, ord.id]);

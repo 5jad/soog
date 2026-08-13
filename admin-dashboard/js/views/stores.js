@@ -30,7 +30,7 @@ async function renderStores() {
       ${d.stores.length ? `<div class="table-wrap"><table class="tbl">
         <tr><th>المحل</th><th>المالك</th><th>القسم</th><th>التقييم</th><th>عمولة</th><th>توصيل</th><th>الحالة</th><th>إجراءات</th></tr>
         ${d.stores.map(s => `<tr>
-          <td><div class="c-main"><div class="emoji-box">${s.logo}</div><div><div class="nm">${esc(s.name)}</div><div class="sb">${s.verified ? '✓ موثق' : 'غير موثق'} • ${esc(s.district_name || '')}</div></div></div></td>
+          <td><div class="c-main"><div class="emoji-box">${esc(s.logo)}</div><div><div class="nm">${esc(s.name)}</div><div class="sb">${s.verified ? '✓ موثق' : 'غير موثق'} • ${esc(s.district_name || '')}</div></div></div></td>
           <td><div class="nm" style="font-size:11.5px">${esc(s.owner_name || 'بدون مالك')}</div><div class="sb" dir="ltr">${esc(s.owner_phone || '')}</div></td>
           <td class="muted">${esc(s.category_name || '-')}</td>
           <td>⭐ ${s.rating_avg} <span class="muted" style="font-size:10px">(${s.rating_count})</span></td>
@@ -69,7 +69,7 @@ async function storeModal(id) {
   if (!s) return;
   const d = await API.get('/api/stores/' + id);
   openModal(`
-    <div class="mt"><span>${s.logo} ${esc(s.name)}</span><span class="x" onclick="closeModal()">✕</span></div>
+    <div class="mt"><span>${esc(s.logo)} ${esc(s.name)}</span><span class="x" onclick="closeModal()">✕</span></div>
     <div class="mrow"><span>الحالة</span>${statusChip(s.status)}</div>
     <div class="mrow"><span>التوثيق</span><span>${s.verified ? '✓ موثق' : 'غير موثق'}</span></div>
     <div class="mrow"><span>العمولة</span><span>${s.commission_rate}%</span></div>

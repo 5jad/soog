@@ -192,7 +192,7 @@ class _NavItemState extends State<_NavItem> {
                         ),
                         alignment: Alignment.center,
                         child: Text(
-                          widget.badge > 99 ? '99+' : '$widget.badge',
+                          widget.badge > 99 ? '99+' : '${widget.badge}',
                           style: const TextStyle(
                             color: Colors.white,
                             fontSize: 9,

@@ -175,17 +175,9 @@ class Api {
     return (d is Map ? d['status']?.toString() : 'expired') ?? 'expired';
   }
 
-  /// بدء التسجيل الجديد: بلا رقم مكتوب إطلاقاً — الحساب يتثبت بزر مشاركة الرقم داخل تلغرام
-  static Future<Map<String, dynamic>> registerStart({
-    required String name,
-    required String password,
-    String referral = '',
-  }) async {
-    final d = await post('/api/auth/register-start', {
-      'name': name,
-      'password': password,
-      if (referral.trim().isNotEmpty) 'referral': referral.trim(),
-    });
+  /// بدء التسجيل: رقم مكتوب → جلسة تحقق؛ الرقم المسجل مسبقاً يوجّه للدخول بلا OTP
+  static Future<Map<String, dynamic>> registerStart(String phone) async {
+    final d = await post('/api/auth/register-start', {'phone': phone});
     return (d ?? {}) as Map<String, dynamic>;
   }
 
@@ -195,9 +187,24 @@ class Api {
     return (d is Map ? d['status']?.toString() : 'expired') ?? 'expired';
   }
 
-  /// إتمام التسجيل بعد تأكيد تلغرام → توك + حساب مفعّل
-  static Future<Map<String, dynamic>> registerConfirm(String token) async {
-    final d = await post('/api/auth/register-confirm', {'token': token});
+  /// التثبت من رمز البوت بعد مطابقة الرقم
+  static Future<void> registerCode(String token, String code) async {
+    await post('/api/auth/register-code', {'token': token, 'code': code});
+  }
+
+  /// إتمام التسجيل: رمز مؤكد + الاسم وكلمة المرور → توك + حساب مفعّل
+  static Future<Map<String, dynamic>> registerConfirm({
+    required String token,
+    required String name,
+    required String password,
+    String referral = '',
+  }) async {
+    final d = await post('/api/auth/register-confirm', {
+      'token': token,
+      'name': name,
+      'password': password,
+      if (referral.trim().isNotEmpty) 'referral': referral.trim(),
+    });
     return (d ?? {}) as Map<String, dynamic>;
   }
 }

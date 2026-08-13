@@ -1,19 +1,22 @@
+import 'dart:async';
 import 'dart:ui' as ui;
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:url_launcher/url_launcher.dart';
 import 'package:zaboon/core/api/api.dart';
 import 'package:zaboon/core/theme/zaboon_design_system.dart';
 import 'package:zaboon/core/widgets/widgets.dart';
 import 'package:zaboon/core/routing/shell.dart';
-import 'package:zaboon/features/auth/screens/phone_verify_screen.dart';
 
 enum AuthMode { login, register }
 
 /// صفحة الدخول/التسجيل — كارد صلب فوق كحلي الهوية (بلا زجاج: قرار حرج).
 /// فاصل تبويبي واضح، حقول بسماكة 48، عداد إعادة إرسال، وأدوات التطوير
 /// مخفية خلف صفارة حتى لا تلوّث الانطباع الأول.
+/// [onGuest] يفعّل زر «تصفح بدون حساب» — يمرره الـ Shell فقط.
 class LoginScreen extends StatefulWidget {
-  const LoginScreen({super.key});
+  final VoidCallback? onGuest;
+  const LoginScreen({super.key, this.onGuest});
   @override
   State<LoginScreen> createState() => _LoginScreenState();
 }
@@ -26,52 +29,179 @@ class _LoginScreenState extends State<LoginScreen> {
   final phone = TextEditingController();
   final password = TextEditingController();
   final name = TextEditingController();
+  final code = TextEditingController();
   final referral = TextEditingController();
 
   bool obscurePass = true;
 
+  // ── مراحل التسجيل: 0=رقم → 1=رمز (بعد موافقة البوت) → 2=بيانات ──
+  int regStage = 0;
+  String? regToken;
+  String? regBot;
+  bool regCodeReady = false; // البوت طابق الرقم ودز الرمز
+  Timer? _regPoll;
+
   @override
   void dispose() {
+    _regPoll?.cancel();
     phone.dispose();
     password.dispose();
     name.dispose();
+    code.dispose();
     referral.dispose();
     super.dispose();
   }
 
-  String get _modeLabel => mode == AuthMode.login ? 'تسجيل الدخول' : 'سجّل برقم تلغرامك 📲';
+  String get _modeLabel => mode == AuthMode.login
+      ? 'تسجيل الدخول'
+      : (regStage == 0
+          ? 'التأكيد عبر تلغرام'
+          : (regStage == 1 ? 'تأكيد الرمز' : 'إنشاء الحساب'));
 
   Future<void> submit() async {
     if (mode == AuthMode.login) {
-      final p = phone.text.trim();
-      if (p.length < 10) return toast(context, 'أدخل رقم هاتف صحيح', error: true);
-      setState(() => loading = true);
-    } else {
-      if (name.text.trim().length < 3) return toast(context, 'أدخل اسمك الكامل', error: true);
-      if (password.text.length < 6) return toast(context, 'كلمة المرور 6 أحرف كحد أدنى', error: true);
+      _login();
+      return;
     }
+    if (regStage == 0) return _regStart();
+    if (regStage == 1) return _regSubmitCode();
+    if (regStage == 2) return _regSubmitDetails();
+  }
 
+  // ── الدخول: رقم + كلمة مرور — بلا OTP أبداً ──
+  Future<void> _login() async {
+    final p = phone.text.trim();
+    if (p.length < 10) return toast(context, 'أدخل رقم هاتف صحيح', error: true);
+    setState(() => loading = true);
     try {
-      if (mode == AuthMode.login) {
-        if (password.text.isEmpty) throw ApiException('أدخل كلمة المرور', 400);
-        final d = await Api.post('/api/auth/login', {
-          'phone': phone.text.trim(),
-          'password': password.text,
-        });
-        await _onSuccess(d);
-      } else {
-        // التسجيل الجديد: بلا رقم مكتوب — الحساب يتثبت بزر المشاركة داخل تلغرام
-        await Navigator.of(context).push(MaterialPageRoute(
-          builder: (_) => PhoneVerifyScreen.register(
-            register: RegisterInfo(
-              name: name.text.trim(),
-              password: password.text,
-              referral: referral.text.trim(),
-            ),
-            onVerified: _onSuccess,
-          ),
-        ));
+      if (password.text.isEmpty) throw ApiException('أدخل كلمة المرور', 400);
+      final d = await Api.post('/api/auth/login', {
+        'phone': p,
+        'password': password.text,
+      });
+      await _onSuccess(d);
+    } on ApiException catch (e) {
+      if (!mounted) return;
+      toast(context, e.message, error: true);
+    } catch (_) {
+      if (!mounted) return;
+      toast(context, 'تعذر الاتصال بالخادم', error: true);
+    } finally {
+      if (mounted) setState(() => loading = false);
+    }
+  }
+
+  // ── المرحلة 0: رقم → جلسة تحقق + فتح البوت ──
+  Future<void> _regStart() async {
+    final p = phone.text.trim();
+    if (p.length < 10) return toast(context, 'أدخل رقم هاتف صحيح', error: true);
+    setState(() => loading = true);
+    try {
+      final d = await Api.registerStart(p);
+      regToken = d['token'];
+      regBot = d['bot_username'] ?? 'soog_otp_bot';
+      regCodeReady = false;
+      setState(() => regStage = 1);
+      _openRegTelegram();
+      _startRegPoll();
+    } on ApiException catch (e) {
+      if (!mounted) return;
+      toast(context, e.message, error: true);
+      // الرقم عليه حساب → سجل دخول مباشرة (بلا OTP)
+      if (e.message.contains('سجّل دخول')) setState(() => mode = AuthMode.login);
+    } catch (_) {
+      if (!mounted) return;
+      toast(context, 'تعذر الاتصال بالخادم', error: true);
+    } finally {
+      if (mounted) setState(() => loading = false);
+    }
+  }
+
+  void _startRegPoll() {
+    _regPoll?.cancel();
+    _regPoll = Timer.periodic(const Duration(milliseconds: 2500), (_) async {
+      final t = regToken;
+      if (t == null || !mounted) {
+        _regPoll?.cancel();
+        return;
       }
+      try {
+        final s = await Api.registerStatus(t);
+        if (!mounted) return;
+        if (s == 'verified' && !regCodeReady) {
+          setState(() => regCodeReady = true); // البوت دز الرمز — يكتبه بالحقل
+        } else if (s == 'mismatch') {
+          _resetReg();
+          toast(context, 'الرقم اللي شاركته بالتلي غير الرقم اللي كتبته — جرب مرة ثانية', error: true);
+        } else if (s == 'expired') {
+          _resetReg();
+          toast(context, 'انتهت مهلة التحقق — جرب من جديد', error: true);
+        }
+      } catch (_) {}
+    });
+  }
+
+  void _resetReg() {
+    _regPoll?.cancel();
+    regToken = null;
+    regCodeReady = false;
+    code.clear();
+    setState(() => regStage = 0);
+  }
+
+  Future<void> _openRegTelegram() async {
+    final bot = regBot ?? 'soog_otp_bot';
+    final t = regToken;
+    if (t == null) return;
+    final ok = await launchUrl(
+      Uri.parse('https://t.me/$bot?start=$t'),
+      mode: LaunchMode.externalApplication,
+    );
+    if (!ok && mounted) {
+      toast(context, 'افتح تلغرام واكتب $bot واضغط Start', error: true);
+    }
+  }
+
+  // ── المرحلة 1: رمز البوت ──
+  Future<void> _regSubmitCode() async {
+    final t = regToken;
+    final c = code.text.trim();
+    if (t == null) return _resetReg();
+    if (c.length < 4) return toast(context, 'اكتب الرمز اللي وصلك بالمحادثة', error: true);
+    setState(() => loading = true);
+    try {
+      await Api.registerCode(t, c);
+      if (mounted) {
+        _regPoll?.cancel();
+        setState(() => regStage = 2);
+      }
+    } on ApiException catch (e) {
+      if (!mounted) return;
+      toast(context, e.message, error: true);
+      if (e.message.contains('انتهت')) _resetReg();
+    } catch (_) {
+      if (!mounted) return;
+      toast(context, 'تعذر الاتصال بالخادم', error: true);
+    } finally {
+      if (mounted) setState(() => loading = false);
+    }
+  }
+
+  // ── المرحلة 2: الاسم + كلمة المرور → إنشاء الحساب ──
+  Future<void> _regSubmitDetails() async {
+    final t = regToken;
+    if (t == null) return _resetReg();
+    if (name.text.trim().length < 3) return toast(context, 'أدخل اسمك الكامل', error: true);
+    if (password.text.length < 6) return toast(context, 'كلمة المرور 6 أحرف كحد أدنى', error: true);
+    setState(() => loading = true);
+    try {
+      final d = await Api.registerConfirm(
+        token: t,
+        name: name.text.trim(),
+        password: password.text,
+        referral: referral.text.trim(),
+      );
+      await _onSuccess(d);
     } on ApiException catch (e) {
       if (!mounted) return;
       toast(context, e.message, error: true);
@@ -124,6 +254,19 @@ class _LoginScreenState extends State<LoginScreen> {
                       _buildHeader(),
                       const SizedBox(height: 28),
                       _buildCard(),
+                      // الضيف: تصفح كامل بلا حساب — الدخول يطلب عند الدفع/المفضلة
+                      if (widget.onGuest != null)
+                        TextButton.icon(
+                          onPressed: widget.onGuest,
+                          icon: const Icon(Icons.visibility_outlined,
+                              color: Colors.white70, size: 18),
+                          label: Text(
+                            'تصفح بدون حساب',
+                            style: AppType.style(12.5,
+                                color: Colors.white70,
+                                weight: FontWeight.w700),
+                          ),
+                        ),
                       const SizedBox(height: 16),
                       _buildFooter(),
                     ],
@@ -258,7 +401,10 @@ class _LoginScreenState extends State<LoginScreen> {
         shadowColor: AppColors.primary.withValues(alpha: 0.25),
         child: InkWell(
           borderRadius: BorderRadius.circular(10),
-          onTap: () => setState(() => mode = m),
+          onTap: () {
+            setState(() => mode = m);
+            _resetReg(); // تبديل التبويب ينهي أي جلسة تسجيل معلقة
+          },
           child: SizedBox(
             height: 40,
             child: Center(
@@ -293,52 +439,119 @@ class _LoginScreenState extends State<LoginScreen> {
         ),
       ];
 
-  List<Widget> _registerFields() => [
-        _Field(
-          controller: name,
-          hint: 'الاسم الكامل',
-          icon: Icons.person_outline,
-          textInputAction: TextInputAction.next,
-        ),
-        const SizedBox(height: 12),
-        _Field(
-          controller: password,
-          hint: 'كلمة المرور (6 أحرف أو أكثر)',
-          icon: Icons.lock_outline,
-          isPassword: true,
-          obscure: obscurePass,
-          onToggleObscure: () => setState(() => obscurePass = !obscurePass),
-        ),
-        const SizedBox(height: 12),
-        _Field(
-          controller: referral,
-          hint: 'كود الدعوة (اختياري) 🎁',
-          icon: Icons.card_giftcard,
-        ),
-        const SizedBox(height: 12),
-        // رقم الحساب = رقم تلغرامك — لا يُكتب إطلاقاً
-        Container(
-          padding: const EdgeInsets.all(12),
-          decoration: BoxDecoration(
-            color: AppColors.bg,
-            borderRadius: BorderRadius.circular(14),
-            border: Border.all(color: AppColors.line),
+  List<Widget> _registerFields() {
+    switch (regStage) {
+      case 1: // رمز البوت (بعد المطابقة)
+        return [
+          _Field(
+            controller: code,
+            hint: 'رمز التحقق ●●●●',
+            icon: Icons.message_outlined,
+            isNumber: true,
+            maxLen: 6,
+            textInputAction: TextInputAction.done,
           ),
-          child: Row(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              const Icon(Icons.telegram, size: 18, color: AppColors.info),
-              const SizedBox(width: 8),
-              Expanded(
-                child: Text(
-                  'رقم حسابك سيُؤخذ من تلغرامك بضغطة زر داخل البوت — بلا كتابة ولا مشاركة',
-                  style: AppType.style(12, color: AppColors.muted, weight: FontWeight.w600),
-                ),
+          const SizedBox(height: 12),
+          // شريط الحالة: بانتظار البوت ← أو الرمز انوصل
+          Container(
+            padding: const EdgeInsets.all(12),
+            decoration: BoxDecoration(
+              color: regCodeReady ? AppColors.surface : AppColors.bg,
+              borderRadius: BorderRadius.circular(14),
+              border: Border.all(
+                color: regCodeReady ? AppColors.success : AppColors.line,
               ),
-            ],
+            ),
+            child: Row(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                if (regCodeReady)
+                  const Icon(Icons.check_circle, size: 18, color: AppColors.success)
+                else
+                  const SizedBox(
+                    width: 16,
+                    height: 16,
+                    child: CircularProgressIndicator(strokeWidth: 2),
+                  ),
+                const SizedBox(width: 8),
+                Expanded(
+                  child: Text(
+                    regCodeReady
+                        ? 'الرمز وصلك داخل المحادثة بالبوت — اكتبه أعلاه'
+                        : 'افتح تلغرام واضغط «مشاركة رقم هاتفي» — البوت يطابق رقمك ويرسل الرمز',
+                    style: AppType.style(12, color: AppColors.muted, weight: FontWeight.w600),
+                  ),
+                ),
+              ],
+            ),
           ),
-        ),
-      ];
+          const SizedBox(height: 8),
+          // إعادة فتح تلغرام إن رجع الزبون للتطبيق
+          TextButton.icon(
+            onPressed: _openRegTelegram,
+            icon: const Icon(Icons.telegram, size: 16, color: AppColors.info),
+            label: Text('فتح تلغرام 🔗',
+                style: AppType.style(12, color: AppColors.primary, weight: FontWeight.w700)),
+          ),
+        ];
+      case 2: // الاسم + كلمة المرور
+        return [
+          _Field(
+            controller: name,
+            hint: 'الاسم الكامل',
+            icon: Icons.person_outline,
+            textInputAction: TextInputAction.next,
+          ),
+          const SizedBox(height: 12),
+          _Field(
+            controller: password,
+            hint: 'كلمة المرور (6 أحرف أو أكثر)',
+            icon: Icons.lock_outline,
+            isPassword: true,
+            obscure: obscurePass,
+            onToggleObscure: () => setState(() => obscurePass = !obscurePass),
+          ),
+          const SizedBox(height: 12),
+          _Field(
+            controller: referral,
+            hint: 'كود الدعوة (اختياري) 🎁',
+            icon: Icons.card_giftcard,
+          ),
+        ];
+      default: // المرحلة 0 — الرقم فقط
+        return [
+          _Field(
+            controller: phone,
+            hint: 'رقم الهاتف',
+            icon: Icons.phone_android,
+            isPhone: true,
+          ),
+          const SizedBox(height: 12),
+          // التحقق للحساب الجديد فقط — المسجل يوجّه للدخول تلقائياً
+          Container(
+            padding: const EdgeInsets.all(12),
+            decoration: BoxDecoration(
+              color: AppColors.bg,
+              borderRadius: BorderRadius.circular(14),
+              border: Border.all(color: AppColors.line),
+            ),
+            child: Row(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                const Icon(Icons.telegram, size: 18, color: AppColors.info),
+                const SizedBox(width: 8),
+                Expanded(
+                  child: Text(
+                    'راح نتأكد رقمك عبر تلغرام: البوت يطابق الرقم ويرسل لك رمز — وإذا الرقم مسجل يرجّعك للدخول مباشرة',
+                    style: AppType.style(12, color: AppColors.muted, weight: FontWeight.w600),
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ];
+    }
+  }
 
   Widget _buildFooter() {
     return Column(children: [
@@ -371,7 +584,9 @@ class _Field extends StatelessWidget {
   final IconData icon;
   final bool isPhone;
   final bool isPassword;
+  final bool isNumber;
   final bool obscure;
+  final int? maxLen;
   final VoidCallback? onToggleObscure;
   final TextInputAction? textInputAction;
 
@@ -381,7 +596,9 @@ class _Field extends StatelessWidget {
     required this.icon,
     this.isPhone = false,
     this.isPassword = false,
+    this.isNumber = false,
     this.obscure = true,
+    this.maxLen,
     this.onToggleObscure,
     this.textInputAction,
   });
@@ -393,10 +610,12 @@ class _Field extends StatelessWidget {
       textInputAction: textInputAction,
       textDirection: isPhone ? TextDirection.ltr : null,
       textAlign: isPhone ? TextAlign.left : TextAlign.start,
-      keyboardType: isPhone ? TextInputType.number : TextInputType.text,
+      keyboardType: isPhone || isNumber ? TextInputType.number : TextInputType.text,
       obscureText: isPassword && obscure,
-      inputFormatters: isPhone ? [FilteringTextInputFormatter.digitsOnly] : null,
-      maxLength: isPhone ? 15 : null,
+      inputFormatters: isPhone || isNumber
+          ? [FilteringTextInputFormatter.digitsOnly]
+          : null,
+      maxLength: isPhone ? 15 : maxLen,
       style: const TextStyle(color: AppColors.ink),
       cursorColor: AppColors.primary,
       decoration: InputDecoration(

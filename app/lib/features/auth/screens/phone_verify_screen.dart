@@ -8,39 +8,18 @@ import 'package:zaboon/core/widgets/widgets.dart';
 
 enum _VerState { starting, noTelegram, waiting, success, timedout, mismatch, error }
 
-/// بيانات التسجيل: تُنقل للشاشة (الرقم يأتي من تلغرام لاحقاً — لا يُكتب أبداً)
-class RegisterInfo {
-  final String name;
-  final String password;
-  final String referral;
-  const RegisterInfo({
-    required this.name,
-    required this.password,
-    this.referral = '',
-  });
-}
-
 /// تحقق الهاتف عبر تلغرام (request_contact) — تلغرام حصراً، بلا أي مسار بديل.
 /// خلفية صلبة (شاشة قرار حرج) — الزجاج للتنقل فقط، وكل حالة واضحة بلا فراغ.
-/// وضعان: [order] تأكيد رقم موجود (مقارنة)، [register] إنشاء حساب برقم تلغرام (تبني مباشر).
+/// للتأكيد عند الطلب (مقارنة الرقم) — التسجيل له مرحله داخل تبويب التسجيل.
 class PhoneVerifyScreen extends StatefulWidget {
-  final String? phone;
-  final RegisterInfo? register;
+  final String phone;
   final void Function(dynamic result) onVerified;
 
-  const PhoneVerifyScreen.order({
+  const PhoneVerifyScreen({
     super.key,
     required this.phone,
     required this.onVerified,
-  }) : register = null;
-
-  const PhoneVerifyScreen.register({
-    super.key,
-    required this.register,
-    required this.onVerified,
-  }) : phone = null;
-
-  bool get forRegistration => register != null;
+  });
 
   @override
   State<PhoneVerifyScreen> createState() => _PhoneVerifyScreenState();
@@ -54,12 +33,11 @@ class _PhoneVerifyScreenState extends State<PhoneVerifyScreen>
   Timer? _timer;
   DateTime? _deadline;
   String _error = '';
-  bool _dupAccount = false; // الرقم مسجل مسبقاً → يوجّه للدخول بدل إعادة المحاولة
   static const _pollEvery = Duration(milliseconds: 2500);
   static const _attemptLimit = Duration(seconds: 120);
 
   String get _masked {
-    final p = widget.phone ?? '';
+    final p = widget.phone;
     return p.length >= 10
         ? '${p.substring(0, 4)} ••• ${p.substring(p.length - 3)}'
         : p;
@@ -104,17 +82,7 @@ class _PhoneVerifyScreenState extends State<PhoneVerifyScreen>
       _timer?.cancel();
     });
     try {
-      final Map<String, dynamic> d;
-      if (widget.forRegistration) {
-        final reg = widget.register!;
-        d = await Api.registerStart(
-          name: reg.name,
-          password: reg.password,
-          referral: reg.referral,
-        );
-      } else {
-        d = await Api.verifyStart();
-      }
+      final d = await Api.verifyStart();
       token = d['token'];
       botName = d['bot_username'] ?? 'soog_otp_bot';
       _deadline = DateTime.now().add(_attemptLimit);
@@ -149,16 +117,10 @@ class _PhoneVerifyScreenState extends State<PhoneVerifyScreen>
     if (token == null || !mounted) return;
     final t = token!;
     try {
-      final s = widget.forRegistration
-          ? await Api.registerStatus(t)
-          : await Api.verifyStatus(t);
+      final s = await Api.verifyStatus(t);
       switch (s) {
         case 'verified':
           _timer?.cancel();
-          if (widget.forRegistration) {
-            await _finalizeRegister(t);
-            return;
-          }
           setState(() => state = _VerState.success);
           Future.delayed(const Duration(milliseconds: 900), () {
             if (mounted) widget.onVerified(null);
@@ -189,33 +151,6 @@ class _PhoneVerifyScreenState extends State<PhoneVerifyScreen>
       }
     } catch (_) {
       // انقطاع شبكة مؤقت — يكمل الـ polling مباشرة
-    }
-  }
-
-  // ── التسجيل: الرقم مثبت من تلغرام → إتمام الحساب وتسليم التوك للمستدعي ──
-  Future<void> _finalizeRegister(String t) async {
-    try {
-      final result = await Api.registerConfirm(t);
-      if (!mounted) return;
-      setState(() => state = _VerState.success);
-      Future.delayed(const Duration(milliseconds: 900), () {
-        if (mounted) widget.onVerified(result);
-      });
-    } on ApiException catch (e) {
-      if (!mounted) return;
-      _timer?.cancel();
-      setState(() {
-        state = _VerState.error;
-        _error = e.message;
-        _dupAccount = e.code == 409;
-      });
-    } catch (_) {
-      if (!mounted) return;
-      _timer?.cancel();
-      setState(() {
-        state = _VerState.error;
-        _error = 'تعذر الاتصال بالخادم';
-      });
     }
   }
 
@@ -265,13 +200,11 @@ class _PhoneVerifyScreenState extends State<PhoneVerifyScreen>
                           size: 44, color: AppColors.info),
                     ),
                     const SizedBox(height: 16),
-                    Text(widget.forRegistration ? 'التسجيل برقم تلغرامك' : 'تأكيد رقمك عبر تلغرام',
+                    Text('تأكيد رقمك عبر تلغرام',
                         style: AppType.h2Style, textAlign: TextAlign.center),
                     const SizedBox(height: 8),
                     Text(
-                      widget.forRegistration
-                          ? 'سيُسجَّل رقم تلغرامك رقماً لحسابك — بلا كتابة ولا مشاركة لأي جهة'
-                          : 'الرقم المراد تأكيده: $_masked',
+                      'الرقم المراد تأكيده: $_masked',
                       style: AppType.smallStyle,
                       textAlign: TextAlign.center,
                     ),
@@ -372,12 +305,12 @@ class _PhoneVerifyScreenState extends State<PhoneVerifyScreen>
           ),
           const SizedBox(height: 16),
           Text(
-            widget.forRegistration ? 'تم إنشاء حسابك بنجاح ✓' : 'تم تأكيد رقمك بنجاح ✓',
+            'تم تأكيد رقمك بنجاح ✓',
             style: AppType.h3Style.copyWith(color: AppColors.success),
           ),
           const SizedBox(height: 8),
           Text(
-            widget.forRegistration ? 'الدخول جاهز الآن' : '$_masked — متحقق الآن',
+            '$_masked — متحقق الآن',
             style: AppType.smallStyle,
           ),
         ]);
@@ -412,18 +345,11 @@ class _PhoneVerifyScreenState extends State<PhoneVerifyScreen>
           const SizedBox(height: 16),
           Text(_error, style: AppType.h3Style, textAlign: TextAlign.center),
           const SizedBox(height: 24),
-          if (_dupAccount)
-            SolidBtn(
-              label: 'سجّل دخول بدلاً منها',
-              color: AppColors.accent,
-              onTap: () => Navigator.of(context).maybePop(),
-            )
-          else
-            SolidBtn(
-              label: 'حاول مرة ثانية 🔄',
-              color: AppColors.accent,
-              onTap: _retry,
-            ),
+          SolidBtn(
+            label: 'حاول مرة ثانية 🔄',
+            color: AppColors.accent,
+            onTap: _retry,
+          ),
         ]);
     }
   }

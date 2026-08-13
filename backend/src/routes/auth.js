@@ -11,16 +11,19 @@ const r = Router();
 const genCode = () => String(Math.floor(1000 + Math.random() * 9000));
 const genReferral = () => 'ZB' + String(Math.floor(10000 + Math.random() * 90000));
 
-// ── التسجيل الجديد: برقم تلغرام حصراً (request_contact) — لا رقم مكتوب إطلاقاً ──
-// 1) register-start: يحفظ الاسم/كلمة المرور فقط في حساب «معلّق» placeholder
-// 2) الزبون يضغط زر مشاركة الرقم داخل البوت → تلغرام يكتب الرقم نفسه
-// 3) register-confirm: الرقم المثبت يخلّص الحساب (فحص التكرار هنا — الرقم حقيقي وموثق)
+// ── التسجيل: رقم مكتوب → تأكيد تلغرام (مطابقة + رمز) → الاسم وكلمة المرور ──
+// التحقق (OTP) للحساب الجديد فقط — الرقم المسجل مسبقاً يوجّه للدخول مباشرة
+// 1) register-start {phone}: فحص الوجود + جلسة تحقق
+// 2) البوت: يطابق رقم المشاركة مع الرقم المكتوب → يرسل رمز
+// 3) register-code {token, code}: التثبت من الرمز
+// 4) register-confirm {token, name, password, referral}: إنشاء الحساب نهائياً
 r.post('/register-start', async (req, res) => {
-  const name = String(req.body.name || '').trim();
-  const password = String(req.body.password || '');
-  const referral = String(req.body.referral || '').trim();
-  if (name.length < 3) return res.status(400).json({ error: 'الاسم قصير جداً' });
-  if (password.length < 6) return res.status(400).json({ error: 'كلمة المرور 6 أحرف كحد أدنى' });
+  const phone = String(req.body.phone || '').replace(/\D/g, '');
+  if (!/^0[0-9]{9,14}$/.test(phone)) return res.status(400).json({ error: 'رقم الهاتف غير صحيح' });
+
+  // حساب موجود → لا داعي للتحقق — سجّل دخول مباشرة
+  const existing = await one('SELECT id FROM users WHERE phone=$1', [phone]);
+  if (existing) return res.status(400).json({ error: 'هذا الرقم عليه حساب — سجّل دخول مباشرة' });
 
   const ip = (req.headers['x-forwarded-for']?.split(',')[0] || req.ip || '').trim();
   const recent = await one(`SELECT count(*)::int AS n FROM phone_verifications
@@ -32,47 +35,74 @@ r.post('/register-start', async (req, res) => {
            AND NOT EXISTS (SELECT 1 FROM phone_verifications pv
                            WHERE pv.user_id=users.id AND pv.status IN ('pending','prompted'))`);
 
-  let referredById = null;
-  if (referral) {
-    const inviter = await one('SELECT id FROM users WHERE referral_code=$1', [referral]);
-    if (inviter) referredById = inviter.id;
-  }
-
-  const hash = await bcrypt.hash(password, 10);
   const placeholder = 'tg-await-' + randomBytes(8).toString('hex');
-  const user = (await q(`INSERT INTO users (phone, name, password, role, verified, referred_by)
-                         VALUES ($1,$2,$3,'customer',false,$4) RETURNING *`,
-    [placeholder, name, hash, referredById]))[0];
+  const user = (await q(`INSERT INTO users (phone, name, role, verified)
+                         VALUES ($1,'','customer',false) RETURNING *`, [placeholder]))[0];
 
-  const token = await createPhoneVerification({ userId: user.id, phone: placeholder, purpose: 'register', ip });
+  const token = await createPhoneVerification({ userId: user.id, phone, purpose: 'register', ip });
   res.json({ token, bot_username: process.env.TELEGRAM_BOT_USERNAME || 'soog_otp_bot', expires_in: 600 });
 });
 
-// ── إتمام التسجيل: يتطلب جلسة تحقق مكتملة (verified) — لا يقبل أي توكن آخر ──
-r.post('/register-confirm', async (req, res) => {
+// ── التثبت من رمز البوت (بعد مطابقة الرقم) ──
+r.post('/register-code', async (req, res) => {
   const token = String(req.body.token || '');
-  if (!token) return res.status(400).json({ error: 'token ناقص' });
+  const code = String(req.body.code || '').trim();
+  if (!token || !code) return res.status(400).json({ error: 'رمز ناقص' });
   const v = await one(`SELECT * FROM phone_verifications WHERE token=$1 AND purpose='register'`, [token]);
   if (!v || v.status === 'expired') return res.status(401).json({ error: 'الجلسة منتهية — ابدأ التسجيل من جديد' });
-  if (v.status !== 'verified') return res.status(400).json({ error: 'لم يكتمل التحقق بعد — اضغط زر المشاركة داخل البوت' });
+  if (v.status !== 'verified') return res.status(400).json({ error: 'لم يكتمل تأكيد البوت بعد — اضغط زر المشاركة داخل تلغرام' });
+  if (v.code_ok) return res.json({ ok: true }); // الرمز محسوم سابقاً — لا إعادة
+  if (!v.code || !v.code_expires_at || new Date(v.code_expires_at) < new Date())
+    return res.status(400).json({ error: 'الرمز منتهي — ابدأ التسجيل من جديد' });
+  if (code !== v.code) {
+    await q(`UPDATE phone_verifications SET attempts=attempts+1 WHERE token=$1`, [token]);
+    return res.status(401).json({ error: 'الرمز غلط — راجع رسالة البوت وجرب' });
+  }
+  await q(`UPDATE phone_verifications SET code_ok=true WHERE token=$1`, [token]);
+  res.json({ ok: true });
+});
+
+// ── إتمام التسجيل: رمز مؤكد + الاسم وكلمة المرور → الحساب جاهز ──
+r.post('/register-confirm', async (req, res) => {
+  const token = String(req.body.token || '');
+  const name = String(req.body.name || '').trim();
+  const password = String(req.body.password || '');
+  const referral = String(req.body.referral || '').trim();
+  if (!token) return res.status(400).json({ error: 'token ناقص' });
+  if (name.length < 3) return res.status(400).json({ error: 'الاسم قصير جداً' });
+  if (password.length < 6) return res.status(400).json({ error: 'كلمة المرور 6 أحرف كحد أدنى' });
+
+  const v = await one(`SELECT * FROM phone_verifications WHERE token=$1 AND purpose='register'`, [token]);
+  if (!v || v.status === 'expired') return res.status(401).json({ error: 'الجلسة منتهية — ابدأ التسجيل من جديد' });
+  if (v.status !== 'verified' || !v.code_ok) return res.status(400).json({ error: 'اكمل التأكيد والرمز أولاً' });
 
   const user = await one('SELECT * FROM users WHERE id=$1', [v.user_id]);
   if (!user || user.verified) return res.status(401).json({ error: 'الحساب غير صالح — ابدأ من جديد' });
 
-  const tgPhone = String(v.contact_phone || '');
-  if (!/^0[0-9]{9,14}$/.test(tgPhone)) return res.status(400).json({ error: 'الرقم المستلم غير صالح' });
+  // الرقم الصالح: المكتوب بالتطبيق والمطابق لرقم التلغرام من البوت
+  const tgPhone = String(v.phone || '');
+  if (!/^0[0-9]{9,14}$/.test(tgPhone)) return res.status(400).json({ error: 'الرقم غير صالح' });
 
-  // الفحص الحقيقي للتكرار هنا — الرقم موثق من تلغرام، لا مجال للتخمين
+  // حماية مزدوجة: حتى لو سبق الرقم — رفض
   const dup = await one('SELECT id FROM users WHERE phone=$1 AND id!=$2', [tgPhone, user.id]);
   if (dup) {
     await q(`UPDATE phone_verifications SET status='expired' WHERE token=$1`, [token]);
     return res.status(409).json({ error: 'هذا الرقم عليه حساب مسبقاً — سجّل دخول مباشرة' });
   }
 
+  let referredById = null;
+  if (referral) {
+    const inviter = await one('SELECT id FROM users WHERE referral_code=$1', [referral]);
+    if (inviter) referredById = inviter.id;
+  }
+
   let referralCode;
   do { referralCode = genReferral(); } while (await one('SELECT id FROM users WHERE referral_code=$1', [referralCode]));
-  const done = (await q(`UPDATE users SET phone=$1, verified=true, referral_code=$2
-                         WHERE id=$3 RETURNING *`, [tgPhone, referralCode, user.id]))[0];
+  const hash = await bcrypt.hash(password, 10);
+  const done = (await q(`UPDATE users SET phone=$1, name=$2, password=$3, verified=true,
+                         referral_code=$4, referred_by=$5
+                         WHERE id=$6 RETURNING *`,
+    [tgPhone, name, hash, referralCode, referredById, user.id]))[0];
 
   // مكافأة الدعوة: 100 نقطة للداعي + 50 للمدعو (بعد التحقق الحقيقي فقط)
   if (done.referred_by) {

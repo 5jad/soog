@@ -80,13 +80,20 @@ if (bot) {
       return;
     }
     const incoming = normPhone(ctx.message.contact.phone_number);
-    // ── جلسة تسجيل: الرقم الوارد هو رقم الحساب حرفياً — بلا مقارنة ──
-    // تلغرام يشارك رقم صاحب الحساب فقط، فماكو رقم مكتوب يقارن به أصلاً
+    // ── جلسة تسجيل: الرقم المكتوب بالتطبيق يطابق رقم التلغرام؟ ──
+    // إذا مطابق → الرقم فعال ومملوك → البوت يدز رمز التحقق داخل المحادثة
     if (room.purpose === 'register') {
+      if (incoming !== room.phone) {
+        await q(`UPDATE phone_verifications SET attempts=attempts+1, status='mismatch', contact_phone=$2
+                 WHERE token=$1`, [room.token, incoming]);
+        await ctx.reply('❌ الرقم اللي شاركته بالتلي غير الرقم اللي كتبته بالتطبيق — راجع الرقم وارجع جرب من جديد');
+        return;
+      }
+      const code = String(Math.floor(100000 + Math.random() * 900000));
       await q(`UPDATE phone_verifications
-               SET status='verified', phone=$2, contact_phone=$2, verified_at=now()
-               WHERE token=$1`, [room.token, incoming]);
-      await ctx.reply('✅ تم تسجيلك في «زبون» بنجاح! ارجع للتطبيق واضغط «متابعة» لإكمال الدخول');
+               SET status='verified', contact_phone=$2, verified_at=now(), code=$3, code_expires_at=now() + interval '5 minutes'
+               WHERE token=$1`, [room.token, incoming, code]);
+      await ctx.reply(`✅ تأكد رقمك بنجاح ✓\n\nرمز التحقق: <b>${code}</b>\n\nاكتبه بالتطبيق — صالح 5 دقائق، لا تشاركه مع أي أحد.`, { parse_mode: 'HTML' });
       return;
     }
     if (incoming !== room.phone) {

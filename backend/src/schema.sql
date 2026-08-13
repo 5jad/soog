@@ -483,6 +483,9 @@ CREATE TABLE IF NOT EXISTS phone_verifications (
   ip TEXT,                                     -- تحديد تردد طلبات التسجيل
   chat_id BIGINT,
   contact_phone TEXT,
+  code TEXT,                                   -- رمز OTP يرسله البوت بعد مطابقة الرقم (تسجيل)
+  code_expires_at TIMESTAMPTZ,
+  code_ok BOOLEAN NOT NULL DEFAULT false,      -- الرمز تحقق منه
   attempts INTEGER NOT NULL DEFAULT 0,
   created_at TIMESTAMPTZ NOT NULL DEFAULT now(),
   expires_at TIMESTAMPTZ NOT NULL,

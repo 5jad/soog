@@ -701,6 +701,7 @@ class _CourierMapScreenState extends State<CourierMapScreen> {
   bool busy = false;
   bool _follow = true;
   bool _routing = false;
+  bool _mapReady = false;
   DateTime _lastTouch = DateTime(2000);
   LatLng? _lastRouteFrom;
   List<LatLng> _plan = [];
@@ -718,15 +719,18 @@ class _CourierMapScreenState extends State<CourierMapScreen> {
   @override
   void initState() {
     super.initState();
-    _loadPlan();
-    // إرسال الموقع التلقائي شغال دائماً وبشكل مخفي
-    _sendMyPos();
-    _auto = Timer.periodic(const Duration(seconds: 5), (_) => _sendMyPos());
-    // إعادة حساب المسار من موقع المندوب الحالي كل 15 ثانية — يتبع المندوب لو حاد عن الخطة
-    _rerouteT = Timer.periodic(
-      const Duration(seconds: 15),
-      (_) => _maybeReroute(),
-    );
+    // ═══ أي خطأ في الإقلاع (GPS/شبكة) ما يخرب الشاشة — يضل الخريطة تشتغل ═══
+    try {
+      _loadPlan();
+      _sendMyPos();
+      _auto = Timer.periodic(const Duration(seconds: 5), (_) => _sendMyPos());
+      _rerouteT = Timer.periodic(
+        const Duration(seconds: 15),
+        (_) => _maybeReroute(),
+      );
+    } catch (e) {
+      debugPrint('خطأ إقلاع خريطة التوصيل: $e');
+    }
   }
 
   @override
@@ -807,10 +811,12 @@ class _CourierMapScreenState extends State<CourierMapScreen> {
   }
 
   void _fitAll() {
+    // ═══ لا تلمس الكاميرا قبل جاهزية الخريطة — يسبب تجمد الشاشة ═══
+    if (!_mapReady) return;
     final tr = widget.trip;
     final pts = <LatLng>[];
     void add(Object? lat, Object? lng) {
-      if (lat != null && lng != null)
+      if (lat is num && lng is num)
         pts.add(LatLng((lat as num).toDouble(), (lng as num).toDouble()));
     }
 
@@ -825,7 +831,9 @@ class _CourierMapScreenState extends State<CourierMapScreen> {
         ),
       );
     } catch (_) {
-      _c.move(pts.first, 13);
+      try {
+        _c.move(pts.first, 13);
+      } catch (_) {}
     }
   }
 
@@ -853,7 +861,7 @@ class _CourierMapScreenState extends State<CourierMapScreen> {
     // المسار يتبع المندوب: يعيد الحساب من موقعه الجديد إذا تحرك عن آخر مسار
     _maybeReroute();
     // الكاميرا تتبع المندوب إلا إذا المستخدم حرك الخريطة بنفسه
-    if (_follow && DateTime.now().difference(_lastTouch).inSeconds > 10) {
+    if (_follow && _mapReady && DateTime.now().difference(_lastTouch).inSeconds > 10) {
       try {
         _c.move(p, 15);
       } catch (_) {}
@@ -919,7 +927,11 @@ class _CourierMapScreenState extends State<CourierMapScreen> {
             options: MapOptions(
               initialCenter: store ?? user ?? _kut,
               initialZoom: 14,
-              onMapReady: _fitAll,
+              onMapReady: () {
+                _mapReady = true;
+                _fitAll();
+                _loadPlan();
+              },
               onTap: (_, p) {
                 _lastTouch = DateTime.now();
                 setState(() => meManual = p);
@@ -946,7 +958,8 @@ class _CourierMapScreenState extends State<CourierMapScreen> {
               MarkerLayer(
                 markers: [
                   for (final e in (tr['orders'] as List? ?? []).indexed)
-                    if ((e.$2 as Map)['store_lat'] is num &&
+                    if (e.$2 is Map &&
+                        (e.$2 as Map)['store_lat'] is num &&
                         (e.$2 as Map)['store_lng'] is num)
                       mMaker(
                         LatLng(
@@ -1163,7 +1176,9 @@ class _RoutePreviewScreenState extends State<RoutePreviewScreen> {
         ),
       );
     } catch (_) {
-      _c.move(pts.first, 13);
+      try {
+        _c.move(pts.first, 13);
+      } catch (_) {}
     }
   }
 

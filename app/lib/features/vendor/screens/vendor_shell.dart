@@ -2,6 +2,7 @@ import 'dart:typed_data';
 import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:latlong2/latlong.dart';
+import 'package:url_launcher/url_launcher.dart';
 import 'package:zaboon/core/api/api.dart';
 import 'package:zaboon/features/shop/screens/map_screen.dart';
 import 'package:zaboon/core/theme/zaboon_design_system.dart';
@@ -20,12 +21,41 @@ class _VendorShellState extends State<VendorShell> {
   int tab = 0;
   final pageKey = GlobalKey();
 
+  /// فحص النسخة: إن وجدت أحدث يفتح التحميل من الموقع
+  Future<void> _checkUpdate() async {
+    try {
+      final d = await Api.get('/api/app/version');
+      if (!mounted) return;
+      final latest = (d['version'] ?? '').toString();
+      final build = (d['build'] as num?)?.toInt() ?? 0;
+      if (build > kAppBuild) {
+        toast(
+          context,
+          'توجد نسخة أحدث v$latest — جاري فتح التحميل...',
+        );
+        final u = Uri.parse(Api.base + (d['download_url'] ?? '/download'));
+        launchUrl(u, mode: LaunchMode.externalApplication);
+      } else {
+        toast(context, 'إصدارك v$kAppVersion — هو آخر إصدار ✓');
+      }
+    } catch (_) {
+      if (!mounted) return;
+      toast(context, 'إصدارك: v$kAppVersion');
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
         title: const ScreenTitle(Icons.storefront_rounded, 'واجهة التاجر'),
         actions: [
+          IconButton(
+            onPressed: _checkUpdate,
+            icon: const Icon(Icons.update_rounded, color: AppColors.muted),
+            tooltip: 'فحص النسخة',
+          ),
+          const NotifBell(),
           IconButton(
             onPressed: widget.onExit,
             icon: const Icon(Icons.exit_to_app_rounded, color: AppColors.muted),

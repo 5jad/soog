@@ -100,46 +100,78 @@ class Api {
     Map<String, dynamic>? body,
     Duration timeout = _t,
   ]) async {
-    final r = await http
-        .post(
-          Uri.parse('$base$path'),
-          headers: _headers(),
-          body: body == null ? null : jsonEncode(body),
-        )
-        .timeout(timeout);
-    return _handle(r);
+    debugPrint('[API] POST $path → $base$path');
+    try {
+      final r = await http
+          .post(
+            Uri.parse('$base$path'),
+            headers: _headers(),
+            body: body == null ? null : jsonEncode(body),
+          )
+          .timeout(timeout);
+      debugPrint('[API] ← ${r.statusCode} $path');
+      return _handle(r);
+    } catch (e) {
+      debugPrint('[API] ❌ $path :: $e');
+      if (e is ApiException) rethrow;
+      throw ApiException('تعذر الاتصال بالخادم — تحقق من شبكة الإنترنت', 0);
+    }
   }
 
   static Future<dynamic> patch(
     String path, [
     Map<String, dynamic>? body,
   ]) async {
-    final r = await http
-        .patch(
-          Uri.parse('$base$path'),
-          headers: _headers(),
-          body: body == null ? null : jsonEncode(body),
-        )
-        .timeout(_t);
-    return _handle(r);
+    debugPrint('[API] PATCH $path → $base$path');
+    try {
+      final r = await http
+          .patch(
+            Uri.parse('$base$path'),
+            headers: _headers(),
+            body: body == null ? null : jsonEncode(body),
+          )
+          .timeout(_t);
+      debugPrint('[API] ← ${r.statusCode} $path');
+      return _handle(r);
+    } catch (e) {
+      debugPrint('[API] ❌ $path :: $e');
+      if (e is ApiException) rethrow;
+      throw ApiException('تعذر الاتصال بالخادم — تحقق من شبكة الإنترنت', 0);
+    }
   }
 
   static Future<dynamic> put(String path, [Map<String, dynamic>? body]) async {
-    final r = await http
-        .put(
-          Uri.parse('$base$path'),
-          headers: _headers(),
-          body: body == null ? null : jsonEncode(body),
-        )
-        .timeout(_t);
-    return _handle(r);
+    debugPrint('[API] PUT $path → $base$path');
+    try {
+      final r = await http
+          .put(
+            Uri.parse('$base$path'),
+            headers: _headers(),
+            body: body == null ? null : jsonEncode(body),
+          )
+          .timeout(_t);
+      debugPrint('[API] ← ${r.statusCode} $path');
+      return _handle(r);
+    } catch (e) {
+      debugPrint('[API] ❌ $path :: $e');
+      if (e is ApiException) rethrow;
+      throw ApiException('تعذر الاتصال بالخادم — تحقق من شبكة الإنترنت', 0);
+    }
   }
 
   static Future<dynamic> del(String path) async {
-    final r = await http
-        .delete(Uri.parse('$base$path'), headers: _headers())
-        .timeout(_t);
-    return _handle(r);
+    debugPrint('[API] DELETE $path → $base$path');
+    try {
+      final r = await http
+          .delete(Uri.parse('$base$path'), headers: _headers())
+          .timeout(_t);
+      debugPrint('[API] ← ${r.statusCode} $path');
+      return _handle(r);
+    } catch (e) {
+      debugPrint('[API] ❌ $path :: $e');
+      if (e is ApiException) rethrow;
+      throw ApiException('تعذر الاتصال بالخادم — تحقق من شبكة الإنترنت', 0);
+    }
   }
 
   static dynamic _handle(http.Response r) {

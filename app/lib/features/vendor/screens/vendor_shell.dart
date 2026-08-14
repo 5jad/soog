@@ -154,6 +154,7 @@ class _ProductsTabState extends State<_ProductsTab> {
         : null;
     List allCats = [];
     List allAttrs = [];
+    bool saving = false;
 
     try {
       final c = await Api.get('/api/categories');
@@ -541,7 +542,9 @@ class _ProductsTabState extends State<_ProductsTab> {
                     const SizedBox(height: 16),
                     SolidBtn(
                       label: 'حفظ',
+                      loading: saving,
                       onTap: () async {
+                        if (saving) return;
                         if (name.text.trim().isEmpty) {
                           toast(context, 'اكتب اسم المنتج', error: true);
                           return;
@@ -583,6 +586,7 @@ class _ProductsTabState extends State<_ProductsTab> {
                           }
                         }
                         try {
+                          setS(() => saving = true);
                           final body = <String, dynamic>{
                             'name': name.text.trim(),
                             'price': pv ?? 0,
@@ -624,7 +628,15 @@ class _ProductsTabState extends State<_ProductsTab> {
                           Navigator.pop(context);
                           _load();
                         } on ApiException catch (e) {
+                          setS(() => saving = false);
                           toast(context, e.message, error: true);
+                        } catch (e) {
+                          setS(() => saving = false);
+                          toast(
+                            context,
+                            'حصل خطأ غير متوقع — حاول مرة ثانية',
+                            error: true,
+                          );
                         }
                       },
                     ),
@@ -1133,11 +1145,17 @@ class _WalletTabState extends State<_WalletTab> {
                           context,
                           'انرسل طلب الإعلان — ينتظر موافقة الأدمن ⏳',
                         );
-                        Navigator.pop(context);
-                        _load();
-                      } on ApiException catch (e) {
-                        toast(context, e.message, error: true);
-                      }
+                          Navigator.pop(context);
+                          _load();
+                        } on ApiException catch (e) {
+                          toast(context, e.message, error: true);
+                        } catch (e) {
+                          toast(
+                            context,
+                            'حصل خطأ غير متوقع — حاول مرة ثانية',
+                            error: true,
+                          );
+                        }
                     },
                   ),
                 ],

@@ -8,6 +8,7 @@ import 'package:zaboon/core/models/models.dart';
 import 'package:zaboon/core/theme/zaboon_design_system.dart';
 import 'package:zaboon/core/widgets/widgets.dart';
 import 'package:zaboon/features/chat/screens/chat_screen.dart';
+import 'package:zaboon/features/notifications/screens/notifications_screen.dart';
 
 /// رابط موقع المتجر: من رابط التاجر المخزن أو من الإحداثيات مباشرة
 String? storeMapLink(Object? lat, Object? lng, String? url) {
@@ -131,6 +132,7 @@ class _DeliveryShellState extends State<DeliveryShell> {
               ),
             ),
           ),
+          const NotifBell(),
           IconButton(
             onPressed: widget.onExit,
             icon: const Icon(Icons.exit_to_app_rounded, color: AppColors.muted),
@@ -147,6 +149,10 @@ class _DeliveryShellState extends State<DeliveryShell> {
           ),
           _MyTrip(),
           _WalletTab(role: 'delivery'),
+          _ProfileTab(
+            online: online,
+            onOpenWallet: () => setState(() => tab = 2),
+          ),
         ],
       ),
       bottomNavigationBar: GlassBottomNav(
@@ -155,6 +161,7 @@ class _DeliveryShellState extends State<DeliveryShell> {
           (Icons.radar_rounded, 'متاح'),
           (Icons.route_rounded, 'رحلتي'),
           (Icons.account_balance_wallet_rounded, 'المحفظة'),
+          (Icons.person_rounded, 'حسابي'),
         ],
         onTap: (i) => setState(() => tab = i),
       ),
@@ -1120,5 +1127,428 @@ class _WalletTabState extends State<_WalletTab> {
     } on ApiException catch (e) {
       toast(context, e.message, error: true);
     }
+  }
+}
+
+/* ═══════════ حسابي — البروفايل المتكامل للمندوب ═══════════ */
+class _ProfileTab extends StatefulWidget {
+  final bool online;
+  final VoidCallback onOpenWallet;
+  const _ProfileTab({required this.online, required this.onOpenWallet});
+  @override
+  State<_ProfileTab> createState() => _ProfileTabState();
+}
+
+class _ProfileTabState extends State<_ProfileTab> {
+  dynamic me;
+  dynamic stats;
+  dynamic w;
+  bool loading = true;
+
+  @override
+  void initState() {
+    super.initState();
+    _load();
+  }
+
+  Future<void> _load() async {
+    try {
+      final d = await Api.get('/api/auth/me');
+      me = d['user'] ?? d['me'];
+    } catch (_) {}
+    try {
+      final d = await Api.get('/api/delivery/stats');
+      stats = d['stats'] ?? {};
+    } catch (_) {}
+    try {
+      final d = await Api.get('/api/delivery/wallet');
+      w = d['wallet'];
+    } catch (_) {}
+    if (mounted) setState(() => loading = false);
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    if (loading) return const Loader();
+    final u = (me ?? Api.me ?? {}) as Map<String, dynamic>;
+    final s = (stats ?? {}) as Map<String, dynamic>;
+    final wallet = (w ?? {}) as Map<String, dynamic>;
+    final todayOrders = (s['today_orders'] ?? 0) as num;
+    final delivered = (s['delivered'] ?? 0) as num;
+    final delivering = (s['delivering'] ?? 0) as num;
+    final collected = (wallet['today'] ?? 0) as num;
+    final name = u['name']?.toString() ?? 'مندوب';
+    final phone = u['phone']?.toString() ?? '';
+    final first = name.characters.first;
+
+    return Scaffold(
+      body: ListView(
+        padding: const EdgeInsets.fromLTRB(16, 6, 16, 24),
+        children: [
+          // ═══ بطاقة الهوية ═══
+          Container(
+            padding: const EdgeInsets.fromLTRB(16, 18, 16, 16),
+            decoration: BoxDecoration(
+              gradient: AppColors.gradNavy,
+              borderRadius: BorderRadius.circular(24),
+              boxShadow: [
+                BoxShadow(
+                  color: AppColors.primary.withValues(alpha: .25),
+                  blurRadius: 18,
+                  offset: const Offset(0, 8),
+                ),
+              ],
+            ),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Row(
+                  children: [
+                    Container(
+                      width: 62,
+                      height: 62,
+                      decoration: BoxDecoration(
+                        gradient: const LinearGradient(
+                          begin: Alignment.topLeft,
+                          end: Alignment.bottomRight,
+                          colors: [AppColors.primaryLight, AppColors.cyan],
+                        ),
+                        shape: BoxShape.circle,
+                        border: Border.all(
+                          color: Colors.white.withValues(alpha: .55),
+                          width: 2.4,
+                        ),
+                      ),
+                      alignment: Alignment.center,
+                      child: Text(
+                        first,
+                        style: AppType.style(
+                          24,
+                          color: Colors.white,
+                          weight: FontWeight.w900,
+                        ),
+                      ),
+                    ),
+                    const SizedBox(width: 14),
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            name,
+                            style: AppType.style(
+                              17,
+                              color: Colors.white,
+                              weight: FontWeight.w900,
+                            ),
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                          ),
+                          const SizedBox(height: 3),
+                          Text(
+                            '$phone · مندوب توصيل',
+                            style: AppType.style(
+                              12.5,
+                              color: Colors.white.withValues(alpha: .85),
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                    // حالة الاتصال
+                    Container(
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 10,
+                        vertical: 6,
+                      ),
+                      decoration: BoxDecoration(
+                        color: widget.online
+                            ? AppColors.success.withValues(alpha: .25)
+                            : Colors.white.withValues(alpha: .15),
+                        borderRadius: BorderRadius.circular(12),
+                        border: Border.all(
+                          color: widget.online
+                              ? AppColors.success
+                              : Colors.white.withValues(alpha: .35),
+                        ),
+                      ),
+                      child: Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          Icon(
+                            Icons.circle,
+                            size: 8,
+                            color: widget.online
+                                ? AppColors.success
+                                : Colors.white.withValues(alpha: .6),
+                          ),
+                          const SizedBox(width: 5),
+                          Text(
+                            widget.online ? 'متصل' : 'غير متصل',
+                            style: AppType.style(
+                              10.5,
+                              color: Colors.white,
+                              weight: FontWeight.w800,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 14),
+                // ═══ إحصائيات اليوم ═══
+                Row(
+                  children: [
+                    _miniStat(
+                      icon: Icons.receipt_long_rounded,
+                      value: '$todayOrders',
+                      label: 'طلبات اليوم',
+                    ),
+                    const SizedBox(width: 10),
+                    _miniStat(
+                      icon: Icons.check_circle_rounded,
+                      value: '$delivered',
+                      label: 'مسلّمة',
+                      color: AppColors.success,
+                    ),
+                    const SizedBox(width: 10),
+                    _miniStat(
+                      icon: Icons.route_rounded,
+                      value: '$delivering',
+                      label: 'بالتوصيل',
+                      color: AppColors.cyan,
+                    ),
+                  ],
+                ),
+              ],
+            ),
+          ),
+          const SizedBox(height: 14),
+          // ═══ ملخص محفظة اليوم ═══
+          GlassCard(
+            child: Row(
+              children: [
+                const Icon(
+                  Icons.payments_rounded,
+                  color: AppColors.success,
+                  size: 30,
+                ),
+                const SizedBox(width: 12),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        'كاش اليوم',
+                        style: AppType.style(12, color: AppColors.muted),
+                      ),
+                      Text(
+                        formatMoney(collected),
+                        style: AppType.style(
+                          18,
+                          color: AppColors.ink,
+                          weight: FontWeight.w900,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+                GestureDetector(
+                  onTap: widget.onOpenWallet,
+                  child: Container(
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 12,
+                      vertical: 8,
+                    ),
+                    decoration: BoxDecoration(
+                      color: AppColors.primary.withValues(alpha: .08),
+                      borderRadius: BorderRadius.circular(10),
+                    ),
+                    child: Text(
+                      'محفظتي',
+                      style: AppType.style(
+                        11.5,
+                        color: AppColors.primary,
+                        weight: FontWeight.w800,
+                      ),
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ),
+          const SizedBox(height: 14),
+          // ═══ قائمة سريعة ═══
+          Container(
+            decoration: AppDecor.card(radius: AppRadius.xl),
+            child: Column(
+              children: [
+                _profileTile(
+                  Icons.notifications_rounded,
+                  'الإشعارات 🔔',
+                  () => Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                      builder: (_) => const NotificationsScreen(),
+                    ),
+                  ),
+                ),
+                _profileDiv(),
+                _profileTile(
+                  Icons.chat_bubble_rounded,
+                  'المحادثات 💬',
+                  () => Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                      builder: (_) => const ChatListScreen(role: 'delivery'),
+                    ),
+                  ),
+                ),
+                _profileDiv(),
+                // ═══ فحص النسخة ═══
+                ListTile(
+                  leading: const Icon(
+                    Icons.update_rounded,
+                    color: AppColors.primary,
+                  ),
+                  title: Text('فحص النسخة', style: AppType.style(13.5)),
+                  trailing: Text(
+                    'v$kAppVersion',
+                    style: AppType.style(
+                      12,
+                      color: AppColors.muted,
+                      weight: FontWeight.w800,
+                    ),
+                  ),
+                  onTap: () async {
+                    try {
+                      final d = await Api.get('/api/app/version');
+                      if (!context.mounted) return;
+                      final latest = (d['version'] ?? '').toString();
+                      final build = (d['build'] as num?)?.toInt() ?? 0;
+                      if (build > kAppBuild) {
+                        toast(
+                          context,
+                          'توجد نسخة أحدث v$latest — جاري فتح التحميل...',
+                        );
+                        final u = Uri.parse(
+                          Api.base + (d['download_url'] ?? '/download'),
+                        );
+                        launchUrl(u, mode: LaunchMode.externalApplication);
+                      } else {
+                        toast(
+                          context,
+                          'إصدارك v$kAppVersion — هو آخر إصدار ✓',
+                        );
+                      }
+                    } catch (_) {
+                      if (!context.mounted) return;
+                      toast(context, 'إصدارك: v$kAppVersion');
+                    }
+                  },
+                ),
+                _profileDiv(),
+                _profileTile(
+                  Icons.exit_to_app_rounded,
+                  'تسجيل الخروج 🚪',
+                  () => _logout(),
+                  color: AppColors.danger,
+                ),
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  // ═══ عناصر مساعدة ═══
+  Widget _miniStat({
+    required IconData icon,
+    required String value,
+    required String label,
+    Color? color,
+  }) {
+    return Expanded(
+      child: Container(
+        padding: const EdgeInsets.symmetric(vertical: 10, horizontal: 6),
+        decoration: BoxDecoration(
+          color: Colors.white.withValues(alpha: .12),
+          borderRadius: BorderRadius.circular(12),
+        ),
+        child: Column(
+          children: [
+            Icon(icon, size: 17, color: Colors.white),
+            const SizedBox(height: 4),
+            Text(
+              value,
+              style: AppType.style(
+                15,
+                color: Colors.white,
+                weight: FontWeight.w900,
+              ),
+            ),
+            Text(
+              label,
+              style: AppType.style(
+                9.5,
+                color: Colors.white.withValues(alpha: .75),
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _profileTile(
+    IconData icon,
+    String title,
+    VoidCallback onTap, {
+    Color? color,
+  }) {
+    return ListTile(
+      leading: Icon(icon, color: color ?? AppColors.primary),
+      title: Text(title, style: AppType.style(13.5)),
+      trailing: const Icon(
+        Icons.chevron_left_rounded,
+        color: AppColors.muted,
+        size: 18,
+      ),
+      onTap: onTap,
+    );
+  }
+
+  Widget _profileDiv() => const Divider(
+        height: 1,
+        indent: 52,
+        endIndent: 14,
+        color: AppColors.line,
+      );
+
+  Future<void> _logout() async {
+    final ok = await showDialog<bool>(
+      context: context,
+      builder: (_) => AlertDialog(
+        title: const ScreenTitle(Icons.logout_rounded, 'تسجيل الخروج'),
+        content: const Text('تريد تخرج من حساب المندوب؟'),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context, false),
+            child: const Text('إلغاء'),
+          ),
+          TextButton(
+            onPressed: () => Navigator.pop(context, true),
+            child: const Text('خروج', style: TextStyle(color: AppColors.danger)),
+          ),
+        ],
+      ),
+    );
+    if (ok != true) return;
+    await Api.clear();
+    if (!context.mounted) return;
+    // يعود لشاشة الدخول عبر إعادة تهيئة الواجهة
+    Navigator.of(context).popUntil((r) => r.isFirst);
   }
 }

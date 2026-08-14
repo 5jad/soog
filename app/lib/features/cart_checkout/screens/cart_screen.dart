@@ -6,6 +6,7 @@ import 'package:zaboon/features/shop/screens/map_screen.dart';
 import 'package:zaboon/core/theme/zaboon_design_system.dart';
 import 'package:zaboon/core/widgets/widgets.dart';
 import 'package:zaboon/features/orders/screens/orders_screen.dart';
+import 'package:zaboon/features/auth/screens/phone_verify_screen.dart';
 import 'package:zaboon/features/cart_checkout/screens/order_success_screen.dart';
 
 /// السلة — مرتبة حسب المتجر، مع إنشاء الطلب (كاش فقط)
@@ -120,6 +121,7 @@ class _CartScreenState extends State<CartScreen> {
     if (!mounted) return;
     final gid = DateTime.now().millisecondsSinceEpoch.toString();
     var done = 0;
+    String? firstError;
     for (final g in groups) {
       try {
         await Api.post('/api/customer/orders', {
@@ -130,7 +132,29 @@ class _CartScreenState extends State<CartScreen> {
           'group_id': gid,
         });
         done++;
-      } catch (_) {}
+      } on ApiException catch (e) {
+        // التحقق عبر تلغرام — يفتح شاشة التأكيد مباشرة
+        if (e.code == 403 &&
+            (e.message.contains('أكّد') || e.message.contains('تلغرام'))) {
+          if (!mounted) return;
+          final phone = Api.me?['phone']?.toString() ?? '';
+          await Navigator.push(
+            context,
+            MaterialPageRoute(
+              builder: (_) => PhoneVerifyScreen(
+                phone: phone,
+                onVerified: (_) {},
+              ),
+            ),
+          );
+          if (!mounted) return;
+          _load();
+          return;
+        }
+        firstError ??= e.message;
+      } catch (_) {
+        firstError ??= 'تعذر الاتصال بالخادم — تحقق من شبكة الإنترنت';
+      }
     }
     if (!mounted) return;
     if (done > 0) {
@@ -142,7 +166,7 @@ class _CartScreenState extends State<CartScreen> {
         MaterialPageRoute(builder: (_) => OrderSuccessScreen(done: done)),
       );
     } else {
-      toast(context, 'ما انطلق أي طلب — جرب مرة ثانية', error: true);
+      toast(context, firstError ?? 'ما انطلق أي طلب — جرب مرة ثانية', error: true);
     }
   }
 

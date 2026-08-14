@@ -256,50 +256,86 @@ class _CropScreenState extends State<CropScreen> {
                       top: false,
                       child: Padding(
                         padding: const EdgeInsets.all(12),
-                        child: Row(
+                        child: Column(
+                          mainAxisSize: MainAxisSize.min,
                           children: [
-                            OutlinedButton(
-                              style: OutlinedButton.styleFrom(
-                                foregroundColor: Colors.white,
-                                side: const BorderSide(color: Colors.white54),
-                              ),
-                              onPressed: () => setState(() {
-                                _scale = 1;
-                                _pan = Offset.zero;
-                              }),
-                              child: const Text('إعادة'),
+                            // ═══ صف الأدوات: إعادة + تقريب/تصغير ═══
+                            Row(
+                              children: [
+                                OutlinedButton(
+                                  style: OutlinedButton.styleFrom(
+                                    foregroundColor: Colors.white,
+                                    side: const BorderSide(
+                                      color: Colors.white54,
+                                    ),
+                                  ),
+                                  onPressed: () => setState(() {
+                                    _scale = 1;
+                                    _pan = Offset.zero;
+                                  }),
+                                  child: const Text('إعادة'),
+                                ),
+                                const SizedBox(width: 8),
+                                IconButton.outlined(
+                                  onPressed: () => setState(() {
+                                    _scale = (_scale * 0.78).clamp(1.0, 5.0);
+                                    _clampPan(view);
+                                  }),
+                                  icon: const Icon(
+                                    Icons.zoom_out_rounded,
+                                    color: Colors.white,
+                                  ),
+                                  tooltip: 'تصغير',
+                                ),
+                                IconButton.outlined(
+                                  onPressed: () => setState(() {
+                                    _scale = (_scale * 1.28).clamp(1.0, 5.0);
+                                    _clampPan(view);
+                                  }),
+                                  icon: const Icon(
+                                    Icons.zoom_in_rounded,
+                                    color: Colors.white,
+                                  ),
+                                  tooltip: 'تقريب',
+                                ),
+                                const Spacer(),
+                                const Text(
+                                  'اسحب أو كبّر للتحكم بالصورة',
+                                  style: TextStyle(
+                                    color: Colors.white54,
+                                    fontSize: 11,
+                                  ),
+                                ),
+                              ],
                             ),
-                            const SizedBox(width: 8),
-                            IconButton.outlined(
-                              onPressed: () => setState(() {
-                                _scale = (_scale * 0.78).clamp(1.0, 5.0);
-                                _clampPan(view);
-                              }),
-                              icon: const Icon(
-                                Icons.zoom_out_rounded,
-                                color: Colors.white,
+                            const SizedBox(height: 10),
+                            // ═══ زر القصّ بعرض كامل — يظهر دائماً ═══
+                            SizedBox(
+                              width: double.infinity,
+                              child: FilledButton(
+                                style: FilledButton.styleFrom(
+                                  backgroundColor: const Color(0xFFF2560F),
+                                  foregroundColor: Colors.white,
+                                  padding: const EdgeInsets.symmetric(
+                                    vertical: 14,
+                                  ),
+                                  shape: RoundedRectangleBorder(
+                                    borderRadius: BorderRadius.circular(14),
+                                  ),
+                                ),
+                                onPressed: () async {
+                                  final out = await _save();
+                                  if (out != null && mounted)
+                                    Navigator.pop(context, out);
+                                },
+                                child: const Text(
+                                  'قصّ الصورة ✓',
+                                  style: TextStyle(
+                                    fontWeight: FontWeight.w900,
+                                    fontSize: 15,
+                                  ),
+                                ),
                               ),
-                              tooltip: 'تصغير',
-                            ),
-                            IconButton.outlined(
-                              onPressed: () => setState(() {
-                                _scale = (_scale * 1.28).clamp(1.0, 5.0);
-                                _clampPan(view);
-                              }),
-                              icon: const Icon(
-                                Icons.zoom_in_rounded,
-                                color: Colors.white,
-                              ),
-                              tooltip: 'تقريب',
-                            ),
-                            const Spacer(),
-                            FilledButton(
-                              onPressed: () async {
-                                final out = await _save();
-                                if (out != null && mounted)
-                                  Navigator.pop(context, out);
-                              },
-                              child: const Text('قصّ ✓'),
                             ),
                           ],
                         ),

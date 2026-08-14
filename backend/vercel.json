@@ -5,7 +5,7 @@
     { "src": "src/public/landing/downloads/zaboon-app.apk", "use": "@vercel/static" }
   ],
   "routes": [
-    { "src": "/download", "dest": "/src/public/landing/downloads/zaboon-app.apk", "type": "filesystem" },
+    { "src": "/download", "dest": "/src/public/landing/downloads/zaboon-app.apk" },
     { "src": "/(.*)", "dest": "api/index.js" }
   ]
 }

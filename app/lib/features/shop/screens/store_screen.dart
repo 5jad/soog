@@ -527,195 +527,8 @@ class _StoreScreenState extends State<StoreScreen> {
                       ),
                     ),
                   ),
-                // ═══════ المنتجات ═══════
-                if (shown.isEmpty)
-                  const SliverToBoxAdapter(
-                    child: Padding(
-                      padding: EdgeInsets.only(top: 60),
-                      child: EmptyState(icon: '📦', title: 'لا منتجات بعد'),
-                    ),
-                  )
-                else
-                  SliverPadding(
-                    padding: const EdgeInsets.fromLTRB(0, 14, 0, 0),
-                    sliver: SliverGrid(
-                      gridDelegate:
-                          const SliverGridDelegateWithFixedCrossAxisCount(
-                            crossAxisCount: 2,
-                            mainAxisSpacing: 0,
-                            crossAxisSpacing: 0,
-                            childAspectRatio: 0.55,
-                          ),
-                      delegate: SliverChildBuilderDelegate((_, i) {
-                        final p = shown[i];
-                        return GlassCard(
-                          onTap: () => pushProduct(
-                            context,
-                            widget.storeId,
-                            (p['id'] as num).toInt(),
-                          ),
-                          radius: 0,
-                          padding: EdgeInsets.zero,
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              AspectRatio(
-                                aspectRatio: 3 / 4,
-                                child: Stack(
-                                  fit: StackFit.expand,
-                                  children: [
-                                    productImageBox(p['image']),
-                                    if (p['has_offer'] == true ||
-                                        p['has_offer'] == 1)
-                                      Positioned(
-                                        top: 8,
-                                        right: 8,
-                                        child: Container(
-                                          padding: const EdgeInsets.symmetric(
-                                            horizontal: 7,
-                                            vertical: 3,
-                                          ),
-                                          decoration: BoxDecoration(
-                                            gradient: AppColors.gradSun,
-                                            borderRadius: BorderRadius.circular(
-                                              8,
-                                            ),
-                                          ),
-                                          child: Text(
-                                            'خصم ${_displayPrice(p) > 0 && (p['price'] ?? 0) > 0 ? (((p['price'] as num) - _displayPrice(p)) / (p['price'] as num) * 100).round() : 0}%',
-                                            style: AppType.style(
-                                              9.5,
-                                              color: Colors.white,
-                                              weight: FontWeight.w900,
-                                            ),
-                                          ),
-                                        ),
-                                      ),
-                                    if ((p['stock'] ?? 0) <= 0)
-                                      Positioned(
-                                        top: 8,
-                                        left: 8,
-                                        child: Container(
-                                          padding: const EdgeInsets.symmetric(
-                                            horizontal: 7,
-                                            vertical: 3,
-                                          ),
-                                          decoration: BoxDecoration(
-                                            color: const Color(0xDD0A1120),
-                                            borderRadius: BorderRadius.circular(
-                                              8,
-                                            ),
-                                          ),
-                                          child: Text(
-                                            'نفد',
-                                            style: AppType.style(
-                                              9.5,
-                                              color: Colors.white,
-                                              weight: FontWeight.w900,
-                                            ),
-                                          ),
-                                        ),
-                                      ),
-                                  ],
-                                ),
-                              ),
-                              Padding(
-                                padding: const EdgeInsets.fromLTRB(9, 5, 9, 6),
-                                child: Column(
-                                  crossAxisAlignment: CrossAxisAlignment.start,
-                                  children: [
-                                    Text(
-                                      p['name'] ?? '',
-                                      style: AppType.style(
-                                        11,
-                                        weight: FontWeight.w800,
-                                      ),
-                                      maxLines: 2,
-                                      overflow: TextOverflow.ellipsis,
-                                    ),
-                                    if ((p['has_offer'] == true ||
-                                        p['has_offer'] == 1)) ...[
-                                      const SizedBox(height: 2),
-                                      Text(
-                                        formatMoney(p['price']),
-                                        style: AppType.style(
-                                          9.5,
-                                          color: AppColors.muted,
-                                          decoration:
-                                              TextDecoration.lineThrough,
-                                        ),
-                                        maxLines: 1,
-                                        overflow: TextOverflow.ellipsis,
-                                      ),
-                                    ],
-                                    const SizedBox(height: 2),
-                                    Row(
-                                      children: [
-                                        Expanded(
-                                          child: Text(
-                                            formatMoney(_displayPrice(p)),
-                                            style: AppType.style(
-                                              13.5,
-                                              color: AppColors.accent,
-                                              weight: FontWeight.w900,
-                                            ),
-                                            maxLines: 1,
-                                            overflow: TextOverflow.ellipsis,
-                                          ),
-                                        ),
-                                        GestureDetector(
-                                          onTap: (p['stock'] ?? 0) <= 0
-                                              ? null
-                                              : () {
-                                                  final hasVariant = variants.any(
-                                                    (v) =>
-                                                        (v['product_id']
-                                                                    as num? ??
-                                                                0)
-                                                            .toInt() ==
-                                                        (p['id'] as num)
-                                                            .toInt(),
-                                                  );
-                                                  if (hasVariant) {
-                                                    pushProduct(
-                                                      context,
-                                                      widget.storeId,
-                                                      (p['id'] as num).toInt(),
-                                                    );
-                                                  } else {
-                                                    addToCart(
-                                                      (p['id'] as num).toInt(),
-                                                      1,
-                                                    );
-                                                  }
-                                                },
-                                          child: Container(
-                                            width: 28,
-                                            height: 28,
-                                            decoration: BoxDecoration(
-                                              color: AppColors.primary,
-                                              borderRadius:
-                                                  BorderRadius.circular(9),
-                                            ),
-                                            alignment: Alignment.center,
-                                            child: const Icon(
-                                              Icons.add_rounded,
-                                              size: 17,
-                                              color: Colors.white,
-                                            ),
-                                          ),
-                                        ),
-                                      ],
-                                    ),
-                                  ],
-                                ),
-                              ),
-                            ],
-                          ),
-                        );
-                      }, childCount: shown.length),
-                    ),
-                  ),
+                // ═══════ المنتجات مقسمة حسب الفئات ═══════
+                ..._buildCategorySections(),
                 // ═══════ التقييمات ═══════
                 if (reviews.isNotEmpty)
                   SliverToBoxAdapter(
@@ -1029,6 +842,219 @@ class _StoreScreenState extends State<StoreScreen> {
 
   String _stars(dynamic rating) =>
       '★' * ((rating as num?)?.toInt() ?? 0).clamp(0, 5);
+
+  Iterable<Widget> _buildCategorySections() sync* {
+    if (shown.isEmpty) {
+      yield const SliverToBoxAdapter(
+        child: Padding(
+          padding: EdgeInsets.only(top: 60),
+          child: EmptyState(icon: '📦', title: 'لا منتجات بعد'),
+        ),
+      );
+      return;
+    }
+
+    final categoriesToDisplay = catSel < 0 ? cats : [cats[catSel]];
+
+    for (final cat in categoriesToDisplay) {
+      final catProducts = shown.where((p) => p['category_name'] == cat).toList();
+      if (catProducts.isEmpty) continue;
+
+      yield SliverToBoxAdapter(
+        child: Padding(
+          padding: const EdgeInsets.fromLTRB(16, 24, 16, 12),
+          child: Row(
+            children: [
+              Container(
+                width: 4,
+                height: 18,
+                decoration: BoxDecoration(
+                  color: AppColors.primary,
+                  borderRadius: BorderRadius.circular(2),
+                ),
+              ),
+              const SizedBox(width: 8),
+              Text(
+                cat,
+                style: AppType.style(16, weight: FontWeight.w900, color: AppColors.ink),
+              ),
+            ],
+          ),
+        ),
+      );
+
+      yield SliverPadding(
+        padding: const EdgeInsets.symmetric(horizontal: 16),
+        sliver: SliverGrid(
+          gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+            crossAxisCount: 2,
+            mainAxisSpacing: 12,
+            crossAxisSpacing: 12,
+            childAspectRatio: 0.55,
+          ),
+          delegate: SliverChildBuilderDelegate((_, i) {
+            return _buildProductCard(catProducts[i]);
+          }, childCount: catProducts.length),
+        ),
+      );
+    }
+  }
+
+  Widget _buildProductCard(dynamic p) {
+    return GlassCard(
+      onTap: () => pushProduct(
+        context,
+        widget.storeId,
+        (p['id'] as num).toInt(),
+      ),
+      radius: 16,
+      padding: EdgeInsets.zero,
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          AspectRatio(
+            aspectRatio: 3 / 4,
+            child: Stack(
+              fit: StackFit.expand,
+              children: [
+                productImageBox(p['image'], radius: 16),
+                if (p['has_offer'] == true || p['has_offer'] == 1)
+                  Positioned(
+                    top: 8,
+                    right: 8,
+                    child: Container(
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 7,
+                        vertical: 3,
+                      ),
+                      decoration: BoxDecoration(
+                        gradient: AppColors.gradSun,
+                        borderRadius: BorderRadius.circular(8),
+                      ),
+                      child: Text(
+                        'خصم ${_displayPrice(p) > 0 && (p['price'] ?? 0) > 0 ? (((p['price'] as num) - _displayPrice(p)) / (p['price'] as num) * 100).round() : 0}%',
+                        style: AppType.style(
+                          9.5,
+                          color: Colors.white,
+                          weight: FontWeight.w900,
+                        ),
+                      ),
+                    ),
+                  ),
+                if ((p['stock'] ?? 0) <= 0)
+                  Positioned(
+                    top: 8,
+                    left: 8,
+                    child: Container(
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 7,
+                        vertical: 3,
+                      ),
+                      decoration: BoxDecoration(
+                        color: const Color(0xDD0A1120),
+                        borderRadius: BorderRadius.circular(8),
+                      ),
+                      child: Text(
+                        'نفد',
+                        style: AppType.style(
+                          9.5,
+                          color: Colors.white,
+                          weight: FontWeight.w900,
+                        ),
+                      ),
+                    ),
+                  ),
+              ],
+            ),
+          ),
+          Padding(
+            padding: const EdgeInsets.fromLTRB(9, 8, 9, 8),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  p['name'] ?? '',
+                  style: AppType.style(
+                    11.5,
+                    weight: FontWeight.w800,
+                  ),
+                  maxLines: 2,
+                  overflow: TextOverflow.ellipsis,
+                ),
+                if ((p['has_offer'] == true || p['has_offer'] == 1)) ...[
+                  const SizedBox(height: 4),
+                  Text(
+                    formatMoney(p['price']),
+                    style: AppType.style(
+                      9.5,
+                      color: AppColors.muted,
+                      decoration: TextDecoration.lineThrough,
+                    ),
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                  ),
+                ] else const SizedBox(height: 4),
+                Row(
+                  children: [
+                    Expanded(
+                      child: Text(
+                        formatMoney(_displayPrice(p)),
+                        style: AppType.style(
+                          14,
+                          color: AppColors.accent,
+                          weight: FontWeight.w900,
+                        ),
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                      ),
+                    ),
+                    GestureDetector(
+                      onTap: (p['stock'] ?? 0) <= 0
+                          ? null
+                          : () {
+                              final hasVariant = variants.any(
+                                (v) =>
+                                    (v['product_id'] as num? ?? 0)
+                                        .toInt() ==
+                                    (p['id'] as num).toInt(),
+                              );
+                              if (hasVariant) {
+                                pushProduct(
+                                  context,
+                                  widget.storeId,
+                                  (p['id'] as num).toInt(),
+                                );
+                              } else {
+                                addToCart(
+                                  (p['id'] as num).toInt(),
+                                  1,
+                                );
+                              }
+                            },
+                      child: Container(
+                        width: 30,
+                        height: 30,
+                        decoration: BoxDecoration(
+                          color: AppColors.primary,
+                          borderRadius: BorderRadius.circular(10),
+                        ),
+                        alignment: Alignment.center,
+                        child: const Icon(
+                          Icons.add_rounded,
+                          size: 18,
+                          color: Colors.white,
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
 
   double _displayPrice(Map p) {
     final off = p['offer_price'];

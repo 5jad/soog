@@ -12,6 +12,8 @@ import 'package:zaboon/features/admin/screens/admin_shell.dart';
 import 'package:zaboon/core/routing/shell.dart';
 import 'package:zaboon/features/points/screens/points_screen.dart';
 import 'package:zaboon/features/notifications/screens/notifications_screen.dart';
+import 'package:zaboon/features/shop/screens/favorites_screen.dart';
+import 'package:zaboon/features/auth/screens/support_chat_screen.dart';
 
 /// حسابي — معلوماتي، الدخول كتاجر/مندوب/أدمن، الإشعارات، خروج
 class AccountScreen extends StatefulWidget {
@@ -376,13 +378,23 @@ class _AccountScreenState extends State<AccountScreen> {
                 _tile(
                   Icons.favorite_rounded,
                   'المفضلة ❤️',
-                  () => AppState.i.favsReload.value++,
+                  () => Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                      builder: (_) => const FavoritesScreen(),
+                    ),
+                  ),
                 ),
                 _div(),
                 _tile(
                   Icons.help_outline_rounded,
                   'مساعدة ودعم 🎧',
-                  () => toast(context, 'قريباً في التحديث الجاي'),
+                  () => Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                      builder: (_) => const SupportChatScreen(),
+                    ),
+                  ),
                 ),
                 _div(),
                 ListTile(

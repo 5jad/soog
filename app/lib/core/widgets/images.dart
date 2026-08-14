@@ -83,7 +83,7 @@ Widget productImage(String? image, {double size = 80, double radius = 14}) {
 }
 /// صورة منتج تعبّئ مساحة الأب بالكامل (مربعة) — أسلوب Shein للبطاقات
 /// يدعم: base64 / روابط رفع (/uploads) / إيموجي المنتجات
-Widget productImageBox(String? image, {String? base}) {
+Widget productImageBox(String? image, {String? base, double radius = 12.0}) {
   final url = (image ?? '').trim();
   Widget ph(String emoji) => Container(
     decoration: const BoxDecoration(

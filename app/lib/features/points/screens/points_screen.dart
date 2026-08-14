@@ -3,6 +3,7 @@ import 'package:share_plus/share_plus.dart';
 import 'package:zaboon/core/api/api.dart';
 import 'package:zaboon/core/theme/zaboon_design_system.dart';
 import 'package:zaboon/core/widgets/widgets.dart';
+import 'package:zaboon/features/points/screens/interactive_wheel.dart';
 
 /// نقطة الولاء 🎯 + دعوة الأصدقاء + عجلة الحظ
 class PointsScreen extends StatefulWidget {
@@ -50,25 +51,14 @@ class _PointsScreenState extends State<PointsScreen> {
         spinning = false;
         spinnedToday = true;
       });
-      await showSheet(
-        context,
-        Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            const SheetTitle('🎡 عجلة الحظ'),
-            const SizedBox(height: 6),
-            Text(d['points'] > 0 ? '⭐' : '🍀', style: AppType.style(52)),
-            const SizedBox(height: 8),
-            Text(
-              d['points'] > 0 ? 'الفيت ${d['points']} نقطة!' : 'حظ أوفر بكرة',
-              style: AppType.style(17, weight: FontWeight.w900),
-            ),
-            const SizedBox(height: 16),
-            SolidBtn(label: 'تمام', onTap: () => Navigator.pop(context)),
-          ],
+      await showDialog(
+        context: context,
+        barrierDismissible: false,
+        builder: (_) => InteractiveWheelDialog(
+          pointsWon: d['points'] ?? 0,
+          onFinish: () => _load(),
         ),
       );
-      _load();
     } catch (e) {
       if (!mounted) return;
       setState(() => spinning = false);

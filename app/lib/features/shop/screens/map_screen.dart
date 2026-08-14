@@ -36,8 +36,8 @@ Future<List<LatLng>> _fetchPlan(LatLng from, LatLng to) async {
     return [
       for (final p in pts)
         LatLng(
-          ((p as Map)['lat'] as num).toDouble(),
-          (p['lng'] as num).toDouble(),
+          _dbl((p as Map)['lat']),
+          _dbl(p['lng']),
         ),
     ];
   } catch (_) {
@@ -60,8 +60,8 @@ Future<({List<LatLng> pts, double km, double min})> _fetchMultiPlan(
     final out = <LatLng>[
       for (final p in pts)
         LatLng(
-          ((p as Map)['lat'] as num).toDouble(),
-          (p['lng'] as num).toDouble(),
+          _dbl((p as Map)['lat']),
+          _dbl(p['lng']),
         ),
     ];
     return (
@@ -341,8 +341,8 @@ List<Widget> _routeOverlays(List<LatLng> pts, {required bool done}) {
 Future<List<LatLng>> _remainderFrom(Map tr, LatLng from) async {
   final home = (tr['user_lat'] != null && tr['user_lng'] != null)
       ? LatLng(
-          (tr['user_lat'] as num).toDouble(),
-          (tr['user_lng'] as num).toDouble(),
+          _dbl(tr['user_lat']),
+          _dbl(tr['user_lng']),
         )
       : null;
   if (home == null) return [];
@@ -386,8 +386,8 @@ List<LatLng> _pathFrom(Map tr) {
     try {
       path.add(
         LatLng(
-          ((p as Map)['lat'] as num).toDouble(),
-          (p['lng'] as num).toDouble(),
+          _dbl((p as Map)['lat']),
+          _dbl(p['lng']),
         ),
       );
     } catch (_) {}
@@ -437,8 +437,8 @@ class _LiveTrackMapScreenState extends State<LiveTrackMapScreen> {
           data['user_lat'] != null &&
           data['user_lng'] != null) {
         final home = LatLng(
-          (data['user_lat'] as num).toDouble(),
-          (data['user_lng'] as num).toDouble(),
+          _dbl(data['user_lat']),
+          _dbl(data['user_lng']),
         );
         // طلب من أكثر من محل: مسار واحد يمر بكل المحلات ثم بيتي
         final gs = _storesOf(data, listKey: 'group_stores');
@@ -447,8 +447,8 @@ class _LiveTrackMapScreenState extends State<LiveTrackMapScreen> {
             data['courier_lng'] != null) {
           final m = await _fetchMultiPlan(
             LatLng(
-              (data['courier_lat'] as num).toDouble(),
-              (data['courier_lng'] as num).toDouble(),
+              _dbl(data['courier_lat']),
+              _dbl(data['courier_lng']),
             ),
             gs,
             home,
@@ -457,8 +457,8 @@ class _LiveTrackMapScreenState extends State<LiveTrackMapScreen> {
         } else if (data['store_lat'] != null) {
           final plan = await _fetchPlan(
             LatLng(
-              (data['store_lat'] as num).toDouble(),
-              (data['store_lng'] as num).toDouble(),
+              _dbl(data['store_lat']),
+              _dbl(data['store_lng']),
             ),
             home,
           );
@@ -470,8 +470,8 @@ class _LiveTrackMapScreenState extends State<LiveTrackMapScreen> {
           data['courier_lat'] != null &&
           data['courier_lng'] != null) {
         final cp = LatLng(
-          (data['courier_lat'] as num).toDouble(),
-          (data['courier_lng'] as num).toDouble(),
+          _dbl(data['courier_lat']),
+          _dbl(data['courier_lng']),
         );
         final moved = _lastRemPos == null || _hav(_lastRemPos!, cp) > 200;
         final cooled =
@@ -508,8 +508,8 @@ class _LiveTrackMapScreenState extends State<LiveTrackMapScreen> {
     if (tr['courier_lat'] != null)
       pts.add(
         LatLng(
-          (tr['courier_lat'] as num).toDouble(),
-          (tr['courier_lng'] as num).toDouble(),
+          _dbl(tr['courier_lat']),
+          _dbl(tr['courier_lng']),
         ),
       );
     for (final s in _storesOf(tr, listKey: 'group_stores')) {
@@ -518,15 +518,15 @@ class _LiveTrackMapScreenState extends State<LiveTrackMapScreen> {
     if (tr['store_lat'] != null)
       pts.add(
         LatLng(
-          (tr['store_lat'] as num).toDouble(),
-          (tr['store_lng'] as num).toDouble(),
+          _dbl(tr['store_lat']),
+          _dbl(tr['store_lng']),
         ),
       );
     if (tr['user_lat'] != null && tr['user_lng'] != null)
       pts.add(
         LatLng(
-          (tr['user_lat'] as num).toDouble(),
-          (tr['user_lng'] as num).toDouble(),
+          _dbl(tr['user_lat']),
+          _dbl(tr['user_lng']),
         ),
       );
     if (pts.isEmpty) return;
@@ -594,8 +594,8 @@ class _LiveTrackMapScreenState extends State<LiveTrackMapScreen> {
                           if (tr['store_lat'] != null)
                             mMaker(
                               LatLng(
-                                (tr['store_lat'] as num).toDouble(),
-                                (tr['store_lng'] as num).toDouble(),
+                                _dbl(tr['store_lat']),
+                                _dbl(tr['store_lng']),
                               ),
                               mapPin('🏪', AppColors.primaryLight),
                               label: tr['store_name'] ?? 'المتجر',
@@ -606,8 +606,8 @@ class _LiveTrackMapScreenState extends State<LiveTrackMapScreen> {
                                   tr['status'] == 'delivered'))
                             mMaker(
                               LatLng(
-                                (tr['user_lat'] as num).toDouble(),
-                                (tr['user_lng'] as num).toDouble(),
+                                _dbl(tr['user_lat']),
+                                _dbl(tr['user_lng']),
                               ),
                               mapPin('🏠', AppColors.success),
                               label: 'بيتي',
@@ -616,8 +616,8 @@ class _LiveTrackMapScreenState extends State<LiveTrackMapScreen> {
                               tr['courier_lng'] != null)
                             mMaker(
                               LatLng(
-                                (tr['courier_lat'] as num).toDouble(),
-                                (tr['courier_lng'] as num).toDouble(),
+                                _dbl(tr['courier_lat']),
+                                _dbl(tr['courier_lng']),
                               ),
                               mapPin('🛵', AppColors.primary),
                               label: tr['courier_name'] ?? 'المندوب',
@@ -753,8 +753,8 @@ class _CourierMapScreenState extends State<CourierMapScreen> {
     final tr = widget.trip;
     final to = (tr['user_lat'] != null && tr['user_lng'] != null)
         ? LatLng(
-            (tr['user_lat'] as num).toDouble(),
-            (tr['user_lng'] as num).toDouble(),
+            _dbl(tr['user_lat']),
+            _dbl(tr['user_lng']),
           )
         : null;
     if (to == null) return;
@@ -784,8 +784,8 @@ class _CourierMapScreenState extends State<CourierMapScreen> {
     }
     final s = (tr['store_lat'] != null && tr['store_lng'] != null)
         ? LatLng(
-            (tr['store_lat'] as num).toDouble(),
-            (tr['store_lng'] as num).toDouble(),
+            _dbl(tr['store_lat']),
+            _dbl(tr['store_lng']),
           )
         : null;
     final f = from ?? ((_mlat != null) ? LatLng(_mlat!, _mlng!) : s);
@@ -817,7 +817,7 @@ class _CourierMapScreenState extends State<CourierMapScreen> {
     final pts = <LatLng>[];
     void add(Object? lat, Object? lng) {
       if (lat is num && lng is num)
-        pts.add(LatLng((lat as num).toDouble(), (lng as num).toDouble()));
+        pts.add(LatLng(_dbl(lat), _dbl(lng)));
     }
 
     add(tr['user_lat'], tr['user_lng']);
@@ -906,14 +906,14 @@ class _CourierMapScreenState extends State<CourierMapScreen> {
     final tr = widget.trip;
     LatLng? store = (tr['store_lat'] != null)
         ? LatLng(
-            (tr['store_lat'] as num).toDouble(),
-            (tr['store_lng'] as num).toDouble(),
+            _dbl(tr['store_lat']),
+            _dbl(tr['store_lng']),
           )
         : null;
     LatLng? user = (tr['user_lat'] != null && tr['user_lng'] != null)
         ? LatLng(
-            (tr['user_lat'] as num).toDouble(),
-            (tr['user_lng'] as num).toDouble(),
+            _dbl(tr['user_lat']),
+            _dbl(tr['user_lng']),
           )
         : null;
     return Scaffold(
@@ -963,8 +963,8 @@ class _CourierMapScreenState extends State<CourierMapScreen> {
                         (e.$2 as Map)['store_lng'] is num)
                       mMaker(
                         LatLng(
-                          ((e.$2 as Map)['store_lat'] as num).toDouble(),
-                          ((e.$2 as Map)['store_lng'] as num).toDouble(),
+                          _dbl((e.$2 as Map)['store_lat']),
+                          _dbl((e.$2 as Map)['store_lng']),
                         ),
                         mapPin('🏪', AppColors.primaryLight),
                         label: shortName(
@@ -1351,8 +1351,8 @@ class _LiveTrackCardState extends State<LiveTrackCard> {
           data['user_lat'] != null &&
           data['user_lng'] != null) {
         final home = LatLng(
-          (data['user_lat'] as num).toDouble(),
-          (data['user_lng'] as num).toDouble(),
+          _dbl(data['user_lat']),
+          _dbl(data['user_lng']),
         );
         final gs = _storesOf(data, listKey: 'group_stores');
         if (gs.isNotEmpty &&
@@ -1360,8 +1360,8 @@ class _LiveTrackCardState extends State<LiveTrackCard> {
             data['courier_lng'] != null) {
           final m = await _fetchMultiPlan(
             LatLng(
-              (data['courier_lat'] as num).toDouble(),
-              (data['courier_lng'] as num).toDouble(),
+              _dbl(data['courier_lat']),
+              _dbl(data['courier_lng']),
             ),
             gs,
             home,
@@ -1370,8 +1370,8 @@ class _LiveTrackCardState extends State<LiveTrackCard> {
         } else if (data['store_lat'] != null) {
           final plan = await _fetchPlan(
             LatLng(
-              (data['store_lat'] as num).toDouble(),
-              (data['store_lng'] as num).toDouble(),
+              _dbl(data['store_lat']),
+              _dbl(data['store_lng']),
             ),
             home,
           );
@@ -1383,8 +1383,8 @@ class _LiveTrackCardState extends State<LiveTrackCard> {
           data['courier_lat'] != null &&
           data['courier_lng'] != null) {
         final cp = LatLng(
-          (data['courier_lat'] as num).toDouble(),
-          (data['courier_lng'] as num).toDouble(),
+          _dbl(data['courier_lat']),
+          _dbl(data['courier_lng']),
         );
         final moved = _lastRemPos == null || _hav(_lastRemPos!, cp) > 200;
         final cooled =
@@ -1416,15 +1416,15 @@ class _LiveTrackCardState extends State<LiveTrackCard> {
         if (data['store_lat'] != null)
           pts.add(
             LatLng(
-              (data['store_lat'] as num).toDouble(),
-              (data['store_lng'] as num).toDouble(),
+              _dbl(data['store_lat']),
+              _dbl(data['store_lng']),
             ),
           );
         if (data['user_lat'] != null && data['user_lng'] != null)
           pts.add(
             LatLng(
-              (data['user_lat'] as num).toDouble(),
-              (data['user_lng'] as num).toDouble(),
+              _dbl(data['user_lat']),
+              _dbl(data['user_lng']),
             ),
           );
         if (pts.isNotEmpty) {
@@ -1490,15 +1490,15 @@ class _LiveTrackCardState extends State<LiveTrackCard> {
                     if (tr!['store_lat'] != null)
                       pts.add(
                         LatLng(
-                          (tr!['store_lat'] as num).toDouble(),
-                          (tr!['store_lng'] as num).toDouble(),
+                          _dbl(tr!['store_lat']),
+                          _dbl(tr!['store_lng']),
                         ),
                       );
                     if (tr!['user_lat'] != null && tr!['user_lng'] != null)
                       pts.add(
                         LatLng(
-                          (tr!['user_lat'] as num).toDouble(),
-                          (tr!['user_lng'] as num).toDouble(),
+                          _dbl(tr!['user_lat']),
+                          _dbl(tr!['user_lng']),
                         ),
                       );
                     if (pts.isNotEmpty) {
@@ -1530,8 +1530,8 @@ class _LiveTrackCardState extends State<LiveTrackCard> {
                     if (tr['store_lat'] != null)
                       mMaker(
                         LatLng(
-                          (tr['store_lat'] as num).toDouble(),
-                          (tr['store_lng'] as num).toDouble(),
+                          _dbl(tr['store_lat']),
+                          _dbl(tr['store_lng']),
                         ),
                         mapPin('🏪', AppColors.primaryLight),
                         label: shortName(tr['store_name'] as String?),
@@ -1541,8 +1541,8 @@ class _LiveTrackCardState extends State<LiveTrackCard> {
                         tr['status'] != 'delivered')
                       mMaker(
                         LatLng(
-                          (tr['courier_lat'] as num).toDouble(),
-                          (tr['courier_lng'] as num).toDouble(),
+                          _dbl(tr['courier_lat']),
+                          _dbl(tr['courier_lng']),
                         ),
                         mapPin('🛵', AppColors.primary),
                         label: tr['courier_name'] ?? 'المندوب',
@@ -1550,8 +1550,8 @@ class _LiveTrackCardState extends State<LiveTrackCard> {
                     if (tr['user_lat'] != null && tr['user_lng'] != null)
                       mMaker(
                         LatLng(
-                          (tr['user_lat'] as num).toDouble(),
-                          (tr['user_lng'] as num).toDouble(),
+                          _dbl(tr['user_lat']),
+                          _dbl(tr['user_lng']),
                         ),
                         mapPin('🏠', AppColors.success),
                         label: 'بيتي',
@@ -1573,8 +1573,8 @@ class _LiveTrackCardState extends State<LiveTrackCard> {
               : _etaText(
                   _remain.isNotEmpty ? _remain : _plan,
                   LatLng(
-                    (tr['courier_lat'] as num).toDouble(),
-                    (tr['courier_lng'] as num).toDouble(),
+                    _dbl(tr['courier_lat']),
+                    _dbl(tr['courier_lng']),
                   ),
                   tr,
                 ),
@@ -1592,4 +1592,13 @@ class _LiveTrackCardState extends State<LiveTrackCard> {
         : '${mins}د';
     return '${tr['courier_name'] ?? 'المندوب'} — ${tr['courier_phone'] ?? ''} · المتبقي ${e.km.toStringAsFixed(1)} كم · وصول تقريبي $m';
   }
+}
+
+
+double _dbl(dynamic v) {
+  if (v == null) return 0.0;
+  if (v is double) return v;
+  if (v is int) return v.toDouble();
+  if (v is String) return double.tryParse(v) ?? 0.0;
+  try { return (v as num).toDouble(); } catch (_) { return 0.0; }
 }

@@ -549,7 +549,9 @@ class _OrderDetailScreenState extends State<OrderDetailScreen> {
     final order = Order.fromJson(Map<String, dynamic>.from(o as Map));
     final status = order.status;
     final items = (o['items'] ?? []) as List;
+    // ignore: unused_local_variable
     final idx = stepIdx;
+    // ignore: unused_local_variable
     final cancelled = status == 'cancelled' || status == 'returned';
     final trip = _trip == null ? null : Map<String, dynamic>.from(_trip!);
 
@@ -558,88 +560,8 @@ class _OrderDetailScreenState extends State<OrderDetailScreen> {
       body: ListView(
         padding: const EdgeInsets.fromLTRB(16, 6, 16, 30),
         children: [
-          // خط الحالة
-          if (!cancelled)
-            GlassCard(
-              child: Column(
-                children: [
-                  Row(
-                    children: List.generate(5, (i) {
-                      final done = i <= idx;
-                      return Expanded(
-                        child: Column(
-                          children: [
-                            Container(
-                              padding: const EdgeInsets.all(7),
-                              decoration: BoxDecoration(
-                                color: done ? AppColors.primary : Colors.white,
-                                shape: BoxShape.circle,
-                                border: Border.all(
-                                  color: done
-                                      ? AppColors.primary
-                                      : AppColors.line,
-                                ),
-                              ),
-                              child: Icon(
-                                done
-                                    ? Icons.check_rounded
-                                    : Icons.circle_outlined,
-                                size: 13,
-                                color: done ? Colors.white : AppColors.muted,
-                              ),
-                            ),
-                            Text(
-                              steps[i] == 'new'
-                                  ? 'جديد'
-                                  : steps[i] == 'preparing'
-                                  ? 'تجهيز'
-                                  : steps[i] == 'ready'
-                                  ? 'جاهز'
-                                  : steps[i] == 'delivering'
-                                  ? 'استلام'
-                                  : 'تسليم',
-                              style: AppType.style(
-                                9,
-                                color: done
-                                    ? AppColors.primary
-                                    : AppColors.muted,
-                                weight: FontWeight.w800,
-                              ),
-                            ),
-                          ],
-                        ),
-                      );
-                    }),
-                  ),
-                  const SizedBox(height: 10),
-                  Text(
-                    statusLabel(status),
-                    style: AppType.style(
-                      14,
-                      color: statusColor(status),
-                      weight: FontWeight.w900,
-                    ),
-                  ),
-                  Text(
-                    '${timeAgo(order.createdAt)} · ${order.itemsCount} صنف',
-                    style: AppType.style(11, color: AppColors.muted),
-                  ),
-                ],
-              ),
-            )
-          else
-            GlassCard(
-              child: Center(
-                child: Text(
-                  'الطلب ${statusLabel(status)}',
-                  style: AppType.style(
-                    15,
-                    color: statusColor(status),
-                    weight: FontWeight.w900,
-                  ),
-                ),
-              ),
-            ),
+          // تايم لاين الحالة البصري
+          _OrderTimeline(status: status, order: order),
           const SizedBox(height: 14),
           // المنتجات
           GlassCard(
@@ -780,23 +702,6 @@ class _OrderDetailScreenState extends State<OrderDetailScreen> {
           const SizedBox(height: 20),
           // إجراءات الزبون
           if (widget.role == 'customer') ...[
-            // الخريطة الحية تظهر أوتوماتيك: من قبول المندوب إلى التسليم
-            if (status == 'delivering' ||
-                status == 'picked' ||
-                status == 'delivered')
-              LiveTrackCard(orderId: widget.orderId),
-            const SizedBox(height: 14),
-            if (status == 'delivering' || status == 'picked')
-              SolidBtn(
-                label: 'شاهد المندوب على الخريطة 🗺',
-                color: const Color(0xFF22C55E),
-                onTap: () => Navigator.push(
-                  context,
-                  MaterialPageRoute(
-                    builder: (_) => LiveTrackMapScreen(orderId: widget.orderId),
-                  ),
-                ),
-              ),
             const SizedBox(height: 10),
             if (status == 'pending' || status == 'accepted')
               SolidBtn(
@@ -1280,6 +1185,296 @@ class _OrderDetailScreenState extends State<OrderDetailScreen> {
     } catch (_) {
       return '';
     }
+  }
+}
+
+// ══════════════════════════════════════════════════
+// تايم لاين بصري متحرك — يعرض مراحل الطلب للزبون
+// ══════════════════════════════════════════════════
+class _OrderTimeline extends StatefulWidget {
+  final String status;
+  final Order order;
+  const _OrderTimeline({required this.status, required this.order});
+
+  @override
+  State<_OrderTimeline> createState() => _OrderTimelineState();
+}
+
+class _OrderTimelineState extends State<_OrderTimeline>
+    with SingleTickerProviderStateMixin {
+  late AnimationController _pulse;
+
+  // مراحل الطلب مرتبة بالتسلسل الصحيح
+  static const _stages = [
+    (
+      statuses: ['new', 'pending'],
+      icon: '📋',
+      label: 'تم استلام الطلب',
+      sub: 'وصل طلبك للمتجر',
+    ),
+    (
+      statuses: ['accepted'],
+      icon: '✅',
+      label: 'تم قبول الطلب',
+      sub: 'التاجر قبل طلبك',
+    ),
+    (
+      statuses: ['preparing', 'ready'],
+      icon: '📦',
+      label: 'بالمخزن والتجهيز',
+      sub: 'يتجهز طلبك الحين',
+    ),
+    (
+      statuses: ['picked', 'delivering'],
+      icon: '🛵',
+      label: 'المندوب متوجه إليك',
+      sub: 'طلبك بالطريق لبيتك',
+    ),
+    (
+      statuses: ['delivered'],
+      icon: '🎉',
+      label: 'تم التسليم',
+      sub: 'وصل طلبك، تقدر تقيّم',
+    ),
+  ];
+
+  int get _currentIdx {
+    for (var i = _stages.length - 1; i >= 0; i--) {
+      if (_stages[i].statuses.contains(widget.status)) return i;
+    }
+    return -1; // ملغي أو غير معروف
+  }
+
+  bool get _isCancelled =>
+      widget.status == 'cancelled' || widget.status == 'returned';
+
+  @override
+  void initState() {
+    super.initState();
+    _pulse = AnimationController(
+      vsync: this,
+      duration: const Duration(milliseconds: 900),
+    )..repeat(reverse: true);
+  }
+
+  @override
+  void dispose() {
+    _pulse.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    if (_isCancelled) {
+      return GlassCard(
+        padding: const EdgeInsets.symmetric(vertical: 18, horizontal: 16),
+        child: Row(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            const Text('❌', style: TextStyle(fontSize: 22)),
+            const SizedBox(width: 10),
+            Text(
+              'الطلب ${widget.status == 'returned' ? 'مُرتجع' : 'مُلغى'}',
+              style: AppType.style(
+                15,
+                color: AppColors.danger,
+                weight: FontWeight.w900,
+              ),
+            ),
+          ],
+        ),
+      );
+    }
+
+    final cur = _currentIdx;
+
+    return GlassCard(
+      padding: const EdgeInsets.fromLTRB(16, 20, 16, 16),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          // عنوان البطاقة
+          Row(
+            children: [
+              const Icon(
+                Icons.local_shipping_rounded,
+                size: 18,
+                color: AppColors.primary,
+              ),
+              const SizedBox(width: 7),
+              Text(
+                'حالة الطلب',
+                style: AppType.style(
+                  13.5,
+                  weight: FontWeight.w900,
+                  color: AppColors.ink,
+                ),
+              ),
+              const Spacer(),
+              Text(
+                timeAgo(widget.order.createdAt),
+                style: AppType.style(10.5, color: AppColors.muted),
+              ),
+            ],
+          ),
+          const SizedBox(height: 18),
+          // التايم لاين
+          for (var i = 0; i < _stages.length; i++) ...[
+            _StageRow(
+              emoji: _stages[i].icon,
+              label: _stages[i].label,
+              sub: _stages[i].sub,
+              state: i < cur
+                  ? _StageState.done
+                  : i == cur
+                  ? _StageState.active
+                  : _StageState.pending,
+              pulse: _pulse,
+              isLast: i == _stages.length - 1,
+            ),
+          ],
+        ],
+      ),
+    );
+  }
+}
+
+enum _StageState { done, active, pending }
+
+class _StageRow extends StatelessWidget {
+  final String emoji;
+  final String label;
+  final String sub;
+  final _StageState state;
+  final AnimationController pulse;
+  final bool isLast;
+
+  const _StageRow({
+    required this.emoji,
+    required this.label,
+    required this.sub,
+    required this.state,
+    required this.pulse,
+    required this.isLast,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final isDone = state == _StageState.done;
+    final isActive = state == _StageState.active;
+    final isPending = state == _StageState.pending;
+    return Row(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        // العمود الأيمن: النقطة + الخط
+        SizedBox(
+          width: 36,
+          child: Column(
+            children: [
+              // النقطة الدائرية
+              if (isActive)
+                AnimatedBuilder(
+                  animation: pulse,
+                  builder: (_, __) => Container(
+                    width: 36,
+                    height: 36,
+                    decoration: BoxDecoration(
+                      shape: BoxShape.circle,
+                      color: AppColors.primary
+                          .withValues(alpha: 0.12 + pulse.value * 0.1),
+                    ),
+                    alignment: Alignment.center,
+                    child: Container(
+                      width: 22,
+                      height: 22,
+                      decoration: const BoxDecoration(
+                        shape: BoxShape.circle,
+                        color: AppColors.primary,
+                      ),
+                      alignment: Alignment.center,
+                      child: Text(emoji, style: const TextStyle(fontSize: 11)),
+                    ),
+                  ),
+                )
+              else
+                Container(
+                  width: 36,
+                  height: 36,
+                  decoration: BoxDecoration(
+                    shape: BoxShape.circle,
+                    color: isDone
+                        ? AppColors.success.withValues(alpha: .12)
+                        : AppColors.bg,
+                    border: isDone
+                        ? null
+                        : Border.all(color: AppColors.line, width: 1.5),
+                  ),
+                  alignment: Alignment.center,
+                  child: isDone
+                      ? const Icon(
+                          Icons.check_rounded,
+                          size: 17,
+                          color: AppColors.success,
+                        )
+                      : Text(
+                          emoji,
+                          style: TextStyle(
+                            fontSize: 13,
+                            color: isPending
+                                ? AppColors.muted.withValues(alpha: .5)
+                                : null,
+                          ),
+                        ),
+                ),
+              // الخط الرابط
+              if (!isLast)
+                Container(
+                  width: 2,
+                  height: 32,
+                  margin: const EdgeInsets.symmetric(vertical: 2),
+                  decoration: BoxDecoration(
+                    borderRadius: BorderRadius.circular(2),
+                    color: isDone
+                        ? AppColors.success.withValues(alpha: .4)
+                        : AppColors.line,
+                  ),
+                ),
+            ],
+          ),
+        ),
+        const SizedBox(width: 12),
+        // النص
+        Expanded(
+          child: Padding(
+            padding: const EdgeInsets.only(top: 7),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  label,
+                  style: AppType.style(
+                    13,
+                    weight: FontWeight.w900,
+                    color: isPending ? AppColors.muted : AppColors.ink,
+                  ),
+                ),
+                if (isActive || isDone) ...[
+                  const SizedBox(height: 2),
+                  Text(
+                    sub,
+                    style: AppType.style(
+                      10.5,
+                      color: isActive ? AppColors.primary : AppColors.muted,
+                    ),
+                  ),
+                ],
+                SizedBox(height: isLast ? 0 : 20),
+              ],
+            ),
+          ),
+        ),
+      ],
+    );
   }
 }
 

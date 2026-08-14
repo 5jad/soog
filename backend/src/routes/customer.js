@@ -194,12 +194,12 @@ r.post('/orders', async (req, res) => {
   const fee = subtotal >= (store.free_delivery_min || 50000) ? 0 : store.delivery_fee;
   const baseDiscount = subtotal >= 50000 ? 5000 : 0;
 
-  // ── حارس التحقق: السيرفر يقرر متى يلزم، والعميل لا يتجاوزه ──
-  const windowMin = await smartRule('verify_window_min', 10);
-  if (await phoneVerifyNeeded(req.user.id, subtotal)) {
-    if (!(await freshVerification(req.user.id, windowMin)))
-      return res.status(403).json({ error: 'أكّد رقم هاتفك أولاً عبر تلغرام', verify_required: true });
-  }
+  // ── تم إيقاف حارس التحقق بناء على طلب المستخدم (التحقق يتم عند التسجيل) ──
+  // const windowMin = await smartRule('verify_window_min', 10);
+  // if (await phoneVerifyNeeded(req.user.id, subtotal)) {
+  //   if (!(await freshVerification(req.user.id, windowMin)))
+  //     return res.status(403).json({ error: 'أكّد رقم هاتفك أولاً عبر تلغرام', verify_required: true });
+  // }
 
   // ── الكوبون ──
   let coupon = null, couponDiscount = 0;
@@ -278,6 +278,11 @@ r.post('/orders/:id/rate', async (req, res) => {
     [o.id, o.store_id, req.user.id, rating, comment]))[0];
   await q(`UPDATE stores SET rating_avg=ROUND((rating_avg*rating_count+$1)::numeric/(rating_count+1),2), rating_count=rating_count+1 WHERE id=$2`,
     [rating, o.store_id]);
+  
+  // Reward 5 points for the review
+  await q(`UPDATE users SET points = points + 5 WHERE id=$1`, [req.user.id]);
+  await q(`INSERT INTO point_transactions (user_id, points, type, note, ref) VALUES ($1, 5, 'earn', 'مكافأة تقييم الطلب ⭐', $2)`, [req.user.id, o.id]);
+
   res.json({ review: rev });
 });
 
@@ -490,6 +495,31 @@ r.post('/notifications/:id/read', async (req, res) => {
 r.delete('/notifications/:id', async (req, res) => {
   await q(`DELETE FROM notifications WHERE id=$1 AND user_id=$2`, [req.params.id, req.user.id]);
   res.json({ ok: true });
+});
+
+// ═══════════ الدعم الفني الذكي (AI) ═══════════
+r.post('/support/chat', async (req, res) => {
+  const { message } = req.body;
+  
+  // Here we can integrate with Google Gemini or OpenAI API later.
+  // For now, return a generic AI response mimicking a helpful assistant.
+  const lowerMsg = String(message || '').toLowerCase();
+  let reply = 'فهمت سؤالك، حالياً آني مساعد ذكي تحت التجربة. تكدر تسألني عن طلباتك أو كيفية استخدام المنصة!';
+  
+  if (lowerMsg.includes('طلب') || lowerMsg.includes('وين')) {
+    reply = 'تكدر تتابع حالة طلبك من قسم "طلباتي" بحسابك، واذا الطلب ويه المندوب تكدر تتبع موقعه عالخريطة.';
+  } else if (lowerMsg.includes('نقط') || lowerMsg.includes('نقاط')) {
+    reply = 'نظام النقاط يخليك تجمع نقاط من كل طلب (1 نقطة لكل 1000 دينار)، وتكدر تحول كل 100 نقطة إلى خصم 1000 دينار من سلتك الجاية!';
+  } else if (lowerMsg.includes('شكرا') || lowerMsg.includes('ممنون')) {
+    reply = 'تدلل حبيبي، بأي وقت اني موجود لخدمتك!';
+  } else if (lowerMsg.includes('مرحبا') || lowerMsg.includes('هلا')) {
+    reply = 'أهلاً بيك يا غالي! شلون أكدر أساعدك اليوم؟';
+  }
+
+  // Simulate network delay for realistic AI feeling
+  await new Promise(resolve => setTimeout(resolve, 800));
+
+  res.json({ reply });
 });
 
 export default r;

@@ -13,6 +13,12 @@ class SolidBtn extends StatelessWidget {
 
   /// اهتزاز خفيف عند الضغط — للأزرار الحرجة فقط (إتمام/أضف للسلة) حتى لا يخزّز
   final bool haptic;
+
+  /// true: الزر يملأ عرض الوالد كاملاً (افتراضي).
+  /// false: زر مضغوط بعرض النص — ضروري داخل Row (وإلا width: double.infinity
+  /// داخل صف بلا Expanded يرمي BoxConstraints forces an infinite width
+  /// ويسقط الشاشة كلها).
+  final bool expanded;
   const SolidBtn({
     super.key,
     required this.label,
@@ -21,6 +27,7 @@ class SolidBtn extends StatelessWidget {
     this.disabled = false,
     this.color,
     this.haptic = false,
+    this.expanded = true,
   });
 
   @override
@@ -45,7 +52,7 @@ class SolidBtn extends StatelessWidget {
               },
         child: SizedBox(
           height: 52,
-          width: double.infinity,
+          width: expanded ? double.infinity : null,
           child: Center(
             child: loading
                 ? const SizedBox(

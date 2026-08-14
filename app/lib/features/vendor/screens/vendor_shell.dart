@@ -628,6 +628,7 @@ class _ProductsTabState extends State<_ProductsTab> {
                 SolidBtn(
                   label: '+ منتج',
                   color: AppColors.primary,
+                  expanded: false,
                   onTap: addProduct,
                 ),
               ],

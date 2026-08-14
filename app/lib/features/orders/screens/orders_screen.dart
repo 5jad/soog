@@ -159,6 +159,34 @@ class _OrderListScreenState extends State<OrderListScreen> {
         ? orders
         : orders.where((o) => selGroup.$2.contains(o['status'])).toList();
 
+    late List displayList = [];
+    if (widget.role == 'customer') {
+      final grouped = <String, List<Map>>{};
+      for (final o in list) {
+        final gId = o['group_id']?.toString();
+        if (gId != null && gId.isNotEmpty) {
+          grouped.putIfAbsent(gId, () => []).add(Map<String, dynamic>.from(o as Map));
+        } else {
+          displayList.add(Map<String, dynamic>.from(o as Map));
+        }
+      }
+      for (final gList in grouped.values) {
+        if (gList.length == 1) {
+          displayList.add(gList.first);
+        } else {
+          displayList.add({'is_group': true, 'orders': gList});
+        }
+      }
+      // ترتيب حسب الأحدث
+      displayList.sort((a, b) {
+        final aTime = a['is_group'] == true ? a['orders'][0]['created_at'] : a['created_at'];
+        final bTime = b['is_group'] == true ? b['orders'][0]['created_at'] : b['created_at'];
+        return (bTime ?? '').compareTo(aTime ?? '');
+      });
+    } else {
+      displayList = list;
+    }
+
     Widget body;
     if (loading) {
       body = const Loader();
@@ -178,11 +206,16 @@ class _OrderListScreenState extends State<OrderListScreen> {
         color: AppColors.primary,
         child: ListView.separated(
           padding: const EdgeInsets.fromLTRB(16, 6, 16, 24),
-          itemCount: list.length + (hasMore ? 1 : 0),
+          itemCount: displayList.length + (hasMore ? 1 : 0),
           separatorBuilder: (_, __) => const SizedBox(height: 10),
           itemBuilder: (_, i) {
-            if (i < list.length)
-              return _orderCard(Map<String, dynamic>.from(list[i] as Map));
+            if (i < displayList.length) {
+              final item = Map<String, dynamic>.from(displayList[i] as Map);
+              if (item['is_group'] == true) {
+                return _groupOrderCard(List<Map>.from(item['orders'] as List));
+              }
+              return _orderCard(item);
+            }
             return Padding(
               padding: const EdgeInsets.symmetric(vertical: 6),
               child: GlassCard(
@@ -222,6 +255,107 @@ class _OrderListScreenState extends State<OrderListScreen> {
           if (widget.role == 'customer') _filterBar(),
           Expanded(child: body),
         ],
+      ),
+    );
+  }
+
+  void _openGroup(List<Map> groupOrders) {
+    Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (_) => Scaffold(
+          appBar: AppBar(title: const ScreenTitle(Icons.layers_rounded, 'الطلبية المشتركة')),
+          body: ListView.separated(
+            padding: const EdgeInsets.all(16),
+            itemCount: groupOrders.length,
+            separatorBuilder: (_, __) => const SizedBox(height: 10),
+            itemBuilder: (_, i) => _orderCard(Map<String, dynamic>.from(groupOrders[i])),
+          ),
+        ),
+      ),
+    );
+  }
+
+  /// بطاقة الطلبية المشتركة (تضم عدة محلات)
+  Widget _groupOrderCard(List<Map> groupOrders) {
+    double totalAmt = 0;
+    int itemsCount = 0;
+    for (final o in groupOrders) {
+      final order = Order.fromJson(Map<String, dynamic>.from(o));
+      totalAmt += order.total;
+      itemsCount += (o['items'] as List?)?.length ?? 0;
+    }
+    final first = groupOrders.first;
+    
+    return GestureDetector(
+      onTap: () => _openGroup(groupOrders),
+      child: Container(
+        padding: const EdgeInsets.all(13),
+        decoration: BoxDecoration(
+          color: Colors.white,
+          borderRadius: BorderRadius.circular(20),
+          border: Border.all(color: AppColors.line),
+          boxShadow: const [
+            BoxShadow(
+              color: Color(0x0D0A1120),
+              blurRadius: 14,
+              offset: Offset(0, 4),
+            ),
+          ],
+        ),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Row(
+              children: [
+                const Icon(Icons.shopping_bag_rounded, color: AppColors.primary, size: 24),
+                const SizedBox(width: 10),
+                Expanded(
+                  child: Text(
+                    'طلبية مشتركة (${groupOrders.length} محلات)',
+                    style: AppType.style(14, weight: FontWeight.w900),
+                  ),
+                ),
+                Text(
+                  timeAgo(first['created_at']),
+                  style: AppType.style(10.5, color: AppColors.muted),
+                ),
+              ],
+            ),
+            const SizedBox(height: 12),
+            Row(
+              children: [
+                Text(
+                  formatMoney(totalAmt),
+                  style: AppType.style(16, color: AppColors.accent, weight: FontWeight.w900),
+                ),
+                const SizedBox(width: 10),
+                Text(
+                  '$itemsCount صنف الإجمالي',
+                  style: AppType.style(11, color: AppColors.muted, weight: FontWeight.w700),
+                ),
+                const Spacer(),
+                Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+                  decoration: BoxDecoration(
+                    color: AppColors.primary.withOpacity(0.1),
+                    borderRadius: BorderRadius.circular(999),
+                  ),
+                  child: Row(
+                    children: [
+                      Text(
+                        'عرض المحلات',
+                        style: AppType.style(11, color: AppColors.primary, weight: FontWeight.w800),
+                      ),
+                      const SizedBox(width: 4),
+                      const Icon(Icons.arrow_forward_ios_rounded, size: 10, color: AppColors.primary),
+                    ],
+                  ),
+                ),
+              ],
+            ),
+          ],
+        ),
       ),
     );
   }

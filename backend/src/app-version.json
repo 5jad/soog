@@ -1,7 +1,7 @@
 {
-  "version": "1.1.9",
-  "build": 42,
-  "changelog": "إصلاح شاشة الخريطة بالكامل + تحديث التايم لاين",
+  "version": "1.1.10",
+  "build": 43,
+  "changelog": "تجميع الطلبات المشتركة بصفحة الزبون",
   "download_url": "/download",
-  "updated_at": "2026-08-14"
+  "updated_at": "2026-08-15"
 }

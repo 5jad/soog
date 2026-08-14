@@ -3,6 +3,7 @@ import path from 'path';
 import crypto from 'crypto';
 import { fileURLToPath } from 'url';
 import sharp from 'sharp';
+import { q } from './db.js';
 
 // ═══════════ تخزين صور مركزي: base64 → ملف مخدوم في public/uploads ═══════════
 // يستخدمه routes/uploads.js (رفع مباشر) وscripts/migrate-images.js (تحويل الموجودة)
@@ -44,7 +45,18 @@ export async function storeImage(dataUri) {
     try {
       await fs.promises.writeFile(path.join(UPLOAD_DIR, name), out);
     } catch (_) {
-      url = `data:image/jpeg;base64,${out.toString('base64')}`;
+      // بيئات serverless (Vercel): القرص غير قابل للكتابة → نخزن في القاعدة
+      // ونخدّمها من هناك عبر /uploads/:name (الجدول uploaded_images)
+      try {
+        await q(
+          `INSERT INTO uploaded_images (name, bytes, mime) VALUES ($1,$2,$3)
+           ON CONFLICT (name) DO UPDATE SET bytes=EXCLUDED.bytes, mime=EXCLUDED.mime`,
+          [name, out, 'image/jpeg'],
+        );
+      } catch (e) {
+        console.error('storeImage: فشل حفظ الصورة في القاعدة —', e.message);
+        url = `data:image/jpeg;base64,${out.toString('base64')}`;
+      }
     }
     return url;
   } catch (_) {

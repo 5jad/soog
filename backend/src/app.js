@@ -34,7 +34,24 @@ app.use(cors());
 app.use(express.json({ limit: '20mb' }));
 app.use(express.urlencoded({ extended: true }));
 
-// الصور المرفوعة من معرض الجهاز
+// الصور المرفوعة من معرض الجهاز — ملفات القرص أولاً، ثم القاعدة (بيئات serverless)
+app.get('/uploads/:name', async (req, res) => {
+  const file = path.join(PUBLIC_DIR, 'uploads', path.basename(req.params.name));
+  if (fs.existsSync(file)) return res.sendFile(file);
+  try {
+    const { one } = await import('./db.js');
+    const row = await one(
+      'SELECT bytes, mime FROM uploaded_images WHERE name=$1',
+      [req.params.name],
+    );
+    if (!row) return res.status(404).json({ error: 'الصورة غير موجودة' });
+    res.setHeader('Content-Type', row.mime || 'image/jpeg');
+    res.setHeader('Cache-Control', 'public, max-age=31536000, immutable');
+    res.send(Buffer.isBuffer(row.bytes) ? row.bytes : Buffer.from(row.bytes));
+  } catch (e) {
+    res.status(500).json({ error: 'تعذر جلب الصورة' });
+  }
+});
 app.use('/uploads', express.static(path.join(PUBLIC_DIR, 'uploads')));
 app.use('/api/uploads', uploadRoutes);
 

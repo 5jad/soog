@@ -27,6 +27,7 @@ const ensures = [
   ["ALTER TABLE stores ADD COLUMN IF NOT EXISTS on_vacation BOOLEAN NOT NULL DEFAULT false", "stores.on_vacation"],
   ["ALTER TABLE stores ADD COLUMN IF NOT EXISTS status TEXT NOT NULL DEFAULT 'approved'", "stores.status"],
   ["ALTER TABLE stores ADD COLUMN IF NOT EXISTS is_open BOOLEAN NOT NULL DEFAULT true", "stores.is_open"],
+  ["CREATE TABLE IF NOT EXISTS uploaded_images (name TEXT PRIMARY KEY, bytes BYTEA NOT NULL, mime TEXT NOT NULL DEFAULT 'image/jpeg', created_at TIMESTAMPTZ NOT NULL DEFAULT now())", "uploaded_images (جدول صور القاعدة)"],
 ];
 
 for (const [sql, label] of ensures) {

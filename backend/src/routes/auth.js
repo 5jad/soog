@@ -21,6 +21,11 @@ r.post('/register-start', async (req, res) => {
   const phone = String(req.body.phone || '').replace(/\D/g, '');
   if (!/^0[0-9]{9,14}$/.test(phone)) return res.status(400).json({ error: 'رقم الهاتف غير صحيح' });
 
+  // الدور مطلوب من الـ placeholder فقط — أي قيمة خارج القائمة تُرفض
+  const role = String(req.body.role || 'customer');
+  if (!['customer', 'vendor'].includes(role))
+    return res.status(400).json({ error: 'نوع الحساب غير صالح' });
+
   // حساب موجود → لا داعي للتحقق — سجّل دخول مباشرة
   const existing = await one('SELECT id FROM users WHERE phone=$1', [phone]);
   if (existing) return res.status(400).json({ error: 'هذا الرقم عليه حساب — سجّل دخول مباشرة' });
@@ -37,7 +42,7 @@ r.post('/register-start', async (req, res) => {
 
   const placeholder = 'tg-await-' + randomBytes(8).toString('hex');
   const user = (await q(`INSERT INTO users (phone, name, role, verified)
-                         VALUES ($1,'','customer',false) RETURNING *`, [placeholder]))[0];
+                         VALUES ($1,'',$2,false) RETURNING *`, [placeholder, role]))[0];
 
   const token = await createPhoneVerification({ userId: user.id, phone, purpose: 'register', ip });
   res.json({ token, bot_username: process.env.TELEGRAM_BOT_USERNAME || 'soog_otp_bot', expires_in: 600 });

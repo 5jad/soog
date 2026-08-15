@@ -586,7 +586,7 @@ Color statusColor(String status) => switch (status) {
       'ready'                             => AppColors.cyan,
       'picked' || 'delivering'            => AppColors.primaryLight,
       'delivered'                         => AppColors.success,
-      'cancelled'                         => AppColors.danger,
+      'cancelled' || 'rejected'           => AppColors.danger,
       'returned'                          => AppColors.muted,
       _                                   => AppColors.muted,
     };
@@ -602,6 +602,7 @@ String statusLabel(String status) => switch (status) {
       'delivering' => 'بالتوصيل',
       'delivered'  => 'تم التوصيل ✅',
       'cancelled'  => 'ملغي',
+      'rejected'   => 'مرفوض ✗',
       'returned'   => 'مرتجع',
       _            => status,
     };

@@ -36,6 +36,7 @@ class _LoginScreenState extends State<LoginScreen> {
 
   // ── مراحل التسجيل: 0=رقم → 1=رمز (بعد موافقة البوت) → 2=بيانات ──
   int regStage = 0;
+  String regRole = 'customer'; // نوع الحساب: زبون / تاجر / مندوب
   String? regToken;
   String? regBot;
   bool regCodeReady = false; // البوت طابق الرقم ودز الرمز
@@ -97,7 +98,7 @@ class _LoginScreenState extends State<LoginScreen> {
     if (p.length < 10) return toast(context, 'أدخل رقم هاتف صحيح', error: true);
     setState(() => loading = true);
     try {
-      final d = await Api.registerStart(p);
+      final d = await Api.registerStart(p, role: regRole);
       regToken = d['token'];
       regBot = d['bot_username'] ?? 'soog_otp_bot';
       regCodeReady = false;
@@ -526,8 +527,22 @@ class _LoginScreenState extends State<LoginScreen> {
             icon: Icons.card_giftcard,
           ),
         ];
-      default: // المرحلة 0 — الرقم فقط
+      default: // المرحلة 0 — الرقم فقط + نوع الحساب
         return [
+          // ═══ اختيار نوع الحساب: زبون / تاجر ═══
+          Container(
+            padding: const EdgeInsets.all(4),
+            decoration: BoxDecoration(
+              color: AppColors.bg,
+              borderRadius: BorderRadius.circular(14),
+              border: Border.all(color: AppColors.line),
+            ),
+            child: Row(children: [
+              _regRoleBtn('customer', 'زبون 🛍️'),
+              _regRoleBtn('vendor', 'تاجر 🏪'),
+            ]),
+          ),
+          const SizedBox(height: 12),
           _Field(
             key: const ValueKey('phone'),
             controller: phone,
@@ -551,7 +566,9 @@ class _LoginScreenState extends State<LoginScreen> {
                 const SizedBox(width: 8),
                 Expanded(
                   child: Text(
-                    'راح نتأكد رقمك عبر تلغرام: البوت يطابق الرقم ويرسل لك رمز — وإذا الرقم مسجل يرجّعك للدخول مباشرة',
+                    regRole == 'vendor'
+                        ? 'راح تنشئ حساب تاجر: بعد التأكيد تسجل محلك بانتظار توثيق الأدمن 🏪'
+                        : 'راح نتأكد رقمك عبر تلغرام: البوت يطابق الرقم ويرسل لك رمز — وإذا الرقم مسجل يرجّعك للدخول مباشرة',
                     style: AppType.style(12, color: AppColors.muted, weight: FontWeight.w600),
                   ),
                 ),
@@ -560,6 +577,33 @@ class _LoginScreenState extends State<LoginScreen> {
           ),
         ];
     }
+  }
+
+  Widget _regRoleBtn(String v, String label) {
+    final active = regRole == v;
+    return Expanded(
+      child: Material(
+        color: active ? AppColors.surface : Colors.transparent,
+        borderRadius: BorderRadius.circular(10),
+        elevation: active ? 1.5 : 0,
+        shadowColor: AppColors.primary.withValues(alpha: 0.25),
+        child: InkWell(
+          borderRadius: BorderRadius.circular(10),
+          onTap: () => setState(() => regRole = v),
+          child: SizedBox(
+            height: 40,
+            child: Center(
+              child: Text(
+                label,
+                style: AppType.style(12.5,
+                    color: active ? AppColors.primary : AppColors.muted,
+                    weight: FontWeight.w700),
+              ),
+            ),
+          ),
+        ),
+      ),
+    );
   }
 
   Widget _buildFooter() {

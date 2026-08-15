@@ -234,8 +234,12 @@ class Api {
   }
 
   /// بدء التسجيل: رقم مكتوب → جلسة تحقق؛ الرقم المسجل مسبقاً يوجّه للدخول بلا OTP
-  static Future<Map<String, dynamic>> registerStart(String phone) async {
-    final d = await post('/api/auth/register-start', {'phone': phone});
+  static Future<Map<String, dynamic>> registerStart(String phone,
+      {String role = 'customer'}) async {
+    final d = await post('/api/auth/register-start', {
+      'phone': phone,
+      if (role.isNotEmpty) 'role': role,
+    });
     return (d ?? {}) as Map<String, dynamic>;
   }
 

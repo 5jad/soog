@@ -1450,6 +1450,7 @@ class _StoreTabState extends State<_StoreTab> {
   }
 
   Future<void> _editStore() async {
+    final isNew = store == null;
     final s = store as Map<String, dynamic>? ?? {};
     final name = TextEditingController(text: s['name'] ?? '');
     final desc = TextEditingController(text: s['description'] ?? '');
@@ -1460,6 +1461,28 @@ class _StoreTabState extends State<_StoreTab> {
     final fee = TextEditingController(text: '${s['delivery_fee'] ?? 2000}');
     double? slat = (s['lat'] as num?)?.toDouble();
     double? slng = (s['lng'] as num?)?.toDouble();
+    int? selCat =
+        s['category_id'] != null ? (s['category_id'] as num).toInt() : null;
+    int? selDist =
+        s['district_id'] != null ? (s['district_id'] as num).toInt() : null;
+    List allCats = [];
+    final allDistricts = <Map<String, dynamic>>[];
+
+    // الفئات والمحافظات/الأحياء — لاختيار القسم والموقع
+    try {
+      final c = await Api.get('/api/categories');
+      allCats = c['categories'] ?? [];
+      final g = await Api.get('/api/governorates');
+      for (final gov in (g['governorates'] ?? [])) {
+        final govId = (gov['id'] as num).toInt();
+        for (final d in (gov['districts'] ?? [])) {
+          allDistricts.add({
+            ...(d as Map<String, dynamic>),
+            'governorate_id': govId,
+          });
+        }
+      }
+    } catch (_) {}
 
     await showSheet(
       context,
@@ -1500,7 +1523,7 @@ class _StoreTabState extends State<_StoreTab> {
             child: Column(
               mainAxisSize: MainAxisSize.min,
               children: [
-                const SheetTitle('تعديل معلومات المتجر ✏️'),
+                SheetTitle(isNew ? 'سجّل متجرك 🏪' : 'تعديل معلومات المتجر ✏️'),
                 Padding(
                   padding: const EdgeInsets.fromLTRB(20, 0, 20, 24),
                   child: Column(
@@ -1510,6 +1533,47 @@ class _StoreTabState extends State<_StoreTab> {
                         decoration: const InputDecoration(
                           labelText: 'اسم المتجر',
                         ),
+                      ),
+                      const SizedBox(height: 10),
+                      // ── القسم (إلزامي عند الإنشاء الجديد) ──
+                      DropdownButtonFormField<int?>(
+                        value: selCat,
+                        isExpanded: true,
+                        decoration: const InputDecoration(labelText: 'القسم'),
+                        items: [
+                          const DropdownMenuItem<int?>(
+                            value: null,
+                            child: Text('بدون قسم'),
+                          ),
+                          ...allCats.map(
+                            (c) => DropdownMenuItem<int?>(
+                              value: (c['id'] as num).toInt(),
+                              child: Text('${c['icon'] ?? ''} ${c['name']}'),
+                            ),
+                          ),
+                        ],
+                        onChanged: (v) => setS(() => selCat = v),
+                      ),
+                      const SizedBox(height: 10),
+                      // ── المحافظة / الحي ──
+                      DropdownButtonFormField<int?>(
+                        value: selDist,
+                        isExpanded: true,
+                        decoration:
+                            const InputDecoration(labelText: 'المحافظة / الحي'),
+                        items: [
+                          const DropdownMenuItem<int?>(
+                            value: null,
+                            child: Text('بدون حي'),
+                          ),
+                          ...allDistricts.map(
+                            (d) => DropdownMenuItem<int?>(
+                              value: (d['id'] as num).toInt(),
+                              child: Text('${d['name']}'),
+                            ),
+                          ),
+                        ],
+                        onChanged: (v) => setS(() => selDist = v),
                       ),
                       const SizedBox(height: 10),
                       // ── شعار المتجر (من الجهاز مع قصّ) ──
@@ -1637,10 +1701,10 @@ class _StoreTabState extends State<_StoreTab> {
                       ),
                       const SizedBox(height: 16),
                       SolidBtn(
-                        label: 'حفظ',
+                        label: isNew ? 'سجّل المتجر 🚀' : 'حفظ',
                         onTap: () async {
                           try {
-                            await Api.patch('/api/vendor/store', {
+                            final body = {
                               'name': name.text,
                               'description': desc.text,
                               'logo': logo.text,
@@ -1648,10 +1712,21 @@ class _StoreTabState extends State<_StoreTab> {
                               'address': address.text,
                               'phone': phone.text,
                               'delivery_fee': int.tryParse(fee.text) ?? 2000,
+                              if (selCat != null) 'category_id': selCat,
+                              if (selDist != null) 'district_id': selDist,
                               if (slat != null) 'lat': slat,
                               if (slng != null) 'lng': slng,
-                            });
-                            toast(context, 'انحفظت المعلومات ✓');
+                            };
+                            if (isNew) {
+                              await Api.post('/api/vendor/store', body);
+                              toast(
+                                context,
+                                'انطلق متجرك — بانتظار توثيق الأدمن 🏪',
+                              );
+                            } else {
+                              await Api.patch('/api/vendor/store', body);
+                              toast(context, 'انحفظت المعلومات ✓');
+                            }
                             Navigator.pop(context);
                             _load();
                           } on ApiException catch (e) {
@@ -1674,6 +1749,51 @@ class _StoreTabState extends State<_StoreTab> {
   Widget build(BuildContext context) {
     if (loading) return const Loader();
     final s = store as Map<String, dynamic>? ?? {};
+
+    // ═══ تاجر جديد بلا متجر بعد — دعوة لإنشاء متجره ═══
+    if (store == null) {
+      return Scaffold(
+        body: Center(
+          child: SingleChildScrollView(
+            padding: const EdgeInsets.all(28),
+            child: Column(
+              children: [
+                Container(
+                  width: 92,
+                  height: 92,
+                  decoration: BoxDecoration(
+                    color: AppColors.primary.withValues(alpha: 0.1),
+                    borderRadius: BorderRadius.circular(28),
+                  ),
+                  alignment: Alignment.center,
+                  child: const Icon(Icons.storefront_rounded,
+                      size: 46, color: AppColors.primary),
+                ),
+                const SizedBox(height: 18),
+                Text(
+                  'ما عندك متجر بعد',
+                  style: AppType.style(20, weight: FontWeight.w900),
+                  textAlign: TextAlign.center,
+                ),
+                const SizedBox(height: 8),
+                Text(
+                  'سجّل محلك خلال دقيقة: الاسم والقسم والموقع — بعدها يوصل للأدمن للتوثيق وتبدأ تستقبل الطلبات 🚀',
+                  style: AppType.style(13, color: AppColors.muted, height: 1.6),
+                  textAlign: TextAlign.center,
+                ),
+                const SizedBox(height: 24),
+                SolidBtn(
+                  label: 'سجّل متجرك الآن 🏪',
+                  color: AppColors.accent,
+                  onTap: _editStore,
+                ),
+              ],
+            ),
+          ),
+        ),
+      );
+    }
+
     final coverUrl = (s['cover'] ?? '').toString();
     final hasCover = isUrlCover(coverUrl);
     return Scaffold(
@@ -1843,6 +1963,63 @@ class _StoreTabState extends State<_StoreTab> {
                         color: AppColors.primary,
                       ),
                       tooltip: 'تعديل معلومات المتجر',
+                    ),
+                  ],
+                ),
+              ),
+            ),
+          // ═══ حالة التوثيق: بانتظار الأدمن / مرفوض ═══
+          if (s['status'] == 'pending' || s['status'] == 'rejected')
+            Padding(
+              padding: const EdgeInsets.fromLTRB(16, 4, 16, 18),
+              child: GlassCard(
+                child: Row(
+                  children: [
+                    Container(
+                      padding: const EdgeInsets.all(10),
+                      decoration: BoxDecoration(
+                        color: (s['status'] == 'pending'
+                                ? AppColors.warning
+                                : AppColors.danger)
+                            .withValues(alpha: 0.12),
+                        borderRadius: BorderRadius.circular(13),
+                      ),
+                      child: Icon(
+                        s['status'] == 'pending'
+                            ? Icons.hourglass_top_rounded
+                            : Icons.block_rounded,
+                        color: s['status'] == 'pending'
+                            ? AppColors.warning
+                            : AppColors.danger,
+                        size: 22,
+                      ),
+                    ),
+                    const SizedBox(width: 12),
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            s['status'] == 'pending'
+                                ? 'متجرك بانتظار التوثيق ⏳'
+                                : 'متجرك مرفوض ✗',
+                            style: AppType.style(
+                              13.5,
+                              weight: FontWeight.w900,
+                              color: s['status'] == 'pending'
+                                  ? AppColors.warning
+                                  : AppColors.danger,
+                            ),
+                          ),
+                          const SizedBox(height: 3),
+                          Text(
+                            s['status'] == 'pending'
+                                ? 'وصل للأدمن — نوصل لك إشعار فور الموافقة، وتقدر تعدل بياناتك بأي وقت'
+                                : 'راجع سبب الرفض من الإشعارات — بعدل معلوماتك تقدر يعيد الأدمن النظر',
+                            style: AppType.style(11, color: AppColors.muted),
+                          ),
+                        ],
+                      ),
                     ),
                   ],
                 ),

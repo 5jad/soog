@@ -41,6 +41,7 @@ echo "🔨 بناء APK release (ياخذ دقيقة)..."
 mkdir -p landing/downloads backend/public/landing/downloads
 cp app/build/app/outputs/flutter-apk/app-release.apk landing/downloads/zaboon-app.apk
 cp app/build/app/outputs/flutter-apk/app-release.apk backend/public/landing/downloads/zaboon-app.apk
+cp app/build/app/outputs/flutter-apk/app-release.apk backend/src/public/landing/downloads/zaboon-app.apk
 echo "✓ APK: $(ls -lh landing/downloads/zaboon-app.apk | awk '{print $5}')"
 
 # 5) خطوة الزبون الأخيرة

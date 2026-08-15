@@ -173,6 +173,7 @@ class _LoginScreenState extends State<LoginScreen> {
       await Api.registerCode(t, c);
       if (mounted) {
         _regPoll?.cancel();
+        FocusManager.instance.primaryFocus?.unfocus();
         setState(() => regStage = 2);
       }
     } on ApiException catch (e) {
@@ -423,6 +424,7 @@ class _LoginScreenState extends State<LoginScreen> {
 
   List<Widget> _loginFields() => [
         _Field(
+          key: const ValueKey('phone'),
           controller: phone,
           hint: 'رقم الهاتف',
           icon: Icons.phone_android,
@@ -430,6 +432,7 @@ class _LoginScreenState extends State<LoginScreen> {
         ),
         const SizedBox(height: 12),
         _Field(
+          key: const ValueKey('password'),
           controller: password,
           hint: 'كلمة المرور',
           icon: Icons.lock_outline,
@@ -444,6 +447,7 @@ class _LoginScreenState extends State<LoginScreen> {
       case 1: // رمز البوت (بعد المطابقة)
         return [
           _Field(
+            key: const ValueKey('code'),
             controller: code,
             hint: 'رمز التحقق ●●●●',
             icon: Icons.message_outlined,
@@ -497,13 +501,16 @@ class _LoginScreenState extends State<LoginScreen> {
       case 2: // الاسم + كلمة المرور
         return [
           _Field(
+            key: const ValueKey('name'),
             controller: name,
             hint: 'الاسم الكامل',
             icon: Icons.person_outline,
+            autofocus: true,
             textInputAction: TextInputAction.next,
           ),
           const SizedBox(height: 12),
           _Field(
+            key: const ValueKey('password'),
             controller: password,
             hint: 'كلمة المرور (6 أحرف أو أكثر)',
             icon: Icons.lock_outline,
@@ -513,6 +520,7 @@ class _LoginScreenState extends State<LoginScreen> {
           ),
           const SizedBox(height: 12),
           _Field(
+            key: const ValueKey('referral'),
             controller: referral,
             hint: 'كود الدعوة (اختياري) 🎁',
             icon: Icons.card_giftcard,
@@ -521,6 +529,7 @@ class _LoginScreenState extends State<LoginScreen> {
       default: // المرحلة 0 — الرقم فقط
         return [
           _Field(
+            key: const ValueKey('phone'),
             controller: phone,
             hint: 'رقم الهاتف',
             icon: Icons.phone_android,
@@ -586,11 +595,13 @@ class _Field extends StatelessWidget {
   final bool isPassword;
   final bool isNumber;
   final bool obscure;
+  final bool autofocus;
   final int? maxLen;
   final VoidCallback? onToggleObscure;
   final TextInputAction? textInputAction;
 
   const _Field({
+    super.key,
     required this.controller,
     required this.hint,
     required this.icon,
@@ -598,6 +609,7 @@ class _Field extends StatelessWidget {
     this.isPassword = false,
     this.isNumber = false,
     this.obscure = true,
+    this.autofocus = false,
     this.maxLen,
     this.onToggleObscure,
     this.textInputAction,
@@ -607,6 +619,7 @@ class _Field extends StatelessWidget {
   Widget build(BuildContext context) {
     return TextField(
       controller: controller,
+      autofocus: autofocus,
       textInputAction: textInputAction,
       textDirection: isPhone ? TextDirection.ltr : null,
       textAlign: isPhone ? TextAlign.left : TextAlign.start,

@@ -103,8 +103,8 @@ class Loader extends StatelessWidget {
 }
 /* ═══════════ نظام تحديث النسخ — الشريط يفتح تحميل النسخة الأحدث من الموقع ═══════════ */
 /// نسخة التطبيق الحالية (مطابقة app-version.json على السيرفر)
-const String kAppVersion = '1.1.10';
-const int kAppBuild = 43;
+const String kAppVersion = '1.1.11';
+const int kAppBuild = 44;
 
 class UpdateBanner extends StatefulWidget {
   const UpdateBanner({super.key});

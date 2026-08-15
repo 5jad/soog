@@ -31,13 +31,19 @@ class _LoginScreenState extends State<LoginScreen> {
   final name = TextEditingController();
   final code = TextEditingController();
   final referral = TextEditingController();
+  // ── بيانات المتجر للتاجر فقط (المرحلة 3) ──
+  final storeName = TextEditingController();
+  final storeDesc = TextEditingController();
+  final storePhone = TextEditingController();
+  final storeFee = TextEditingController();
 
   bool obscurePass = true;
 
-  // ── مراحل التسجيل: 0=رقم → 1=رمز (بعد موافقة البوت) → 2=بيانات ──
+  // ── مراحل التسجيل: 0=رقم → 1=رمز (بعد موافقة البوت) → 2=بيانات → 3=متجر التاجر ──
   int regStage = 0;
   String regRole = 'customer'; // نوع الحساب: زبون / تاجر / مندوب
   String? regToken;
+  Map<String, dynamic>? _regAcc; // نتيجة register-confirm — يحفظها للتاجر لإنشاء المتجر
   String? regBot;
   bool regCodeReady = false; // البوت طابق الرقم ودز الرمز
   Timer? _regPoll;
@@ -50,6 +56,10 @@ class _LoginScreenState extends State<LoginScreen> {
     name.dispose();
     code.dispose();
     referral.dispose();
+    storeName.dispose();
+    storeDesc.dispose();
+    storePhone.dispose();
+    storeFee.dispose();
     super.dispose();
   }
 
@@ -57,7 +67,9 @@ class _LoginScreenState extends State<LoginScreen> {
       ? 'تسجيل الدخول'
       : (regStage == 0
           ? 'التأكيد عبر تلغرام'
-          : (regStage == 1 ? 'تأكيد الرمز' : 'إنشاء الحساب'));
+          : (regStage == 1
+              ? 'تأكيد الرمز'
+              : (regStage == 2 ? 'إنشاء الحساب' : 'إنشاء المتجر')));
 
   Future<void> submit() async {
     if (mode == AuthMode.login) {
@@ -67,6 +79,7 @@ class _LoginScreenState extends State<LoginScreen> {
     if (regStage == 0) return _regStart();
     if (regStage == 1) return _regSubmitCode();
     if (regStage == 2) return _regSubmitDetails();
+    if (regStage == 3) return _regSubmitStore();
   }
 
   // ── الدخول: رقم + كلمة مرور — بلا OTP أبداً ──
@@ -147,6 +160,11 @@ class _LoginScreenState extends State<LoginScreen> {
     regToken = null;
     regCodeReady = false;
     code.clear();
+    storeName.clear();
+    storeDesc.clear();
+    storePhone.clear();
+    storeFee.clear();
+    _regAcc = null;
     setState(() => regStage = 0);
   }
 
@@ -189,7 +207,7 @@ class _LoginScreenState extends State<LoginScreen> {
     }
   }
 
-  // ── المرحلة 2: الاسم + كلمة المرور → إنشاء الحساب ──
+// ── المرحلة 2: الاسم + كلمة المرور → إنشاء الحساب ──
   Future<void> _regSubmitDetails() async {
     final t = regToken;
     if (t == null) return _resetReg();
@@ -203,7 +221,46 @@ class _LoginScreenState extends State<LoginScreen> {
         password: password.text,
         referral: referral.text.trim(),
       );
-      await _onSuccess(d);
+      if (!mounted) return;
+      if (regRole == 'vendor') {
+        // التاجر يكمّل بيانات متجره في المرحلة 3 (بعد إنشاء الحساب)
+        _regAcc = (d ?? {}) as Map<String, dynamic>;
+        storePhone.text = phone.text.trim();
+        setState(() => regStage = 3);
+      } else {
+        await _onSuccess(d);
+      }
+    } on ApiException catch (e) {
+      if (!mounted) return;
+      toast(context, e.message, error: true);
+      if (e.message.contains('انتهت')) _resetReg();
+    } catch (_) {
+      if (!mounted) return;
+      toast(context, 'تعذر الاتصال بالخادم', error: true);
+    } finally {
+      if (mounted) setState(() => loading = false);
+    }
+  }
+
+  // ── المرحلة 3 (للتاجر فقط): بيانات المتجر → إنشاء + بانتظار توثيق الأدمن ──
+  Future<void> _regSubmitStore() async {
+    final acc = _regAcc;
+    if (acc == null) return _resetReg();
+    if (storeName.text.trim().length < 3) return toast(context, 'أدخل اسم متجرك', error: true);
+    setState(() => loading = true);
+    try {
+      final t = acc['token'] as String?;
+      if (t == null) return _resetReg();
+      await Api.saveToken(t); // المتجر يحتاج توك التاجر
+      await Api.post('/api/vendor/store', {
+        'name': storeName.text.trim(),
+        'description': storeDesc.text.trim(),
+        'phone': storePhone.text.trim(),
+        'delivery_fee': int.tryParse(storeFee.text.trim()) ?? 2000,
+      });
+      if (!mounted) return;
+      toast(context, 'انطلق متجرك — بانتظار توثيق الأدمن ⏳');
+      await _onSuccess(acc);
     } on ApiException catch (e) {
       if (!mounted) return;
       toast(context, e.message, error: true);
@@ -527,6 +584,66 @@ class _LoginScreenState extends State<LoginScreen> {
             icon: Icons.card_giftcard,
           ),
         ];
+      case 3: // بيانات المتجر — خطوة التاجر بعد إنشاء الحساب
+        return [
+          _Field(
+            key: const ValueKey('storeName'),
+            controller: storeName,
+            hint: 'اسم المتجر',
+            icon: Icons.storefront_outlined,
+            autofocus: true,
+            textInputAction: TextInputAction.next,
+          ),
+          const SizedBox(height: 12),
+          _Field(
+            key: const ValueKey('storeDesc'),
+            controller: storeDesc,
+            hint: 'وصف المتجر (اختياري)',
+            icon: Icons.description_outlined,
+            maxLines: 2,
+          ),
+          const SizedBox(height: 12),
+          _Field(
+            key: const ValueKey('storePhone'),
+            controller: storePhone,
+            hint: 'هاتف المتجر',
+            icon: Icons.phone_android,
+            isPhone: true,
+            maxLen: 15,
+          ),
+          const SizedBox(height: 12),
+          _Field(
+            key: const ValueKey('storeFee'),
+            controller: storeFee,
+            hint: 'رسوم التوصيل (د.ع) — اختياري',
+            icon: Icons.delivery_dining_outlined,
+            isNumber: true,
+            maxLen: 9,
+          ),
+          const SizedBox(height: 12),
+          Container(
+            padding: const EdgeInsets.all(12),
+            decoration: BoxDecoration(
+              color: AppColors.bg,
+              borderRadius: BorderRadius.circular(14),
+              border: Border.all(color: AppColors.line),
+            ),
+            child: Row(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                const Icon(Icons.hourglass_top_rounded,
+                    size: 18, color: AppColors.warning),
+                const SizedBox(width: 8),
+                Expanded(
+                  child: Text(
+                    'بعد الحفظ ينوصل متجرك للأدمن للتوثيق — وتقدر تكمّل القسم والموقع من تبويب «متجري»',
+                    style: AppType.style(12, color: AppColors.muted, weight: FontWeight.w600),
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ];
       default: // المرحلة 0 — الرقم فقط + نوع الحساب
         return [
           // ═══ اختيار نوع الحساب: زبون / تاجر ═══
@@ -641,6 +758,7 @@ class _Field extends StatelessWidget {
   final bool obscure;
   final bool autofocus;
   final int? maxLen;
+  final int? maxLines;
   final VoidCallback? onToggleObscure;
   final TextInputAction? textInputAction;
 
@@ -655,6 +773,7 @@ class _Field extends StatelessWidget {
     this.obscure = true,
     this.autofocus = false,
     this.maxLen,
+    this.maxLines,
     this.onToggleObscure,
     this.textInputAction,
   });
@@ -669,6 +788,7 @@ class _Field extends StatelessWidget {
       textAlign: isPhone ? TextAlign.left : TextAlign.start,
       keyboardType: isPhone || isNumber ? TextInputType.number : TextInputType.text,
       obscureText: isPassword && obscure,
+      maxLines: maxLines,
       inputFormatters: isPhone || isNumber
           ? [FilteringTextInputFormatter.digitsOnly]
           : null,

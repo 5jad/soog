@@ -9,6 +9,7 @@ import 'package:url_launcher/url_launcher.dart';
 import 'package:zaboon/core/api/api.dart';
 import 'package:zaboon/core/theme/zaboon_design_system.dart';
 import 'package:zaboon/core/widgets/crop.dart';
+import 'package:zaboon/core/widgets/lottie_box.dart';
 import 'package:zaboon/core/widgets/widgets.dart';
 import 'package:zaboon/core/routing/shell.dart';
 import 'package:zaboon/features/shop/screens/map_screen.dart';
@@ -472,39 +473,52 @@ class _LoginScreenState extends State<LoginScreen> {
   Widget _buildHeader() {
     return Column(children: [
       Container(
-        width: 84,
-        height: 84,
+        padding: const EdgeInsets.all(4),
         decoration: BoxDecoration(
+          shape: BoxShape.circle,
           gradient: const LinearGradient(
+            colors: [AppColors.primaryLight, AppColors.cyan],
             begin: Alignment.topLeft,
             end: Alignment.bottomRight,
-            colors: [AppColors.primaryLight, AppColors.cyan],
           ),
-          borderRadius: BorderRadius.circular(26),
           boxShadow: [
             BoxShadow(
-              color: AppColors.primaryDeep.withValues(alpha: 0.5),
-              blurRadius: 30,
-              offset: const Offset(0, 14),
+              color: AppColors.cyan.withValues(alpha: 0.4),
+              blurRadius: 24,
+              offset: const Offset(0, 10),
             ),
           ],
         ),
-        alignment: Alignment.center,
-        child: const Text('🛍️', style: TextStyle(fontSize: 40)),
+        child: Container(
+          width: 86,
+          height: 86,
+          decoration: const BoxDecoration(
+            color: AppColors.primaryDeep,
+            shape: BoxShape.circle,
+          ),
+          alignment: Alignment.center,
+          child: LottieBox(
+            assetKey: 'loading_splash',
+            width: 70,
+            height: 70,
+            loop: true,
+            fallback: const Text('🛍️', style: TextStyle(fontSize: 36)),
+          ),
+        ),
       ),
-      const SizedBox(height: 14),
+      const SizedBox(height: 18),
       Text(
         'زبون',
-        style: AppType.style(32,
+        style: AppType.style(36,
             color: Colors.white,
-            weight: FontWeight.w700,
-            fontFamily: AppType.fontBrand),
+            weight: FontWeight.w800,
+            fontFamily: 'ElMessiri'),
       ),
-      const SizedBox(height: 6),
+      const SizedBox(height: 4),
       Text(
-        'كل ما تتمناه — لرجالك ونسائك وأطفالك — بمكان واحد',
-        style: AppType.style(12,
-            color: Colors.white.withValues(alpha: 0.75), weight: FontWeight.w600),
+        'سوق الكوت بين إيديك',
+        style: AppType.style(13.5,
+            color: Colors.white.withValues(alpha: 0.8), weight: FontWeight.w600),
         textAlign: TextAlign.center,
       ),
     ]);
@@ -513,15 +527,15 @@ class _LoginScreenState extends State<LoginScreen> {
   Widget _buildCard() {
     return Container(
       width: double.infinity,
-      padding: const EdgeInsets.all(20),
+      padding: const EdgeInsets.symmetric(horizontal: 22, vertical: 26),
       decoration: BoxDecoration(
         color: AppColors.surface,
-        borderRadius: BorderRadius.circular(24),
+        borderRadius: BorderRadius.circular(32),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withValues(alpha: 0.25),
-            blurRadius: 36,
-            offset: const Offset(0, 18),
+            color: AppColors.primaryDeep.withValues(alpha: 0.4),
+            blurRadius: 40,
+            offset: const Offset(0, 20),
           ),
         ],
       ),
@@ -529,18 +543,18 @@ class _LoginScreenState extends State<LoginScreen> {
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
           _buildModeSwitch(),
-          const SizedBox(height: 20),
+          const SizedBox(height: 24),
           AnimatedSwitcher(
-            duration: const Duration(milliseconds: 220),
-            switchInCurve: Curves.easeOut,
-            switchOutCurve: Curves.easeIn,
+            duration: const Duration(milliseconds: 280),
+            switchInCurve: Curves.easeOutCubic,
+            switchOutCurve: Curves.easeInCubic,
             child: Column(
               key: ValueKey(mode),
               crossAxisAlignment: CrossAxisAlignment.stretch,
               children: mode == AuthMode.login ? _loginFields() : _registerFields(),
             ),
           ),
-          const SizedBox(height: 20),
+          const SizedBox(height: 24),
           SolidBtn(
             label: _modeLabel,
             color: AppColors.accent,
@@ -574,23 +588,23 @@ class _LoginScreenState extends State<LoginScreen> {
     return Expanded(
       child: Material(
         color: active ? AppColors.surface : Colors.transparent,
-        borderRadius: BorderRadius.circular(10),
+        borderRadius: BorderRadius.circular(12),
         elevation: active ? 2 : 0,
-        shadowColor: AppColors.primary.withValues(alpha: 0.25),
+        shadowColor: AppColors.primaryDeep.withValues(alpha: 0.15),
         child: InkWell(
-          borderRadius: BorderRadius.circular(10),
+          borderRadius: BorderRadius.circular(12),
           onTap: () {
             setState(() => mode = m);
             _resetReg(); // تبديل التبويب ينهي أي جلسة تسجيل معلقة
           },
           child: SizedBox(
-            height: 40,
+            height: 44,
             child: Center(
               child: Text(
                 label,
-                style: AppType.style(13,
+                style: AppType.style(13.5,
                     color: active ? AppColors.primary : AppColors.muted,
-                    weight: FontWeight.w700),
+                    weight: active ? FontWeight.w800 : FontWeight.w600),
               ),
             ),
           ),
@@ -603,16 +617,16 @@ class _LoginScreenState extends State<LoginScreen> {
         _Field(
           key: const ValueKey('phone'),
           controller: phone,
-          hint: 'رقم الهاتف',
-          icon: Icons.phone_android,
+          hint: 'رقم الهاتف (مثال: 07800000000)',
+          icon: Icons.phone_android_rounded,
           isPhone: true,
         ),
-        const SizedBox(height: 12),
+        const SizedBox(height: 14),
         _Field(
           key: const ValueKey('password'),
           controller: password,
           hint: 'كلمة المرور',
-          icon: Icons.lock_outline,
+          icon: Icons.lock_outline_rounded,
           isPassword: true,
           obscure: obscurePass,
           onToggleObscure: () => setState(() => obscurePass = !obscurePass),

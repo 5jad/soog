@@ -1,7 +1,7 @@
 {
-  "version": "1.1.16",
-  "build": 49,
-  "changelog": "إصلاح الإشعارات الخلفية وإضافة طلب الصلاحيات عند بدء التطبيق",
+  "version": "1.1.17",
+  "build": 51,
+  "changelog": "تحديث تصميم صفحة تسجيل الدخول وإضافة Lottie",
   "download_url": "/download",
   "updated_at": "2026-08-17"
 }

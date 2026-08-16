@@ -889,6 +889,15 @@ class _CartScreenState extends State<CartScreen> {
           : ((items.first['delivery_fee'] ?? 0) as num).toDouble();
     }
 
+    double pointsDiscount = 0;
+    if (usePoints && Api.me != null) {
+      int pts = (Api.me?['points'] as num?)?.toInt() ?? 0;
+      pts -= pts % 100;
+      pointsDiscount = (pts ~/ 100) * 1000.0;
+      if (pointsDiscount > total) pointsDiscount = total;
+    }
+
+
     final bodyWidget = loading
         ? const Loader()
         : cart.isEmpty
@@ -1151,6 +1160,30 @@ class _CartScreenState extends State<CartScreen> {
                               ],
                             ),
                           ],
+                          if (usePoints && pointsDiscount > 0) ...[
+                            const SizedBox(height: 4),
+                            Row(
+                              children: [
+                                Text(
+                                  'خصم النقاط',
+                                  style: AppType.style(
+                                    10.5,
+                                    color: AppColors.warning,
+                                    weight: FontWeight.w800,
+                                  ),
+                                ),
+                                const Spacer(),
+                                Text(
+                                  '-${formatMoney(pointsDiscount)}',
+                                  style: AppType.style(
+                                    11.5,
+                                    color: AppColors.warning,
+                                    weight: FontWeight.w800,
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ],
                           const Divider(height: 12, color: AppColors.line),
                           Row(
                             children: [
@@ -1165,7 +1198,7 @@ class _CartScreenState extends State<CartScreen> {
                               const Spacer(),
                               Text(
                                 formatMoney(
-                                  total + deliveryTotal - appliedCouponDiscount,
+                                  (total + deliveryTotal - appliedCouponDiscount - pointsDiscount).clamp(0, double.infinity),
                                 ),
                                 style: AppType.style(
                                   19,

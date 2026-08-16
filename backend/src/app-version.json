@@ -1,7 +1,7 @@
 {
-  "version": "1.1.17",
-  "build": 51,
-  "changelog": "تحديث تصميم صفحة تسجيل الدخول وإضافة Lottie",
+  "version": "1.1.18",
+  "build": 52,
+  "changelog": "إصلاح خلل تدرج الألوان وخصم النقاط في السلة",
   "download_url": "/download",
   "updated_at": "2026-08-17"
 }

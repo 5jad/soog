@@ -15,6 +15,7 @@ const displayText = (v, max = 255) => {
 // تدرج ألوان CSS آمن: حروف وأرقام وألوان فقط
 const cssSafe = (v, max = 500) => {
   v = String(v ?? '').trim().slice(0, max);
+  if (!v) return v;
   return /^[\w\s#%(),.\-]+$/.test(v) ? v : null;
 };
 

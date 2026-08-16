@@ -44,7 +44,7 @@ r.post('/store', async (req, res) => {
   const ns = (await q(`INSERT INTO stores (owner_id, governorate_id, district_id, name, category_id, logo, cover, description, address, lat, lng, location_url, phone, delivery_fee, free_delivery_min, open_time, close_time, status)
     VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15,$16,$17,'pending') RETURNING *`,
     [req.user.id, gov.id, b.district_id || null, b.name, b.category_id || null, logo, cover,
-    b.description || '', b.address || '', b.lat || null, b.lng || null, b.location_url || '', b.phone || '', b.delivery_fee || 2000, b.free_delivery_min || 50000,
+    b.description || '', b.address || '', b.lat || null, b.lng || null, b.location_url || '', b.phone || '', 2000, 50000,
     b.open_time || '9ص', b.close_time || '11ل']))[0];
   await q(`INSERT INTO wallets (store_id) VALUES ($1)`, [ns.id]);
   await q(`INSERT INTO notifications (role, type, title, body, data) VALUES ('admin','store','محل جديد ينتظر التوثيق 🏪',$1, jsonb_build_object('store_id',$2::int))`, [ns.name, ns.id]);
@@ -55,7 +55,7 @@ r.patch('/store', async (req, res) => {
   const s = await myStore(req);
   if (!s) return res.status(404).json({ error: 'سجل محلك أول' });
   const b = req.body;
-  const allowed = ['name', 'logo', 'cover', 'description', 'address', 'phone', 'delivery_fee', 'free_delivery_min', 'open_time', 'close_time', 'is_open', 'category_id', 'district_id', 'lat', 'lng', 'location_url', 'on_vacation', 'warranty_days'];
+  const allowed = ['name', 'logo', 'cover', 'description', 'address', 'phone', 'open_time', 'close_time', 'is_open', 'category_id', 'district_id', 'lat', 'lng', 'location_url', 'on_vacation', 'warranty_days'];
   const sets = [], p = [];
   for (const k of allowed) if (b[k] !== undefined) {
     if (k === 'logo' || k === 'cover') {
@@ -71,10 +71,14 @@ r.patch('/store', async (req, res) => {
 });
 
 // ── مستندات التوثيق ──
+const DOC_TYPES = ['national_id', 'store_license', 'other'];
 r.post('/store/documents', async (req, res) => {
   const s = await myStore(req);
   if (!s) return res.status(404).json({ error: 'سجل محلك أول' });
   const { type, title, file_url = '' } = req.body;
+  if (!DOC_TYPES.includes(type)) return res.status(400).json({ error: 'نوع المستند غير صحيح' });
+  if (type === 'national_id' && !String(file_url).startsWith('/uploads/'))
+    return res.status(400).json({ error: 'ارفع صورة البطاقة الوطنية عبر مسار الرفع أولاً' });
   const d = (await q(`INSERT INTO store_documents (store_id, type, title, file_url) VALUES ($1,$2,$3,$4) RETURNING *`,
     [s.id, type, title, file_url]))[0];
   await q(`INSERT INTO notifications (role, type, title, body) VALUES ('admin','store','مستند توثيق جديد',$1)`, [`${s.name}: ${title}`]);
@@ -112,7 +116,8 @@ r.get('/orders/:id', async (req, res) => {
   res.json({ order: o });
 });
 
-r.patch('/orders/:id/status', async (req, res) => {
+// ═══ تغيير حالة الطلب — يقبل PATCH (الصحيح) و POST (توافق مع النسخ المثبتة حالياً من التطبيق) ═══
+const handleOrderStatus = async (req, res) => {
   const s = await myStore(req);
   if (!s) return res.status(404).json({ error: 'سجل محلك أول' });
   const { status, reason = '' } = req.body;
@@ -132,7 +137,8 @@ r.patch('/orders/:id/status', async (req, res) => {
       await c.query(`INSERT INTO notifications (role, type, title, body, data) VALUES ('delivery','order','طلب جاهز للاستلام 🛵',$1, jsonb_build_object('order_id',$2::int))`, [`${s.name} — ${o.total.toLocaleString()} د.ع`, o.id]);
   });
   res.json({ ok: true, status: map[status] });
-});
+};
+r.route('/orders/:id/status').patch(handleOrderStatus).post(handleOrderStatus);
 
 // ── الإرجاعات / الاستبدالات ──
 r.patch('/refunds/:id', async (req, res) => {
@@ -288,9 +294,14 @@ r.post('/products/:id/offer', async (req, res) => {
   if (!s) return res.status(404).json({ error: 'سجل محلك أول' });
   const p = await one('SELECT * FROM products WHERE id=$1 AND store_id=$2', [req.params.id, s.id]);
   if (!p) return res.status(404).json({ error: 'المنتج غير موجود' });
-  const { percent = 0, active = true } = req.body;
+  const { active = true } = req.body;
+  const pct = Number(req.body.percent ?? 0);
+  // نسبة الخصم: 0 لإيقاف العرض، وإلا بين 1 و 90 — يمنع عروض بأسعار سالبة
+  if (!Number.isFinite(pct) || pct < 0 || pct > 90)
+    return res.status(400).json({ error: 'نسبة الخصم بين 1% و 90% فقط — و 0 لإيقاف العرض' });
+  const on = pct > 0 && !!active;
   await q(`INSERT INTO offers (product_id, percent, active) VALUES ($1,$2,$3)
-    ON CONFLICT DO UPDATE SET percent=EXCLUDED.percent, active=EXCLUDED.active`, [p.id, percent, active]);
+    ON CONFLICT (product_id) DO UPDATE SET percent=EXCLUDED.percent, active=EXCLUDED.active`, [p.id, pct, on]);
   res.json({ ok: true });
 });
 
@@ -307,15 +318,21 @@ r.get('/wallet', async (req, res) => {
 r.post('/wallet/withdraw', async (req, res) => {
   const s = await myStore(req);
   if (!s) return res.status(404).json({ error: 'سجل محلك أول' });
-  const { amount } = req.body;
-  if (!amount || amount <= 0) return res.status(400).json({ error: 'المبلغ غلط' });
-  const w = await one('SELECT * FROM wallets WHERE store_id=$1', [s.id]);
-  if (amount > w.available) return res.status(400).json({ error: 'الرصيد غير كافي' });
-  await tx(async (c) => {
-    await c.query(`UPDATE wallets SET available=available-$1, updated_at=now() WHERE store_id=$2`, [amount, s.id]);
-    await c.query(`INSERT INTO wallet_transactions (store_id, type, amount, note) VALUES ($1,'withdraw',$2,'استلام نقدي')`, [s.id, -amount]);
-  });
-  res.json({ ok: true });
+  const amount = Number(req.body.amount);
+  if (!Number.isInteger(amount) || amount <= 0) return res.status(400).json({ error: 'المبلغ غلط' });
+  if (amount > 25000000) return res.status(400).json({ error: 'المبلغ أكبر من المسموح بالسحب' });
+  try {
+    await tx(async (c) => {
+      // قفل صف المحفظة — يمنع سحبين متزامنين لنفس الرصيد
+      const w = (await c.query(`SELECT available FROM wallets WHERE store_id=$1 FOR UPDATE`, [s.id])).rows[0];
+      if (!w || amount > w.available) throw Object.assign(new Error('الرصيد غير كافي'), { status: 400 });
+      await c.query(`UPDATE wallets SET available=available-$1, updated_at=now() WHERE store_id=$2`, [amount, s.id]);
+      await c.query(`INSERT INTO wallet_transactions (store_id, type, amount, note) VALUES ($1,'withdraw',$2,'استلام نقدي')`, [s.id, -amount]);
+    });
+    res.json({ ok: true });
+  } catch (e) {
+    res.status(e.status || 500).json({ error: e.message || 'خطأ بالسيرفر' });
+  }
 });
 
 // ═══════════ الإعلانات ═══════════
@@ -352,15 +369,23 @@ r.post('/ads', async (req, res) => {
   if (!pkg) return res.status(404).json({ error: 'الباقة غير متاحة' });
 
   let ad;
-  await tx(async (c) => {
-    // طلب بانتظار موافقة الأدمن — الرصيد يُحجز فوراً ويُرجع لو انرفض
-    ad = (await c.query(`INSERT INTO ad_requests (store_id, title, art, image, duration_days, price, gradient, status, sort, starts_at, ends_at, note, product_id)
-      VALUES ($1,$2,$3,$4,$5,$6,$7,'pending',0,NULL,NULL,$8,$9) RETURNING *`,
-      [s.id, t, artSafe, imgSafe, pkg.days, pkg.price, gradSafe, noteSafe, product_id || null])).rows[0];
+  try {
+    await tx(async (c) => {
+      // فحص الرصيد داخل المعاملة مع قفل — يمنع رصيد سالب وحجز إعلان برصيد وهمي
+      const w = (await c.query(`SELECT available FROM wallets WHERE store_id=$1 FOR UPDATE`, [s.id])).rows[0];
+      if (!w || (w.available ?? 0) < pkg.price)
+        throw Object.assign(new Error('الرصيد غير كافي لحجز الإعلان — اشحن محفظتك'), { status: 400 });
+      // طلب بانتظار موافقة الأدمن — الرصيد يُحجز فوراً ويُرجع لو انرفض
+      ad = (await c.query(`INSERT INTO ad_requests (store_id, title, art, image, duration_days, price, gradient, status, sort, starts_at, ends_at, note, product_id)
+        VALUES ($1,$2,$3,$4,$5,$6,$7,'pending',0,NULL,NULL,$8,$9) RETURNING *`,
+        [s.id, t, artSafe, imgSafe, pkg.days, pkg.price, gradSafe, noteSafe, product_id || null])).rows[0];
 
-    await c.query(`UPDATE wallets SET available=available-$1, updated_at=now() WHERE store_id=$2`, [pkg.price, s.id]);
-    await c.query(`INSERT INTO wallet_transactions (store_id, type, amount, note) VALUES ($1,'ad',$2,$3)`, [s.id, -pkg.price, `حجز إعلان (بانتظار الموافقة): ${t}`]);
-  });
+      await c.query(`UPDATE wallets SET available=available-$1, updated_at=now() WHERE store_id=$2`, [pkg.price, s.id]);
+      await c.query(`INSERT INTO wallet_transactions (store_id, type, amount, note) VALUES ($1,'ad',$2,$3)`, [s.id, -pkg.price, `حجز إعلان (بانتظار الموافقة): ${t}`]);
+    });
+  } catch (e) {
+    return res.status(e.status || 500).json({ error: e.message || 'خطأ بالسيرفر' });
+  }
 
   await q(`INSERT INTO notifications (role, type, title, body, data) VALUES ('admin','ad','طلب إعلان جديد بانتظارك 🖼',$1, jsonb_build_object('ad_id',$2::int))`,
     [`${t} — ${pkg.days} أيام — ${pkg.price.toLocaleString()} د.ع`, ad.id]);
@@ -396,12 +421,20 @@ r.post('/coupons', async (req, res) => {
   const s = await myStore(req);
   if (!s) return res.status(404).json({ error: 'سجل محلك أول' });
   const { code, percent, flat, min_total = 0, max_discount = 0, expires_at, uses_limit = 0, active = true } = req.body;
-  const clean = String(code || '').trim().toUpperCase();
+  const clean = String(code || '').trim().toUpperCase().slice(0, 30);
   if (!clean) return res.status(400).json({ error: 'كود الكوبون مطلوب' });
-  if (!percent && !flat) return res.status(400).json({ error: 'حدد نسبة % أو مبلغ خصم' });
+  const pct = Number(percent || 0);
+  const fl = Number(flat || 0);
+  const minT = Number(min_total || 0);
+  const maxD = Number(max_discount || 0);
+  const usesL = Number(uses_limit || 0);
+  // تحقق صارم: النسبة 1..100 أو المبلغ 1..999999، وكل الحدود غير سالبة
+  if (pct < 0 || pct > 100 || fl < 0 || fl > 999999 || minT < 0 || maxD < 0 || usesL < 0)
+    return res.status(400).json({ error: 'قيم الكوبون غير صالحة — راجع النسبة/المبلغ والحدود' });
+  if (!pct && !fl) return res.status(400).json({ error: 'حدد نسبة % أو مبلغ خصم' });
   const c = (await q(`INSERT INTO coupons (store_id, code, percent, flat, min_total, max_discount, expires_at, uses_left, active)
     VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9) RETURNING *`,
-    [s.id, clean, percent || null, flat || null, min_total, max_discount, expires_at || null, uses_limit, active]))[0];
+    [s.id, clean, pct || null, fl || null, minT, maxD, expires_at || null, usesL, active]))[0];
   res.status(201).json({ coupon: c });
 });
 
@@ -459,7 +492,7 @@ r.get('/week-earnings', async (req, res) => {
       ROUND(COALESCE(SUM(total), 0) * $2 / 100)::int AS commission_due,
       ROUND(COALESCE(SUM(total), 0) * (1 - $2 / 100))::int AS net_due
     FROM orders
-    WHERE store_id=$1 AND status NOT IN ('cancelled') AND created_at >= now() - interval '7 days'
+    WHERE store_id=$1 AND status='delivered' AND updated_at >= now() - interval '7 days'
   `, [s.id, s.commission_rate]);
   res.json(row);
 });

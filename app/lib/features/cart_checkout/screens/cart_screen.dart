@@ -25,6 +25,7 @@ class _CartScreenState extends State<CartScreen> {
   final addressCtrl = TextEditingController();
   String appliedCoupon = '';
   int appliedCouponDiscount = 0;
+  int appliedCouponStoreId = 0; // المحل اللي انطبق عليه الكوبون — يروح له بس
   bool usePoints = false;
   String? groupError;
 
@@ -69,6 +70,7 @@ class _CartScreenState extends State<CartScreen> {
       setState(() {
         appliedCoupon = d['code'];
         appliedCouponDiscount = d['discount'];
+        appliedCouponStoreId = storeId;
       });
       toast(
         context,
@@ -122,6 +124,8 @@ class _CartScreenState extends State<CartScreen> {
     final gid = DateTime.now().millisecondsSinceEpoch.toString();
     var done = 0;
     String? firstError;
+    // النقاط لأول مجموعة فقط — السيرفر يخصمها من الرصيد لكل طلب، فإرسالها لكل المجموعات يخصمها مرات
+    final maxPoints = ((Api.me?['points'] ?? 0) ~/ 100) * 100;
     for (final g in groups) {
       try {
         await Api.post('/api/customer/orders', {
@@ -130,6 +134,13 @@ class _CartScreenState extends State<CartScreen> {
           if (picked.$2 != null) 'address_id': picked.$2,
           if (picked.$3 != null) 'scheduled_at': picked.$3,
           'group_id': gid,
+          // الكوبون يروح لمحله فقط — السيرفر يرفض "هذا الكوبون لمحل آخر"
+          if (appliedCoupon.isNotEmpty &&
+              appliedCouponStoreId != 0 &&
+              g['store_id'] == appliedCouponStoreId)
+            'coupon_code': appliedCoupon,
+          if (usePoints && maxPoints > 0 && g == groups.first)
+            'redeem_points': maxPoints,
         });
         done++;
       } on ApiException catch (e) {
@@ -489,8 +500,17 @@ class _CartScreenState extends State<CartScreen> {
     return (null, null, null);
   }
 
+  // سعر البند الفعلي — يطبّق العرض إن كان مفعّلاً (نفس منطق الخادم عند الفوترة)
+  double priceOf(dynamic it) {
+    final has = it['has_offer'] ?? false;
+    final op = it['offer_price'];
+    if (has == true && op is num) return op.toDouble();
+    final p = it['price'];
+    return (p is num ? p.toDouble() : double.tryParse('$p') ?? 0.0);
+  }
+
   Widget _itemRow(dynamic it) {
-    final price = (it['price'] ?? 0);
+    final price = priceOf(it);
     final qty = (it['qty'] ?? 1);
     return Padding(
       padding: const EdgeInsets.only(bottom: 10),
@@ -652,9 +672,15 @@ class _CartScreenState extends State<CartScreen> {
     final items = (g['items'] as List);
     final subtotal = items.fold<double>(
       0.0,
-      (sum, it) => sum + ((it['price'] ?? 0) * (it['qty'] ?? 1)).toDouble(),
+      (sum, it) => sum + (priceOf(it) * (it['qty'] ?? 1)).toDouble(),
     );
     final fee = (items.first['delivery_fee'] ?? 0);
+    // التوصيل: مجاني فوق حد المتجر (نفس منطق الخادم عند إنشاء الطلب)
+    final freeMin = ((items.first['free_delivery_min'] ?? 50000) as num).toDouble();
+    final deliveryFee =
+        subtotal >= (freeMin > 0 ? freeMin : 50000)
+        ? 0.0
+        : (fee as num).toDouble();
     return Container(
       margin: const EdgeInsets.only(bottom: 14),
       padding: const EdgeInsets.fromLTRB(11, 11, 11, 12),
@@ -709,7 +735,9 @@ class _CartScreenState extends State<CartScreen> {
                               ),
                               const SizedBox(width: 4),
                               Text(
-                                'توصيل ${formatMoney(fee)}',
+                                deliveryFee <= 0
+                                    ? 'توصيل مجاني 🎉'
+                                    : 'توصيل ${formatMoney(deliveryFee)}',
                                 style: AppType.style(
                                   9.5,
                                   color: AppColors.cyan,
@@ -843,15 +871,22 @@ class _CartScreenState extends State<CartScreen> {
     final groupList = groups.values.toList();
     double total = 0;
     for (final it in cart) {
-      total +=
-          (double.tryParse('${it['price'] ?? 0}') ?? 0.0) *
-          (double.tryParse('${it['qty'] ?? 1}') ?? 1.0);
+      total += priceOf(it) * (it['qty'] ?? 1).toDouble();
     }
     double deliveryTotal = 0;
     for (final g in groupList) {
       final items = (g['items'] as List);
-      if (items.isNotEmpty)
-        deliveryTotal += ((items.first['delivery_fee'] ?? 0) as num).toDouble();
+      if (items.isEmpty) continue;
+      final sub = items.fold<double>(
+        0.0,
+        (sum, it) => sum + (priceOf(it) * (it['qty'] ?? 1)).toDouble(),
+      );
+      final freeMin =
+          ((items.first['free_delivery_min'] ?? 50000) as num).toDouble();
+      deliveryTotal +=
+          sub >= (freeMin > 0 ? freeMin : 50000)
+          ? 0
+          : ((items.first['delivery_fee'] ?? 0) as num).toDouble();
     }
 
     final bodyWidget = loading

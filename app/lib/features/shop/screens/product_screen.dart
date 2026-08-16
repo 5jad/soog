@@ -102,7 +102,7 @@ class _ProductScreenState extends State<ProductScreen> {
     String? label;
     if (variants.isNotEmpty) {
       final colorList = _distinctColors(variants);
-      if (colorList.length == 1 && colorList.first.isEmpty) {
+      if (colorList.isEmpty) {
         // بلا ألوان — اختيار المقاس فقط
         if (selSize < 0 || selSize >= variants.length)
           return toast(context, 'اختر المقاس أولاً 🙏');
@@ -111,7 +111,7 @@ class _ProductScreenState extends State<ProductScreen> {
       } else {
         if (selColor.isEmpty) return toast(context, 'اختر اللون أولاً 🙏');
         final rows = variants
-            .where((v) => '${v['color'] ?? ''}' == selColor)
+            .where((v) => '${v['color'] ?? ''}'.trim() == selColor)
             .toList();
         if (selSize < 0 || selSize >= rows.length)
           return toast(context, 'اختر المقاس أولاً 🙏');
@@ -274,8 +274,8 @@ class _ProductScreenState extends State<ProductScreen> {
   List<String> _distinctColors(List<Map> variants) {
     final seen = <String>[];
     for (final v in variants) {
-      final c = '${v['color'] ?? ''}';
-      if (!seen.contains(c)) seen.add(c);
+      final c = '${v['color'] ?? ''}'.trim();
+      if (c.isNotEmpty && !seen.contains(c)) seen.add(c);
     }
     return seen;
   }
@@ -287,12 +287,12 @@ class _ProductScreenState extends State<ProductScreen> {
         : <Map>[];
     if (variants.isEmpty) return true;
     final colorList = _distinctColors(variants);
-    if (colorList.length == 1 && colorList.first.isEmpty) {
+    if (colorList.isEmpty) {
       return selSize >= 0 && selSize < variants.length;
     }
     if (selColor.isEmpty) return false;
     final rows = variants
-        .where((v) => '${v['color'] ?? ''}' == selColor)
+        .where((v) => '${v['color'] ?? ''}'.trim() == selColor)
         .toList();
     return selSize >= 0 && selSize < rows.length;
   }
@@ -304,14 +304,14 @@ class _ProductScreenState extends State<ProductScreen> {
         : <Map>[];
     if (variants.isEmpty) return 0;
     final colorList = _distinctColors(variants);
-    if (colorList.length == 1 && colorList.first.isEmpty) {
+    if (colorList.isEmpty) {
       return selSize >= 0 && selSize < variants.length
           ? ((variants[selSize]['stock'] as num?)?.toInt() ?? 0)
           : 0;
     }
     if (selColor.isEmpty) return 0;
     final rows = variants
-        .where((v) => '${v['color'] ?? ''}' == selColor)
+        .where((v) => '${v['color'] ?? ''}'.trim() == selColor)
         .toList();
     return selSize >= 0 && selSize < rows.length
         ? ((rows[selSize]['stock'] as num?)?.toInt() ?? 0)
@@ -333,7 +333,7 @@ class _ProductScreenState extends State<ProductScreen> {
     final colorList = _distinctColors(variants);
     final colorRows = selColor.isEmpty
         ? <Map>[]
-        : variants.where((v) => '${v['color'] ?? ''}' == selColor).toList();
+        : variants.where((v) => '${v['color'] ?? ''}'.trim() == selColor).toList();
     final hasVariant = variants.isNotEmpty;
     final offPct = prod.hasOffer && prod.price > 0
         ? ((prod.price - prod.displayPrice) / prod.price * 100).round()
@@ -933,10 +933,7 @@ class _ProductScreenState extends State<ProductScreen> {
                                       ? colorRows.isEmpty
                                             ? []
                                             : []
-                                      : (selColor.isEmpty &&
-                                            (colorList.isEmpty ||
-                                                (colorList.length == 1 &&
-                                                    colorList.first.isEmpty)))
+                                      : (selColor.isEmpty && colorList.isEmpty)
                                       ? variants
                                             .asMap()
                                             .entries
@@ -1273,10 +1270,10 @@ class _ProductScreenState extends State<ProductScreen> {
         : <Map>[];
     if (selSize < 0 || selSize >= variants.length) return '';
     final colorList = _distinctColors(variants);
-    if (colorList.length == 1 && colorList.first.isEmpty)
+    if (colorList.isEmpty)
       return '${variants[selSize]['name'] ?? ''}';
     final rows = variants
-        .where((v) => '${v['color'] ?? ''}' == selColor)
+        .where((v) => '${v['color'] ?? ''}'.trim() == selColor)
         .toList();
     if (selSize < 0 || selSize >= rows.length) return '';
     return '${rows[selSize]['name'] ?? ''}';

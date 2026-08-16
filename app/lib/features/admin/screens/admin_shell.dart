@@ -446,7 +446,7 @@ class _AdminCashState extends State<_AdminCash> {
                       ),
                       const SizedBox(height: 6),
                       Text(
-                        'المبلغ: ${formatMoney(r['amount'] ?? 0)} · ${r['order_count'] ?? 0} طلب · ${timeAgo(r['created_at'] ?? '')}',
+                        'المبلغ: ${formatMoney(r['total_collected'] ?? 0)} · صافي المنصة: ${formatMoney(r['net'] ?? 0)} · ${timeAgo(r['created_at'] ?? '')}',
                         style: AppType.style(11.5, color: AppColors.muted),
                       ),
                       if (pending) ...[
@@ -507,8 +507,9 @@ class _AdminStoresState extends State<_AdminStores> {
 
   Future<void> act(int id, String action) async {
     try {
+      // السكيما تقبل 'approved' للمقبول — 'active' تسبب خطأ 500
       await Api.patch('/api/admin/stores/$id', {
-        'status': action == 'approve' ? 'active' : 'suspended',
+        'status': action == 'approve' ? 'approved' : 'suspended',
       });
       toast(context, 'تم التحديث');
       _load();
@@ -576,7 +577,7 @@ class _AdminStoresState extends State<_AdminStores> {
                       ),
                     ],
                   ),
-                ] else if (s['status'] == 'active') ...[
+                ] else if (s['status'] == 'approved') ...[
                   const SizedBox(height: 10),
                   SolidBtn(
                     label: 'تعليق المتجر',

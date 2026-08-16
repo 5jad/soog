@@ -62,9 +62,11 @@ r.get('/stores/:id', async (req, res) => {
   if (!s) return res.status(404).json({ error: 'المحل غير موجود' });
   const dStore = await demoCond('stores');
   if (dStore && s.name?.startsWith('[وهمي]')) return res.status(404).json({ error: 'المحل غير موجود' });
-  const products = await q(`SELECT p.*, pr.percent AS offer_percent, pr.active AS offer_active,
+  const products = await q(`SELECT p.*, c.name AS category_name, pr.percent AS offer_percent, pr.active AS offer_active,
       (pr.active AND pr.percent>0) AS has_offer, ROUND(p.price*(1-COALESCE(pr.percent,0)/100.0)) AS offer_price
-    FROM products p LEFT JOIN offers pr ON pr.product_id=p.id AND pr.active=true WHERE p.store_id=$1 ORDER BY p.id`, [s.id]);
+    FROM products p
+    LEFT JOIN categories c ON c.id=p.category_id
+    LEFT JOIN offers pr ON pr.product_id=p.id AND pr.active=true WHERE p.store_id=$1 ORDER BY p.id`, [s.id]);
   const variants = await q(`SELECT v.* FROM product_variants v JOIN products p ON p.id=v.product_id WHERE p.store_id=$1`, [s.id]);
   const reviews = await q(`SELECT rev.*, u.name AS user_name, u.avatar FROM reviews rev JOIN users u ON u.id=rev.user_id WHERE rev.store_id=$1 ORDER BY rev.id DESC LIMIT 50`, [s.id]);
   // كوبونات المتجر النشطة (ساكنة رخيصة)

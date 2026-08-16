@@ -185,12 +185,19 @@ async function resetDummyTx(c) {
 }
 
 // ═══════════ البيانات الوهمية (إخفاء/إظهار بلا مسح) ═══════════
-r.get('/dummy', async (req, res) => {
+const checkNotProd = (req, res, next) => {
+  if (process.env.NODE_ENV === 'production') {
+    return res.status(403).json({ error: 'غير مسموح في بيئة الإنتاج' });
+  }
+  next();
+};
+
+r.get('/dummy', checkNotProd, async (req, res) => {
   res.json({ mode: (await isHidden()) ? 'hidden' : 'shown', stats: await demoStats() });
 });
 
 // إظهار: إن كانت البيانات موجودة يظهرها فقط، وإلا يولّدها ويظهرها
-r.post('/dummy', async (req, res) => {
+r.post('/dummy', checkNotProd, async (req, res) => {
   const stats = await demoStats();
   if (stats.stores > 0 && stats.products > 0) {
     await setDemoMode('shown');
@@ -369,19 +376,19 @@ r.post('/dummy', async (req, res) => {
 });
 
 // إخفاء: بدون أي مسح — تبقى البيانات وتختفي من كل الاستعلامات
-r.post('/dummy/hide', async (req, res) => {
+r.post('/dummy/hide', checkNotProd, async (req, res) => {
   await setDemoMode('hidden');
   res.json({ ok: true, mode: 'hidden', stats: await demoStats() });
 });
 
 // إظهار البيانات الموجودة فقط (بدون توليد)
-r.post('/dummy/show', async (req, res) => {
+r.post('/dummy/show', checkNotProd, async (req, res) => {
   await setDemoMode('shown');
   res.json({ ok: true, mode: 'shown', stats: await demoStats() });
 });
 
 // مسح نهائي (اختياري للأدمن)
-r.delete('/dummy', async (req, res) => {
+r.delete('/dummy', checkNotProd, async (req, res) => {
   const removed = await tx((c) => resetDummyTx(c));
   await setDemoMode('shown');
   res.json({ ok: true, ...removed });
@@ -520,8 +527,8 @@ r.get('/stores-week', async (req, res) => {
       ROUND(COALESCE(SUM(o.total), 0) * (1 - s.commission_rate / 100))::int AS net_due
     FROM stores s
     LEFT JOIN orders o ON o.store_id = s.id
-      AND o.status NOT IN ('cancelled')
-      AND o.created_at > COALESCE(s.last_paid_at, now() - interval '7 days')
+      AND o.status = 'delivered'
+      AND o.updated_at > COALESCE(s.last_paid_at, now() - interval '7 days')
       ${dOrder ? `AND ${dOrder}` : ''}
     ${dStore ? `WHERE ${dStore}` : ''}
     GROUP BY s.id, s.name, s.logo, s.commission_rate, s.last_paid_at
@@ -532,24 +539,32 @@ r.get('/stores-week', async (req, res) => {
 
 // ── تسجيل تسليم مستحقات محل ──
 r.post('/stores/:id/pay', async (req, res) => {
-  const s = await one('SELECT * FROM stores WHERE id=$1', [req.params.id]);
-  if (!s) return res.status(404).json({ error: 'المحل غير موجود' });
-  // حساب المستحق منذ آخر دفعة
-  const since = s.last_paid_at || new Date(Date.now() - 7 * 24 * 60 * 60 * 1000).toISOString();
-  const row = await one(`
-    SELECT COALESCE(SUM(total),0)::int AS gross,
-      ROUND(COALESCE(SUM(total),0) * $2::numeric / 100)::int AS commission_due,
-      ROUND(COALESCE(SUM(total),0) * (1 - $2::numeric/100))::int AS net_due
-    FROM orders WHERE store_id=$1 AND status NOT IN ('cancelled') AND created_at > $3
-  `, [s.id, s.commission_rate, since]);
-  // تخزين سجل الدفعة
-  await q(`INSERT INTO wallet_transactions (store_id, type, amount, note)
-    VALUES ($1,'adjust',$2,'\u062fفعة \u0645ستحقات \u0623سبوعية — \u0635افي \u0628عد \u0627لعمولة')`,
-    [s.id, row.net_due]);
-  // تحديث تاريخ آخر دفعة (=الآن)
-  await q(`UPDATE stores SET last_paid_at=now() WHERE id=$1`, [s.id]);
-  await audit(req.user.id, 'store_pay', 'store', s.id, null, row);
-  res.json({ ok: true, ...row });
+  try {
+    await tx(async (c) => {
+      // قفل صف المتجر — يمنع دفعتين متزامنتين لنفس الفترة
+      const s = (await c.query(`SELECT * FROM stores WHERE id=$1 FOR UPDATE`, [req.params.id])).rows[0];
+      if (!s) throw Object.assign(new Error('المحل غير موجود'), { status: 404 });
+      // المستحق: الطلبات المُسلَّمة فعلياً فقط (غير المسلّمة تُحتسب يوم تُسلَّم)
+      const since = s.last_paid_at || new Date(Date.now() - 7 * 24 * 60 * 60 * 1000).toISOString();
+      const row = (await c.query(`
+        SELECT COALESCE(SUM(total),0)::int AS gross,
+          ROUND(COALESCE(SUM(total),0) * $2::numeric / 100)::int AS commission_due,
+          ROUND(COALESCE(SUM(total),0) * (1 - $2::numeric/100))::int AS net_due
+        FROM orders WHERE store_id=$1 AND status='delivered' AND updated_at > $3
+      `, [s.id, s.commission_rate, since])).rows[0];
+      if ((row?.net_due || 0) <= 0) throw Object.assign(new Error('ماكو مستحقات جديدة لهذا المحل'), { status: 400 });
+      // تخزين سجل الدفعة (إعلامي — الرصيد يُحصّل عند التسليم أصلو)
+      await c.query(`INSERT INTO wallet_transactions (store_id, type, amount, note)
+        VALUES ($1,'adjust',$2,'\u062fفعة \u0645ستحقات \u0623سبوعية — \u0635افي \u0628عد \u0627لعمولة')`,
+        [s.id, row.net_due]);
+      // تحديث تاريخ آخر دفعة (=الآن)
+      await c.query(`UPDATE stores SET last_paid_at=now() WHERE id=$1`, [s.id]);
+      await audit(req.user.id, 'store_pay', 'store', s.id, null, row);
+      res.json({ ok: true, ...row });
+    });
+  } catch (e) {
+    res.status(e.status || 500).json({ error: e.message || 'خطأ بالسيرفر' });
+  }
 });
 
 r.patch('/cash/:id', async (req, res) => {

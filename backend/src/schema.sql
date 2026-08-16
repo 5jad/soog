@@ -180,7 +180,7 @@ CREATE TABLE cart_items (
   user_id INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
   product_id INTEGER NOT NULL REFERENCES products(id) ON DELETE CASCADE,
   variant_id INTEGER REFERENCES product_variants(id) ON DELETE CASCADE,
-  qty INTEGER DEFAULT 1,
+  qty INTEGER DEFAULT 1 CHECK (qty >= 1),
   created_at TIMESTAMPTZ DEFAULT now(),
   UNIQUE (user_id, product_id, variant_id)
 );
@@ -256,7 +256,7 @@ CREATE TABLE order_items (
   name TEXT NOT NULL,
   variant TEXT DEFAULT '',
   price INTEGER NOT NULL,
-  qty INTEGER NOT NULL DEFAULT 1
+  qty INTEGER NOT NULL DEFAULT 1 CHECK (qty >= 1)
 );
 
 CREATE TABLE order_status_history (
@@ -385,8 +385,8 @@ CREATE TABLE ad_requests (
 CREATE TABLE wallets (
   id SERIAL PRIMARY KEY,
   store_id INTEGER NOT NULL UNIQUE REFERENCES stores(id) ON DELETE CASCADE,
-  available INTEGER DEFAULT 0,
-  pending INTEGER DEFAULT 0,
+  available INTEGER DEFAULT 0 CHECK (available >= 0),
+  pending INTEGER DEFAULT 0 CHECK (pending >= 0),
   updated_at TIMESTAMPTZ DEFAULT now()
 );
 

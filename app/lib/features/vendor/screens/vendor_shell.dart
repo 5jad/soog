@@ -1440,9 +1440,28 @@ class _StoreTabState extends State<_StoreTab> {
 
   Future<void> _load() async {
     try {
-      final d = await Api.get('/api/vendor/store');
-      store = d['store'];
-      stats = d['stats'] ?? {};
+      // الإحصائيات في مسار منفصل — /store يرجع بيانات المتجر فقط
+      final results = await Future.wait([
+        Api.get('/api/vendor/store'),
+        Api.get('/api/vendor/stats'),
+      ]);
+      store = results[0]['store'];
+      final st = results[1]['stats'];
+      if (st is Map<String, dynamic>) {
+        stats = {
+          'orders_today': st['today_orders'] ?? 0,
+          'sales_today': st['today_sales'] ?? 0,
+          'new_orders': st['new_orders'] ?? 0,
+        };
+      } else {
+        stats = {};
+      }
+      if (store is Map<String, dynamic>) {
+        final sm = store as Map<String, dynamic>;
+        stats['rating'] = sm['rating_avg'] ?? 0;
+        final prods = sm['products'];
+        stats['products_count'] = prods is List ? prods.length : 0;
+      }
     } catch (_) {
     } finally {
       if (mounted) setState(() => loading = false);
@@ -1458,7 +1477,6 @@ class _StoreTabState extends State<_StoreTab> {
     final cover = TextEditingController(text: s['cover'] ?? '');
     final address = TextEditingController(text: s['address'] ?? '');
     final phone = TextEditingController(text: s['phone'] ?? '');
-    final fee = TextEditingController(text: '${s['delivery_fee'] ?? 2000}');
     double? slat = (s['lat'] as num?)?.toDouble();
     double? slng = (s['lng'] as num?)?.toDouble();
     int? selCat =
@@ -1659,14 +1677,6 @@ class _StoreTabState extends State<_StoreTab> {
                         ),
                         keyboardType: TextInputType.phone,
                       ),
-                      const SizedBox(height: 10),
-                      TextField(
-                        controller: fee,
-                        decoration: const InputDecoration(
-                          labelText: 'رسوم التوصيل (د.ع)',
-                        ),
-                        keyboardType: TextInputType.number,
-                      ),
                       const SizedBox(height: 12),
                       OutlinedButton.icon(
                         style: OutlinedButton.styleFrom(
@@ -1711,7 +1721,6 @@ class _StoreTabState extends State<_StoreTab> {
                               'cover': cover.text,
                               'address': address.text,
                               'phone': phone.text,
-                              'delivery_fee': int.tryParse(fee.text) ?? 2000,
                               if (selCat != null) 'category_id': selCat,
                               if (selDist != null) 'district_id': selDist,
                               if (slat != null) 'lat': slat,
@@ -1743,6 +1752,32 @@ class _StoreTabState extends State<_StoreTab> {
         },
       ),
     );
+  }
+
+  // ── رفع/إعادة رفع البطاقة الوطنية (وثيقة توثيق) ──
+  Future<void> _uploadIdCard() async {
+    try {
+      final f = await ImagePicker().pickImage(
+        source: ImageSource.gallery,
+        imageQuality: 85,
+        maxWidth: 1600,
+      );
+      if (f == null) return;
+      final bytes = await f.readAsBytes();
+      final urls = await Api.uploadBytes([bytes]);
+      if (urls.isEmpty || !mounted) return;
+      await Api.post('/api/vendor/store/documents', {
+        'type': 'national_id',
+        'title': 'البطاقة الوطنية',
+        'file_url': urls.first,
+      });
+      toast(context, 'انرفعت البطاقة — بانتظار مراجعة الأدمن ✓');
+      _load();
+    } on ApiException catch (e) {
+      if (mounted) toast(context, e.message, error: true);
+    } catch (_) {
+      if (mounted) toast(context, 'تعذر رفع البطاقة', error: true);
+    }
   }
 
   @override
@@ -2105,7 +2140,95 @@ class _StoreTabState extends State<_StoreTab> {
             ),
           ),
           const SizedBox(height: 16),
-          // الإجازة
+          // ═══ وثائق التوثيق: البطاقة الوطنية ═══
+          Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 16),
+            child: GlassCard(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Row(
+                    children: [
+                      Text(
+                        'وثائق التوثيق 🪪',
+                        style: AppType.style(13, weight: FontWeight.w900),
+                      ),
+                      const Spacer(),
+                      SizedBox(
+                        width: 86,
+                        height: 56,
+                        child: ClipRRect(
+                          borderRadius: BorderRadius.circular(10),
+                          child: productImageBox(
+                            idCardUrl(s),
+                            base: Api.base,
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 10),
+                  ...idDocs(s).map(
+                    (d) => Padding(
+                      padding: const EdgeInsets.only(bottom: 6),
+                      child: Row(
+                        children: [
+                          StatusChip(d['status'] ?? 'pending'),
+                          const SizedBox(width: 8),
+                          Expanded(
+                            child: Text(
+                              '${d['title'] ?? ''}${d['reason'] != null ? ' — ${d['reason']}' : ''}',
+                              style: AppType.style(
+                                12,
+                                color: AppColors.muted,
+                                weight: FontWeight.w600,
+                              ),
+                              maxLines: 2,
+                              overflow: TextOverflow.ellipsis,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ),
+                  const SizedBox(height: 6),
+                  Text(
+                    idDocs(s).isEmpty
+                        ? 'لم ترفع بطاقة وطنية بعد — إلزامية لتوثيق متجرك'
+                        : 'بطاقتك الوطنية تُراجع من الأدمن ضمن توثيق المتجر',
+                    style: AppType.style(
+                      11,
+                      color: idDocs(s).isEmpty
+                          ? AppColors.danger
+                          : AppColors.muted,
+                    ),
+                  ),
+                  const SizedBox(height: 10),
+                  SizedBox(
+                    width: double.infinity,
+                    child: OutlinedButton.icon(
+                      style: OutlinedButton.styleFrom(
+                        foregroundColor: AppColors.primary,
+                        side: const BorderSide(
+                          color: AppColors.primary,
+                          width: 1.2,
+                        ),
+                      ),
+                      onPressed: () => _uploadIdCard(),
+                      icon: const Icon(Icons.badge_outlined, size: 18),
+                      label: Text(
+                        idDocs(s).isEmpty
+                            ? 'ارفع بطاقة الوطنية 📷'
+                            : 'إعادة رفع البطاقة الوطنية 📷',
+                        style: const TextStyle(fontWeight: FontWeight.w800),
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ),
+          const SizedBox(height: 16),
           Padding(
             padding: const EdgeInsets.symmetric(horizontal: 16),
             child: GlassCard(
@@ -2293,10 +2416,12 @@ class _CouponsCardState extends State<_CouponsCard> {
                             'min_total': int.tryParse(minT.text) ?? 0,
                             'max_discount': int.tryParse(maxD.text) ?? 0,
                           });
+                          if (!context.mounted) return;
                           toast(context, 'انصاد الكوبون ✓');
                           Navigator.pop(context);
                           _load();
                         } on ApiException catch (e) {
+                          if (!context.mounted) return;
                           toast(context, e.message, error: true);
                         }
                       },
@@ -2534,10 +2659,12 @@ class _QuestionsCardState extends State<_QuestionsCard> {
                                               '/api/vendor/questions/${q['id']}/answer',
                                               {'answer': ans.text},
                                             );
+                                            if (!context.mounted) return;
                                             toast(context, 'انراد الجواب ✓');
                                             Navigator.pop(context);
                                             _load();
                                           } on ApiException catch (e) {
+                                            if (!context.mounted) return;
                                             toast(
                                               context,
                                               e.message,
@@ -2653,6 +2780,7 @@ class _RefundsListState extends State<_RefundsList> {
                                   '/api/vendor/refunds/${rf['id']}',
                                   {'status': 'accepted'},
                                 );
+                                if (!context.mounted) return;
                                 toast(
                                   context,
                                   rf['type'] == 'exchange'
@@ -2661,6 +2789,7 @@ class _RefundsListState extends State<_RefundsList> {
                                 );
                                 setState(() => rf['status'] = 'accepted');
                               } on ApiException catch (e) {
+                                if (!context.mounted) return;
                                 toast(context, e.message, error: true);
                               }
                             },
@@ -2677,9 +2806,11 @@ class _RefundsListState extends State<_RefundsList> {
                                   '/api/vendor/refunds/${rf['id']}',
                                   {'status': 'rejected'},
                                 );
+                                if (!context.mounted) return;
                                 toast(context, 'انرفض الطلب');
                                 setState(() => rf['status'] = 'rejected');
                               } on ApiException catch (e) {
+                                if (!context.mounted) return;
                                 toast(context, e.message, error: true);
                               }
                             },
@@ -2729,4 +2860,18 @@ class _RefundsListState extends State<_RefundsList> {
       ),
     );
   }
+}
+
+// ── وثائق البطاقة الوطنية للمتجر ──
+List<dynamic> idDocs(Map<String, dynamic> s) {
+  final docs = ((s['documents'] as List?) ?? [])
+      .where((d) => (d['type'] ?? '') == 'national_id')
+      .toList()
+    ..sort((a, b) => ((b['id'] ?? 0) as num).compareTo((a['id'] ?? 0) as num));
+  return docs;
+}
+
+String idCardUrl(Map<String, dynamic> s) {
+  final docs = idDocs(s);
+  return docs.isEmpty ? '' : (docs.first['file_url'] ?? '').toString();
 }

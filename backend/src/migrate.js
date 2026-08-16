@@ -29,6 +29,15 @@ const stmts = [
     read_at TIMESTAMPTZ,
     created_at TIMESTAMPTZ DEFAULT now()
   )`,
+  // ── قيود سلامة مالية (idempotent): كميات موجبة ورصيد غير سالب ──
+  `DO $$ BEGIN IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conname='cart_items_qty_check') THEN
+     ALTER TABLE cart_items ADD CONSTRAINT cart_items_qty_check CHECK (qty >= 1); END IF; END $$`,
+  `DO $$ BEGIN IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conname='order_items_qty_check') THEN
+     ALTER TABLE order_items ADD CONSTRAINT order_items_qty_check CHECK (qty >= 1); END IF; END $$`,
+  `DO $$ BEGIN IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conname='wallets_available_check') THEN
+     ALTER TABLE wallets ADD CONSTRAINT wallets_available_check CHECK (available >= 0); END IF; END $$`,
+  `DO $$ BEGIN IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conname='wallets_pending_check') THEN
+     ALTER TABLE wallets ADD CONSTRAINT wallets_pending_check CHECK (pending >= 0); END IF; END $$`,
 ];
 
 for (const s of stmts) {

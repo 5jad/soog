@@ -619,9 +619,18 @@ class _OrderDetailScreenState extends State<OrderDetailScreen> {
     } catch (_) {}
   }
 
-  Future<void> _act(String ep, Map<String, dynamic> body, String msg) async {
+  Future<void> _act(
+    String ep,
+    Map<String, dynamic> body,
+    String msg, {
+    bool patch = false,
+  }) async {
     try {
-      await Api.post(ep, body);
+      if (patch) {
+        await Api.patch(ep, body);
+      } else {
+        await Api.post(ep, body);
+      }
       toast(context, msg);
       widget.onChanged?.call();
       _load();
@@ -947,6 +956,7 @@ class _OrderDetailScreenState extends State<OrderDetailScreen> {
                         '/api/vendor/orders/${widget.orderId}/status',
                         {'status': 'accept'},
                         'الطلب قيد التجهيز',
+                        patch: true,
                       ),
                     ),
                   ),
@@ -959,6 +969,7 @@ class _OrderDetailScreenState extends State<OrderDetailScreen> {
                         '/api/vendor/orders/${widget.orderId}/status',
                         {'status': 'reject'},
                         'انرفض الطلب',
+                        patch: true,
                       ),
                     ),
                   ),
@@ -971,6 +982,7 @@ class _OrderDetailScreenState extends State<OrderDetailScreen> {
                   '/api/vendor/orders/${widget.orderId}/status',
                   {'status': 'ready'},
                   'في انتظار المندوب',
+                  patch: true,
                 ),
               ),
           ],

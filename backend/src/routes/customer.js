@@ -8,17 +8,23 @@ r.use(auth);
 // ═══════════ السلة ═══════════
 r.get('/cart', async (req, res) => {
   const items = await q(`SELECT c.id, c.qty, p.id AS product_id, p.name, p.price, p.image, p.old_price,
-      v.id AS variant_id, COALESCE(c.variant_label, CASE WHEN v.color <> '' THEN v.color || ' · ' || v.name ELSE v.name END) AS variant, v.stock, s.id AS store_id, s.name AS store_name, s.logo, s.delivery_fee
+      v.id AS variant_id, COALESCE(c.variant_label, CASE WHEN v.color <> '' THEN v.color || ' · ' || v.name ELSE v.name END) AS variant, v.stock, s.id AS store_id, s.name AS store_name, s.logo, s.delivery_fee, s.free_delivery_min,
+      (pr.active AND pr.percent>0) AS has_offer, pr.percent AS offer_percent,
+      ROUND(p.price*(1-COALESCE(pr.percent,0)/100.0)) AS offer_price
     FROM cart_items c
     JOIN products p ON p.id=c.product_id
     JOIN stores s ON s.id=p.store_id
     LEFT JOIN product_variants v ON v.id=c.variant_id
+    LEFT JOIN offers pr ON pr.product_id=p.id AND pr.active=true
     WHERE c.user_id=$1 ORDER BY c.id`, [req.user.id]);
   res.json({ items, cart: items });
 });
 
 r.post('/cart', async (req, res) => {
-  const { product_id, variant_id = null, variant = null, variant_label = null, qty = 1 } = req.body;
+  const { product_id, variant_id = null, variant = null, variant_label = null } = req.body;
+  const qty = Number(req.body.qty ?? 1);
+  if (!Number.isInteger(qty) || qty < 1) return res.status(400).json({ error: 'الكمية غير صالحة — اكتب رقماً موجباً' });
+  if (qty > 99) return res.status(400).json({ error: 'الكمية أكبر من المسموح (99)' });
   const p = await one('SELECT * FROM products WHERE id=$1 AND is_available', [product_id]);
   if (!p) return res.status(404).json({ error: 'المنتج غير موجود' });
   let vid = variant_id;
@@ -53,22 +59,28 @@ r.post('/cart', async (req, res) => {
   res.json({ ok: true, count: items.reduce((a, b) => a + b.qty, 0) });
 });
 
+async function patchQty(item, qtyRaw, res) {
+  const qty = Number(qtyRaw);
+  if (!Number.isFinite(qty)) return res.status(400).json({ error: 'الكمية غير صالحة' });
+  if (qty <= 0) await q('DELETE FROM cart_items WHERE id=$1', [item.id]);
+  else {
+    if (qty > 99) return res.status(400).json({ error: 'الكمية أكبر من المسموح (99)' });
+    await q('UPDATE cart_items SET qty=$1 WHERE id=$2', [qty, item.id]);
+  }
+  res.json({ ok: true });
+}
+
 r.patch('/cart', async (req, res) => {
-  const { item_id, qty } = req.body;
+  const { item_id } = req.body;
   const item = await one('SELECT * FROM cart_items WHERE id=$1 AND user_id=$2', [item_id, req.user.id]);
   if (!item) return res.status(404).json({ error: 'المنتج مو بالسلة' });
-  if (qty <= 0) await q('DELETE FROM cart_items WHERE id=$1', [item.id]);
-  else await q('UPDATE cart_items SET qty=$1 WHERE id=$2', [qty, item.id]);
-  res.json({ ok: true });
+  return patchQty(item, req.body.qty, res);
 });
 
 r.patch('/cart/:id', async (req, res) => {
-  const { qty } = req.body;
   const item = await one('SELECT * FROM cart_items WHERE id=$1 AND user_id=$2', [req.params.id, req.user.id]);
   if (!item) return res.status(404).json({ error: 'المنتج مو بالسلة' });
-  if (qty <= 0) await q('DELETE FROM cart_items WHERE id=$1', [item.id]);
-  else await q('UPDATE cart_items SET qty=$1 WHERE id=$2', [qty, item.id]);
-  res.json({ ok: true });
+  return patchQty(item, req.body.qty, res);
 });
 
 r.delete('/cart/:id', async (req, res) => {
@@ -179,8 +191,11 @@ async function freshVerification(userId, windowMin) {
 
 r.post('/orders', async (req, res) => {
   const { store_id, address_id, note = '', address, coupon_code, redeem_points = 0, scheduled_at, group_id, payment_method = 'cod' } = req.body;
-  const items = await q(`SELECT c.*, p.name, p.price, p.image, p.store_id, COALESCE(c.variant_label, v.name) AS variant
+  const items = await q(`SELECT c.*, p.name, p.price, p.image, p.store_id, c.product_id,
+      COALESCE(c.variant_label, v.name) AS variant, v.id AS variant_id, v.stock AS variant_stock,
+      (pr.active AND pr.percent>0) AS has_offer, ROUND(p.price*(1-COALESCE(pr.percent,0)/100.0)) AS offer_price
     FROM cart_items c JOIN products p ON p.id=c.product_id LEFT JOIN product_variants v ON v.id=c.variant_id
+    LEFT JOIN offers pr ON pr.product_id=p.id AND pr.active=true
     WHERE c.user_id=$1 AND p.store_id=$2`, [req.user.id, store_id]);
   if (!items.length) return res.status(400).json({ error: 'السلة فاضية لهذا المحل' });
 
@@ -190,22 +205,23 @@ r.post('/orders', async (req, res) => {
 
   const addr = address_id ? await one('SELECT * FROM addresses WHERE id=$1 AND user_id=$2', [address_id, req.user.id]) : null;
 
-  const subtotal = items.reduce((a, b) => a + b.price * b.qty, 0);
+  // الفوترة بسعر العرض إن كان مفعّلاً — الزبون يدفع نفس اللي شافه بالسلة
+  const subtotal = items.reduce((a, b) => a + (b.has_offer ? b.offer_price : b.price) * b.qty, 0);
   const fee = subtotal >= (store.free_delivery_min || 50000) ? 0 : store.delivery_fee;
   const baseDiscount = subtotal >= 50000 ? 5000 : 0;
 
-  // ── تم إيقاف حارس التحقق بناء على طلب المستخدم (التحقق يتم عند التسجيل) ──
-  // const windowMin = await smartRule('verify_window_min', 10);
-  // if (await phoneVerifyNeeded(req.user.id, subtotal)) {
-  //   if (!(await freshVerification(req.user.id, windowMin)))
-  //     return res.status(403).json({ error: 'أكّد رقم هاتفك أولاً عبر تلغرام', verify_required: true });
-  // }
+  // ── تم إعادة تفعيل حارس التحقق بناء على طلب المستخدم ──
+  const windowMin = await smartRule('verify_window_min', 10);
+  if (await phoneVerifyNeeded(req.user.id, subtotal)) {
+    if (!(await freshVerification(req.user.id, windowMin)))
+      return res.status(403).json({ error: 'أكّد رقم هاتفك أولاً عبر تلغرام', verify_required: true });
+  }
 
   // ── الكوبون ──
   let coupon = null, couponDiscount = 0;
   if (coupon_code) {
-    coupon = await one(`SELECT * FROM coupons WHERE code=$1 AND active=true AND (expires_at IS NULL OR expires_at > now())
-      AND (uses_left IS NULL OR uses_left >= 0)`, [String(coupon_code).trim().toUpperCase()]);
+    // uses_left = 0 معناها بلا حد (حسب المخطط)، وأي كوبون منتهي الصلاحية/موقوف يرد خطأ
+    coupon = await one(`SELECT * FROM coupons WHERE code=$1 AND active=true AND (expires_at IS NULL OR expires_at > now())`, [String(coupon_code).trim().toUpperCase()]);
     if (!coupon) return res.status(400).json({ error: 'الكوبون غير صالح' });
     if (coupon.min_total > subtotal) return res.status(400).json({ error: `الحد الأدنى للكوبون ${coupon.min_total.toLocaleString()} د.ع` });
     if (coupon.store_id && coupon.store_id !== store_id) return res.status(400).json({ error: 'هذا الكوبون لمحل آخر' });
@@ -227,23 +243,35 @@ r.post('/orders', async (req, res) => {
   const discount = baseDiscount;
   const total = Math.max(0, subtotal + fee - discount - couponDiscount - pointsDiscount);
 
-  const order = await tx(async (c) => {
-    const o = (await c.query(`INSERT INTO orders (code, user_id, store_id, subtotal, delivery_fee, discount, coupon_code, coupon_id, points_used, points_discount, scheduled_at, group_id, warranty_days, total, note, address_id, address_text, payment_method)
-      VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15,$16,$17,$18) RETURNING *`,
-      ['', req.user.id, store_id, subtotal, fee, discount, coupon?.code || '', coupon?.id || null, pointsUsed, pointsDiscount, scheduled_at || null, group_id || null, store.warranty_days ?? 3, total, note, addr?.id || null,
-        address || (addr ? `${addr.label} — ${addr.details}` : 'عنوان عند التوصيل'), payment_method])).rows[0];
-    await c.query(`UPDATE orders SET code='ZB-'||(10000+id) WHERE id=$1`, [o.id]);
-    o.code = `ZB-${10000 + o.id}`;
-    for (const it of items)
-      await c.query(`INSERT INTO order_items (order_id, product_id, variant_id, name, variant, price, qty) VALUES ($1,$2,$3,$4,$5,$6,$7)`,
-        [o.id, it.product_id, it.variant_id, it.name, it.variant || '', it.price, it.qty]);
-    await c.query(`INSERT INTO order_status_history (order_id, to_status, by_role) VALUES ($1,'new','customer')`, [o.id]);
-    await c.query(`DELETE FROM cart_items WHERE user_id=$1 AND product_id IN (SELECT id FROM products WHERE store_id=$2)`, [req.user.id, store_id]);
-    // سجل استخدام الكوبون
-    if (coupon) {
-      await c.query(`INSERT INTO coupon_usages (coupon_id, user_id, order_id, discount) VALUES ($1,$2,$3,$4)`, [coupon.id, req.user.id, o.id, couponDiscount]);
-      if (coupon.uses_left > 0) await c.query(`UPDATE coupons SET uses_left = uses_left - 1 WHERE id=$1`, [coupon.id]);
-    }
+  let order;
+  try {
+    order = await tx(async (c) => {
+        const o = (await c.query(`INSERT INTO orders (code, user_id, store_id, subtotal, delivery_fee, discount, coupon_code, coupon_id, points_used, points_discount, scheduled_at, group_id, warranty_days, total, note, address_id, address_text, payment_method)
+          VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15,$16,$17,$18) RETURNING *`,
+          ['', req.user.id, store_id, subtotal, fee, discount, coupon?.code || '', coupon?.id || null, pointsUsed, pointsDiscount, scheduled_at || null, group_id || null, store.warranty_days ?? 3, total, note, addr?.id || null,
+            address || (addr ? `${addr.label} — ${addr.details}` : 'عنوان عند التوصيل'), payment_method])).rows[0];
+        await c.query(`UPDATE orders SET code='ZB-'||(10000+id) WHERE id=$1`, [o.id]);
+        o.code = `ZB-${10000 + o.id}`;
+        for (const it of items)
+          await c.query(`INSERT INTO order_items (order_id, product_id, variant_id, name, variant, price, qty) VALUES ($1,$2,$3,$4,$5,$6,$7)`,
+            [o.id, it.product_id, it.variant_id, it.name, it.variant || '', it.has_offer ? it.offer_price : it.price, it.qty]);
+        // ── خصم المخزون ذرّياً — يمنع بيع كمية غير موجودة ──
+        for (const it of items) {
+          if (it.variant_id) {
+            const vr = await c.query(`UPDATE product_variants SET stock = stock - $1 WHERE id=$2 AND stock >= $1`, [it.qty, it.variant_id]);
+            if (vr.rowCount === 0) throw Object.assign(new Error('نفدت الكمية من المخزون — عدّل سلتك'), { status: 400 });
+          } else {
+            const pr = await c.query(`UPDATE products SET stock = stock - $1 WHERE id=$2 AND stock >= $1`, [it.qty, it.product_id]);
+            if (pr.rowCount === 0) throw Object.assign(new Error('نفدت الكمية من المخزون — عدّل سلتك'), { status: 400 });
+          }
+        }
+        await c.query(`INSERT INTO order_status_history (order_id, to_status, by_role) VALUES ($1,'new','customer')`, [o.id]);
+        await c.query(`DELETE FROM cart_items WHERE user_id=$1 AND product_id IN (SELECT id FROM products WHERE store_id=$2)`, [req.user.id, store_id]);
+        // سجل استخدام الكوبون
+        if (coupon) {
+          await c.query(`INSERT INTO coupon_usages (coupon_id, user_id, order_id, discount) VALUES ($1,$2,$3,$4)`, [coupon.id, req.user.id, o.id, couponDiscount]);
+          if (coupon.uses_left > 0) await c.query(`UPDATE coupons SET uses_left = uses_left - 1 WHERE id=$1 AND uses_left > 0`, [coupon.id]);
+        }
     // خصم النقاط من رصيد الزبون
     if (pointsUsed) {
       await c.query(`UPDATE users SET points = points - $1 WHERE id=$2`, [pointsUsed, req.user.id]);
@@ -253,8 +281,12 @@ r.post('/orders', async (req, res) => {
     await c.query(`INSERT INTO notifications (user_id, type, title, body, data)
       VALUES ($1,'order','طلب جديد وصل 🧾 #'||$2::text,'من ${req.user.name || 'زبون'} — ${total.toLocaleString()} د.ع كاش', jsonb_build_object('order_id',$3::int))`,
       [store.owner_id, o.code, o.id]);
-    return o;
-  });
+      return o;
+    });
+  } catch (e) {
+    // تراجع كامل للمعاملة — أي خطأ (نفاد مخزون مثلاً) يرد كرسالة واضحة
+    return res.status(e.status || 500).json({ error: e.message || 'خطأ بالسيرفر — جرب مرة ثانية' });
+  }
 
   res.status(201).json({ order });
 });
@@ -265,6 +297,12 @@ r.post('/orders/:id/cancel', async (req, res) => {
   await tx(async (c) => {
     await c.query(`UPDATE orders SET status='cancelled', updated_at=now() WHERE id=$1`, [o.id]);
     await c.query(`INSERT INTO order_status_history (order_id, from_status, to_status, by_role, note) VALUES ($1,'new','cancelled','customer','إلغاء من الزبون')`, [o.id]);
+    // إرجاع المخزون المحجوز للطلب الملغي
+    const oitems = await c.query(`SELECT product_id, variant_id, qty FROM order_items WHERE order_id=$1`, [o.id]);
+    for (const it of oitems.rows) {
+      if (it.variant_id) await c.query(`UPDATE product_variants SET stock = stock + $1 WHERE id=$2`, [it.qty, it.variant_id]);
+      else await c.query(`UPDATE products SET stock = stock + $1 WHERE id=$2`, [it.qty, it.product_id]);
+    }
   });
   res.json({ ok: true });
 });

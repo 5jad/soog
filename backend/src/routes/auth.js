@@ -1,6 +1,6 @@
 import { Router } from 'express';
 import bcrypt from 'bcryptjs';
-import { randomBytes } from 'crypto';
+import { randomBytes, randomInt } from 'crypto';
 import { q, one } from '../db.js';
 import { signToken, publicUser, auth, roles } from '../middleware.js';
 import { sendSms } from '../sms.js';
@@ -8,8 +8,32 @@ import { sendOtpViaTelegram, createPhoneVerification } from '../telegram.js';
 
 const r = Router();
 
-const genCode = () => String(Math.floor(1000 + Math.random() * 9000));
-const genReferral = () => 'ZB' + String(Math.floor(10000 + Math.random() * 90000));
+// رموز التحقق من التشفير الآمن — ممنوع Math.random لأي شيء أمني
+const genCode = () => String(randomInt(1000, 10000));
+const genReferral = () => 'ZB' + String(randomInt(10000, 100000));
+
+// ── حد محاولات الدخول (في الذاكرة: 10 محاولات/5 دقائق ثم قفل 10 دقائق) ──
+// ملاحظة Vercel: الذاكرة لكل نسخة Lambda — حماية مساندة، والحماية الأساسية من قاعدة OTP
+const LOGIN_MAX = 10;
+const LOGIN_WINDOW_MS = 5 * 60 * 1000;
+const LOGIN_LOCK_MS = 10 * 60 * 1000;
+const loginAttempts = new Map(); // المفتاح: phone|ip
+function checkLoginLimit(key, ip) {
+  const k = `${key}|${ip}`;
+  const now = Date.now();
+  const e = loginAttempts.get(k);
+  if (!e || e.resetAt <= now) {
+    loginAttempts.set(k, { count: 1, resetAt: now + LOGIN_WINDOW_MS, lockAt: 0 });
+    return null;
+  }
+  if (e.lockAt && e.lockAt > now) return Math.ceil((e.lockAt - now) / 60000);
+  if (e.count >= LOGIN_MAX) {
+    e.lockAt = now + LOGIN_LOCK_MS;
+    return Math.ceil(LOGIN_LOCK_MS / 60000);
+  }
+  e.count++;
+  return null;
+}
 
 // ── التسجيل: رقم مكتوب → تأكيد تلغرام (مطابقة + رمز) → الاسم وكلمة المرور ──
 // التحقق (OTP) للحساب الجديد فقط — الرقم المسجل مسبقاً يوجّه للدخول مباشرة
@@ -60,7 +84,12 @@ r.post('/register-code', async (req, res) => {
   if (!v.code || !v.code_expires_at || new Date(v.code_expires_at) < new Date())
     return res.status(400).json({ error: 'الرمز منتهي — ابدأ التسجيل من جديد' });
   if (code !== v.code) {
-    await q(`UPDATE phone_verifications SET attempts=attempts+1 WHERE token=$1`, [token]);
+    const nv = (await q(`UPDATE phone_verifications SET attempts=attempts+1 WHERE token=$1 RETURNING attempts`, [token]))[0];
+    // قفل بعد 5 محاولات — يبطل الجلسة كلها
+    if (nv?.attempts >= 5) {
+      await q(`UPDATE phone_verifications SET status='expired' WHERE token=$1`, [token]);
+      return res.status(429).json({ error: 'محاولات كثيرة — الرمز أبطل — ابدأ التسجيل من جديد' });
+    }
     return res.status(401).json({ error: 'الرمز غلط — راجع رسالة البوت وجرب' });
   }
   await q(`UPDATE phone_verifications SET code_ok=true WHERE token=$1`, [token]);
@@ -167,12 +196,16 @@ r.post('/login', async (req, res) => {
   const cleanPhone = String(phone || '').replace(/\D/g, '');
   if (!cleanPhone || !password) return res.status(400).json({ error: 'رقم الهاتف وكلمة المرور مطلوبين' });
 
-  const user = await one('SELECT * FROM users WHERE phone=$1', [cleanPhone]);
-  if (!user) return res.status(401).json({ error: 'الرقم أو كلمة المرور خطأ' });
+  // حد المحاولات — أي رسالة موحدة حتى لا يكشف أرقاماً مسجلة
+  const ip = (req.headers['x-forwarded-for']?.split(',')[0] || req.ip || '').trim();
+  const waitMin = checkLoginLimit(cleanPhone, ip);
+  if (waitMin) return res.status(429).json({ error: `محاولات كثيرة — جرب بعد ${waitMin} دقيقة` });
 
-  // الحسابات بدون كلمة مرور (ضيوف فقط) لا تدخل بالباسوورد
-  if (!user.password || user.password.trim() === '')
-    return res.status(401).json({ error: 'ما عندك كلمة مرور مسجلة — تواصل مع الدعم' });
+  const user = await one('SELECT * FROM users WHERE phone=$1', [cleanPhone]);
+
+  // رسالة موحدة دائماً (الرقم باسم أو بدون كلمة مرور) — يمنع كشف الحسابات المسجلة
+  if (!user || !user.password || user.password.trim() === '')
+    return res.status(401).json({ error: 'الرقم أو كلمة المرور خطأ' });
   const ok = await bcrypt.compare(password, user.password);
   if (!ok) return res.status(401).json({ error: 'الرقم أو كلمة المرور خطأ' });
 

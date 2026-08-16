@@ -1,10 +1,12 @@
 import jwt from 'jsonwebtoken';
 import { one } from './db.js';
 
-const SECRET = process.env.JWT_SECRET || 'zaboon-horizon-secret-2026';
+// المفتاح إجباري — بدون JWT_SECRET السيرفر يرفض الإقلاع بدل الإقلاع بمفتاح معروف للعموم
+const SECRET = process.env.JWT_SECRET;
+if (!SECRET) throw new Error('JWT_SECRET غير مضبوط — السيرفر رفض الإقلاع. اضبط المفتاح في متغيرات البيئة');
 
 export const signToken = (user) =>
-  jwt.sign({ id: user.id, phone: user.phone, role: user.role, name: user.name }, SECRET, { expiresIn: '30d' });
+  jwt.sign({ id: user.id, phone: user.phone, role: user.role, name: user.name }, SECRET, { expiresIn: '7d' });
 
 export const publicUser = (u) => u && ({
   id: u.id, phone: u.phone, name: u.name, role: u.role, avatar: u.avatar,

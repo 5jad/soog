@@ -16,6 +16,12 @@ function esc(s) {
   return String(s ?? '').replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
 }
 
+// تمرير النص داخل خصائص onclick — يهرب باك سلاش واقتباسات JS أولاً ثم HTML
+// esc() وحده لا يكفي لأن المتصفح يفك entities قبل تنفيذ JS فيكسر السلسلة
+function jsStr(s) {
+  return String(s ?? '').replace(/\\/g, '\\\\').replace(/'/g, "\\'").replace(/"/g, '&quot;').replace(/&/g, '&amp;');
+}
+
 function statusChip(st) {
   const map = {
     new: ['جديد', 'st-new'], preparing: ['قيد التجهيز', 'st-preparing'], ready: ['جاهز', 'st-ready'],

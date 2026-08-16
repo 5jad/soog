@@ -7,7 +7,7 @@
 //   TELEGRAM_BOT_TOKEN=123456:ABC...   (من @BotFather) — إجباري
 
 import { Bot, Keyboard } from 'grammy';
-import { randomBytes } from 'crypto';
+import { randomBytes, randomInt } from 'crypto';
 import dotenv from 'dotenv';
 dotenv.config();
 import { q, one } from './db.js';
@@ -89,7 +89,7 @@ if (bot) {
         await ctx.reply('❌ الرقم اللي شاركته بالتلي غير الرقم اللي كتبته بالتطبيق — راجع الرقم وارجع جرب من جديد');
         return;
       }
-      const code = String(Math.floor(100000 + Math.random() * 900000));
+      const code = String(randomInt(100000, 1000000));
       await q(`UPDATE phone_verifications
                SET status='verified', contact_phone=$2, verified_at=now(), code=$3, code_expires_at=now() + interval '5 minutes'
                WHERE token=$1`, [room.token, incoming, code]);

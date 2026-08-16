@@ -40,7 +40,7 @@ async function renderCash() {
           <td><b style="color:var(--success)">${moneySpan(s.net_due)}</b></td>
           <td>
             ${s.net_due > 0 
-              ? `<button class="btn btn-danger btn-sm" onclick="payStore(${s.id}, '${esc(s.name)}', ${s.net_due})">مستحق</button>`
+              ? `<button class="btn btn-danger btn-sm" onclick="payStore(${s.id}, '${jsStr(s.name)}', ${s.net_due})">مستحق</button>`
               : `<button class="btn btn-success btn-sm" style="opacity:0.6" disabled>تم التسليم ✓</button>`
             }
           </td>

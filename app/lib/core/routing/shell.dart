@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:zaboon/core/api/api.dart';
+import 'package:zaboon/core/notifications/notif_push.dart';
 import 'package:zaboon/core/widgets/lottie_box.dart';
 import 'package:zaboon/core/theme/zaboon_design_system.dart';
 import 'package:zaboon/features/shop/screens/customer_shell.dart';
@@ -45,6 +46,8 @@ class _ShellState extends State<Shell> {
           _role = Api.me?['role'] as String? ?? 'customer';
           _ready = true;
         });
+        // طلب الصلاحيات بعد ظهور الواجهة لضمان رؤيتها من قبل المستخدم
+        NotifPusher.i.requestPermission();
       }
     }
   }

@@ -101,7 +101,6 @@ class NotifPusher {
       iOS: DarwinInitializationSettings(),
     );
     await _plugin.initialize(settings);
-    _requestPermission();
 
     // تسجيل المهمة الخلفية (مرة واحدة تكفي — أندرويد يخلّيها حتى بعد إغلاق التطبيق)
     final prefs = await SharedPreferences.getInstance();
@@ -120,7 +119,7 @@ class NotifPusher {
     _tick(); // فحص فوري عند الفتح
   }
 
-  Future<void> _requestPermission() async {
+  Future<void> requestPermission() async {
     if (_permissionAsked) return;
     _permissionAsked = true;
     // أندرويد 13+ يطلب الإذن من المستخدم صراحةً

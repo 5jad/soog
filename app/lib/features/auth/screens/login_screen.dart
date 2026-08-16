@@ -64,6 +64,12 @@ class _LoginScreenState extends State<LoginScreen> {
   Timer? _regPoll;
 
   @override
+  void initState() {
+    super.initState();
+    _loadRegLists();
+  }
+
+  @override
   void dispose() {
     _regPoll?.cancel();
     phone.dispose();
@@ -91,10 +97,20 @@ class _LoginScreenState extends State<LoginScreen> {
       _login();
       return;
     }
-    if (regStage == 0) return _regStart();
-    if (regStage == 1) return _regSubmitCode();
-    if (regStage == 2) return _regSubmitDetails();
-    if (regStage == 3) return _regSubmitStore();
+    if (regToken == null) {
+      final p = phone.text.trim();
+      if (p.length < 10) return toast(context, 'أدخل رقم هاتف صحيح', error: true);
+      if (name.text.trim().length < 3) return toast(context, 'أدخل اسمك الكامل', error: true);
+      if (password.text.length < 6) return toast(context, 'كلمة المرور 6 أحرف كحد أدنى', error: true);
+      if (regRole == 'vendor') {
+         if (storeName.text.trim().length < 3) return toast(context, 'أدخل اسم متجرك', error: true);
+         if (selCat == null) return toast(context, 'اختر قسم المتجر', error: true);
+         if (storeIdCard == null || storeIdCard!.isEmpty) return toast(context, 'ارفع صورة بطاقتك الوطنية — إلزامية للتوثيق', error: true);
+      }
+      return _regStart();
+    } else {
+      return _regSubmitAll();
+    }
   }
 
   // ── الدخول: رقم + كلمة مرور — بلا OTP أبداً ──
@@ -130,7 +146,7 @@ class _LoginScreenState extends State<LoginScreen> {
       regToken = d['token'];
       regBot = d['bot_username'] ?? 'soog_otp_bot';
       regCodeReady = false;
-      setState(() => regStage = 1);
+      
       _openRegTelegram();
       _startRegPoll();
     } on ApiException catch (e) {
@@ -187,7 +203,7 @@ class _LoginScreenState extends State<LoginScreen> {
     slat = null;
     slng = null;
     _regAcc = null;
-    setState(() => regStage = 0);
+    
   }
 
   Future<void> _openRegTelegram() async {
@@ -225,8 +241,7 @@ class _LoginScreenState extends State<LoginScreen> {
     }
   }
 
-  // ── المرحلة 1: رمز البوت ──
-  Future<void> _regSubmitCode() async {
+  Future<void> _regSubmitAll() async {
     final t = regToken;
     final c = code.text.trim();
     if (t == null) return _resetReg();
@@ -234,49 +249,37 @@ class _LoginScreenState extends State<LoginScreen> {
     setState(() => loading = true);
     try {
       await Api.registerCode(t, c);
-      if (mounted) {
-        _regPoll?.cancel();
-        FocusManager.instance.primaryFocus?.unfocus();
-        setState(() => regStage = 2);
-      }
-    } on ApiException catch (e) {
-      if (!mounted) return;
-      toast(context, e.message, error: true);
-      if (e.message.contains('انتهت')) _resetReg();
-    } catch (_) {
-      if (!mounted) return;
-      toast(context, 'تعذر الاتصال بالخادم', error: true);
-    } finally {
-      if (mounted) setState(() => loading = false);
-    }
-  }
-
-// ── المرحلة 2: الاسم + كلمة المرور → إنشاء الحساب ──
-  Future<void> _regSubmitDetails() async {
-    final t = regToken;
-    if (t == null) return _resetReg();
-    if (name.text.trim().length < 3) return toast(context, 'أدخل اسمك الكامل', error: true);
-    if (password.text.length < 6) return toast(context, 'كلمة المرور 6 أحرف كحد أدنى', error: true);
-    setState(() => loading = true);
-    try {
       final d = await Api.registerConfirm(
         token: t,
         name: name.text.trim(),
         password: password.text,
         referral: referral.text.trim(),
       );
-      if (!mounted) return;
       if (regRole == 'vendor') {
-        // التاجر يكمّل بيانات متجره في المرحلة 3 (بعد إنشاء الحساب)
-        _regAcc = (d ?? {}) as Map<String, dynamic>;
-        // احفظ التوكن فوراً — رفع الصور (البطاقة/الشعار/الغلاف) في المرحلة 3 يحتاجه
         final tk = (d?['token'] ?? '') as String;
         if (tk.isNotEmpty) await Api.saveToken(tk);
-        storePhone.text = phone.text.trim();
-        setState(() => regStage = 3);
-        _loadRegLists();
-      } else {
-        await _onSuccess(d);
+        await Api.post('/api/vendor/store', {
+          'name': storeName.text.trim(),
+          'description': storeDesc.text.trim(),
+          'phone': storePhone.text.trim().isNotEmpty ? storePhone.text.trim() : phone.text.trim(),
+          'address': storeAddress.text.trim(),
+          if (selCat != null) 'category_id': selCat,
+          if (selDist != null) 'district_id': selDist,
+          if (slat != null) 'lat': slat,
+          if (slng != null) 'lng': slng,
+          if (storeLogo != null && storeLogo!.isNotEmpty) 'logo': storeLogo,
+          if (storeCover != null && storeCover!.isNotEmpty) 'cover': storeCover,
+        });
+        await Api.post('/api/vendor/store/documents', {
+          'type': 'national_id',
+          'title': 'البطاقة الوطنية',
+          'file_url': storeIdCard,
+        });
+        toast(context, 'انطلق متجرك — بانتظار توثيق الأدمن ⏳');
+      }
+      if (mounted) {
+         _regPoll?.cancel();
+         await _onSuccess(d);
       }
     } on ApiException catch (e) {
       if (!mounted) return;
@@ -290,7 +293,6 @@ class _LoginScreenState extends State<LoginScreen> {
     }
   }
 
-  // ── المرحلة 3 (للتاجر فقط): بيانات المتجر → إنشاء + بانتظار توثيق الأدمن ──
   Future<void> _loadRegLists() async {
     try {
       final c = await Api.get('/api/categories');
@@ -633,444 +635,240 @@ class _LoginScreenState extends State<LoginScreen> {
         ),
       ];
 
+  
   List<Widget> _registerFields() {
-    switch (regStage) {
-      case 1: // رمز البوت (بعد المطابقة)
-        return [
-          _Field(
-            key: const ValueKey('code'),
-            controller: code,
-            hint: 'رمز التحقق ●●●●',
-            icon: Icons.message_outlined,
-            isNumber: true,
-            maxLen: 6,
-            textInputAction: TextInputAction.done,
+    return [
+      // ═══ اختيار نوع الحساب: زبون / تاجر ═══
+      Container(
+        padding: const EdgeInsets.all(4),
+        decoration: BoxDecoration(
+          color: AppColors.bg,
+          borderRadius: BorderRadius.circular(14),
+          border: Border.all(color: AppColors.line),
+        ),
+        child: Row(children: [
+          _regRoleBtn('customer', 'زبون 🛍️'),
+          _regRoleBtn('vendor', 'تاجر 🏪'),
+        ]),
+      ),
+      const SizedBox(height: 12),
+      _Field(
+        key: const ValueKey('name'),
+        controller: name,
+        hint: 'الاسم الكامل',
+        icon: Icons.person_outline,
+      ),
+      const SizedBox(height: 12),
+      _Field(
+        key: const ValueKey('phone'),
+        controller: phone,
+        hint: 'رقم الهاتف (مثال: 07800000000)',
+        icon: Icons.phone_android_rounded,
+        isPhone: true,
+      ),
+      const SizedBox(height: 12),
+      _Field(
+        key: const ValueKey('password'),
+        controller: password,
+        hint: 'كلمة المرور (6 أحرف أو أكثر)',
+        icon: Icons.lock_outline_rounded,
+        isPassword: true,
+        obscure: obscurePass,
+        onToggleObscure: () => setState(() => obscurePass = !obscurePass),
+      ),
+      if (regRole == 'vendor') ...[
+        const SizedBox(height: 12),
+        const Divider(color: AppColors.line),
+        const SizedBox(height: 12),
+        Text('بيانات المتجر', style: AppType.style(14, weight: FontWeight.w900, color: AppColors.primary)),
+        const SizedBox(height: 12),
+        _Field(
+          key: const ValueKey('storeName'),
+          controller: storeName,
+          hint: 'اسم المتجر',
+          icon: Icons.storefront_outlined,
+        ),
+        const SizedBox(height: 12),
+        DropdownButtonFormField<int?>(
+          value: selCat,
+          isExpanded: true,
+          decoration: const InputDecoration(
+            labelText: 'القسم',
+            hintText: 'اختر قسم المتجر',
+            filled: true,
+            fillColor: AppColors.bg,
+            contentPadding: EdgeInsets.symmetric(horizontal: 14, vertical: 14),
+            border: OutlineInputBorder(
+              borderRadius: BorderRadius.all(Radius.circular(14)),
+              borderSide: BorderSide(color: AppColors.line),
+            ),
+            enabledBorder: OutlineInputBorder(
+              borderRadius: BorderRadius.all(Radius.circular(14)),
+              borderSide: BorderSide(color: AppColors.line),
+            ),
           ),
-          const SizedBox(height: 12),
-          // شريط الحالة: بانتظار البوت ← أو الرمز انوصل
-          Container(
-            padding: const EdgeInsets.all(12),
-            decoration: BoxDecoration(
-              color: regCodeReady ? AppColors.surface : AppColors.bg,
-              borderRadius: BorderRadius.circular(14),
-              border: Border.all(
-                color: regCodeReady ? AppColors.success : AppColors.line,
+          items: allCats.isEmpty
+              ? [const DropdownMenuItem<int?>(value: null, child: Text('...جاري التحميل'))]
+              : [
+                  const DropdownMenuItem<int?>(
+                    value: null,
+                    child: Text('اختر القسم'),
+                  ),
+                  ...allCats.map(
+                    (c) => DropdownMenuItem<int?>(
+                      value: (c['id'] as num).toInt(),
+                      child: Text('${c['icon'] ?? ''} ${c['name']}'),
+                    ),
+                  ),
+                ],
+          onChanged: (v) => setState(() => selCat = v),
+        ),
+        const SizedBox(height: 12),
+        Row(
+          children: [
+            Expanded(
+              child: Text(
+                'صورة البطاقة الوطنية 🪪',
+                style: AppType.style(13, color: AppColors.ink, weight: FontWeight.w800),
               ),
             ),
-            child: Row(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                if (regCodeReady)
-                  const Icon(Icons.check_circle, size: 18, color: AppColors.success)
-                else
-                  const SizedBox(
-                    width: 16,
-                    height: 16,
-                    child: CircularProgressIndicator(strokeWidth: 2),
-                  ),
-                const SizedBox(width: 8),
-                Expanded(
-                  child: Text(
-                    regCodeReady
-                        ? 'الرمز وصلك داخل المحادثة بالبوت — اكتبه أعلاه'
-                        : 'افتح تلغرام واضغط «مشاركة رقم هاتفي» — البوت يطابق رقمك ويرسل الرمز',
-                    style: AppType.style(12, color: AppColors.muted, weight: FontWeight.w600),
-                  ),
+            if (storeIdCard != null) ...[
+              Container(
+                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+                decoration: BoxDecoration(
+                  color: AppColors.success.withValues(alpha: 0.12),
+                  borderRadius: BorderRadius.circular(8),
                 ),
+                child: Text('تم الرفع ✓',
+                    style: AppType.style(11, color: AppColors.success, weight: FontWeight.w700)),
+              ),
+              IconButton(
+                onPressed: () => setState(() => storeIdCard = null),
+                icon: const Icon(Icons.close, size: 16, color: AppColors.muted),
+                visualDensity: VisualDensity.compact,
+                tooltip: 'إزالة',
+              ),
+            ],
+          ],
+        ),
+        const SizedBox(height: 8),
+        SizedBox(
+          height: 120,
+          width: double.infinity,
+          child: ClipRRect(
+            borderRadius: BorderRadius.circular(14),
+            child: Stack(
+              fit: StackFit.expand,
+              children: [
+                productImageBox(storeIdCard, base: Api.base),
+                if (storeIdCard == null)
+                  Container(
+                    decoration: const BoxDecoration(
+                      gradient: LinearGradient(colors: [Color(0xFFF1F0EC), Color(0xFFE8E6E0)]),
+                    ),
+                    alignment: Alignment.center,
+                    child: Column(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        const Icon(Icons.badge_outlined, size: 30, color: AppColors.muted),
+                        const SizedBox(height: 6),
+                        Text('لم تُرفع بعد',
+                            style: AppType.style(12, color: AppColors.muted, weight: FontWeight.w700)),
+                      ],
+                    ),
+                  ),
               ],
             ),
           ),
-          const SizedBox(height: 8),
-          // إعادة فتح تلغرام إن رجع الزبون للتطبيق
-          TextButton.icon(
-            onPressed: _openRegTelegram,
-            icon: const Icon(Icons.telegram, size: 16, color: AppColors.info),
-            label: Text('فتح تلغرام 🔗',
-                style: AppType.style(12, color: AppColors.primary, weight: FontWeight.w700)),
+        ),
+        const SizedBox(height: 8),
+        Row(
+          children: [
+            Expanded(
+              child: OutlinedButton.icon(
+                onPressed: () => _pickAndUpload(
+                  ImageSource.camera,
+                  'التقاط البطاقة 📷',
+                  1.586,
+                  (u) => setState(() => storeIdCard = u),
+                ),
+                icon: const Icon(Icons.photo_camera_outlined, size: 17),
+                label: const Text('كاميرا'),
+              ),
+            ),
+            const SizedBox(width: 10),
+            Expanded(
+              child: OutlinedButton.icon(
+                onPressed: () => _pickAndUpload(
+                  ImageSource.gallery,
+                  'اختيار من المعرض 🖼',
+                  1.586,
+                  (u) => setState(() => storeIdCard = u),
+                ),
+                icon: const Icon(Icons.photo_library_outlined, size: 17),
+                label: const Text('من المعرض'),
+              ),
+            ),
+          ],
+        ),
+      ],
+
+      const SizedBox(height: 12),
+      // ═══ كود التوثيق (يظهر بعد ضغط ارسال الرمز) ═══
+      if (regToken != null) ...[
+        const Divider(color: AppColors.line),
+        const SizedBox(height: 12),
+        Container(
+          padding: const EdgeInsets.all(12),
+          decoration: BoxDecoration(
+            color: regCodeReady ? AppColors.surface : AppColors.bg,
+            borderRadius: BorderRadius.circular(14),
+            border: Border.all(
+              color: regCodeReady ? AppColors.success : AppColors.line,
+            ),
           ),
-        ];
-      case 2: // الاسم + كلمة المرور
-        return [
-          _Field(
-            key: const ValueKey('name'),
-            controller: name,
-            hint: 'الاسم الكامل',
-            icon: Icons.person_outline,
-            autofocus: true,
-            textInputAction: TextInputAction.next,
-          ),
-          const SizedBox(height: 12),
-          _Field(
-            key: const ValueKey('password'),
-            controller: password,
-            hint: 'كلمة المرور (6 أحرف أو أكثر)',
-            icon: Icons.lock_outline,
-            isPassword: true,
-            obscure: obscurePass,
-            onToggleObscure: () => setState(() => obscurePass = !obscurePass),
-          ),
-          const SizedBox(height: 12),
-          _Field(
-            key: const ValueKey('referral'),
-            controller: referral,
-            hint: 'كود الدعوة (اختياري) 🎁',
-            icon: Icons.card_giftcard,
-          ),
-        ];
-      case 3: // بيانات المتجر — خطوة التاجر بعد إنشاء الحساب
-        return [
-          // ═══ البطاقة الوطنية — إلزامية للتوثيق ═══
-          Row(
+          child: Row(
+            crossAxisAlignment: CrossAxisAlignment.start,
             children: [
+              if (regCodeReady)
+                const Icon(Icons.check_circle, size: 18, color: AppColors.success)
+              else
+                const SizedBox(
+                  width: 16,
+                  height: 16,
+                  child: CircularProgressIndicator(strokeWidth: 2),
+                ),
+              const SizedBox(width: 8),
               Expanded(
                 child: Text(
-                  'صورة البطاقة الوطنية 🪪',
-                  style: AppType.style(13, color: AppColors.ink, weight: FontWeight.w800),
-                ),
-              ),
-              if (storeIdCard != null) ...[
-                Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
-                  decoration: BoxDecoration(
-                    color: AppColors.success.withValues(alpha: 0.12),
-                    borderRadius: BorderRadius.circular(8),
-                  ),
-                  child: Text('تم الرفع ✓',
-                      style: AppType.style(11, color: AppColors.success, weight: FontWeight.w700)),
-                ),
-                IconButton(
-                  onPressed: () => setState(() => storeIdCard = null),
-                  icon: const Icon(Icons.close, size: 16, color: AppColors.muted),
-                  visualDensity: VisualDensity.compact,
-                  tooltip: 'إزالة',
-                ),
-              ],
-            ],
-          ),
-          const SizedBox(height: 8),
-          SizedBox(
-            height: 120,
-            width: double.infinity,
-            child: ClipRRect(
-              borderRadius: BorderRadius.circular(14),
-              child: Stack(
-                fit: StackFit.expand,
-                children: [
-                  productImageBox(storeIdCard, base: Api.base),
-                  if (storeIdCard == null)
-                    Container(
-                      decoration: const BoxDecoration(
-                        gradient: LinearGradient(colors: [Color(0xFFF1F0EC), Color(0xFFE8E6E0)]),
-                      ),
-                      alignment: Alignment.center,
-                      child: Column(
-                        mainAxisSize: MainAxisSize.min,
-                        children: [
-                          const Icon(Icons.badge_outlined, size: 30, color: AppColors.muted),
-                          const SizedBox(height: 6),
-                          Text('لم تُرفع بعد',
-                              style: AppType.style(12, color: AppColors.muted, weight: FontWeight.w700)),
-                        ],
-                      ),
-                    ),
-                ],
-              ),
-            ),
-          ),
-          const SizedBox(height: 8),
-          Row(
-            children: [
-              Expanded(
-                child: OutlinedButton.icon(
-                  onPressed: () => _pickAndUpload(
-                    ImageSource.camera,
-                    'التقاط البطاقة 📷',
-                    1.586,
-                    (u) => setState(() => storeIdCard = u),
-                  ),
-                  icon: const Icon(Icons.photo_camera_outlined, size: 17),
-                  label: const Text('كاميرا'),
-                ),
-              ),
-              const SizedBox(width: 10),
-              Expanded(
-                child: OutlinedButton.icon(
-                  onPressed: () => _pickAndUpload(
-                    ImageSource.gallery,
-                    'اختيار من المعرض 🖼',
-                    1.586,
-                    (u) => setState(() => storeIdCard = u),
-                  ),
-                  icon: const Icon(Icons.photo_library_outlined, size: 17),
-                  label: const Text('من المعرض'),
+                  regCodeReady
+                      ? 'الرمز وصلك داخل المحادثة بالبوت — اكتبه بالأسفل'
+                      : 'افتح تلغرام واضغط «مشاركة رقم هاتفي» — البوت يطابق رقمك ويرسل الرمز',
+                  style: AppType.style(12, color: AppColors.muted, weight: FontWeight.w600),
                 ),
               ),
             ],
           ),
-          const SizedBox(height: 12),
-          _Field(
-            key: const ValueKey('storeName'),
-            controller: storeName,
-            hint: 'اسم المتجر',
-            icon: Icons.storefront_outlined,
-            autofocus: true,
-            textInputAction: TextInputAction.next,
-          ),
-          const SizedBox(height: 12),
-          // ═══ القسم — إلزامي ═══
-          DropdownButtonFormField<int?>(
-            value: selCat,
-            isExpanded: true,
-            decoration: const InputDecoration(
-              labelText: 'القسم',
-              hintText: 'اختر قسم المتجر',
-              filled: true,
-              fillColor: AppColors.bg,
-              contentPadding: EdgeInsets.symmetric(horizontal: 14, vertical: 14),
-              border: OutlineInputBorder(
-                borderRadius: BorderRadius.all(Radius.circular(14)),
-                borderSide: BorderSide(color: AppColors.line),
-              ),
-              enabledBorder: OutlineInputBorder(
-                borderRadius: BorderRadius.all(Radius.circular(14)),
-                borderSide: BorderSide(color: AppColors.line),
-              ),
-            ),
-            items: allCats.isEmpty
-                ? [const DropdownMenuItem<int?>(value: null, child: Text('...جاري التحميل'))]
-                : [
-                    const DropdownMenuItem<int?>(
-                      value: null,
-                      child: Text('اختر القسم'),
-                    ),
-                    ...allCats.map(
-                      (c) => DropdownMenuItem<int?>(
-                        value: (c['id'] as num).toInt(),
-                        child: Text('${c['icon'] ?? ''} ${c['name']}'),
-                      ),
-                    ),
-                  ],
-            onChanged: (v) => setState(() => selCat = v),
-          ),
-          const SizedBox(height: 12),
-          // ═══ المحافظة / الحي ═══
-          DropdownButtonFormField<int?>(
-            value: selDist,
-            isExpanded: true,
-            decoration: const InputDecoration(
-              labelText: 'المحافظة / الحي (اختياري)',
-              filled: true,
-              fillColor: AppColors.bg,
-              contentPadding: EdgeInsets.symmetric(horizontal: 14, vertical: 14),
-              border: OutlineInputBorder(
-                borderRadius: BorderRadius.all(Radius.circular(14)),
-                borderSide: BorderSide(color: AppColors.line),
-              ),
-              enabledBorder: OutlineInputBorder(
-                borderRadius: BorderRadius.all(Radius.circular(14)),
-                borderSide: BorderSide(color: AppColors.line),
-              ),
-            ),
-            items: allDistricts.isEmpty
-                ? [const DropdownMenuItem<int?>(value: null, child: Text('...جاري التحميل'))]
-                : [
-                    const DropdownMenuItem<int?>(
-                      value: null,
-                      child: Text('بدون حي'),
-                    ),
-                    ...allDistricts.map(
-                      (d) => DropdownMenuItem<int?>(
-                        value: (d['id'] as num).toInt(),
-                        child: Text('${d['name']}'),
-                      ),
-                    ),
-                  ],
-            onChanged: (v) => setState(() => selDist = v),
-          ),
-          const SizedBox(height: 12),
-          _Field(
-            key: const ValueKey('storeAddress'),
-            controller: storeAddress,
-            hint: 'العنوان (اختياري) — اكتبه يدوياً',
-            icon: Icons.location_on_outlined,
-            textInputAction: TextInputAction.next,
-          ),
-          const SizedBox(height: 12),
-          // ═══ الموقع على الخريطة — يدوياً أو بالخريطة ═══
-          OutlinedButton.icon(
-            style: OutlinedButton.styleFrom(
-              foregroundColor: AppColors.primary,
-              side: const BorderSide(color: AppColors.primary, width: 1.2),
-              minimumSize: const Size.fromHeight(46),
-            ),
-            onPressed: () async {
-              final picked = await Navigator.push<Object?>(
-                context,
-                MaterialPageRoute(
-                  builder: (_) => PickMapScreen(lat: slat, lng: slng),
-                ),
-              );
-              if (picked != null && picked is LatLng) {
-                setState(() {
-                  slat = picked.latitude;
-                  slng = picked.longitude;
-                });
-              }
-            },
-            icon: const Icon(Icons.map_rounded),
-            label: Text(
-              slat != null
-                  ? 'الموقع محدد ✓ (${slat!.toStringAsFixed(4)}, ${slng!.toStringAsFixed(4)})'
-                  : 'حدد موقع المتجر على الخريطة 🗺 (اختياري)',
-              style: const TextStyle(fontWeight: FontWeight.w800),
-            ),
-          ),
-          const SizedBox(height: 12),
-          _Field(
-            key: const ValueKey('storeDesc'),
-            controller: storeDesc,
-            hint: 'وصف المتجر (اختياري)',
-            icon: Icons.description_outlined,
-            maxLines: 2,
-          ),
-          const SizedBox(height: 12),
-          _Field(
-            key: const ValueKey('storePhone'),
-            controller: storePhone,
-            hint: 'هاتف المتجر (داخلي — لا يظهر للزبون)',
-            icon: Icons.phone_android,
-            isPhone: true,
-            maxLen: 15,
-          ),
-          const SizedBox(height: 12),
-          // ═══ الشعار والغلاف — اختيارية ═══
-          Row(
-            children: [
-              Expanded(
-                child: TextButton.icon(
-                  onPressed: () => _pickAndUpload(
-                    ImageSource.gallery,
-                    'قصّ الشعار ✂️',
-                    1,
-                    (u) => setState(() => storeLogo = u),
-                    crop: true,
-                  ),
-                  icon: const Icon(Icons.add_photo_alternate_rounded, size: 17),
-                  label: const Text('شعار المتجر (اختياري)'),
-                ),
-              ),
-              if (storeLogo != null)
-                SizedBox(
-                  width: 40,
-                  height: 40,
-                  child: ClipRRect(
-                    borderRadius: BorderRadius.circular(10),
-                    child: productImageBox(storeLogo, base: Api.base),
-                  ),
-                ),
-            ],
-          ),
-          const SizedBox(height: 4),
-          Row(
-            children: [
-              Expanded(
-                child: TextButton.icon(
-                  onPressed: () => _pickAndUpload(
-                    ImageSource.gallery,
-                    'قصّ الغلاف ✂️',
-                    16 / 9,
-                    (u) => setState(() => storeCover = u),
-                    crop: true,
-                  ),
-                  icon: const Icon(Icons.image_outlined, size: 17),
-                  label: const Text('صورة الغلاف (اختياري)'),
-                ),
-              ),
-              if (storeCover != null)
-                SizedBox(
-                  width: 40,
-                  height: 40,
-                  child: ClipRRect(
-                    borderRadius: BorderRadius.circular(10),
-                    child: productImageBox(storeCover, base: Api.base),
-                  ),
-                ),
-            ],
-          ),
-          const SizedBox(height: 4),
-          Container(
-            padding: const EdgeInsets.all(12),
-            decoration: BoxDecoration(
-              color: AppColors.bg,
-              borderRadius: BorderRadius.circular(14),
-              border: Border.all(color: AppColors.line),
-            ),
-            child: Row(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                const Icon(Icons.hourglass_top_rounded,
-                    size: 18, color: AppColors.warning),
-                const SizedBox(width: 8),
-                Expanded(
-                  child: Text(
-                    'بعد الحفظ ينوصل متجرك وبطاقتك للأدمن للتوثيق — ورقم هاتفك يبقى داخلياً ولا يظهر للزبون',
-                    style: AppType.style(12, color: AppColors.muted, weight: FontWeight.w600),
-                  ),
-                ),
-              ],
-            ),
-          ),
-        ];
-      default: // المرحلة 0 — الرقم فقط + نوع الحساب
-        return [
-          // ═══ اختيار نوع الحساب: زبون / تاجر ═══
-          Container(
-            padding: const EdgeInsets.all(4),
-            decoration: BoxDecoration(
-              color: AppColors.bg,
-              borderRadius: BorderRadius.circular(14),
-              border: Border.all(color: AppColors.line),
-            ),
-            child: Row(children: [
-              _regRoleBtn('customer', 'زبون 🛍️'),
-              _regRoleBtn('vendor', 'تاجر 🏪'),
-            ]),
-          ),
-          const SizedBox(height: 12),
-          _Field(
-            key: const ValueKey('phone'),
-            controller: phone,
-            hint: 'رقم الهاتف',
-            icon: Icons.phone_android,
-            isPhone: true,
-          ),
-          const SizedBox(height: 12),
-          // التحقق للحساب الجديد فقط — المسجل يوجّه للدخول تلقائياً
-          Container(
-            padding: const EdgeInsets.all(12),
-            decoration: BoxDecoration(
-              color: AppColors.bg,
-              borderRadius: BorderRadius.circular(14),
-              border: Border.all(color: AppColors.line),
-            ),
-            child: Row(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                const Icon(Icons.telegram, size: 18, color: AppColors.info),
-                const SizedBox(width: 8),
-                Expanded(
-                  child: Text(
-                    regRole == 'vendor'
-                        ? 'راح تنشئ حساب تاجر: بعد التأكيد تسجل محلك بانتظار توثيق الأدمن 🏪'
-                        : 'راح نتأكد رقمك عبر تلغرام: البوت يطابق الرقم ويرسل لك رمز — وإذا الرقم مسجل يرجّعك للدخول مباشرة',
-                    style: AppType.style(12, color: AppColors.muted, weight: FontWeight.w600),
-                  ),
-                ),
-              ],
-            ),
-          ),
-        ];
-    }
+        ),
+        const SizedBox(height: 8),
+        TextButton.icon(
+          onPressed: _openRegTelegram,
+          icon: const Icon(Icons.telegram, size: 16, color: AppColors.info),
+          label: Text('فتح تلغرام يدوياً 🔗',
+              style: AppType.style(12, color: AppColors.primary, weight: FontWeight.w700)),
+        ),
+        const SizedBox(height: 8),
+        _Field(
+          key: const ValueKey('code'),
+          controller: code,
+          hint: 'رمز التحقق (أرقام)',
+          icon: Icons.message_outlined,
+          isNumber: true,
+          maxLen: 6,
+          textInputAction: TextInputAction.done,
+        ),
+      ],
+    ];
   }
 
   Widget _regRoleBtn(String v, String label) {

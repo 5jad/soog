@@ -28,6 +28,12 @@ class _CartScreenState extends State<CartScreen> {
   int appliedCouponStoreId = 0; // المحل اللي انطبق عليه الكوبون — يروح له بس
   bool usePoints = false;
   String? groupError;
+  // سعر التوصيل المحسوب من الخادم بالمعادلة الجديدة (مسافة + تعدد محلات)
+  int deliveryFee = 1500;
+  bool deliveryFeeLoading = false;
+  int? _selectedAddrId;      // عنوان مختار لحساب التوصيل
+  double? _selectedAddrLat;
+  double? _selectedAddrLng;
 
   @override
   void initState() {
@@ -57,6 +63,30 @@ class _CartScreenState extends State<CartScreen> {
       print('CART_LOAD ERROR: $e');
     } finally {
       if (mounted) setState(() => loading = false);
+    }
+    // حسّب سعر التوصيل بعد تحميل السلة
+    _loadDeliveryEstimate();
+  }
+
+  /// تقدير سعر التوصيل من الخادم — يُستدعى عند تحميل السلة وعند تغيير العنوان
+  Future<void> _loadDeliveryEstimate() async {
+    if (!Api.logged || cart.isEmpty) return;
+    final storeIds = cart.map((e) => e['store_id']).toSet().toList();
+    final idsStr = storeIds.join(',');
+    setState(() => deliveryFeeLoading = true);
+    try {
+      final params = StringBuffer('/api/customer/delivery-estimate?store_ids=$idsStr');
+      if (_selectedAddrId != null) {
+        params.write('&address_id=$_selectedAddrId');
+      } else if (_selectedAddrLat != null && _selectedAddrLng != null) {
+        params.write('&lat=$_selectedAddrLat&lng=$_selectedAddrLng');
+      }
+      final d = await Api.get(params.toString());
+      if (mounted) setState(() => deliveryFee = (d['fee'] as num?)?.toInt() ?? 1500);
+    } catch (_) {
+      // إذا فشل الطلب نحتفظ بالحد الأدنى 1500
+    } finally {
+      if (mounted) setState(() => deliveryFeeLoading = false);
     }
   }
 
@@ -873,21 +903,8 @@ class _CartScreenState extends State<CartScreen> {
     for (final it in cart) {
       total += priceOf(it) * (it['qty'] ?? 1).toDouble();
     }
-    double deliveryTotal = 0;
-    for (final g in groupList) {
-      final items = (g['items'] as List);
-      if (items.isEmpty) continue;
-      final sub = items.fold<double>(
-        0.0,
-        (sum, it) => sum + (priceOf(it) * (it['qty'] ?? 1)).toDouble(),
-      );
-      final freeMin =
-          ((items.first['free_delivery_min'] ?? 50000) as num).toDouble();
-      deliveryTotal +=
-          sub >= (freeMin > 0 ? freeMin : 50000)
-          ? 0
-          : ((items.first['delivery_fee'] ?? 0) as num).toDouble();
-    }
+    // سعر التوصيل الصافي — محسوب من الخادم بالمعادلة الجديدة (مسافة + تعدد محلات)
+    final double deliveryTotal = deliveryFee.toDouble();
 
     double pointsDiscount = 0;
     if (usePoints && Api.me != null) {
@@ -1114,7 +1131,7 @@ class _CartScreenState extends State<CartScreen> {
                           Row(
                             children: [
                               Text(
-                                'التوصيل (${groupList.length} متجر)',
+                                'التوصيل (${groupList.length} ${groupList.length == 1 ? 'متجر' : 'متاجر'})',
                                 style: AppType.style(
                                   10.5,
                                   color: AppColors.muted,
@@ -1122,18 +1139,21 @@ class _CartScreenState extends State<CartScreen> {
                                 ),
                               ),
                               const Spacer(),
-                              Text(
-                                deliveryTotal <= 0
-                                    ? 'مجاني 🎉'
-                                    : formatMoney(deliveryTotal),
-                                style: AppType.style(
-                                  11.5,
-                                  color: deliveryTotal <= 0
-                                      ? AppColors.success
-                                      : AppColors.ink,
-                                  weight: FontWeight.w800,
+                              if (deliveryFeeLoading)
+                                const SizedBox(
+                                  width: 14,
+                                  height: 14,
+                                  child: CircularProgressIndicator(strokeWidth: 1.5),
+                                )
+                              else
+                                Text(
+                                  formatMoney(deliveryTotal),
+                                  style: AppType.style(
+                                    11.5,
+                                    color: AppColors.ink,
+                                    weight: FontWeight.w800,
+                                  ),
                                 ),
-                              ),
                             ],
                           ),
                           if (appliedCoupon.isNotEmpty) ...[

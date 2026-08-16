@@ -1,6 +1,7 @@
 import { Router } from 'express';
 import { q, one, tx } from '../db.js';
 import { auth } from '../middleware.js';
+import { calculateDeliveryPrice } from '../pricing/delivery.js';
 
 const r = Router();
 r.use(auth);
@@ -207,8 +208,15 @@ r.post('/orders', async (req, res) => {
 
   // الفوترة بسعر العرض إن كان مفعّلاً — الزبون يدفع نفس اللي شافه بالسلة
   const subtotal = items.reduce((a, b) => a + (b.has_offer ? b.offer_price : b.price) * b.qty, 0);
-  const fee = subtotal >= (store.free_delivery_min || 50000) ? 0 : store.delivery_fee;
-  const baseDiscount = subtotal >= 50000 ? 5000 : 0;
+
+  // ── سعر التوصيل بالمعادلة الجديدة (مسافة + تعدد محلات) ──
+  // إذا عندنا إحداثيات المحل والزبون نحسب بدقة، وإلا نحط الحد الأدنى 1500
+  const storePoint = (store.lat && store.lng) ? { lat: +store.lat, lng: +store.lng } : null;
+  const userPoint = (addr?.lat && addr?.lng) ? { lat: +addr.lat, lng: +addr.lng } : null;
+  const fee = storePoint && userPoint
+    ? calculateDeliveryPrice([storePoint], userPoint).total_price
+    : 1500; // حد أدنى إذا ما عندنا إحداثيات
+  const baseDiscount = 0; // ألغينا خصم الـ 50 ألف — السعر بالمسافة يغني عنه
 
   // ── تم إعادة تفعيل حارس التحقق بناء على طلب المستخدم ──
   const windowMin = await smartRule('verify_window_min', 10);
@@ -354,6 +362,42 @@ r.post('/orders/:id/return', async (req, res) => {
     [vendorOwner, type === 'exchange' ? 'طلب استبدال جديد 🔁' : 'طلب إرجاع جديد ⤴',
       type === 'exchange' ? `يريد استبدال بـ «${label}»${reason ? ` — ${reason}` : ''}` : reason, o.id, rf.id]);
   res.status(201).json({ refund: rf });
+});
+
+// ═══════════ تقدير سعر التوصيل قبل الطلب ═══════════
+// يستخدمه التطبيق لعرض سعر التوصيل للزبون بدقة في صفحة السلة
+// المعاملات: store_ids (قائمة بأرقام المحلات) + lat/lng (موقع الزبون) اختياري
+r.get('/delivery-estimate', async (req, res) => {
+  const { store_ids, lat, lng, address_id } = req.query;
+  const ids = (store_ids || '').split(',').map(Number).filter(Boolean);
+  if (!ids.length) return res.status(400).json({ error: 'أرسل store_ids' });
+
+  const stores = await q(
+    `SELECT id, lat, lng FROM stores WHERE id = ANY($1)`,
+    [ids]
+  );
+
+  // موقع الزبون — من address_id أو من lat/lng مباشرة
+  let userPoint = null;
+  if (address_id) {
+    const a = await one(`SELECT lat, lng FROM addresses WHERE id=$1 AND user_id=$2`, [address_id, req.user.id]);
+    if (a?.lat && a?.lng) userPoint = { lat: +a.lat, lng: +a.lng };
+  } else if (lat && lng) {
+    userPoint = { lat: +lat, lng: +lng };
+  }
+
+  // إحداثيات المحلات بترتيب الـ ids
+  const shopPoints = stores
+    .filter(s => s.lat && s.lng)
+    .map(s => ({ lat: +s.lat, lng: +s.lng }));
+
+  // إذا ما عندنا إحداثيات كافية نرجع الحد الأدنى
+  if (!shopPoints.length || !userPoint) {
+    return res.json({ fee: 1500, fallback: true, note: 'لا تتوفر إحداثيات كافية' });
+  }
+
+  const { total_price, breakdown } = calculateDeliveryPrice(shopPoints, userPoint);
+  res.json({ fee: total_price, breakdown });
 });
 
 // ═══════════ نقاط الولاء ═══════════

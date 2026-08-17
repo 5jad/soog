@@ -6,6 +6,7 @@ import 'package:zaboon/features/shop/screens/map_screen.dart';
 import 'package:zaboon/core/theme/zaboon_design_system.dart';
 import 'package:zaboon/core/widgets/widgets.dart';
 import 'package:zaboon/features/orders/screens/orders_screen.dart';
+import 'package:zaboon/features/auth/screens/login_screen.dart';
 import 'package:zaboon/features/auth/screens/phone_verify_screen.dart';
 import 'package:zaboon/features/cart_checkout/screens/order_success_screen.dart';
 
@@ -145,7 +146,13 @@ class _CartScreenState extends State<CartScreen> {
   // ── سلة موحدة: اطلب من كل المتاجر دفعة واحدة (group_id مشترك) ──
   Future<void> placeGroupOrder(List<Map> groups) async {
     if (!Api.logged) {
-      toast(context, 'سجل دخولك أول', error: true);
+      toast(context, 'سجّل دخولك أو أنشئ حساباً لإكمال طلبك — السلة محفوظة', error: true);
+      Navigator.push(
+        context,
+        MaterialPageRoute(
+          builder: (_) => const LoginScreen(initialMode: AuthMode.register),
+        ),
+      );
       return;
     }
     final picked = await _pickAddress();

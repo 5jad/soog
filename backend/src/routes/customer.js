@@ -61,6 +61,82 @@ r.post('/cart', async (req, res) => {
   res.json({ ok: true, count: items.reduce((a, b) => a + b.qty, 0) });
 });
 
+// ═══ دمج سلة الضيف المحلية مع سلة الحساب — يُستدعى فور نجاح الدخول/التسجيل ═══
+// يعامل كل عنصر بنفس منطق POST /cart (فرع المقاس/اللون) مع سقف 99،
+// وأي عنصر تالف (منتج محذوف/نفد) يُتجاهل بدون كسر بقية الدمج.
+r.post('/cart/merge', async (req, res) => {
+  const list = req.body.items;
+  if (!Array.isArray(list) || list.length === 0)
+    return res.status(400).json({ error: 'سلة الضيف فارغة' });
+  if (list.length > 50)
+    return res.status(400).json({ error: 'عدد الأغراض كبير جداً للدمج' });
+  const uid = req.user.id;
+  let merged = 0;
+  await tx(async (c) => {
+    for (const raw of list) {
+      try {
+        const pid = Number(raw?.product_id);
+        const qty = Number(raw?.qty ?? 1);
+        if (!Number.isInteger(pid) || pid <= 0) continue;
+        if (!Number.isInteger(qty) || qty < 1 || qty > 99) continue;
+        const p = await c.query('SELECT * FROM products WHERE id=$1 AND is_available', [pid]);
+        if (p.rows.length === 0) continue;
+        const label = String(raw?.variant ?? '').trim();
+        let vid = raw?.variant_id ? Number(raw.variant_id) : null;
+        if (label && !vid) {
+          const v = await c.query('SELECT id FROM product_variants WHERE product_id=$1 AND name=$2', [pid, label]);
+          vid = v.rows[0]?.id ?? null;
+        }
+        if (vid) {
+          const v = await c.query('SELECT * FROM product_variants WHERE id=$1 AND product_id=$2', [vid, pid]);
+          if (v.rows.length === 0) continue;
+          if (v.rows[0].stock === 0) continue;
+        }
+        if (vid) {
+          await c.query(
+            `INSERT INTO cart_items (user_id, product_id, variant_id, qty) VALUES ($1,$2,$3,$4)
+             ON CONFLICT (user_id, product_id, variant_id)
+             DO UPDATE SET qty = LEAST(cart_items.qty + $4, 99)`,
+            [uid, pid, vid, qty]
+          );
+        } else if (label) {
+          const row = await c.query(
+            `SELECT id FROM cart_items WHERE user_id=$1 AND product_id=$2 AND variant_id IS NULL AND variant_label=$3`,
+            [uid, pid, label]
+          );
+          if (row.rows.length)
+            await c.query(`UPDATE cart_items SET qty = LEAST(qty + $1, 99) WHERE id=$2`, [qty, row.rows[0].id]);
+          else
+            await c.query(`INSERT INTO cart_items (user_id, product_id, variant_label, qty) VALUES ($1,$2,$3,$4)`, [uid, pid, label, qty]);
+        } else {
+          const existing = await c.query(
+            `SELECT id FROM cart_items WHERE user_id=$1 AND product_id=$2 AND variant_id IS NULL AND variant_label=''`,
+            [uid, pid]
+          );
+          if (existing.rows.length)
+            await c.query(`UPDATE cart_items SET qty = LEAST(qty + $1, 99) WHERE id=$2`, [qty, existing.rows[0].id]);
+          else
+            await c.query(`INSERT INTO cart_items (user_id, product_id, variant_id, qty) VALUES ($1,$2,NULL,$3)`, [uid, pid, qty]);
+        }
+        merged++;
+      } catch (_) {
+        // عنصر تالف — نتجاهله بدون ما نكسر الدمج
+      }
+    }
+  });
+  const items = await q(`SELECT c.id, c.qty, p.id AS product_id, p.name, p.price, p.image, p.old_price,
+      v.id AS variant_id, COALESCE(c.variant_label, CASE WHEN v.color <> '' THEN v.color || ' · ' || v.name ELSE v.name END) AS variant, v.stock, s.id AS store_id, s.name AS store_name, s.logo, s.delivery_fee, s.free_delivery_min,
+      (pr.active AND pr.percent>0) AS has_offer, pr.percent AS offer_percent,
+      ROUND(p.price*(1-COALESCE(pr.percent,0)/100.0)) AS offer_price
+    FROM cart_items c
+    JOIN products p ON p.id=c.product_id
+    JOIN stores s ON s.id=p.store_id
+    LEFT JOIN product_variants v ON v.id=c.variant_id
+    LEFT JOIN offers pr ON pr.product_id=p.id AND pr.active=true
+    WHERE c.user_id=$1 ORDER BY c.id`, [uid]);
+  res.json({ ok: true, merged, items, cart: items });
+});
+
 async function patchQty(item, qtyRaw, res) {
   const qty = Number(qtyRaw);
   if (!Number.isFinite(qty)) return res.status(400).json({ error: 'الكمية غير صالحة' });

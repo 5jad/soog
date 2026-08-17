@@ -3,6 +3,7 @@ import 'package:flutter/services.dart';
 import 'package:zaboon/core/api/api.dart';
 import 'package:zaboon/core/theme/zaboon_design_system.dart';
 import 'package:zaboon/core/widgets/widgets.dart';
+import 'package:zaboon/features/auth/screens/login_screen.dart';
 
 /// الإطلالة الكاملة — «نسّق لي هذه القطعة ✨»
 /// شريط مناسبات + ميزانية، وكل قطعة قابلة للتبديل ببدائلها، ثم إضافة الكل للسلة
@@ -91,10 +92,12 @@ class _OutfitScreenState extends State<OutfitScreen> {
     if (!Api.logged) {
       final keep = slots.where((s) => s['seed'] == true).toList();
       if (keep.isEmpty) {
-        toast(context, 'سجل دخولك أول حتى نضيف الإطلالة', error: true);
+        toast(context, 'سجّل دخولك أول حتى نضيف الإطلالة', error: true);
+        openLoginScreen(context);
         return;
       }
-      toast(context, 'الإطلالة جاهزة — سجل دخولك لإضافة كل القطع', error: true);
+      toast(context, 'الإطلالة جاهزة — سجّل دخولك لإضافة كل القطع', error: true);
+      openLoginScreen(context);
       return;
     }
     var added = 0;

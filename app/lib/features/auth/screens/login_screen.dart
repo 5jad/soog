@@ -19,14 +19,16 @@ enum AuthMode { login, register }
 /// صفحة الدخول/التسجيل — كارد صلب فوق كحلي الهوية (بلا زجاج: قرار حرج).
 /// فاصل تبويبي واضح، حقول بسماكة 48، عداد إعادة إرسال، ورابط «شروط الاستخدام»
 /// تحت الزر — الزبون يشوف الشروط قبل ما يوافق.
+/// [initialMode] يحدد التبويب الافتتاحي — يمرره الـ Cart لما الضيف يريد الطلب.
 class LoginScreen extends StatefulWidget {
-  const LoginScreen({super.key});
+  final AuthMode initialMode;
+  const LoginScreen({super.key, this.initialMode = AuthMode.login});
   @override
   State<LoginScreen> createState() => _LoginScreenState();
 }
 
 class _LoginScreenState extends State<LoginScreen> {
-  AuthMode mode = AuthMode.login;
+  late AuthMode mode = widget.initialMode;
   bool loading = false;
 
   final phone = TextEditingController();
@@ -394,6 +396,26 @@ class _LoginScreenState extends State<LoginScreen> {
   Future<void> _onSuccess(dynamic d) async {
     await Api.saveToken(d['token']);
     Api.me = d['user'];
+    // دمج سلة الضيف المحلية مع سلة الحساب — الأغراض اللي ضافها كضيف
+    // تظهر له بعد التسجيل. لو فشل الدمج تبقى سلة الضيف محفوظة للمحاولة الجاية.
+    if (AppState.i.guestCart.isNotEmpty) {
+      try {
+        final r = await Api.post('/api/customer/cart/merge', {
+          'items': AppState.i.guestCart.map((e) => {
+                'product_id': e['product_id'],
+                'variant': e['variant'],
+                'qty': e['qty'],
+              }).toList(),
+        });
+        AppState.i.guestCart.clear();
+        final items = r['items'] ?? [];
+        AppState.i.setCart(
+          (items as List).fold<int>(0, (a, b) => a + ((b['qty'] as num?)?.toInt() ?? 0)),
+        );
+      } catch (_) {
+        // الشبكة/الخادم ما جاوب — السلة المحلية تظل مكتوبة عند المحاولة التالية
+      }
+    }
     if (!mounted) return;
     Navigator.of(context).pushAndRemoveUntil(
       MaterialPageRoute(builder: (_) => const Shell()),
@@ -901,6 +923,16 @@ class _LoginScreenState extends State<LoginScreen> {
       ),
     ]);
   }
+}
+
+/// يفتح شاشة الدخول/التسجيل من أي نقطة في التطبيق — الضيف يواجهه التسجيل
+/// عند الطلب أو المفضلة أو متابعة متجر. الافتراضي على تبويب «حساب جديد».
+void openLoginScreen(BuildContext context,
+    {AuthMode initial = AuthMode.register}) {
+  Navigator.push(
+    context,
+    MaterialPageRoute(builder: (_) => LoginScreen(initialMode: initial)),
+  );
 }
 
 /// حقل موحد باحتراف: أيقونة، إدخال LTR للهاتف، إظهار كلمة المرور، ومكوّن جانبي اختياري

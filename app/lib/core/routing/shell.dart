@@ -55,9 +55,9 @@ class _ShellState extends State<Shell> {
   Widget build(BuildContext context) {
     if (!_ready) return const _SplashScreen();
 
-    // بدون حساب: شاشة الدخول — التطبيق يتطلب حساباً حقيقياً
+    // بدون حساب: يتصفح كضيف مباشرة كل الصفحات — الطلب والمفضلة تتطلب تسجيل
     if (!Api.logged) {
-      return const LoginScreen();
+      return CustomerShell(roles: const ['customer']);
     }
 
     if (_role == 'vendor') return VendorShell(onExit: _logout);

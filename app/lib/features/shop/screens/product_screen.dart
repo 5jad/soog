@@ -6,6 +6,7 @@ import 'package:zaboon/core/api/api.dart';
 import 'package:zaboon/core/models/models.dart';
 import 'package:zaboon/core/theme/zaboon_design_system.dart';
 import 'package:zaboon/core/widgets/widgets.dart';
+import 'package:zaboon/features/auth/screens/login_screen.dart';
 import 'package:zaboon/features/shop/screens/store_screen.dart';
 import 'package:zaboon/features/shop/screens/outfit_screen.dart';
 import 'package:zaboon/features/shop/widgets/product_card.dart';
@@ -1618,7 +1619,8 @@ class _ProductScreenState extends State<ProductScreen> {
 
   Future<void> _toggleFav() async {
     if (!Api.logged) {
-      toast(context, 'سجل دخولك لحفظ المفضلة');
+      toast(context, 'سجّل دخولك لحفظ المفضلة', error: true);
+      openLoginScreen(context);
       return;
     }
     try {

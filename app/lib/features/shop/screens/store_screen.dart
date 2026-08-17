@@ -6,6 +6,7 @@ import 'package:url_launcher/url_launcher.dart';
 import 'package:zaboon/core/api/api.dart';
 import 'package:zaboon/core/theme/zaboon_design_system.dart';
 import 'package:zaboon/core/widgets/widgets.dart';
+import 'package:zaboon/features/auth/screens/login_screen.dart';
 import 'package:zaboon/features/cart_checkout/screens/cart_screen.dart';
 
 /// صفحة المتجر: الحالة + التوصيل + كوبونات + عروض + منتجات + تقييمات + تواصل
@@ -90,7 +91,37 @@ class _StoreScreenState extends State<StoreScreen> {
 
   Future<void> addToCart(int productId, int qty, [String? variant]) async {
     if (!Api.logged) {
-      toast(context, 'سجل دخولك أول 🛒', error: true);
+      // الضيف يضيف للسلة المحلية — الطلب فقط يتطلب تسجيل
+      final existing = AppState.i.guestCart.indexWhere(
+        (e) => e['product_id'] == productId,
+      );
+      if (existing >= 0) {
+        AppState.i.guestCart[existing]['qty'] += qty;
+      } else {
+        Map p = {};
+        for (final pr in products) {
+          if ((pr['id'] as num).toInt() == productId) {
+            p = Map<String, dynamic>.from(pr as Map);
+            break;
+          }
+        }
+        AppState.i.guestCart.add({
+          'id': DateTime.now().millisecondsSinceEpoch,
+          'store_id': widget.storeId,
+          'store_name': store?['name'] ?? 'متجر',
+          'logo': store?['logo'] ?? '',
+          'product_id': productId,
+          'product_name': p['name'],
+          'image': p['image'],
+          'price': (p['has_offer'] == true || p['has_offer'] == 1)
+              ? p['offer_price']
+              : p['price'],
+          'qty': qty,
+          'variant': variant,
+        });
+      }
+      AppState.i.setCart(cartTotalQty(AppState.i.guestCart));
+      addPop(context);
       return;
     }
     try {
@@ -112,7 +143,8 @@ class _StoreScreenState extends State<StoreScreen> {
 
   Future<void> _toggleFollow() async {
     if (!Api.logged) {
-      toast(context, 'سجل دخولك لمتابعة المتجر', error: true);
+      toast(context, 'سجّل دخولك لمتابعة المتجر', error: true);
+      openLoginScreen(context);
       return;
     }
     try {

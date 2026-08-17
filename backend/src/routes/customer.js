@@ -1,7 +1,7 @@
 import { Router } from 'express';
 import { q, one, tx } from '../db.js';
 import { auth } from '../middleware.js';
-import { calculateDeliveryPrice } from '../pricing/delivery.js';
+import { calculateDeliveryPrice, calculateGroupDeliveryFee } from '../pricing/delivery.js';
 import { isOpenNow } from '../hours.js';
 
 const r = Router();
@@ -211,13 +211,24 @@ r.post('/orders', async (req, res) => {
   // الفوترة بسعر العرض إن كان مفعّلاً — الزبون يدفع نفس اللي شافه بالسلة
   const subtotal = items.reduce((a, b) => a + (b.has_offer ? b.offer_price : b.price) * b.qty, 0);
 
-  // ── سعر التوصيل بالمعادلة الجديدة (مسافة + تعدد محلات) ──
-  // إذا عندنا إحداثيات المحل والزبون نحسب بدقة، وإلا نحط الحد الأدنى 1500
-  const storePoint = (store.lat && store.lng) ? { lat: +store.lat, lng: +store.lng } : null;
+  // ── سعر التوصيل بالمعادلة (مسافة + تعدد محلات) — رحلة واحدة لكل مجموعة ──
+  // التقدير بالسلة والفوتيرة هنا: نفس الدالة ونفس الترتيب → الرقم المطابق دائماً
+  // group_store_ids ترسلها السلة: أول طلب بالمجموعة يتحمل سعر التوصيل كاملاً
+  // (محسوباً على كل محلاتها) وبقية طلبات نفس group_id بسعر صفر — لأنها رحلة واحدة
   const userPoint = (addr?.lat && addr?.lng) ? { lat: +addr.lat, lng: +addr.lng } : null;
-  const fee = storePoint && userPoint
-    ? calculateDeliveryPrice([storePoint], userPoint).total_price
-    : 1500; // حد أدنى إذا ما عندنا إحداثيات
+  const groupIds = String(req.body.group_store_ids || '').split(',').map(Number).filter(Boolean);
+  const feeIds = (group_id && groupIds.length) ? groupIds : [store_id];
+  const feeStores = await q(`SELECT id, lat, lng FROM stores WHERE id = ANY($1)`, [feeIds]);
+  const feePoints = feeStores.filter(s => s.lat && s.lng).map(s => ({ lat: +s.lat, lng: +s.lng }));
+  let fee = 1500; // حد أدنى إذا ما عدنا إحداثيات كاملة — نفس fallback التقدير
+  if (userPoint && feePoints.length === feeIds.length) {
+    if (group_id && feeIds.length > 1) {
+      const charged = await one(`SELECT count(*)::int AS n FROM orders WHERE group_id=$1`, [group_id]);
+      fee = (charged?.n || 0) > 0 ? 0 : calculateGroupDeliveryFee(feePoints, userPoint).total_price;
+    } else {
+      fee = calculateDeliveryPrice(feePoints, userPoint).total_price;
+    }
+  }
   const baseDiscount = 0; // ألغينا خصم الـ 50 ألف — السعر بالمسافة يغني عنه
 
   // ── تم إعادة تفعيل حارس التحقق بناء على طلب المستخدم ──
@@ -393,13 +404,14 @@ r.get('/delivery-estimate', async (req, res) => {
     .filter(s => s.lat && s.lng)
     .map(s => ({ lat: +s.lat, lng: +s.lng }));
 
-  // إذا ما عندنا إحداثيات كافية نرجع الحد الأدنى
+  // إذا ما عندنا إحداثيات كافية نرجع الحد الأدنى 1500 — نفس منطق /orders
   if (!shopPoints.length || !userPoint) {
     return res.json({ fee: 1500, fallback: true, note: 'لا تتوفر إحداثيات كافية' });
   }
 
-  const { total_price, breakdown } = calculateDeliveryPrice(shopPoints, userPoint);
-  res.json({ fee: total_price, breakdown });
+  // نفس الدالة والترتيب اللي يستخدمه /orders فوترةً — الرقم المطابق دائماً
+  const { total_price, breakdown } = calculateGroupDeliveryFee(shopPoints, userPoint);
+  res.json({ fee: total_price, breakdown, stores: shopPoints.length });
 });
 
 // ═══════════ نقاط الولاء ═══════════

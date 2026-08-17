@@ -164,6 +164,9 @@ class _CartScreenState extends State<CartScreen> {
           if (picked.$2 != null) 'address_id': picked.$2,
           if (picked.$3 != null) 'scheduled_at': picked.$3,
           'group_id': gid,
+          // محلات المجموعة كلها — السيرفر يحسب سعر التوصيل عليها كرحلة واحدة
+          // (يتحمله أول طلب يُنشأ بالمجموعة والباقي بلا توصيل)
+          'group_store_ids': groups.map((e) => '${e['store_id']}').join(','),
           // الكوبون يروح لمحله فقط — السيرفر يرفض "هذا الكوبون لمحل آخر"
           if (appliedCoupon.isNotEmpty &&
               appliedCouponStoreId != 0 &&
@@ -704,13 +707,6 @@ class _CartScreenState extends State<CartScreen> {
       0.0,
       (sum, it) => sum + (priceOf(it) * (it['qty'] ?? 1)).toDouble(),
     );
-    final fee = (items.first['delivery_fee'] ?? 0);
-    // التوصيل: مجاني فوق حد المتجر (نفس منطق الخادم عند إنشاء الطلب)
-    final freeMin = ((items.first['free_delivery_min'] ?? 50000) as num).toDouble();
-    final deliveryFee =
-        subtotal >= (freeMin > 0 ? freeMin : 50000)
-        ? 0.0
-        : (fee as num).toDouble();
     return Container(
       margin: const EdgeInsets.only(bottom: 14),
       padding: const EdgeInsets.fromLTRB(11, 11, 11, 12),
@@ -765,9 +761,7 @@ class _CartScreenState extends State<CartScreen> {
                               ),
                               const SizedBox(width: 4),
                               Text(
-                                deliveryFee <= 0
-                                    ? 'توصيل مجاني 🎉'
-                                    : 'توصيل ${formatMoney(deliveryFee)}',
+                                'توصيل حسب المسافة',
                                 style: AppType.style(
                                   9.5,
                                   color: AppColors.cyan,

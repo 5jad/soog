@@ -31,6 +31,20 @@ export function haversineKm(a, b) {
 }
 
 /**
+ * سعر توصيل مجموعة محلات (رحلة واحدة للمندوب) — يستخدمه التقدير والفوترة معاً
+ * الترتيب ثابت (الأبعد عن الزبون أولاً) كي لا يتغير السعر بين التحميلات،
+ * وكلاهما يستدعي نفس الدالة فيطابق الرقم المعروض بالسلة المبلغ المنخصم فعلياً
+ * @param {Array<{lat:number,lng:number}>} shopPoints إحداثيات محلات المجموعة
+ * @param {{lat:number,lng:number}} customerLocation إحداثيات الزبون
+ * @param {Partial<typeof DELIVERY_CONFIG>} [overrides] أرقام بديلة (اختياري)
+ */
+export function calculateGroupDeliveryFee(shopPoints, customerLocation, overrides = {}) {
+  const d = (p) => haversineKm(p, customerLocation);
+  const sorted = [...(shopPoints || [])].sort((a, b) => d(b) - d(a));
+  return calculateDeliveryPrice(sorted, customerLocation, overrides);
+}
+
+/**
  * حساب سعر توصيل الطلب (من المحل الأول → المحل الثاني → ... → الزبون)
  * @param {Array<{lat:number,lng:number}>} shops إحداثيات المحلات بترتيب الاستلام
  * @param {{lat:number,lng:number}} customerLocation إحداثيات الزبون

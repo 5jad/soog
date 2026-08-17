@@ -4,6 +4,7 @@ import path from 'path';
 import { fileURLToPath } from 'url';
 import { q, one } from '../db.js';
 import { demoCond } from '../demo.js';
+import { withOpenNow } from '../hours.js';
 import { auth } from '../middleware.js';
 
 const r = Router();
@@ -49,7 +50,7 @@ r.get('/stores', async (req, res) => {
     LEFT JOIN governorates g ON g.id=s.governorate_id
     LEFT JOIN districts d ON d.id=s.district_id
     WHERE ${w.join(' AND ')} ORDER BY s.rating_avg DESC, s.id`;
-  res.json({ stores: await q(sql, p) });
+  res.json({ stores: withOpenNow(await q(sql, p)) });
 });
 
 r.get('/stores/:id', async (req, res) => {
@@ -76,7 +77,7 @@ r.get('/stores/:id', async (req, res) => {
   const ratingBreakdown = (await q(`SELECT rating, count(*)::int AS n FROM reviews WHERE store_id=$1 GROUP BY rating`, [s.id]));
   const breakdown = { 5: 0, 4: 0, 3: 0, 2: 0, 1: 0 };
   for (const r of ratingBreakdown) if (r.rating) breakdown[r.rating] = r.n;
-  res.json({ store: s, products, variants, reviews, coupons, rating_breakdown: breakdown });
+  res.json({ store: withOpenNow([s])[0], products, variants, reviews, coupons, rating_breakdown: breakdown });
 });
 
 // ── المنتجات ──
@@ -177,7 +178,7 @@ r.get('/products/:id', async (req, res) => {
     WHERE p.id=$1`, [req.params.id]);
   if (!p) return res.status(404).json({ error: 'المنتج غير موجود' });
   p.variants = await q('SELECT * FROM product_variants WHERE product_id=$1 ORDER BY id', [p.id]);
-  res.json({ product: p });
+  res.json({ product: withOpenNow([p])[0] });
 });
 
 // ═══════════ محرك التنسيق الذكي «نسّق لي» — إطلالة كاملة حول أي منتج ═══════════

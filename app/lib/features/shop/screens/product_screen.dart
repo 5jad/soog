@@ -705,7 +705,8 @@ class _ProductScreenState extends State<ProductScreen> {
                                           weight: FontWeight.w700,
                                         ),
                                       ),
-                                      if (store['is_open'] == true) ...[
+                                      if (store['is_open'] == true &&
+                                          store['on_vacation'] != true) ...[
                                         const SizedBox(width: 6),
                                         const Text(
                                           '●',
@@ -1048,11 +1049,6 @@ class _ProductScreenState extends State<ProductScreen> {
                               '💵',
                               'كاش عند\nالاستلام',
                               'ادفع بعد المشاهدة',
-                            ),
-                            _serviceChip(
-                              '🔄',
-                              'استرجاع\nخلال ${store['warranty_days'] ?? 3} أيام',
-                              'ضمان المتجر',
                             ),
                           ],
                         ),

@@ -2,10 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:zaboon/features/shop/screens/product_screen.dart';
 import 'package:zaboon/features/shop/widgets/product_card.dart';
 import 'package:zaboon/core/api/api.dart';
-import 'package:zaboon/core/models/models.dart';
 import 'package:zaboon/core/theme/zaboon_design_system.dart';
 import 'package:zaboon/core/widgets/widgets.dart';
-import 'package:zaboon/features/shop/screens/customer_shell.dart';
 
 /// صفحة منتجات فئة معينة — شبكة متلاصقة + فلترة بأسلوب شي إن/إيباي
 class CategoryProductsScreen extends StatefulWidget {
@@ -657,145 +655,21 @@ class _CategoryProductsScreenState extends State<CategoryProductsScreen> {
                                   final m = Map<String, dynamic>.from(
                                     products[i] as Map,
                                   );
-                                  final p = Product.fromJson(m);
                                   final storeId =
                                       (products[i]['store_id'] as num?)
                                           ?.toInt() ??
                                       0;
-                                  return GestureDetector(
-                                    onTap: () =>
-                                        pushProduct(context, storeId, p.id),
-                                    child: Container(
-                                      decoration: BoxDecoration(
-                                        color: AppColors.surface,
-                                      ),
-                                      clipBehavior: Clip.antiAlias,
-                                      child: Column(
-                                        crossAxisAlignment:
-                                            CrossAxisAlignment.start,
-                                        children: [
-                                          AspectRatio(
-                                            aspectRatio: 3 / 4,
-                                            child: Stack(
-                                              fit: StackFit.expand,
-                                              children: [
-                                                productImageBox(p.image),
-                                                if (p.hasOffer)
-                                                  Positioned(
-                                                    top: 8,
-                                                    right: 8,
-                                                    child: BadgeWow(
-                                                      'خصم ${p.price > 0 ? (((p.price - p.displayPrice) / p.price) * 100).round() : 0}%',
-                                                    ),
-                                                  ),
-                                                if (p.outOfStock)
-                                                  Positioned(
-                                                    top: 8,
-                                                    left: 8,
-                                                    child: BadgeWow(
-                                                      'نفد',
-                                                      dark: true,
-                                                    ),
-                                                  ),
-                                              ],
-                                            ),
-                                          ),
-                                          Padding(
-                                            padding: const EdgeInsets.fromLTRB(
-                                              9,
-                                              5,
-                                              9,
-                                              6,
-                                            ),
-                                            child: Column(
-                                              crossAxisAlignment:
-                                                  CrossAxisAlignment.start,
-                                              children: [
-                                                Text(
-                                                  products[i]['store_name']
-                                                          ?.toString() ??
-                                                      '',
-                                                  style: AppType.style(
-                                                    9.5,
-                                                    color: AppColors.primary,
-                                                    weight: FontWeight.w800,
-                                                  ),
-                                                  maxLines: 1,
-                                                  overflow:
-                                                      TextOverflow.ellipsis,
-                                                ),
-                                                Text(
-                                                  p.name,
-                                                  style: AppType.style(
-                                                    11,
-                                                    weight: FontWeight.w800,
-                                                  ),
-                                                  maxLines: 2,
-                                                  overflow:
-                                                      TextOverflow.ellipsis,
-                                                ),
-                                                if (p.hasOffer) ...[
-                                                  const SizedBox(height: 2),
-                                                  Text(
-                                                    formatMoney(p.price),
-                                                    style: AppType.style(
-                                                      9.5,
-                                                      color: AppColors.muted,
-                                                      decoration: TextDecoration
-                                                          .lineThrough,
-                                                    ),
-                                                  ),
-                                                ],
-                                                const SizedBox(height: 2),
-                                                Row(
-                                                  children: [
-                                                    Expanded(
-                                                      child: Text(
-                                                        formatMoney(
-                                                          p.displayPrice,
-                                                        ),
-                                                        style: AppType.style(
-                                                          13.5,
-                                                          color: AppColors.ink,
-                                                          weight:
-                                                              FontWeight.w900,
-                                                        ),
-                                                        maxLines: 1,
-                                                        overflow: TextOverflow
-                                                            .ellipsis,
-                                                      ),
-                                                    ),
-                                                    GestureDetector(
-                                                      onTap: () =>
-                                                          quickAdd(context, m),
-                                                      child: Container(
-                                                        width: 28,
-                                                        height: 28,
-                                                        decoration: BoxDecoration(
-                                                          color:
-                                                              AppColors.primary,
-                                                          borderRadius:
-                                                              BorderRadius.circular(
-                                                                9,
-                                                              ),
-                                                        ),
-                                                        alignment:
-                                                            Alignment.center,
-                                                        child: const Icon(
-                                                          Icons.add_rounded,
-                                                          size: 17,
-                                                          color: Colors.white,
-                                                        ),
-                                                      ),
-                                                    ),
-                                                  ],
-                                                ),
-                                              ],
-                                            ),
-                                          ),
-                                        ],
-                                      ),
+                                  return ProdCard(
+                                    product: m,
+                                    onOpen: () => pushProduct(
+                                      context,
+                                      storeId,
+                                      (m['id'] as num?)?.toInt() ?? 0,
                                     ),
+                                    storeName:
+                                        products[i]['store_name']?.toString() ??
+                                            '',
+                                    opts: ProdCardOptions.category,
                                   );
                                 },
                               ),

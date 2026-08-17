@@ -2,6 +2,7 @@ import { Router } from 'express';
 import { q, one, tx } from '../db.js';
 import { auth } from '../middleware.js';
 import { calculateDeliveryPrice } from '../pricing/delivery.js';
+import { isOpenNow } from '../hours.js';
 
 const r = Router();
 r.use(auth);
@@ -203,6 +204,7 @@ r.post('/orders', async (req, res) => {
   const store = await one('SELECT * FROM stores WHERE id=$1 AND status=$2', [store_id, 'approved']);
   if (!store) return res.status(404).json({ error: 'المحل غير موجود' });
   if (store.on_vacation) return res.status(400).json({ error: 'المحل ويا إجازة حالياً — جرب بعدين' });
+  if (!isOpenNow(store)) return res.status(400).json({ error: 'المحل مغلق حالياً — جرب بعد ساعات الدوام' });
 
   const addr = address_id ? await one('SELECT * FROM addresses WHERE id=$1 AND user_id=$2', [address_id, req.user.id]) : null;
 

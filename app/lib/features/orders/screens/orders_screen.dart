@@ -619,6 +619,92 @@ class _OrderDetailScreenState extends State<OrderDetailScreen> {
     } catch (_) {}
   }
 
+  /// بطاقة صنف كاملة: صورة أكبر + المقاس/اللون + السمات + سعر الوحدة/الكمية/المجموع
+  Widget _itemDetail(dynamic it) {
+    final attrs = (it['attributes'] is Map)
+        ? Map<String, dynamic>.from(it['attributes'] as Map)
+        : <String, dynamic>{};
+    return Row(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        productImage(it['image'], size: 56, radius: 12),
+        const SizedBox(width: 10),
+        Expanded(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                it['product_name'] ?? it['name'] ?? '',
+                style: AppType.style(13.5, weight: FontWeight.w900),
+                maxLines: 2,
+                overflow: TextOverflow.ellipsis,
+              ),
+              if ((it['variant'] ?? '') != '') ...[
+                const SizedBox(height: 5),
+                Container(
+                  padding:
+                      const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+                  decoration: BoxDecoration(
+                    color: AppColors.primary.withValues(alpha: 0.1),
+                    borderRadius: BorderRadius.circular(7),
+                  ),
+                  child: Text(
+                    '${it['variant']}',
+                    style: AppType.style(
+                      10.5,
+                      color: AppColors.primary,
+                      weight: FontWeight.w900,
+                    ),
+                  ),
+                ),
+              ],
+              if (attrs.isNotEmpty) ...[
+                const SizedBox(height: 5),
+                Wrap(
+                  spacing: 5,
+                  runSpacing: 4,
+                  children: [
+                    for (final e in attrs.entries)
+                      if ('${e.value}'.trim().isNotEmpty)
+                        Container(
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 7,
+                            vertical: 3,
+                          ),
+                          decoration: BoxDecoration(
+                            color: AppColors.bg,
+                            borderRadius: BorderRadius.circular(7),
+                            border: Border.all(color: AppColors.line, width: 1),
+                          ),
+                          child: Text(
+                            '${e.key}: ${e.value}',
+                            style: AppType.style(
+                              9.5,
+                              color: AppColors.muted,
+                              weight: FontWeight.w800,
+                            ),
+                          ),
+                        ),
+                  ],
+                ),
+              ],
+              const SizedBox(height: 6),
+              Text(
+                'سعر الوحدة: ${formatMoney(it['price'] ?? 0)} × ${it['qty'] ?? 1}',
+                style: AppType.style(10.5, color: AppColors.muted),
+              ),
+            ],
+          ),
+        ),
+        const SizedBox(width: 8),
+        Text(
+          formatMoney(((it['price'] ?? 0) * (it['qty'] ?? 1)) as num),
+          style: AppType.style(13.5, weight: FontWeight.w900),
+        ),
+      ],
+    );
+  }
+
   Future<void> _act(
     String ep,
     Map<String, dynamic> body,
@@ -711,38 +797,7 @@ class _OrderDetailScreenState extends State<OrderDetailScreen> {
             child: Column(
               children: [
                 for (final it in items) ...[
-                  Row(
-                    children: [
-                      productImage(it['image'], size: 42, radius: 10),
-                      const SizedBox(width: 10),
-                      Expanded(
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Text(
-                              it['product_name'] ?? '',
-                              style: AppType.style(13),
-                              maxLines: 1,
-                              overflow: TextOverflow.ellipsis,
-                            ),
-                            Text(
-                              '${it['qty']} × ${formatMoney(it['price'] ?? 0)}${it['variant'] != null ? ' · ${it['variant']}' : ''}',
-                              style: AppType.style(
-                                10.5,
-                                color: AppColors.muted,
-                              ),
-                            ),
-                          ],
-                        ),
-                      ),
-                      Text(
-                        formatMoney(
-                          ((it['price'] ?? 0) * (it['qty'] ?? 1)) as num,
-                        ),
-                        style: AppType.style(12.5, weight: FontWeight.w900),
-                      ),
-                    ],
-                  ),
+                  _itemDetail(it),
                   const Divider(height: 18),
                 ],
                 Row(

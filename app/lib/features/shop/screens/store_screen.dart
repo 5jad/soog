@@ -6,7 +6,6 @@ import 'package:url_launcher/url_launcher.dart';
 import 'package:zaboon/core/api/api.dart';
 import 'package:zaboon/core/theme/zaboon_design_system.dart';
 import 'package:zaboon/core/widgets/widgets.dart';
-import 'package:zaboon/features/shop/screens/customer_shell.dart';
 import 'package:zaboon/features/cart_checkout/screens/cart_screen.dart';
 
 /// صفحة المتجر: الحالة + التوصيل + كوبونات + عروض + منتجات + تقييمات + تواصل
@@ -305,15 +304,6 @@ class _StoreScreenState extends State<StoreScreen> {
                               mainAxisAlignment: MainAxisAlignment.center,
                               children: [
                                 _statusChip(s),
-                                const SizedBox(width: 8),
-                                if (s['warranty_days'] != null) ...[
-                                  _chip(
-                                    Icons.verified_user_rounded,
-                                    'ضمان ${s['warranty_days']} يوم',
-                                    AppColors.success,
-                                  ),
-                                  const SizedBox(width: 8),
-                                ],
                               ],
                             ),
                           ],
@@ -335,8 +325,8 @@ class _StoreScreenState extends State<StoreScreen> {
                         children: [
                           _infoIcon(
                             Icons.storefront_rounded,
-                            'العدوان',
-                            '${(s['open_time'] ?? '')} - ${(s['close_time'] ?? '')}',
+                            'الدوام',
+                            _hoursLabel(s),
                             AppColors.cyan,
                           ),
                         ],
@@ -693,6 +683,14 @@ class _StoreScreenState extends State<StoreScreen> {
   }
 
   // ── مساعدات UI ──
+  /// نص ساعات الدوام: يفضل الدوام التلقائي (HH:MM - HH:MM) على النص القديم
+  String _hoursLabel(Map s) {
+    final wh = (s['work_hours'] as Map?) ?? {};
+    if (wh['enabled'] == true && wh['open'] != null && wh['close'] != null)
+      return '${wh['open']} - ${wh['close']}';
+    return '${(s['open_time'] ?? '')} - ${(s['close_time'] ?? '')}';
+  }
+
   Widget _statusChip(Map s) {
     if (s['on_vacation'] == true)
       return _chip(Icons.beach_access_rounded, 'ويا إجازة', AppColors.warning);
@@ -901,158 +899,30 @@ class _StoreScreenState extends State<StoreScreen> {
   }
 
   Widget _buildProductCard(dynamic p) {
-    return GlassCard(
-      onTap: () => pushProduct(
+    return ProdCard(
+      product: Map<String, dynamic>.from(p as Map),
+      onOpen: () => pushProduct(
         context,
         widget.storeId,
         (p['id'] as num).toInt(),
       ),
-      radius: 16,
-      padding: EdgeInsets.zero,
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          AspectRatio(
-            aspectRatio: 3 / 4,
-            child: Stack(
-              fit: StackFit.expand,
-              children: [
-                productImageBox(p['image'], radius: 16),
-                if (p['has_offer'] == true || p['has_offer'] == 1)
-                  Positioned(
-                    top: 8,
-                    right: 8,
-                    child: Container(
-                      padding: const EdgeInsets.symmetric(
-                        horizontal: 7,
-                        vertical: 3,
-                      ),
-                      decoration: BoxDecoration(
-                        gradient: AppColors.gradSun,
-                        borderRadius: BorderRadius.circular(8),
-                      ),
-                      child: Text(
-                        'خصم ${_displayPrice(p) > 0 && (p['price'] ?? 0) > 0 ? (((p['price'] as num) - _displayPrice(p)) / (p['price'] as num) * 100).round() : 0}%',
-                        style: AppType.style(
-                          9.5,
-                          color: Colors.white,
-                          weight: FontWeight.w900,
-                        ),
-                      ),
-                    ),
-                  ),
-                if ((p['stock'] ?? 0) <= 0)
-                  Positioned(
-                    top: 8,
-                    left: 8,
-                    child: Container(
-                      padding: const EdgeInsets.symmetric(
-                        horizontal: 7,
-                        vertical: 3,
-                      ),
-                      decoration: BoxDecoration(
-                        color: const Color(0xDD0A1120),
-                        borderRadius: BorderRadius.circular(8),
-                      ),
-                      child: Text(
-                        'نفد',
-                        style: AppType.style(
-                          9.5,
-                          color: Colors.white,
-                          weight: FontWeight.w900,
-                        ),
-                      ),
-                    ),
-                  ),
-              ],
-            ),
-          ),
-          Padding(
-            padding: const EdgeInsets.fromLTRB(9, 8, 9, 8),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  p['name'] ?? '',
-                  style: AppType.style(
-                    11.5,
-                    weight: FontWeight.w800,
-                  ),
-                  maxLines: 2,
-                  overflow: TextOverflow.ellipsis,
-                ),
-                if ((p['has_offer'] == true || p['has_offer'] == 1)) ...[
-                  const SizedBox(height: 4),
-                  Text(
-                    formatMoney(p['price']),
-                    style: AppType.style(
-                      9.5,
-                      color: AppColors.muted,
-                      decoration: TextDecoration.lineThrough,
-                    ),
-                    maxLines: 1,
-                    overflow: TextOverflow.ellipsis,
-                  ),
-                ] else const SizedBox(height: 4),
-                Row(
-                  children: [
-                    Expanded(
-                      child: Text(
-                        formatMoney(_displayPrice(p)),
-                        style: AppType.style(
-                          14,
-                          color: AppColors.accent,
-                          weight: FontWeight.w900,
-                        ),
-                        maxLines: 1,
-                        overflow: TextOverflow.ellipsis,
-                      ),
-                    ),
-                    GestureDetector(
-                      onTap: (p['stock'] ?? 0) <= 0
-                          ? null
-                          : () {
-                              final hasVariant = variants.any(
-                                (v) =>
-                                    (v['product_id'] as num? ?? 0)
-                                        .toInt() ==
-                                    (p['id'] as num).toInt(),
-                              );
-                              if (hasVariant) {
-                                pushProduct(
-                                  context,
-                                  widget.storeId,
-                                  (p['id'] as num).toInt(),
-                                );
-                              } else {
-                                addToCart(
-                                  (p['id'] as num).toInt(),
-                                  1,
-                                );
-                              }
-                            },
-                      child: Container(
-                        width: 30,
-                        height: 30,
-                        decoration: BoxDecoration(
-                          color: AppColors.primary,
-                          borderRadius: BorderRadius.circular(10),
-                        ),
-                        alignment: Alignment.center,
-                        child: const Icon(
-                          Icons.add_rounded,
-                          size: 18,
-                          color: Colors.white,
-                        ),
-                      ),
-                    ),
-                  ],
-                ),
-              ],
-            ),
-          ),
-        ],
-      ),
+      opts: ProdCardOptions.glass,
+      addEnabled: (p['stock'] ?? 0) > 0,
+      onAdd: () {
+        final hasVariant = variants.any(
+          (v) =>
+              (v['product_id'] as num? ?? 0).toInt() == (p['id'] as num).toInt(),
+        );
+        if (hasVariant) {
+          pushProduct(
+            context,
+            widget.storeId,
+            (p['id'] as num).toInt(),
+          );
+        } else {
+          addToCart((p['id'] as num).toInt(), 1);
+        }
+      },
     );
   }
 

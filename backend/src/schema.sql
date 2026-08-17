@@ -123,6 +123,7 @@ CREATE TABLE stores (
   last_paid_at TIMESTAMPTZ,
   warranty_days INTEGER DEFAULT 3,   -- سياسة الضمان (أيام من الاستلام)
   on_vacation BOOLEAN DEFAULT false,   -- إجازة المتجر
+  work_hours JSONB,   -- دوام تلقائي: {"enabled":true,"open":"10:00","close":"23:00"} — NULL يعني دوام يدوي
   created_at TIMESTAMPTZ DEFAULT now()
 );
 

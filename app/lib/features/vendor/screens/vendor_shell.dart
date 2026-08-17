@@ -7,7 +7,16 @@ import 'package:zaboon/core/api/api.dart';
 import 'package:zaboon/features/shop/screens/map_screen.dart';
 import 'package:zaboon/core/theme/zaboon_design_system.dart';
 import 'package:zaboon/core/widgets/widgets.dart';
+import 'package:zaboon/features/shop/widgets/product_card.dart';
 import 'package:zaboon/features/orders/screens/orders_screen.dart';
+
+/// تحويل الأرقام العربية (٠-٩ / ۰-۹) إلى لاتينية — للكميات والأسعار
+String _normDigits(String s) => s
+    .replaceAllMapped(
+      RegExp('[٠-٩۰-۹]'),
+      (m) => '${'٠١٢٣٤٥٦٧٨٩۰۱۲۳۴۵۶۷۸۹'.indexOf(m.group(0)!) % 10}',
+    )
+    .replaceAll(',', '.');
 
 /// واجهة التاجر: الطلبات · المنتجات · المحفظة · متجري
 class VendorShell extends StatefulWidget {
@@ -377,12 +386,57 @@ class _ProductsTabState extends State<_ProductsTab> {
                         ),
                         const SizedBox(width: 10),
                         Expanded(
-                          child: TextField(
-                            controller: stock,
-                            keyboardType: TextInputType.number,
-                            decoration: const InputDecoration(
-                              labelText: 'الكمية',
-                            ),
+                          child: Row(
+                            children: [
+                              Expanded(
+                                child: TextField(
+                                  controller: stock,
+                                  keyboardType: TextInputType.number,
+                                  decoration: const InputDecoration(
+                                    labelText: 'الكمية',
+                                  ),
+                                ),
+                              ),
+                              _QtyBtn(
+                                icon: Icons.remove_rounded,
+                                onTap: () => setS(() {
+                                  final v = int.tryParse(_normDigits(stock.text)) ?? 1;
+                                  stock.text = '${(v - 1).clamp(0, 999999)}';
+                                }),
+                              ),
+                              _QtyBtn(
+                                icon: Icons.add_rounded,
+                                onTap: () => setS(() {
+                                  final v = int.tryParse(_normDigits(stock.text)) ?? 1;
+                                  stock.text = '${v + 1}';
+                                }),
+                              ),
+                              const SizedBox(width: 4),
+                              GestureDetector(
+                                onTap: () => setS(() {
+                                  final v = int.tryParse(_normDigits(stock.text)) ?? 1;
+                                  stock.text = '${v + 5}';
+                                }),
+                                child: Container(
+                                  padding: const EdgeInsets.symmetric(
+                                    horizontal: 8,
+                                    vertical: 10,
+                                  ),
+                                  decoration: BoxDecoration(
+                                    color: AppColors.primary.withOpacity(0.1),
+                                    borderRadius: BorderRadius.circular(8),
+                                  ),
+                                  child: Text(
+                                    '+5',
+                                    style: AppType.style(
+                                      11,
+                                      color: AppColors.primary,
+                                      weight: FontWeight.w900,
+                                    ),
+                                  ),
+                                ),
+                              ),
+                            ],
                           ),
                         ),
                       ],
@@ -469,7 +523,7 @@ class _ProductsTabState extends State<_ProductsTab> {
                             ),
                             const SizedBox(width: 8),
                             SizedBox(
-                              width: 66,
+                              width: 52,
                               child: TextField(
                                 controller: row['stock'],
                                 keyboardType: TextInputType.number,
@@ -478,6 +532,28 @@ class _ProductsTabState extends State<_ProductsTab> {
                                 ),
                                 style: const TextStyle(fontSize: 12.5),
                               ),
+                            ),
+                            _QtyBtn(
+                              icon: Icons.remove_rounded,
+                              small: true,
+                              onTap: () => setS(() {
+                                final v = int.tryParse(
+                                      _normDigits(row['stock']!.text),
+                                    ) ??
+                                    0;
+                                row['stock']!.text = '${(v - 1).clamp(0, 999999)}';
+                              }),
+                            ),
+                            _QtyBtn(
+                              icon: Icons.add_rounded,
+                              small: true,
+                              onTap: () => setS(() {
+                                final v = int.tryParse(
+                                      _normDigits(row['stock']!.text),
+                                    ) ??
+                                    0;
+                                row['stock']!.text = '${v + 1}';
+                              }),
                             ),
                             GestureDetector(
                               onTap: () => setS(() => vrows.remove(row)),
@@ -711,7 +787,10 @@ class _VendorProdCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final hasOffer = p['has_offer'] == true || p['has_offer'] == 1;
-    final outOfStock = (p['stock'] ?? 0) == 0;
+    // المتوفر: مع متغيرات (مقاس/لون) المجموع هو المتاح — وإلا الكمية الأساسية
+    final variantsStock = (p['variants_stock'] as num?)?.toInt() ?? 0;
+    final stock = variantsStock > 0 ? variantsStock : ((p['stock'] as num?)?.toInt() ?? 0);
+    final outOfStock = stock == 0;
     final price = double.tryParse('${p['price'] ?? 0}') ?? 0;
     final offerPrice = double.tryParse('${p['offer_price'] ?? 0}') ?? 0;
     return GestureDetector(
@@ -722,28 +801,18 @@ class _VendorProdCard extends StatelessWidget {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            AspectRatio(
-              aspectRatio: 3 / 4,
-              child: Stack(
-                fit: StackFit.expand,
-                children: [
-                  productImageBox(p['image'], base: Api.base),
-                  if (hasOffer)
-                    Positioned(
-                      top: 8,
-                      right: 8,
-                      child: _OfferBadge(
-                        'خصم ${price > 0 && offerPrice > 0 ? (((price - offerPrice) / price) * 100).round() : 0}%',
-                      ),
-                    ),
-                  if (outOfStock)
-                    Positioned(
-                      top: 8,
-                      left: 8,
-                      child: _OfferBadge('نفد', dark: true),
-                    ),
-                ],
+            ProdImageStack(
+              image: p['image'],
+              imageBase: Api.base,
+              hasOffer: hasOffer,
+              outOfStock: outOfStock,
+              offPct: price > 0 && offerPrice > 0
+                  ? (((price - offerPrice) / price) * 100).round()
+                  : 0,
+              offerBadge: _OfferBadge(
+                'خصم ${price > 0 && offerPrice > 0 ? (((price - offerPrice) / price) * 100).round() : 0}%',
               ),
+              stockBadge: _OfferBadge('نفد', dark: true),
             ),
             Padding(
               padding: const EdgeInsets.fromLTRB(9, 5, 9, 4),
@@ -804,6 +873,33 @@ class _VendorProdCard extends StatelessWidget {
                     ],
                   ),
                   const SizedBox(height: 4),
+                  // ═══ الكمية المتوفرة ═══
+                  Container(
+                    width: double.infinity,
+                    padding: const EdgeInsets.symmetric(vertical: 3),
+                    decoration: BoxDecoration(
+                      color: outOfStock
+                          ? AppColors.danger.withOpacity(0.1)
+                          : (stock <= 3
+                              ? AppColors.warning.withOpacity(0.12)
+                              : AppColors.success.withOpacity(0.1)),
+                      borderRadius: BorderRadius.circular(7),
+                    ),
+                    child: Text(
+                      outOfStock ? 'نفد ✗' : 'المتوفر: $stock',
+                      textAlign: TextAlign.center,
+                      style: AppType.style(
+                        9.5,
+                        color: outOfStock
+                            ? AppColors.danger
+                            : (stock <= 3
+                                ? AppColors.warning
+                                : AppColors.success),
+                        weight: FontWeight.w900,
+                      ),
+                    ),
+                  ),
+                  const SizedBox(height: 4),
                   Container(
                     width: double.infinity,
                     padding: const EdgeInsets.symmetric(vertical: 3),
@@ -835,6 +931,36 @@ class _VendorProdCard extends StatelessWidget {
             ),
           ],
         ),
+      ),
+    );
+  }
+}
+
+/// زر دائري صغير لزيادة/نقصان الكمية
+class _QtyBtn extends StatelessWidget {
+  final IconData icon;
+  final VoidCallback onTap;
+  final bool small;
+  const _QtyBtn({
+    required this.icon,
+    required this.onTap,
+    this.small = false,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return GestureDetector(
+      onTap: onTap,
+      child: Container(
+        width: small ? 24 : 28,
+        height: small ? 24 : 28,
+        margin: EdgeInsets.only(right: small ? 2 : 4, left: small ? 2 : 0),
+        decoration: BoxDecoration(
+          color: AppColors.primary.withOpacity(0.12),
+          borderRadius: BorderRadius.circular(8),
+        ),
+        alignment: Alignment.center,
+        child: Icon(icon, size: small ? 14 : 16, color: AppColors.primary),
       ),
     );
   }
@@ -1432,6 +1558,21 @@ class _StoreTabState extends State<_StoreTab> {
   dynamic stats;
   bool loading = true;
 
+  // ═══ تحويل "HH:MM" نصية إلى TimeOfDay — تعيد null لو الصيغة خاطئة ═══
+  static TimeOfDay? _parseHours(dynamic v) {
+    if (v == null) return null;
+    final m = RegExp(r'^(\d{1,2}):([0-5]\d)$').firstMatch('$v');
+    if (m == null) return null;
+    final h = int.tryParse(m.group(1)!);
+    final min = int.tryParse(m.group(2)!);
+    if (h == null || min == null || h > 23) return null;
+    return TimeOfDay(hour: h, minute: min);
+  }
+
+  /// TimeOfDay → "HH:MM" (ساعة رقمية ثابتة لخادم العراق)
+  static String _fmtHours(TimeOfDay t) =>
+      '${t.hour.toString().padLeft(2, '0')}:${t.minute.toString().padLeft(2, '0')}';
+
   @override
   void initState() {
     super.initState();
@@ -1451,6 +1592,8 @@ class _StoreTabState extends State<_StoreTab> {
         stats = {
           'orders_today': st['today_orders'] ?? 0,
           'sales_today': st['today_sales'] ?? 0,
+          'month_orders': st['month_orders'] ?? 0,
+          'month_sales': st['month_sales'] ?? 0,
           'new_orders': st['new_orders'] ?? 0,
         };
       } else {
@@ -1483,8 +1626,13 @@ class _StoreTabState extends State<_StoreTab> {
         s['category_id'] != null ? (s['category_id'] as num).toInt() : null;
     int? selDist =
         s['district_id'] != null ? (s['district_id'] as num).toInt() : null;
-    List allCats = [];
+    List allCats = <Map>[];
     final allDistricts = <Map<String, dynamic>>[];
+    // ═══ الدوام التلقائي: {enabled, open, close} بصيغة HH:MM ═══
+    final wh = (s['work_hours'] as Map?) ?? {};
+    bool autoHours = wh['enabled'] == true;
+    TimeOfDay? openT = _parseHours(wh['open']);
+    TimeOfDay? closeT = _parseHours(wh['close']);
 
     // الفئات والمحافظات/الأحياء — لاختيار القسم والموقع
     try {
@@ -1678,6 +1826,131 @@ class _StoreTabState extends State<_StoreTab> {
                         keyboardType: TextInputType.phone,
                       ),
                       const SizedBox(height: 12),
+                      // ═══ أوقات العمل — الدوام التلقائي ═══
+                      Container(
+                        padding: const EdgeInsets.all(12),
+                        decoration: BoxDecoration(
+                          color: AppColors.bg,
+                          borderRadius: BorderRadius.circular(14),
+                          border: Border.all(color: AppColors.line),
+                        ),
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Row(
+                              children: [
+                                const Icon(
+                                  Icons.schedule_rounded,
+                                  size: 18,
+                                  color: AppColors.primary,
+                                ),
+                                const SizedBox(width: 8),
+                                const Expanded(
+                                  child: Text(
+                                    'أوقات العمل ⏰',
+                                    style: TextStyle(
+                                      fontSize: 13,
+                                      fontWeight: FontWeight.w900,
+                                    ),
+                                  ),
+                                ),
+                                Switch(
+                                  value: autoHours,
+                                  activeColor: AppColors.primary,
+                                  onChanged: (v) => setS(() {
+                                    autoHours = v;
+                                    if (v && openT == null) openT = TimeOfDay.now();
+                                    if (v && closeT == null) closeT = TimeOfDay.now();
+                                  }),
+                                ),
+                              ],
+                            ),
+                            Text(
+                              autoHours
+                                  ? 'الدوام التلقائي مفعّل — المتجر يفتح/يغلق حسب الساعة الحالية'
+                                  : 'الدوام اليدوي — يبقى المتجر مفتوح ما لم تطفيه الإدارة',
+                              style: AppType.style(
+                                11,
+                                color: AppColors.muted,
+                                height: 1.5,
+                              ),
+                            ),
+                            if (autoHours) ...[
+                              const SizedBox(height: 10),
+                              Row(
+                                children: [
+                                  Expanded(
+                                    child: OutlinedButton.icon(
+                                      style: OutlinedButton.styleFrom(
+                                        foregroundColor: AppColors.primary,
+                                        side: const BorderSide(
+                                          color: AppColors.primary,
+                                          width: 1.2,
+                                        ),
+                                      ),
+                                      onPressed: () async {
+                                        final t = await showTimePicker(
+                                          context: context,
+                                          initialTime: openT ?? const TimeOfDay(
+                                            hour: 9,
+                                            minute: 0,
+                                          ),
+                                        );
+                                        if (t != null) setS(() => openT = t);
+                                      },
+                                      icon: const Icon(
+                                        Icons.wb_sunny_rounded,
+                                        size: 16,
+                                      ),
+                                      label: Text(
+                                        'الفتح: ${openT != null ? openT!.format(context) : '—'}',
+                                        style: const TextStyle(
+                                          fontWeight: FontWeight.w800,
+                                          fontSize: 12,
+                                        ),
+                                      ),
+                                    ),
+                                  ),
+                                  const SizedBox(width: 10),
+                                  Expanded(
+                                    child: OutlinedButton.icon(
+                                      style: OutlinedButton.styleFrom(
+                                        foregroundColor: AppColors.danger,
+                                        side: const BorderSide(
+                                          color: AppColors.danger,
+                                          width: 1.2,
+                                        ),
+                                      ),
+                                      onPressed: () async {
+                                        final t = await showTimePicker(
+                                          context: context,
+                                          initialTime: closeT ?? const TimeOfDay(
+                                            hour: 23,
+                                            minute: 0,
+                                          ),
+                                        );
+                                        if (t != null) setS(() => closeT = t);
+                                      },
+                                      icon: const Icon(
+                                        Icons.nightlight_round,
+                                        size: 16,
+                                      ),
+                                      label: Text(
+                                        'الإغلاق: ${closeT != null ? closeT!.format(context) : '—'}',
+                                        style: const TextStyle(
+                                          fontWeight: FontWeight.w800,
+                                          fontSize: 12,
+                                        ),
+                                      ),
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ],
+                          ],
+                        ),
+                      ),
+                      const SizedBox(height: 12),
                       OutlinedButton.icon(
                         style: OutlinedButton.styleFrom(
                           foregroundColor: AppColors.primary,
@@ -1725,6 +1998,18 @@ class _StoreTabState extends State<_StoreTab> {
                               if (selDist != null) 'district_id': selDist,
                               if (slat != null) 'lat': slat,
                               if (slng != null) 'lng': slng,
+                              if (autoHours && openT != null && closeT != null)
+                                'work_hours': {
+                                  'enabled': true,
+                                  'open': _fmtHours(openT!),
+                                  'close': _fmtHours(closeT!),
+                                }
+                              else if (!autoHours && wh['enabled'] == true)
+                                'work_hours': {
+                                  'enabled': false,
+                                  'open': wh['open'] ?? '',
+                                  'close': wh['close'] ?? '',
+                                },
                             };
                             if (isNew) {
                               await Api.post('/api/vendor/store', body);
@@ -2067,17 +2352,17 @@ class _StoreTabState extends State<_StoreTab> {
               children: [
                 Expanded(
                   child: MoneyBox(
-                    label: 'طلبات اليوم',
-                    value: '${stats['orders_today'] ?? 0}',
-                    icon: Icons.receipt_long_rounded,
+                    label: 'طلبات الشهر',
+                    value: '${stats['month_orders'] ?? 0}',
+                    icon: Icons.calendar_today_rounded,
                     color: AppColors.primary,
                   ),
                 ),
                 const SizedBox(width: 10),
                 Expanded(
                   child: MoneyBox(
-                    label: 'مبيعات اليوم',
-                    value: formatMoney(stats['sales_today'] ?? 0),
+                    label: 'مبيعات الشهر',
+                    value: formatMoney(stats['month_sales'] ?? 0),
                     icon: Icons.payments_rounded,
                     color: AppColors.success,
                   ),
@@ -2130,12 +2415,7 @@ class _StoreTabState extends State<_StoreTab> {
                       height: 1.6,
                     ),
                   ),
-                  const Divider(height: 22),
-                  Text(
-                    '💰 عمولة المنصة: 10% من كل طلب — تخصم أوتوماتيك وتوصلك بالكاش.',
-                    style: AppType.style(11.5, color: AppColors.muted),
-                  ),
-                ],
+                  ],
               ),
             ),
           ),
@@ -2287,6 +2567,12 @@ class _StoreTabState extends State<_StoreTab> {
             ),
           ),
           const SizedBox(height: 14),
+          // ═══ بطاقة الدوام: الحالة الحية + الأوقات ═══
+          Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 16),
+            child: _HoursCard(store: s, onEdit: _editStore),
+          ),
+          const SizedBox(height: 14),
           // الكوبونات
           Padding(
             padding: const EdgeInsets.symmetric(horizontal: 16),
@@ -2310,6 +2596,89 @@ class _StoreTabState extends State<_StoreTab> {
           Padding(
             padding: const EdgeInsets.symmetric(horizontal: 16),
             child: const _QuestionsCard(),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+/// ═══ بطاقة الدوام في صفحة متجري — الحالة الحية + الساعات ═══
+class _HoursCard extends StatelessWidget {
+  final Map store;
+  final VoidCallback onEdit;
+  const _HoursCard({required this.store, required this.onEdit});
+
+  @override
+  Widget build(BuildContext context) {
+    final onVacation = store['on_vacation'] == true;
+    final open = store['is_open'] == true;
+    final wh = (store['work_hours'] as Map?) ?? {};
+    final auto = wh['enabled'] == true;
+    final time = (auto && wh['open'] != null && wh['close'] != null)
+        ? '${wh['open']} - ${wh['close']}'
+        : 'دوام يدوي (يدوي دائماً)';
+    final (label, color, icon) = onVacation
+        ? ('ويا إجازة — لا يستقبل الطلبات', AppColors.warning,
+            Icons.beach_access_rounded)
+        : open
+            ? ('مفتوح الآن — يستقبل الطلبات', AppColors.success,
+                Icons.check_circle_rounded)
+            : ('مغلق الآن — لا يستقبل الطلبات', AppColors.danger,
+                Icons.cancel_rounded);
+    return GlassCard(
+      child: Row(
+        children: [
+          Container(
+            padding: const EdgeInsets.all(10),
+            decoration: BoxDecoration(
+              color: color.withOpacity(0.12),
+              borderRadius: BorderRadius.circular(13),
+            ),
+            child: Icon(icon, color: color, size: 22),
+          ),
+          const SizedBox(width: 12),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  'أوقات العمل ⏰',
+                  style: AppType.style(13.5, weight: FontWeight.w900),
+                ),
+                const SizedBox(height: 3),
+                Text(
+                  auto ? 'الدوام التلقائي: $time' : 'بدون دوام تلقائي',
+                  style: AppType.style(11, color: AppColors.muted),
+                ),
+                const SizedBox(height: 4),
+                Row(
+                  children: [
+                    Icon(icon, size: 13, color: color),
+                    const SizedBox(width: 5),
+                    Text(
+                      label,
+                      style: AppType.style(11, color: color, weight: FontWeight.w800),
+                    ),
+                  ],
+                ),
+              ],
+            ),
+          ),
+          GestureDetector(
+            onTap: onEdit,
+            child: Container(
+              padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 7),
+              decoration: BoxDecoration(
+                color: AppColors.primary.withOpacity(0.1),
+                borderRadius: BorderRadius.circular(10),
+              ),
+              child: const Icon(
+                Icons.schedule_rounded,
+                size: 16,
+                color: AppColors.primary,
+              ),
+            ),
           ),
         ],
       ),

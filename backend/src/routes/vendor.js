@@ -1,6 +1,7 @@
 import { Router } from 'express';
 import { q, one, tx } from '../db.js';
 import { auth, roles } from '../middleware.js';
+import { isOpenNow, parseHour } from '../hours.js';
 
 const r = Router();
 r.use(auth, roles('vendor'));
@@ -23,9 +24,11 @@ const cssSafe = (v, max = 500) => {
 r.get('/store', async (req, res) => {
   const s = await myStore(req);
   if (!s) return res.json({ store: null });
+  s.is_open = isOpenNow(s);
   s.documents = await q('SELECT * FROM store_documents WHERE store_id=$1', [s.id]);
   s.products = await q(`SELECT p.*, pr.percent AS offer_percent, pr.active AS offer_active,
-      (pr.active AND pr.percent>0) AS has_offer, ROUND(p.price*(1-COALESCE(pr.percent,0)/100.0)) AS offer_price
+      (pr.active AND pr.percent>0) AS has_offer, ROUND(p.price*(1-COALESCE(pr.percent,0)/100.0)) AS offer_price,
+      (SELECT COALESCE(sum(v.stock),0)::int FROM product_variants v WHERE v.product_id=p.id) AS variants_stock
     FROM products p LEFT JOIN offers pr ON pr.product_id=p.id WHERE p.store_id=$1 ORDER BY p.id`, [s.id]);
   s.refunds = await q(`SELECT rf.*, o.code, o.total, o.status AS order_status, u.name AS user_name FROM refund_requests rf
     JOIN orders o ON o.id=rf.order_id JOIN users u ON u.id=o.user_id WHERE o.store_id=$1 ORDER BY rf.id DESC LIMIT 30`, [s.id]);
@@ -56,9 +59,23 @@ r.patch('/store', async (req, res) => {
   const s = await myStore(req);
   if (!s) return res.status(404).json({ error: 'سجل محلك أول' });
   const b = req.body;
-  const allowed = ['name', 'logo', 'cover', 'description', 'address', 'phone', 'open_time', 'close_time', 'is_open', 'category_id', 'district_id', 'lat', 'lng', 'location_url', 'on_vacation', 'warranty_days'];
+  const allowed = ['name', 'logo', 'cover', 'description', 'address', 'phone', 'open_time', 'close_time', 'is_open', 'category_id', 'district_id', 'lat', 'lng', 'location_url', 'on_vacation', 'warranty_days', 'work_hours'];
   const sets = [], p = [];
   for (const k of allowed) if (b[k] !== undefined) {
+    // الدوام التلقائي: تحقق صارم من {enabled, open, close}
+    if (k === 'work_hours') {
+      const wh = b[k];
+      const open = parseHour(wh?.open);
+      const close = parseHour(wh?.close);
+      if (!wh || typeof wh !== 'object' ||
+          (wh.enabled !== undefined && typeof wh.enabled !== 'boolean') ||
+          (wh.enabled && (open == null || close == null)))
+        return res.status(400).json({ error: 'أوقات الدوام غير صحيحة — استخدم صيغة HH:MM (مثال 09:00)' });
+      b[k] = JSON.stringify({ enabled: wh.enabled === true, open: open == null ? '' : wh.open, close: close == null ? '' : wh.close });
+      sets.push(`work_hours=$${p.length + 1}::jsonb`);
+      p.push(b[k]);
+      continue;
+    }
     if (k === 'logo' || k === 'cover') {
       const sv = displayText(b[k], k === 'cover' ? 2000 : 255);
       if (sv === null) return res.status(400).json({ error: k === 'logo' ? 'الشعار غير صالح — نص فقط بدون وسوم HTML' : 'الغلاف غير صالح — نص فقط بدون وسوم HTML' });
@@ -68,6 +85,7 @@ r.patch('/store', async (req, res) => {
   }
   if (!sets.length) return res.json({ store: s });
   const ns = (await q(`UPDATE stores SET ${sets.join(', ')} WHERE id=$${p.length + 1} RETURNING *`, [...p, s.id]))[0];
+  ns.is_open = isOpenNow(ns);
   res.json({ store: ns });
 });
 
@@ -99,7 +117,10 @@ r.get('/orders', async (req, res) => {
   const total = (await one(`SELECT count(*)::int AS n FROM orders o WHERE ${w.join(' AND ')}`, p)).n;
   const orders = await q(`SELECT o.*, u.name AS user_name, u.phone AS user_phone FROM orders o
     LEFT JOIN users u ON u.id=o.user_id WHERE ${w.join(' AND ')} ORDER BY o.id DESC LIMIT $${p.length + 1} OFFSET $${p.length + 2}`, [...p, limit, offset]);
-  const items = await q(`SELECT oi.*, o.id AS order_id FROM order_items oi JOIN orders o ON o.id=oi.order_id WHERE o.store_id=$1 AND o.id = ANY($2::int[])`, [s.id, orders.map(o => o.id)]);
+  // تفاصيل الأصناف كاملة: الصورة والسمات من جدول المنتجات (للقراءة من التاجر)
+  const items = await q(`SELECT oi.*, o.id AS order_id, p.image, p.images, p.attributes
+    FROM order_items oi JOIN orders o ON o.id=oi.order_id LEFT JOIN products p ON p.id=oi.product_id
+    WHERE o.store_id=$1 AND o.id = ANY($2::int[])`, [s.id, orders.map(o => o.id)]);
   const returns = await q(`SELECT rf.*, o.code, o.total, u.name AS user_name FROM refund_requests rf
     JOIN orders o ON o.id=rf.order_id JOIN users u ON u.id=o.user_id WHERE o.store_id=$1 ORDER BY rf.id DESC`, [s.id]);
   res.json({ orders: orders.map(o => ({ ...o, items: items.filter(i => i.order_id === o.id) })), refunds: returns, total });
@@ -112,7 +133,8 @@ r.get('/orders/:id', async (req, res) => {
     FROM orders o LEFT JOIN users u ON u.id=o.user_id LEFT JOIN users c ON c.id=o.courier_id
     WHERE o.id=$1 AND o.store_id=$2`, [req.params.id, s.id]);
   if (!o) return res.status(404).json({ error: 'الطلب غير موجود' });
-  o.items = await q('SELECT * FROM order_items WHERE order_id=$1', [o.id]);
+  o.items = await q(`SELECT oi.*, p.image, p.images, p.attributes
+    FROM order_items oi LEFT JOIN products p ON p.id=oi.product_id WHERE oi.order_id=$1`, [o.id]);
   o.history = await q('SELECT * FROM order_status_history WHERE order_id=$1 ORDER BY id', [o.id]);
   res.json({ order: o });
 });
@@ -398,8 +420,9 @@ r.get('/stats', async (req, res) => {
   const s = await myStore(req);
   if (!s) return res.json({ stats: null });
   const today = (await one(`SELECT count(*)::int AS orders, COALESCE(sum(total),0)::int AS sales FROM orders WHERE store_id=$1 AND created_at::date=CURRENT_DATE AND status NOT IN ('cancelled')`, [s.id]));
+  const month = (await one(`SELECT count(*)::int AS orders, COALESCE(sum(total),0)::int AS sales FROM orders WHERE store_id=$1 AND created_at >= date_trunc('month', now()) AND status NOT IN ('cancelled')`, [s.id]));
   const fresh = (await one(`SELECT count(*)::int AS n FROM orders WHERE store_id=$1 AND status='new'`, [s.id]));
-  res.json({ stats: { today_orders: today.orders, today_sales: today.sales, new_orders: fresh.n } });
+  res.json({ stats: { today_orders: today.orders, today_sales: today.sales, month_orders: month.orders, month_sales: month.sales, new_orders: fresh.n } });
 });
 
 // ── إجازة المتجر ──

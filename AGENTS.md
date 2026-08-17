@@ -59,6 +59,7 @@
 - **التحقق من المدخلات:** نمط whitelist `allowed = [...]` ثم دالة `norm()` للأرقام العربية (٠-٩/۰-۹) مع رسالة خطأ عربية واضحة؛ لا تثق بأي قيمة من الـ client.
 - **رسائل الأخطاء:** السيرفر يرد `{ error: 'رسالة عربية' }` مع كود HTTP صحيح؛ التطبيق يعرضها عبر `on ApiException catch (e)` → Toast/SnackBar بـ `e.message` (لا تعرض stack traces).
 - **Flutter:** كل طلبات الشبكة تمر من `app/lib/core/api/api.dart` المركزي (لا توزع `http` مباشرة في الشاشات)؛ بنية folders: features + screens؛ الثوابت نصية عربية مباشرة.
+- **بوكس المنتج (إلزامي):** أي بطاقة منتج جديدة أو تعديل على بطاقة موجودة يستخدم `ProdCard` من `app/lib/features/shop/widgets/product_card.dart` مع أحد presets: `ProdCardOptions.home` / `category` / `glass` / `favorites` (كل شاشة تحتفظ بمقاساتها الأصلية موثقة داخل `ProdCardOptions`) — ممنوع بناء بطاقة منتج يدوية مكررة. صورة المنتج وبدراتها عبر `ProdImageStack` من نفس الملف (مع `offerBadge`/`stockBadge` للحالات المخصصة مثل بطاقة التاجر)؛ شارتي "خصم/نفد" من `BadgeWow` أو نمط glass.
 - **التسمية:** ملفات snake_case؛ كلاسات Dart بـ PascalCase؛ دوال ومتغيرات camelCase.
 - **الحساس النقدي (محفظة/نقاط/سداد):** كل التحديثات داخل معاملة `tx()` مع أقفال/شروط ذرّية وفحص صحة الرصيد.
 

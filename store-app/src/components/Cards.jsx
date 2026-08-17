@@ -25,7 +25,7 @@ export const DOT = (name) => {
   return '#D9DEE7';
 };
 
-/* ═══ بطاقة منتج — شبكة 2×2 مثل التطبيق: صورة 3:4 + خصم + نقاط ألوان + زر برتقالي ═══ */
+/* ═══ بطاقة منتج — شبكة auto-fill: صورة 3:4 + خصم + نقاط ألوان + زر برتقالي ═══ */
 export function ProductCard({ p, cols = 2 }) {
   const nav = useNavigate();
   const { addToCart, notify, setLoginOpen, token } = useApp();
@@ -44,24 +44,26 @@ export function ProductCard({ p, cols = 2 }) {
     await addToCart(p.id, null, null, 1);
   };
   return (
-    <div className="pc" onClick={() => nav('/product/' + p.id)}>
-      <div className="pc-img">
+    <div className="pcard" onClick={() => nav('/product/' + p.id)}>
+      <div className="pcard-img">
         {U(p.image) ? <img src={p.image} alt={p.name} loading="lazy" onError={(e) => { e.currentTarget.style.display = 'none'; }} /> : <span>{p.image || '🛍️'}</span>}
-        {off ? <span className="pc-badge">خصم {off}%</span> : null}
-        {p.out_of_stock ? <span className="pc-badge dark">نفد</span> : null}
+        {off ? <span className="pcard-off">خصم {off}%</span> : null}
+        {p.out_of_stock ? <span className="pcard-tag"><M n="block" s={10} c="#fff" w={800} />نفد</span>
+          : (p.stock != null && p.stock > 0 && p.stock <= 5) ? <span className="pcard-stock pcard-stock--low">متبقي {p.stock}</span>
+          : null}
       </div>
-      <div className="pc-in">
-        <div className="pc-n">{p.name}</div>
+      <div className="pcard-in">
+        <div className="pcard-name">{p.name}</div>
         {dots.length ? (
-          <div className="pc-dots">
-            {dots.slice(0, 4).map((c, i) => <span key={i} className="pc-dot" style={{ background: c }} />)}
-            {dots.length > 4 ? <span className="more">+{dots.length - 4}</span> : null}
+          <div style={{ display: 'flex', alignItems: 'center', gap: 5, paddingBlock: 4 }}>
+            {dots.slice(0, 4).map((c, i) => <span key={i} style={{ width: 8, height: 8, borderRadius: '50%', background: c, border: '1px solid var(--line-strong)' }} />)}
+            {dots.length > 4 ? <span style={{ fontSize: 9, fontWeight: 800, color: 'var(--muted)' }}>+{dots.length - 4}</span> : null}
           </div>
         ) : null}
-        {p.has_offer ? <div className="pc-old">{fmt(p.price)}</div> : null}
-        <div className="pc-row">
-          <span className="pc-p">{fmt(priceOf(p))}</span>
-          <button className={`add-mini ${p.has_offer ? '' : ''}`} onClick={quick} title="أضف للسلة">
+        {p.has_offer ? <div className="pcard-old">{fmt(p.price)}</div> : null}
+        <div className="pcard-row">
+          <span className="pcard-price">{fmt(priceOf(p))}</span>
+          <button className="add-mini" onClick={quick} title="أضف للسلة">
             <M n="add" s={17} c="#fff" w={700} />
           </button>
         </div>
@@ -70,25 +72,25 @@ export function ProductCard({ p, cols = 2 }) {
   );
 }
 
-/* ═══ بطاقة محل مصغرة — الغلاف يملأ البوكس (132×122) ═══ */
-export function StoreCard({ s, cover }) {
+/* ═══ بطاقة محل — الغلاف يملأ البوكس (16:9) ═══ */
+export function StoreCard({ s, cover, w }) {
   const nav = useNavigate();
   const hasCover = !!S(s.cover);
   const coverSrc = S(s.cover) || cover;
   const logoSrc = S(s.logo);
   return (
-    <div className="sm" onClick={() => nav('/stores/' + s.id)}>
-      {hasCover ? <img className="sm-cover" src={coverSrc} alt={s.name} loading="lazy" onError={(e) => { e.currentTarget.style.display = 'none'; }} /> : <div className="sm-cover" style={{ background: cover }} />}
-      <div className="sm-ov" />
-      <div className="sm-logo">
+    <div className="scard" style={w ? { width: w, flex: 'none' } : undefined} onClick={() => nav('/stores/' + s.id)}>
+      {hasCover ? <img className="scard-cover" src={coverSrc} alt={s.name} loading="lazy" onError={(e) => { e.currentTarget.style.display = 'none'; }} /> : <div className="scard-cover" style={{ background: cover }} />}
+      <div className="scard-ov" />
+      <div className="scard-logo">
         {logoSrc ? <img src={logoSrc} alt="" onError={(e) => { e.currentTarget.style.display = 'none'; }} /> : <span style={{ fontSize: 16 }}>{s.logo || '🏪'}</span>}
       </div>
-      <div className="sm-info">
-        <div className="sm-n">{s.name}</div>
-        <div className="sm-r">
+      <div className="scard-info">
+        <div className="scard-name">{s.name}</div>
+        <div className="scard-r">
           <M n="star" fill s={12} c="var(--star)" w={700} />
-          <span className="rc">{Number(s.rating || 0).toFixed(1)}</span>
-          <span className="rv">• {s.reviews_count || 0} تقييم</span>
+          <span>{Number(s.rating || 0).toFixed(1)}</span>
+          <span>• {s.reviews_count || 0} تقييم</span>
         </div>
       </div>
     </div>
@@ -104,20 +106,20 @@ export function DealCard({ d }) {
   const add = (e) => {
     e.stopPropagation();
     if (variants.length) { nav('/product/' + prod.id); return; }
-    if (!token) { setLoginOpen(true); return; }
+    if (!token) { notify('سجل دخولك أولاً', 'err'); setLoginOpen(true); return; }
     flyToCart(srcRectOf(e.currentTarget), U(prod.image) ? prod.image : null);
     addToCart(prod.id, null, null, 1);
   };
   return (
-    <div className="card deal-c" onClick={() => nav('/product/' + prod.id)} style={{ cursor: 'pointer', position: 'relative' }}>
-      {prod.has_offer ? <span className="deal-badge">خصم {pct(prod.price, prod.offer_price)}%</span> : null}
-      <div className="deal-img">
-        {U(prod.image) ? <img src={prod.image} alt={prod.name} style={{ width: '100%', height: '100%', objectFit: 'cover', borderRadius: 15 }} loading="lazy" onError={(e) => { e.currentTarget.style.display = 'none'; }} /> : <span>{prod.image || '🛍️'}</span>}
+    <div className="dcard" onClick={() => nav('/product/' + prod.id)}>
+      {prod.has_offer ? <span className="pcard-off">خصم {pct(prod.price, prod.offer_price)}%</span> : null}
+      <div className="dcard-img">
+        {U(prod.image) ? <img src={prod.image} alt={prod.name} loading="lazy" onError={(e) => { e.currentTarget.style.display = 'none'; }} /> : <span>{prod.image || '🛍️'}</span>}
       </div>
-      <div className="deal-n">{prod.name}</div>
-      <div className="deal-s">{d.store_name || 'متجر'}</div>
-      <div className="deal-row">
-        <span className="deal-p">{fmt(priceOf(prod))}</span>
+      <div className="dcard-name">{prod.name}</div>
+      <div className="dcard-s">{d.store_name || 'متجر'}</div>
+      <div className="dcard-row">
+        <span className="pcard-price" style={{ fontSize: 'var(--t-body)' }}>{fmt(priceOf(prod))}</span>
         <button className="add-mini" onClick={add}><M n="add" s={17} c="#fff" w={700} /></button>
       </div>
     </div>
@@ -126,7 +128,7 @@ export function DealCard({ d }) {
 
 /* ═══ شريحة فئة ═══ */
 export const CatIcon = ({ c, on, onClick }) => (
-  <span className={`chipg ${on ? 'on' : ''}`} onClick={onClick}>
+  <span className={`chip ${on ? 'on' : ''}`} onClick={onClick}>
     <span className="ce">{c.icon || '🛍️'}</span>{c.name}
   </span>
 );

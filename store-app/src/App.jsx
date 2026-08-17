@@ -66,7 +66,7 @@ export default function App() {
       </main>
       <Footer />
       <LoginModal open={loginOpen} onClose={() => setLoginOpen(false)} />
-      {toast && <div className={`toast show ${toast.kind}`}>{toast.kind === 'ok' ? <M n="check_circle" fill c="#4ADE80" w={700} /> : toast.kind === 'err' ? <M n="error" fill c="#F87171" w={700} /> : null}{toast.msg}</div>}
+      {toast && <div className={`toast show toast--${toast.kind}`}>{toast.kind === 'ok' ? <M n="check_circle" fill c="#4ADE80" w={700} /> : toast.kind === 'err' ? <M n="error" fill c="#F87171" w={700} /> : null}{toast.msg}</div>}
     </>
   );
 }

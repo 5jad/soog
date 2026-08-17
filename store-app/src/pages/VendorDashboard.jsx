@@ -1,9 +1,8 @@
-import React, { useEffect, useMemo, useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useApp } from '../ctx';
 import { api, fmt, priceOf, timeAgo } from '../api';
 import { M, Modal, Empty, Loader } from '../ui';
-
 
 /* ═══════════════ لوحة التاجر — ويب ═══════════════ */
 const STAT = {
@@ -25,7 +24,7 @@ const TABS = [
 ];
 
 export default function VendorDashboard() {
-  const { me, setLoginOpen } = useApp();
+  const { me, notify, setLoginOpen } = useApp();
   const nav = useNavigate();
   const [tab, setTab] = useState('overview');
   const [store, setStore] = useState(null);
@@ -56,28 +55,27 @@ export default function VendorDashboard() {
     } catch (e) { notify(e.message, 'err'); } finally { setLoading(false); }
   };
 
-  const { notify } = useApp();
   useEffect(() => { if (isVendor) reload(); else setLoading(false); }, [isVendor]);
   useEffect(() => { if (isVendor) { const t = setInterval(reload, 30000); return () => clearInterval(t); } }, [isVendor]);
 
   if (!isVendor) {
-    return <div className="sect">
+    return <div className="container section">
       <Empty icon="🧑💼" msg="هذه المنطقة للتجار فقط"
         sub={me ? 'حسابك مو مفعّل كتاجر — تواصل مع الإدارة' : 'سجّل دخولك بحساب التاجر أول'}
         action={<button className="btn" onClick={() => me ? nav('/') : setLoginOpen(true)}>{me ? 'عودة للمتجر' : 'دخول'}</button>} />
     </div>;
   }
-  if (loading) return <div className="sect"><Loader /></div>;
+  if (loading) return <div className="container section"><Loader /></div>;
 
   return (
-    <div className="sect">
+    <div className="container section" style={{ paddingBlockStart: 12 }}>
       <div className="dash-head">
         <div>
           <div className="dash-title">{store ? store.name : 'واجهة التاجر'}{store && store.verified ? <M n="verified" fill s={18} c="var(--accent)" /> : null}</div>
           <div className="dash-sub">{store ? `${store.category_name || ''} · ${store.district_name || ''} · ${STAT[store.status] ? STAT[store.status][0] : store.status}` : 'سجّل متجرك من صفحة متجري'}</div>
         </div>
-        <div className="dash-btns">
-          {store && <span className={'c-chip ' + (store.on_vacation ? 'st-cancelled' : 'st-delivered')}>{store.on_vacation ? 'في إجازة' : 'فاتح'}</span>}
+        <div className="rowf" style={{ gap: 8 }}>
+          {store && <span className={cls(store.on_vacation ? 'cancelled' : 'delivered')}>{store.on_vacation ? 'في إجازة' : 'فاتح'}</span>}
         </div>
       </div>
 
@@ -85,7 +83,7 @@ export default function VendorDashboard() {
         {TABS.map(([k, ic, l]) => (
           <button key={k} className={tab === k ? 'on' : ''} onClick={() => setTab(k)}>
             <M n={ic} s={17} />{l}
-            {k === 'orders' && stats && stats.new_orders > 0 ? <span className="badge">{stats.new_orders}</span> : null}
+            {k === 'orders' && stats && stats.new_orders > 0 ? <span className="c-chip st-new" style={{ height: 18, padding: '0 7px' }}>{stats.new_orders}</span> : null}
           </button>
         ))}
       </div>
@@ -112,27 +110,27 @@ function Overview({ store, stats, week, products, goto }) {
   ];
   return (
     <>
-      <div className="stat" style={{ gridTemplateColumns: 'repeat(2,1fr)' }}>
-        {cards.map(([ic, l, v, c]) => (
-          <div key={l} className="grid-item">
-            <span className="gi-ic" style={{ background: c + '1a', color: c }}><M n={ic} /></span>
-            <h4>{v}</h4><p>{l}</p>
+      <div className="dash-stats">
+        {cards.map(([ic, l, v]) => (
+          <div key={l} className="dash-stat">
+            <M n={ic} s={19} c="var(--primary)" />
+            <b>{v}</b><small>{l}</small>
           </div>
         ))}
       </div>
-      <div className="card" style={{ margin: '14px 16px 0', padding: 16 }}>
+      <div className="card" style={{ marginBlockStart: 14, padding: 16 }}>
         <div className="card-h"><M n="calendar_today" s={18} c="var(--success)" />مستحقاتك هذا الأسبوع</div>
-        <div style={{ fontSize: 24, fontWeight: 900, color: 'var(--success)', marginTop: 6 }}>
+        <div style={{ fontSize: 24, fontWeight: 900, color: 'var(--success)', marginBlockStart: 6 }}>
           {week ? fmt(week.net_due) : '—'}
         </div>
-        <div className="muted-l" style={{ marginTop: 2 }}>بعد خصم عمولة المنصة ({store ? store.commission_rate : 10}%)</div>
+        <div className="muted" style={{ marginBlockStart: 2 }}>بعد خصم عمولة المنصة ({store ? store.commission_rate : 10}%)</div>
         <div className="mini-row">
           <span>إجمالي المبيعات: <b>{week ? fmt(week.gross) : '—'}</b></span>
           <span>عمولة المنصة: <b style={{ color: 'var(--danger)' }}>{week ? '−' + fmt(week.commission_due) : '—'}</b></span>
         </div>
       </div>
       <Empty icon="📈" msg="التقارير التفصيلية تظهر هنا قريباً"
-        action={<button className="btn btn-sm btn-o" style={{ marginTop: 10 }} onClick={() => goto('orders')}>شوف طلباتك ←</button>} />
+        action={<button className="btn btn--outline btn--sm" style={{ marginTop: 10 }} onClick={() => goto('orders')}>شوف طلباتك ←</button>} />
     </>
   );
 }
@@ -164,7 +162,7 @@ function OrdersTab({ reload, notify: toast }) {
   if (loading) return <Loader />;
   return (
     <>
-      <div className="tabs" style={{ margin: '10px 16px 6px' }}>
+      <div className="tabs" style={{ margin: '10px 0 6px' }}>
         {['all', 'new', 'preparing', 'ready', 'delivering', 'delivered', 'cancelled', 'returned'].map(s => (
           <button key={s} className={status === s ? 'on' : ''} onClick={() => setStatus(s)}>
             {s === 'all' ? 'الكل' : STAT[s][0]}
@@ -174,12 +172,12 @@ function OrdersTab({ reload, notify: toast }) {
       {orders.length === 0
         ? <Empty icon="🧾" msg="لا طلبات بهذه الحالة" />
         : orders.map(o => (
-          <div key={o.id} className="card ord-card">
+          <div key={o.id} className="card order-card" style={{ marginBlockEnd: 10 }}>
             <div className="ord-top" onClick={() => setOpenId(openId === o.id ? null : o.id)}>
               <div>
                 <b>#{o.code}</b>
-                <span className="muted-l"> · {timeAgo(o.created_at)} · {o.user_name}</span>
-                <div className="muted-l">{o.items.length} منتج · {fmt(o.total)}</div>
+                <span className="muted"> · {timeAgo(o.created_at)} · {o.user_name}</span>
+                <div className="muted">{o.items.length} منتج · {fmt(o.total)}</div>
               </div>
               <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
                 <span className={cls(o.status)}>{STAT[o.status][0]}</span>
@@ -196,17 +194,17 @@ function OrdersTab({ reload, notify: toast }) {
                 ))}
                 <div className="mini-row"><span>رسوم التوصيل</span><b>{fmt(o.delivery_fee || 0)}</b></div>
                 <div className="mini-row ord-total"><span>الإجمالي</span><b style={{ color: 'var(--accent)' }}>{fmt(o.total)}</b></div>
-                <div className="muted-l" style={{ margin: '8px 0' }}>الزبون: {o.user_phone || ''} · {o.address_text || ''}</div>
+                <div className="muted" style={{ margin: '8px 0' }}>الزبون: {o.user_phone || ''} · {o.address_text || ''}</div>
                 {['new', 'preparing'].includes(o.status) && (
                   <div className="ord-actions">
                     {o.status === 'new' && (
                       <>
-                        <button className="btn btn-sm" onClick={() => act(o.id, 'accept')}>قبول ✓</button>
-                        <button className="btn btn-sm btn-o-err" onClick={() => act(o.id, 'reject')}>رفض ✕</button>
+                        <button className="btn btn--navy btn--sm" onClick={() => act(o.id, 'accept')}>قبول ✓</button>
+                        <button className="btn btn--danger btn--sm" onClick={() => act(o.id, 'reject')}>رفض ✕</button>
                         <input className="inp" style={{ marginTop: 8, padding: 8, fontSize: 12 }} placeholder="سبب الرفض (اختياري)" value={reason} onChange={e => setReason(e.target.value)} />
                       </>
                     )}
-                    {o.status === 'preparing' && <button className="btn btn-sm btn-sun" onClick={() => act(o.id, 'ready')}>جهّز الطلب — جاهز للتوصيل 🛵</button>}
+                    {o.status === 'preparing' && <button className="btn btn--cta btn--sm" onClick={() => act(o.id, 'ready')}>جهّز الطلب — جاهز للتوصيل 🛵</button>}
                   </div>
                 )}
               </div>
@@ -221,13 +219,13 @@ function OrdersTab({ reload, notify: toast }) {
 function ProductsTab({ products, reload, notify: toast, setEditing, showForm, editing, onClose }) {
   return (
     <>
-      <div className="dash-actions">
-        <span className="muted-l">{products.length} منتج</span>
-        <button className="btn btn-sm" onClick={() => setEditing(null)}><M n="add" s={17} />إضافة منتج</button>
+      <div className="rowf" style={{ justifyContent: 'space-between', gap: 8, flexWrap: 'wrap' }}>
+        <span className="muted">{products.length} منتج</span>
+        <button className="btn btn--navy btn--sm" onClick={() => setEditing(null)}><M n="add" s={17} />إضافة منتج</button>
       </div>
       {products.length === 0
-        ? <Empty icon="📦" msg="ما عندك منتجات بعد" action={<button className="btn btn-sm" style={{ marginTop: 10 }} onClick={() => setEditing(null)}>أول منتج +</button>} />
-        : <div className="dash-products">
+        ? <Empty icon="📦" msg="ما عندك منتجات بعد" action={<button className="btn btn--navy btn--sm" style={{ marginTop: 10 }} onClick={() => setEditing(null)}>أول منتج +</button>} />
+        : <div>
           {products.map(p => <ProductRow key={p.id} p={p} reload={reload} toast={toast} onEdit={() => setEditing(p)} />)}
         </div>}
       {showForm && <ProductForm product={editing} onClose={onClose} reload={reload} toast={toast} />}
@@ -254,19 +252,19 @@ function ProductRow({ p, reload, toast, onEdit }) {
     } catch (e) { toast(e.message, 'err'); }
   };
   return (
-    <div className="card prod-row">
+    <div className="card prod-row" style={{ marginBlockEnd: 10 }}>
       <IMG src={p.image} />
       <div className="prod-info">
         <b>{p.name}</b>
-        <div className="muted-l">{p.variants ? p.variants.length : 0} متغير · مخزون {p.stock ?? 0}</div>
+        <div className="muted">{p.variants ? p.variants.length : 0} متغير · مخزون {p.stock ?? 0}</div>
         {p.has_offer
-          ? <div><s className="muted-l">{fmt(p.price)}</s> <b style={{ color: 'var(--accent)' }}>{fmt(priceOf(p))}</b></div>
+          ? <div><s className="muted">{fmt(p.price)}</s> <b style={{ color: 'var(--accent)' }}>{fmt(priceOf(p))}</b></div>
           : <b>{fmt(p.price)}</b>}
       </div>
       <div className="prod-acts">
-        <button className="btn btn-sm btn-o" onClick={onEdit}><M n="edit" s={16} />تعديل</button>
-        <button className="btn btn-sm btn-o" onClick={toggleOffer}>{p.has_offer ? 'إيقاف عرض' : 'عرض 🔥'}</button>
-        <button className="btn btn-sm btn-o-err" disabled={busy} onClick={del}><M n="delete" s={16} /></button>
+        <button className="btn btn--outline btn--sm" onClick={onEdit}><M n="edit" s={16} />تعديل</button>
+        <button className="btn btn--outline btn--sm" onClick={toggleOffer}>{p.has_offer ? 'إيقاف عرض' : 'عرض 🔥'}</button>
+        <button className="btn btn--outline btn--sm" style={{ borderColor: 'rgba(217, 45, 32, .4)', color: 'var(--danger)' }} disabled={busy} onClick={del}><M n="delete" s={16} /></button>
       </div>
     </div>
   );
@@ -327,56 +325,51 @@ function ProductForm({ product, onClose, reload, toast }) {
 
   return (
     <Modal open onClose={onClose} lg>
-      <div className="modal-head">
-        <b>{product ? 'تعديل المنتج' : 'إضافة منتج'}</b>
-        <button className="i-btn" onClick={onClose}><M n="close" s={20} /></button>
-      </div>
-      <div className="modal-body">
-        <div className="img-row">
-          {imgs.map((u, i) => (
-            <span key={i} className="img-tile">
-              <img src={u} alt="" style={{ width: 64, height: 64, borderRadius: 10, objectFit: 'cover' }} />
-              <button className="img-x" onClick={() => setImgs(l => l.filter((x, j) => j !== i))}><M n="close" s={12} /></button>
-            </span>
-          ))}
-          {imgs.length < 8 && <button className="img-add" onClick={pick}><M n="add_a_photo" s={22} /><small>صور</small></button>}
-        </div>
-        <label className="muted-l">اسم المنتج *</label>
-        <input className="inp" value={f.name} onChange={e => setF({ ...f, name: e.target.value })} />
-        <div className="two-col">
-          <div><label className="muted-l">السعر (د.ع) *</label><input className="inp" type="number" value={f.price} onChange={e => setF({ ...f, price: e.target.value })} /></div>
-          <div><label className="muted-l">الكمية</label><input className="inp" type="number" value={f.stock} onChange={e => setF({ ...f, stock: e.target.value })} /></div>
-        </div>
-        <label className="muted-l">الوصف</label>
-        <textarea className="inp" rows={2} value={f.description} onChange={e => setF({ ...f, description: e.target.value })} />
-        <div className="two-col">
-          <div>
-            <label className="muted-l">القسم</label>
-            <select className="inp" value={f.category_id} onChange={e => setF({ ...f, category_id: e.target.value })}>
-              <option value="">بدون قسم</option>
-              {cats.map(c => <option key={c.id} value={c.id}>{c.icon} {c.name}</option>)}
-            </select>
-          </div>
-          <div><label className="muted-l">سعر العرض (اختياري)</label><input className="inp" type="number" value={f.offer} onChange={e => setF({ ...f, offer: e.target.value })} /></div>
-        </div>
-
-        <div className="card-h" style={{ marginTop: 14 }}>الألوان والمقاسات
-          <button className="btn btn-sm" style={{ minHeight: 30, padding: '4px 10px' }}
-            onClick={() => setVariants(v => [...v, { color: '', name: '', stock: 10 }])}>
-            <M n="add" s={15} />صف
-          </button>
-        </div>
-        {variants.map((v, i) => (
-          <div key={i} className="v-row">
-            <input className="inp" placeholder="اللون (أحمر/أسود)" value={v.color} onChange={e => setVariants(l => l.map((x, j) => j === i ? { ...x, color: e.target.value } : x))} />
-            <input className="inp" placeholder="المقاس" value={v.name} onChange={e => setVariants(l => l.map((x, j) => j === i ? { ...x, name: e.target.value } : x))} />
-            <input className="inp" type="number" placeholder="الكمية" value={v.stock} onChange={e => setVariants(l => l.map((x, j) => j === i ? { ...x, stock: e.target.value } : x))} />
-            <button className="i-btn" onClick={() => setVariants(l => l.filter((x, j) => j !== i))}><M n="close" s={18} c="var(--danger)" /></button>
-          </div>
+      <div className="modal-title">{product ? 'تعديل المنتج' : 'إضافة منتج'}</div>
+      <div className="img-row">
+        {imgs.map((u, i) => (
+          <span key={i} className="img-tile">
+            <img src={u} alt="" style={{ width: 64, height: 64, borderRadius: 10, objectFit: 'cover' }} />
+            <button className="img-x" onClick={() => setImgs(l => l.filter((x, j) => j !== i))}><M n="close" s={12} /></button>
+          </span>
         ))}
-
-        <button className="btn btn-block" style={{ marginTop: 16 }} disabled={busy} onClick={save}>{busy ? 'حفظ...' : 'حفظ المنتج'}</button>
+        {imgs.length < 8 && <button className="img-add" onClick={pick}><M n="add_a_photo" s={22} /><small>صور</small></button>}
       </div>
+      <label className="muted">اسم المنتج *</label>
+      <input className="inp" value={f.name} onChange={e => setF({ ...f, name: e.target.value })} />
+      <div className="two-col">
+        <div><label className="muted">السعر (د.ع) *</label><input className="inp" type="number" value={f.price} onChange={e => setF({ ...f, price: e.target.value })} /></div>
+        <div><label className="muted">الكمية</label><input className="inp" type="number" value={f.stock} onChange={e => setF({ ...f, stock: e.target.value })} /></div>
+      </div>
+      <label className="muted">الوصف</label>
+      <textarea className="inp" rows={2} value={f.description} onChange={e => setF({ ...f, description: e.target.value })} />
+      <div className="two-col">
+        <div>
+          <label className="muted">القسم</label>
+          <select className="inp" value={f.category_id} onChange={e => setF({ ...f, category_id: e.target.value })}>
+            <option value="">بدون قسم</option>
+            {cats.map(c => <option key={c.id} value={c.id}>{c.icon} {c.name}</option>)}
+          </select>
+        </div>
+        <div><label className="muted">سعر العرض (اختياري)</label><input className="inp" type="number" value={f.offer} onChange={e => setF({ ...f, offer: e.target.value })} /></div>
+      </div>
+
+      <div className="card-h" style={{ marginTop: 14 }}>الألوان والمقاسات
+        <button className="btn btn--outline btn--sm"
+          onClick={() => setVariants(v => [...v, { color: '', name: '', stock: 10 }])}>
+          <M n="add" s={15} />صف
+        </button>
+      </div>
+      {variants.map((v, i) => (
+        <div key={i} className="v-row">
+          <input className="inp" placeholder="اللون (أحمر/أسود)" value={v.color} onChange={e => setVariants(l => l.map((x, j) => j === i ? { ...x, color: e.target.value } : x))} />
+          <input className="inp" placeholder="المقاس" value={v.name} onChange={e => setVariants(l => l.map((x, j) => j === i ? { ...x, name: e.target.value } : x))} />
+          <input className="inp" type="number" placeholder="الكمية" value={v.stock} onChange={e => setVariants(l => l.map((x, j) => j === i ? { ...x, stock: e.target.value } : x))} />
+          <button className="icon-btn" onClick={() => setVariants(l => l.filter((x, j) => j !== i))}><M n="close" s={18} c="var(--danger)" /></button>
+        </div>
+      ))}
+
+      <button className="btn btn--navy btn--block" style={{ marginTop: 16 }} disabled={busy} onClick={save}>{busy ? 'حفظ...' : 'حفظ المنتج'}</button>
     </Modal>
   );
 }
@@ -413,38 +406,36 @@ function WalletTab({ wallet, tx, week, reload, notify: toast }) {
 
   return (
     <>
-      <div className="card grad-navy card-glow" style={{ margin: '12px 16px 0', padding: 22, textAlign: 'center' }}>
+      <div className="promo-banner" style={{ padding: 22, textAlign: 'center', marginBlockStart: 0 }}>
         <div style={{ fontSize: 13, opacity: .85 }}>رصيد محفظتك</div>
         <div style={{ fontSize: 30, fontWeight: 900, margin: '6px 0' }}>{wallet ? fmt(wallet.balance) : '0'}</div>
         <div className="two-col">
-          <button className="btn btn-sun btn-sm" disabled={busy} onClick={withdraw}><M n="payments" s={17} />سحب</button>
-          <button className="btn btn-sm" style={{ background: 'rgba(255,255,255,.16)', boxShadow: 'none' }} onClick={openAd}><M n="campaign" s={17} />إعلان 📣</button>
+          <button className="btn btn--cta btn--sm" disabled={busy} onClick={withdraw}><M n="payments" s={17} />سحب</button>
+          <button className="btn btn--outline btn--sm" style={{ background: 'rgba(255,255,255,.16)', borderColor: 'rgba(255,255,255,.35)', color: 'var(--white)', boxShadow: 'none' }} onClick={openAd}><M n="campaign" s={17} />إعلان 📣</button>
         </div>
         {week && <div className="mini-row" style={{ marginTop: 12, justifyContent: 'center', gap: 18 }}>
-          <span>أسبوعي: <b style={{ color: 'var(--success)' }}>{fmt(week.net_due)}</b></span>
+          <span>أسبوعي: <b style={{ color: 'var(--success-light)' }}>{fmt(week.net_due)}</b></span>
         </div>}
       </div>
-      <div className="card" style={{ margin: '14px 16px 0', padding: 14 }}>
+      <div className="card" style={{ marginBlockStart: 14, padding: 14 }}>
         <div className="card-h">الحركات</div>
         {tx.length === 0 ? <Empty icon="🧾" msg="لا حركات بعد" /> : tx.map((t, i) => (
           <div key={i} className="mini-row" style={{ padding: '7px 0', borderBottom: '1px solid var(--line)' }}>
-            <span><M n={t.type === 'credit' ? 'arrow_downward' : 'arrow_upward'} s={15} c={t.type === 'credit' ? 'var(--success)' : 'var(--danger)'} /> {t.note} <small className="muted-l">({timeAgo(t.created_at)})</small></span>
+            <span><M n={t.type === 'credit' ? 'arrow_downward' : 'arrow_upward'} s={15} c={t.type === 'credit' ? 'var(--success)' : 'var(--danger)'} /> {t.note} <small className="muted">({timeAgo(t.created_at)})</small></span>
             <b style={{ color: t.type === 'credit' ? 'var(--success)' : 'var(--danger)' }}>{t.type === 'credit' ? '+' : '−'}{fmt(t.amount)}</b>
           </div>
         ))}
       </div>
 
       <Modal open={adOpen} onClose={() => setAdOpen(false)}>
-        <div className="modal-head"><b>إعلان لمتجري 📣</b><button className="i-btn" onClick={() => setAdOpen(false)}><M n="close" s={20} /></button></div>
-        <div className="modal-body">
-          <label className="muted-l">نص الإعلان</label>
-          <input className="inp" placeholder="مثال: خصم 50% هذا الأسبوع" value={adTxt} onChange={e => setAdTxt(e.target.value)} />
-          <label className="muted-l" style={{ marginTop: 10, display: 'block' }}>الباقة</label>
-          <select className="inp" value={pkg} onChange={e => setPkg(Number(e.target.value))}>
-            {pkgs.map(p => <option key={p.id} value={p.id}>{p.days} أيام — {fmt(p.price)}</option>)}
-          </select>
-          <button className="btn btn-block btn-sun" style={{ marginTop: 14 }} disabled={busy} onClick={createAd}>ترويج الآن 🚀</button>
-        </div>
+        <div className="modal-title">إعلان لمتجري 📣</div>
+        <label className="muted">نص الإعلان</label>
+        <input className="inp" placeholder="مثال: خصم 50% هذا الأسبوع" value={adTxt} onChange={e => setAdTxt(e.target.value)} />
+        <label className="muted" style={{ marginTop: 10, display: 'block' }}>الباقة</label>
+        <select className="inp" value={pkg} onChange={e => setPkg(Number(e.target.value))}>
+          {pkgs.map(p => <option key={p.id} value={p.id}>{p.days} أيام — {fmt(p.price)}</option>)}
+        </select>
+        <button className="btn btn--cta btn--block" style={{ marginTop: 14 }} disabled={busy} onClick={createAd}>ترويج الآن 🚀</button>
       </Modal>
     </>
   );
@@ -454,7 +445,7 @@ function WalletTab({ wallet, tx, week, reload, notify: toast }) {
 function StoreTab({ store, reload, notify: toast }) {
   const nav = useNavigate();
   const [editing, setEditing] = useState(false);
-  if (!store) return <Empty icon="🏪" msg="سجل متجرك لتبدأ البيع" action={<button className="btn" style={{ marginTop: 10 }} onClick={() => nav('/stores')}>إنشاء متجر</button>} />;
+  if (!store) return <Empty icon="🏪" msg="سجل متجرك لتبدأ البيع" action={<button className="btn btn--cta" style={{ marginTop: 10 }} onClick={() => nav('/stores')}>إنشاء متجر</button>} />;
   const vac = async (on) => {
     try { await api('/api/vendor/store/vacation', { method: 'POST', body: JSON.stringify({ on_vacation: on }) }); toast(on ? 'المتجر ويا إجازة' : 'رجع المتجر يشتغل', 'ok'); reload(); }
     catch (e) { toast(e.message, 'err'); }
@@ -466,21 +457,21 @@ function StoreTab({ store, reload, notify: toast }) {
   return (
     <>
       {editing && <StoreEdit store={store} onClose={() => setEditing(false)} reload={reload} toast={toast} />}
-      <div className="card" style={{ margin: '12px 16px 0', padding: 16 }}>
+      <div className="card" style={{ padding: 16 }}>
         <div className="store-line">
           <IMG src={store.logo || '🏪'} size={56} />
           <div className="prod-info">
             <b>{store.name}</b>
-            <div className="muted-l">{store.category_name || ''} · {store.district_name || ''} · {store.address || ''} · {store.phone || ''}</div>
-            <div className="muted-l">رسوم التوصيل: <b>{fmt(store.delivery_fee || 0)}</b> · عمولة المنصة: <b>{store.commission_rate}%</b></div>
+            <div className="muted">{store.category_name || ''} · {store.district_name || ''} · {store.address || ''} · {store.phone || ''}</div>
+            <div className="muted">رسوم التوصيل: <b>{fmt(store.delivery_fee || 0)}</b> · عمولة المنصة: <b>{store.commission_rate}%</b></div>
           </div>
-          <button className="btn btn-sm btn-o" onClick={() => setEditing(true)}><M n="edit" s={16} />تعديل</button>
+          <button className="btn btn--outline btn--sm" onClick={() => setEditing(true)}><M n="edit" s={16} />تعديل</button>
         </div>
         <div className="two-col" style={{ marginTop: 12 }}>
-          <button className="btn btn-sm btn-o" onClick={() => setOpen(!store.is_open)}>
+          <button className="btn btn--outline btn--sm" onClick={() => setOpen(!store.is_open)}>
             <M n={store.is_open ? 'storefront' : 'lock'} s={16} />{store.is_open ? 'المتجر مفتوح' : 'المتجر مغلق'}
           </button>
-          <button className="btn btn-sm btn-o" onClick={() => vac(!store.on_vacation)}>
+          <button className="btn btn--outline btn--sm" onClick={() => vac(!store.on_vacation)}>
             <M n="beach_access" s={16} />{store.on_vacation ? 'رجوع من الإجازة' : 'إجازة المتجر 🏖'}
           </button>
         </div>
@@ -503,17 +494,15 @@ function StoreEdit({ store, onClose, reload, toast }) {
   };
   return (
     <Modal open onClose={onClose}>
-      <div className="modal-head"><b>تعديل المتجر</b><button className="i-btn" onClick={onClose}><M n="close" s={20} /></button></div>
-      <div className="modal-body">
-        <label className="muted-l">اسم المتجر</label><input className="inp" value={f.name} onChange={e => setF({ ...f, name: e.target.value })} />
-        <label className="muted-l" style={{ marginTop: 8, display: 'block' }}>الوصف</label><textarea className="inp" rows={3} value={f.description} onChange={e => setF({ ...f, description: e.target.value })} />
-        <label className="muted-l" style={{ marginTop: 8, display: 'block' }}>العنوان</label><input className="inp" value={f.address} onChange={e => setF({ ...f, address: e.target.value })} />
-        <div className="two-col">
-          <div><label className="muted-l">الهاتف</label><input className="inp" value={f.phone} onChange={e => setF({ ...f, phone: e.target.value })} /></div>
-          <div><label className="muted-l">رسوم التوصيل</label><input className="inp" type="number" value={f.delivery_fee} onChange={e => setF({ ...f, delivery_fee: e.target.value })} /></div>
-        </div>
-        <button className="btn btn-block" style={{ marginTop: 14 }} disabled={busy} onClick={save}>{busy ? 'حفظ...' : 'حفظ'}</button>
+      <div className="modal-title">تعديل المتجر</div>
+      <label className="muted">اسم المتجر</label><input className="inp" value={f.name} onChange={e => setF({ ...f, name: e.target.value })} />
+      <label className="muted" style={{ marginTop: 8, display: 'block' }}>الوصف</label><textarea className="inp" rows={3} value={f.description} onChange={e => setF({ ...f, description: e.target.value })} />
+      <label className="muted" style={{ marginTop: 8, display: 'block' }}>العنوان</label><input className="inp" value={f.address} onChange={e => setF({ ...f, address: e.target.value })} />
+      <div className="two-col">
+        <div><label className="muted">الهاتف</label><input className="inp" value={f.phone} onChange={e => setF({ ...f, phone: e.target.value })} /></div>
+        <div><label className="muted">رسوم التوصيل</label><input className="inp" type="number" value={f.delivery_fee} onChange={e => setF({ ...f, delivery_fee: e.target.value })} /></div>
       </div>
+      <button className="btn btn--navy btn--block" style={{ marginTop: 14 }} disabled={busy} onClick={save}>{busy ? 'حفظ...' : 'حفظ'}</button>
     </Modal>
   );
 }
@@ -546,33 +535,33 @@ function CouponsTab({ notify: toast }) {
   if (loading) return <Loader />;
   return (
     <>
-      <div className="dash-actions"><span className="muted-l">{list.length} كوبون</span>
-        <button className="btn btn-sm" onClick={() => setOpen(true)}><M n="add" s={17} />كوبون جديد</button></div>
+      <div className="rowf" style={{ justifyContent: 'space-between', gap: 8, flexWrap: 'wrap' }}>
+        <span className="muted">{list.length} كوبون</span>
+        <button className="btn btn--navy btn--sm" onClick={() => setOpen(true)}><M n="add" s={17} />كوبون جديد</button>
+      </div>
       {list.length === 0 ? <Empty icon="🏷" msg="ما عندك كوبونات" /> : list.map(c => (
-        <div key={c.id} className="card mini-row" style={{ margin: '8px 16px 0', padding: 12 }}>
+        <div key={c.id} className="card mini-row" style={{ marginBlockStart: 8, padding: 12 }}>
           <div>
             <b className="coupon-code">{c.code}</b>
-            <span className="muted-l"> — {c.percent ? c.percent + '%' : fmt(c.flat)} خصم{c.min_total ? ` من ${fmt(c.min_total)}` : ''}{c.uses_left ? ` · متبقي ${c.uses_left}` : ''}{c.active ? '' : ' · متوقف'}</span>
+            <span className="muted"> — {c.percent ? c.percent + '%' : fmt(c.flat)} خصم{c.min_total ? ` من ${fmt(c.min_total)}` : ''}{c.uses_left ? ` · متبقي ${c.uses_left}` : ''}{c.active ? '' : ' · متوقف'}</span>
           </div>
-          <button className="i-btn" onClick={() => del(c.id)}><M n="delete" s={18} c="var(--danger)" /></button>
+          <button className="icon-btn" onClick={() => del(c.id)}><M n="delete" s={18} c="var(--danger)" /></button>
         </div>
       ))}
       <Modal open={open} onClose={() => setOpen(false)}>
-        <div className="modal-head"><b>كوبون جديد</b><button className="i-btn" onClick={() => setOpen(false)}><M n="close" s={20} /></button></div>
-        <div className="modal-body">
-          <label className="muted-l">الكود (حروف إنجليزية)</label><input className="inp" value={f.code} onChange={e => setF({ ...f, code: e.target.value.toUpperCase() })} />
-          <div className="two-col">
-            <div><label className="muted-l">نسبة %</label><input className="inp" type="number" value={f.percent} onChange={e => setF({ ...f, percent: e.target.value })} /></div>
-            <div><label className="muted-l">خصم ثابت</label><input className="inp" type="number" value={f.flat} onChange={e => setF({ ...f, flat: e.target.value })} /></div>
-          </div>
-          <div className="two-col">
-            <div><label className="muted-l">حد أدنى للطلب</label><input className="inp" type="number" value={f.min_total} onChange={e => setF({ ...f, min_total: e.target.value })} /></div>
-            <div><label className="muted-l">سقف الخصم</label><input className="inp" type="number" value={f.max_discount} onChange={e => setF({ ...f, max_discount: e.target.value })} /></div>
-          </div>
-          <label className="muted-l" style={{ marginTop: 8, display: 'block' }}>حد الاستخدام (0 = بلا حد)</label>
-          <input className="inp" type="number" value={f.uses_limit} onChange={e => setF({ ...f, uses_limit: e.target.value })} />
-          <button className="btn btn-block" style={{ marginTop: 14 }} onClick={save}>حفظ</button>
+        <div className="modal-title">كوبون جديد</div>
+        <label className="muted">الكود (حروف إنجليزية)</label><input className="inp" value={f.code} onChange={e => setF({ ...f, code: e.target.value.toUpperCase() })} />
+        <div className="two-col">
+          <div><label className="muted">نسبة %</label><input className="inp" type="number" value={f.percent} onChange={e => setF({ ...f, percent: e.target.value })} /></div>
+          <div><label className="muted">خصم ثابت</label><input className="inp" type="number" value={f.flat} onChange={e => setF({ ...f, flat: e.target.value })} /></div>
         </div>
+        <div className="two-col">
+          <div><label className="muted">حد أدنى للطلب</label><input className="inp" type="number" value={f.min_total} onChange={e => setF({ ...f, min_total: e.target.value })} /></div>
+          <div><label className="muted">سقف الخصم</label><input className="inp" type="number" value={f.max_discount} onChange={e => setF({ ...f, max_discount: e.target.value })} /></div>
+        </div>
+        <label className="muted" style={{ marginTop: 8, display: 'block' }}>حد الاستخدام (0 = بلا حد)</label>
+        <input className="inp" type="number" value={f.uses_limit} onChange={e => setF({ ...f, uses_limit: e.target.value })} />
+        <button className="btn btn--navy btn--block" style={{ marginTop: 14 }} onClick={save}>حفظ</button>
       </Modal>
     </>
   );
@@ -589,15 +578,15 @@ function RefundsTab({ refunds, reload, notify: toast }) {
   return (
     <>
       {refunds.length === 0 ? <Empty icon="🔄" msg="لا طلبات إرجاع حالياً" /> : refunds.map(r => (
-        <div key={r.id} className="card mini-row" style={{ margin: '8px 16px 0', padding: 12, alignItems: 'flex-start' }}>
+        <div key={r.id} className="card mini-row" style={{ marginBlockStart: 8, padding: 12, alignItems: 'flex-start' }}>
           <div>
-            <b>#{r.code}</b> <span className="muted-l">— {r.type === 'exchange' ? 'استبدال 🔁' : 'إرجاع ↩️'} · {r.reason || ''}{r.desired ? ` · البديل: ${r.desired}` : ''}</span>
-            <div className="muted-l">{r.user_name} · {fmt(r.total)} · {timeAgo(r.created_at)}</div>
+            <b>#{r.code}</b> <span className="muted">— {r.type === 'exchange' ? 'استبدال 🔁' : 'إرجاع ↩️'} · {r.reason || ''}{r.desired ? ` · البديل: ${r.desired}` : ''}</span>
+            <div className="muted">{r.user_name} · {fmt(r.total)} · {timeAgo(r.created_at)}</div>
           </div>
           {r.status === 'pending'
             ? <div className="prod-acts">
-              <button className="btn btn-sm" disabled={busy === r.id} onClick={() => decide(r.id, 'accepted')}>قبول</button>
-              <button className="btn btn-sm btn-o-err" disabled={busy === r.id} onClick={() => decide(r.id, 'rejected')}>رفض</button>
+              <button className="btn btn--navy btn--sm" disabled={busy === r.id} onClick={() => decide(r.id, 'accepted')}>قبول</button>
+              <button className="btn btn--danger btn--sm" disabled={busy === r.id} onClick={() => decide(r.id, 'rejected')}>رفض</button>
             </div>
             : <span className={r.status === 'accepted' ? 'c-chip st-delivered' : 'c-chip st-cancelled'}>{r.status === 'accepted' ? 'مقبول' : 'مرفوض'}</span>}
         </div>
@@ -625,12 +614,12 @@ function QuestionsTab({ notify: toast }) {
   return (
     <>
       {list.length === 0 ? <Empty icon="💬" msg="لا أسئلة معلقة" /> : list.map(qq => (
-        <div key={qq.id} className="card" style={{ margin: '8px 16px 0', padding: 14 }}>
-          <b>{qq.product_name}</b> <span className="muted-l">— {qq.user_name}</span>
+        <div key={qq.id} className="card" style={{ marginBlockStart: 8, padding: 14 }}>
+          <b>{qq.product_name}</b> <span className="muted">— {qq.user_name}</span>
           <p style={{ fontSize: 13, margin: '6px 0' }}>{qq.question}</p>
           <div className="two-col">
             <input className="inp" placeholder="جوابك..." value={ans[qq.id] || ''} onChange={e => setAns({ ...ans, [qq.id]: e.target.value })} />
-            <button className="btn btn-sm" onClick={() => reply(qq.id)}>إرسال ✓</button>
+            <button className="btn btn--navy btn--sm" onClick={() => reply(qq.id)}>إرسال ✓</button>
           </div>
         </div>
       ))}

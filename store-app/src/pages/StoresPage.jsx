@@ -4,7 +4,7 @@ import { useApp } from '../ctx';
 import { StoreCard } from '../components/Cards';
 import { Empty, M, SkeGrid, useTitle } from '../ui';
 
-const COVERS = ['linear-gradient(135deg,var(--primary-deep),var(--primary))', 'linear-gradient(135deg,var(--accent-light),var(--orange-soft))', 'linear-gradient(135deg,var(--success-deep),var(--success-light))', 'linear-gradient(135deg,var(--warning),var(--star))'];
+const COVERS = ['linear-gradient(135deg,var(--primary-deep),var(--primary))', 'linear-gradient(135deg,var(--accent-light),var(--accent))', 'linear-gradient(135deg,var(--success-deep),var(--success))', 'linear-gradient(135deg,var(--warning),var(--star))'];
 
 export default function StoresPage() {
   useTitle('المتاجر', 'جميع متاجر الكوت');
@@ -29,31 +29,29 @@ export default function StoresPage() {
   const myFollowed = (stores || []).filter(s => followed.includes(s.id));
 
   return (
-    <div className="sect" style={{ paddingTop: 16 }}>
-      <div className="sect-head"><h2><M n="storefront" s={19} c="var(--primary)" /> متاجر الكوت <span style={{ color: 'var(--muted)', fontSize: 12, fontWeight: 700 }}>({stores ? show.length + ' من ' + stores.length : ''})</span></h2></div>
-      <div className="search-row" style={{ marginBottom: 8 }}>
-        <div className="search-f">
-          <span className="go" style={{ background: 'none', border: 0, color: 'var(--muted)', padding: '0 8px' }}><M n="search" s={20} w={500} /></span>
-          <input placeholder="ابحث عن محل…" value={q} onChange={(e) => setQ(e.target.value)} />
-          {q ? <button className="clr" onClick={() => setQ('')}><M n="close" s={19} w={500} /></button> : null}
-        </div>
+    <div className="container section" style={{ paddingBlockStart: 12 }}>
+      <div className="sect-head"><h2><M n="storefront" s={19} c="var(--primary)" /> متاجر الكوت <span className="muted" style={{ fontSize: 12, fontWeight: 700 }}>({stores ? show.length + ' من ' + stores.length : ''})</span></h2></div>
+      <form className="search" style={{ marginBlockEnd: 12 }} role="search" onSubmit={(e) => e.preventDefault()}>
+        <M n="search" s={19} c="var(--muted)" w={600} cls="ic" />
+        <input placeholder="ابحث عن محل…" value={q} onChange={(e) => setQ(e.target.value)} aria-label="بحث عن محل" />
+        {q ? <button type="button" className="icon-btn" style={{ width: 32, height: 32, border: 0 }} onClick={() => setQ('')}><M n="close" s={17} w={500} /></button> : null}
+      </form>
+      <div className="grid-cats">
+        <span className={`chip ${!catSel ? 'on' : ''}`} onClick={() => setCatSel(null)}>الكل</span>
+        {cats.map(c => <span key={c.id} className={`chip ${catSel === c.id ? 'on' : ''}`} onClick={() => setCatSel(c.id)}>{c.icon || ''} {c.name}</span>)}
       </div>
-      <div className="cats-row" style={{ paddingInline: 0 }}>
-        <span className={`chipg ${!catSel ? 'on' : ''}`} onClick={() => setCatSel(null)}>الكل</span>
-        {cats.map(c => <span key={c.id} className={`chipg ${catSel === c.id ? 'on' : ''}`} onClick={() => setCatSel(c.id)}>{c.icon || ''} {c.name}</span>)}
-      </div>
-      <div className="cats-row" style={{ paddingInline: 0 }}>
+      <div className="grid-cats">
         {[['best', 'الأكثر تقييماً'], ['new', 'الأحدث']].map(([v, l]) => (
-          <span key={v} className={`chipg ${sort === v ? 'on' : ''}`} onClick={() => setSort(v)}>{l}</span>
+          <span key={v} className={`chip ${sort === v ? 'on' : ''}`} onClick={() => setSort(v)}>{l}</span>
         ))}
       </div>
       {!stores ? <SkeGrid n={6} />
-        : show.length ? <div className="grid" style={{ paddingInline: 0, gridTemplateColumns: 'repeat(auto-fill, minmax(150px, 1fr))', gap: 12 }}>{show.map((s, i) => <StoreCard key={s.id} s={s} cover={COVERS[i % 4]} />)}</div>
+        : show.length ? <div className="grid-stores" style={{ marginBlockStart: 8 }}>{show.map((s, i) => <StoreCard key={s.id} s={s} cover={COVERS[i % 4]} />)}</div>
         : <Empty icon="🏬" msg="ماكو متاجر مطابقة" />}
       {myFollowed.length ? (
         <>
           <div className="sect-head"><h2><M n="favorite" fill s={17} c="var(--danger)" /> متاجر تابعتهم</h2></div>
-          <div className="grid" style={{ paddingInline: 0, gridTemplateColumns: 'repeat(auto-fill, minmax(150px, 1fr))', gap: 12 }}>{myFollowed.map((s, i) => <StoreCard key={s.id} s={s} cover={COVERS[i % 4]} />)}</div>
+          <div className="grid-stores">{myFollowed.map((s, i) => <StoreCard key={s.id} s={s} cover={COVERS[i % 4]} />)}</div>
         </>
       ) : null}
     </div>

@@ -3,7 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { U } from '../api';
 import { M } from '../ui';
 
-const COVERS = ['linear-gradient(135deg,var(--primary-deep),var(--primary))', 'linear-gradient(135deg,var(--accent-light),var(--orange-soft))', 'linear-gradient(135deg,var(--success-deep),var(--success-light))', 'linear-gradient(135deg,var(--warning),var(--star))'];
+const COVERS = ['linear-gradient(135deg,var(--primary-deep),var(--primary))', 'linear-gradient(135deg,var(--accent-light),var(--accent))', 'linear-gradient(135deg,var(--success-deep),var(--success))', 'linear-gradient(135deg,var(--warning),var(--star))'];
 
 export default function Promo({ ads, stores }) {
   const nav = useNavigate();
@@ -40,7 +40,7 @@ export default function Promo({ ads, stores }) {
           const a = list[page];
           const sun = a.theme === 'sun';
           const img = imgOf(a);
-          const grad = img ? '' : (sun ? 'linear-gradient(135deg,var(--orange-deep),var(--orange-soft))' : 'linear-gradient(135deg,var(--primary-deep),var(--primary),var(--cyan))');
+          const grad = img ? '' : (sun ? 'linear-gradient(135deg,var(--accent-deep),var(--accent-light))' : 'linear-gradient(135deg,var(--primary-deep),var(--primary),var(--cyan))');
           return (
             <>
               {img ? <div className="hero-bg" style={{ backgroundImage: `url(${img})` }} /> : <div className="hero-bg" style={{ background: grad }} />}
@@ -48,8 +48,8 @@ export default function Promo({ ads, stores }) {
               {!img && <span className="hero-emoji">{sun ? '🛍️' : '💎'}</span>}
               <div className="hero-in">
                 <span className={`hero-chip ${sun ? 'sun' : ''}`}>
-                  {U(coverOf(a)) ? <img src={coverOf(a)} alt="" />
-                    : <b className="hero-logo" style={{ background: 'rgba(255,255,255,.2)', display: 'inline-flex', alignItems: 'center', justifyContent: 'center' }}>🏪</b>}
+                  {U(coverOf(a)) ? <img src={coverOf(a)} alt="" style={{ width: 16, height: 16, borderRadius: '50%', objectFit: 'cover' }} />
+                    : <b style={{ fontSize: 13 }}>🏪</b>}
                   {a.store_name || 'عرض مميز'}
                 </span>
                 <div className="hero-row">

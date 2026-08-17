@@ -2,7 +2,7 @@ import React, { useEffect, useRef, useState } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { api } from '../api';
 import { useApp } from '../ctx';
-import { Loader, Empty } from '../ui';
+import { Loader, Empty, M } from '../ui';
 import { STATUS } from './Orders';
 
 let L = null;
@@ -48,7 +48,7 @@ export default function Track() {
       if (!mUser.current) mUser.current = mp.marker([t.user_lat, t.user_lng], { icon: ic('📍') }).addTo(mapRef.current).bindPopup('<b>عنوان التوصيل</b>');
       if (mCou.current) mapRef.current.removeLayer(mCou.current);
       if (t.courier_lat && t.courier_lng) {
-        mCou.current = mp.marker([t.courier_lat, t.courier_lng], { icon: ic(t.status === 'on_the_way' ? '🚚' : '🛵') }).addTo(mapRef.current).bindPopup('<b>' + (t.courier_name || 'المندوب') + '</b>');
+        mCou.current = mp.marker([t.courier_lat, t.courier_lng], { icon: ic(t.status === 'delivering' ? '🚚' : '🛵') }).addTo(mapRef.current).bindPopup('<b>' + (t.courier_name || 'المندوب') + '</b>');
       }
       if (pathRef.current) { mapRef.current.removeLayer(pathRef.current); pathRef.current = null; }
       if ((t.path || []).length) pathRef.current = Lm.polyline(t.path, { color: 'var(--primary)', weight: 4, opacity: 0.8, dashArray: '8 6' }).addTo(mapRef.current);
@@ -58,10 +58,10 @@ export default function Track() {
     });
   }, [t, token]);
 
-  if (err) return <div className="sect"><Empty icon="🔐" msg={err} /></div>;
+  if (err) return <div className="container section"><Empty icon="🔐" msg={err} /></div>;
   if (!t) return <Loader />;
 
-  const st = STATUS[t.status] || STATUS.pending;
+  const st = STATUS[t.status] || STATUS.new;
   const chat = async () => {
     try {
       const d = await api('/api/customer/conversations', { method: 'POST', body: JSON.stringify({ courier_id: t.courier_id }) });
@@ -70,11 +70,11 @@ export default function Track() {
   };
 
   return (
-    <div className="sect" style={{ maxWidth: 760 }}>
-      <div className="sect-head"><h2><span className="ln" />📍 تتبع الطلب #{t.code}</h2>
+    <div className="container section" style={{ maxWidth: 760, paddingBlockStart: 12 }}>
+      <div className="sect-head"><h2><M n="near_me" s={19} c="var(--primary)" /> تتبع الطلب #{t.code}</h2>
         <span className={`pill ${st.c}`}>{st.e} {st.t}</span></div>
 
-      <div className="card" style={{ padding: 0, overflow: 'hidden', marginBottom: 14 }}>
+      <div className="card" style={{ padding: 0, overflow: 'hidden', marginBlockEnd: 14 }}>
         <div ref={mapEl} style={{ height: 300, width: '100%', background: 'var(--bg-map)' }}></div>
         <div className="track-legend">
           <span><b>🏬</b> المتجر</span><span><b>📍</b> عنوانك</span><span><b>🛵</b> المندوب</span>
@@ -85,17 +85,17 @@ export default function Track() {
               <div className="courier-ava">🛵</div>
               <div style={{ flex: 1, fontSize: 13 }}>
                 <b>{t.courier_name}</b>
-                <div style={{ color: 'var(--muted)', fontSize: 12 }}>{t.status === 'on_the_way' ? '🚚 في الطريق إليك' : 'قادم للمتجر لاستلام طلبك'}</div>
+                <div style={{ color: 'var(--muted)', fontSize: 12 }}>{t.status === 'delivering' ? '🚚 في الطريق إليك' : 'قادم للمتجر لاستلام طلبك'}</div>
                 <div style={{ display: 'flex', gap: 6, marginTop: 8 }}>
-                  <a className="btn btn-p btn-sm" href={'tel:' + t.courier_phone}>📞 اتصال</a>
-                  <button className="btn btn-o btn-sm" onClick={chat}>💬 راسله</button>
-                  <button className="btn btn-o btn-sm" onClick={() => nav('/orders/' + id)}>📦 التفاصيل</button>
+                  <a className="btn btn--navy btn--sm" href={'tel:' + t.courier_phone}><M n="call" s={13} /> اتصال</a>
+                  <button className="btn btn--outline btn--sm" onClick={chat}><M n="chat" s={13} /> راسله</button>
+                  <button className="btn btn--outline btn--sm" onClick={() => nav('/orders/' + id)}><M n="receipt_long" s={13} /> التفاصيل</button>
                 </div>
               </div>
             </div>
           ) : (
             <div className="note" style={{ textAlign: 'center', padding: 14 }}>
-              🕐 {t.status === 'rejected' ? 'الطلب رُفض — تفاصيل في صفحة الطلب' : 'بانتظار قيام المتجر بتجهيز طلبك وتعيين مندوب…'} (تبني حي كل ~12 ثانية)
+              🕐 {t.status === 'rejected' ? 'الطلب رُفض — تفاصيل في صفحة الطلب' : 'بانتظار قيام المتجر بتجهيز طلبك وتعيين مندوب…'} (تحديث حي كل ~12 ثانية)
             </div>
           )}
         </div>

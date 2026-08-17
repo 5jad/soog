@@ -30,16 +30,16 @@ export default function ProductModal({ id, onClose }) {
           <div style={{ flex: '1 1 260px', minWidth: 240 }}>
             <div style={{ aspectRatio: 1, borderRadius: 16, background: 'var(--bg-blue-soft)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 72, overflow: 'hidden', position: 'relative' }}>
               <Img src={p.image} fontSize="72px" />
-              {p.has_offer ? <span className="dc" style={{ position: 'absolute', top: 10, right: 10 }}>-{Math.round(p.offer_percent)}%</span> : null}
+              {p.has_offer ? <span className="pcard-off" style={{ top: 10, insetInlineStart: 10 }}>-{Math.round(p.offer_percent)}%</span> : null}
             </div>
           </div>
           <div style={{ flex: '1 1 300px' }}>
-            <h2 style={{ fontSize: 19, fontWeight: 900 }}>{p.name}</h2>
-            <div className="sname" onClick={() => { onClose(); nav('/stores/' + p.store_id); }}>🏬 {p.store_name}</div>
-            <div className="prices"><b>{fmt(price)}</b>{Number(p.old_price) > price ? <s>{fmt(p.old_price)}</s> : null}</div>
-            {p.description ? <div className="desc" style={{ padding: '10px 14px', marginBottom: 12 }}>{p.description}</div> : null}
+            <h2 className="modal-title" style={{ fontSize: 19 }}>{p.name}</h2>
+            <div className="pd-store" style={{ marginBlock: 6 }} onClick={() => { onClose(); nav('/stores/' + p.store_id); }}>🏬 {p.store_name}</div>
+            <div className="pd-old-row" style={{ alignItems: 'baseline' }}><span className="pd-price" style={{ fontSize: 'var(--t-h2)' }}>{fmt(price)}</span>{Number(p.old_price) > price ? <span className="pd-old">{fmt(p.old_price)}</span> : null}</div>
+            {p.description ? <div className="note" style={{ marginBlock: 12 }}>{p.description}</div> : null}
             {vars.length ? (
-              <div className="vars">
+              <div className="vars" style={{ marginBlock: 8 }}>
                 {vars.map((v, i) => (
                   <span key={i} className={`var ${v.stock === 0 ? 'off' : i === varI ? 'on' : ''}`} onClick={() => v.stock > 0 && setVarI(i)}>
                     {v.color ? v.color + ' · ' : ''}{v.name}{v.stock === 0 ? ' (نفد)' : ''}
@@ -47,11 +47,13 @@ export default function ProductModal({ id, onClose }) {
                 ))}
               </div>
             ) : null}
-            <div className="qty">
-              <button onClick={() => setQty(Math.max(1, qty - 1))}>−</button><b>{qty}</b>
-              <button onClick={() => setQty(qty + 1)}>+</button>
+            <div className="rowf" style={{ gap: 12, marginBlock: 12 }}>
+              <div className="qty">
+                <button onClick={() => setQty(Math.max(1, qty - 1))}><M n="remove" s={16} w={600} /></button><b>{qty}</b>
+                <button className="plus" onClick={() => setQty(qty + 1)}><M n="add" s={16} w={600} /></button>
+              </div>
             </div>
-            <button className="btn btn-p btn-lg btn-block" style={{ fontSize: 15 }} disabled={busy}
+            <button className="btn btn--navy btn--lg btn--block" disabled={busy}
               onClick={async () => {
                 setBusy(true);
                 const ok = await addToCart(p.id, varSel ? varSel.id : null, null, qty);

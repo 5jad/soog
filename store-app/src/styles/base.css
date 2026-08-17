@@ -1,0 +1,95 @@
+/* ═══════════════════════════════════════════════════════════════════════════
+   «زبون» ويب — BASE v6 · الأساسيات العامة
+   ─────────────────────────────────────────────────────────────────────────────
+   الاستيراد بالترتيب: tokens → base → layout → components → pages
+   القواعد الحاكمة هنا (وراثة من tokens.css R1–R5):
+   · R1: logical properties حصراً — هذا الملف أول الاختبارات الفعلية للبوابة
+   · R4: كل تفاعل يملك hover (مقيد بـ hover:hover) + focus-visible + active
+   ═══════════════════════════════════════════════════════════════════════════ */
+
+/* ── إعادة ضبط ──────────────────────────────────────────────────────────── */
+*, *::before, *::after { box-sizing: border-box; }
+* { margin: 0; }
+html { scroll-behavior: smooth; -webkit-text-size-adjust: 100%; }
+body {
+  background: var(--bg);
+  color: var(--ink);
+  font-family: var(--f-ui);
+  font-size: var(--t-body);
+  font-weight: var(--w-500);
+  line-height: var(--lh-base);
+  min-height: 100dvh;
+  -webkit-tap-highlight-color: transparent;
+  text-rendering: optimizeLegibility;
+}
+img, picture, video, svg { display: block; max-width: 100%; }
+input, button, textarea, select { font: inherit; color: inherit; }
+button { cursor: pointer; }
+a { color: var(--primary); text-decoration: none; }
+a:hover { color: var(--primary-deep); }
+ul, ol { list-style: none; padding: 0; }
+h1, h2, h3, h4 { line-height: var(--lh-display); font-weight: var(--w-800); color: var(--ink); }
+::selection { background: rgba(18, 41, 78, .16); }
+
+/* ── أشرطة التمرير (هادئة) ──────────────────────────────────────────────── */
+* { scrollbar-width: thin; scrollbar-color: var(--line-strong) transparent; }
+*::-webkit-scrollbar { width: 8px; height: 8px; }
+*::-webkit-scrollbar-thumb { background: var(--line-strong); border-radius: var(--radius-pill); }
+*::-webkit-scrollbar-track { background: transparent; }
+
+/* ── التركيز (WCAG) — R4 ────────────────────────────────────────────────── */
+:focus { outline: none; }
+:focus-visible {
+  outline: none;
+  box-shadow: var(--ring);
+  border-radius: var(--radius-sm);
+}
+
+/* ── أيقونات Material Symbols (مطابقة التطبيق) ──────────────────────────── */
+.msm {
+  font-family: 'Material Symbols Rounded';
+  font-weight: normal;
+  font-style: normal;
+  line-height: 1;
+  letter-spacing: normal;
+  text-transform: none;
+  display: inline-block;
+  white-space: nowrap;
+  word-wrap: normal;
+  direction: ltr;
+  vertical-align: middle;
+  -webkit-font-smoothing: antialiased;
+  user-select: none;
+}
+
+/* ── أدوات عامة ─────────────────────────────────────────────────────────── */
+.muted { color: var(--muted); }
+.strong { font-weight: var(--w-800); }
+.nowrap { white-space: nowrap; }
+.brk-w { word-break: break-word; }
+.t-center { text-align: center; }
+.t-start { text-align: start; }
+.to-end { margin-inline-start: auto; }
+.rowf { display: flex; align-items: center; }
+.colf { display: flex; flex-direction: column; }
+.gap2 { gap: var(--space-2); }
+.gap3 { gap: var(--space-3); }
+.divider { height: 1px; background: var(--line); border: 0; }
+.vdiv { height: 1px; background: var(--line); margin-block: var(--space-4); }
+.visually-hidden {
+  position: absolute;
+  width: 1px; height: 1px;
+  overflow: hidden;
+  clip-path: inset(50%);
+  white-space: nowrap;
+}
+.no-scrollbar { scrollbar-width: none; }
+.no-scrollbar::-webkit-scrollbar { display: none; }
+/* إخفاء أدوات الترويسة الازدواجية على الموبايل (زر السلة: موجود في الشريط السفلي) */
+@media (max-width: 899px) { .d-hide-m { display: none !important; } }
+
+/* ── اختزال الحركة — يغطي كل إضافات النظام الجديدة (hover scale إلخ) ────── */
+@media (prefers-reduced-motion: reduce) {
+  * { animation: none !important; transition: none !important; scroll-behavior: auto !important; }
+  *:hover, *:active { transform: none !important; }
+}

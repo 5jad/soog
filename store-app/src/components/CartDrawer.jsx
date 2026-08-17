@@ -50,10 +50,10 @@ export default function CartDrawer({ open, onClose }) {
     <>
       <div className="overlay" onClick={onClose} />
       <aside className={`drawer ${open ? 'open' : ''}`}>
-        <div className="drawer-head"><b>سلة التسوق 🛒</b><button className="i-btn" onClick={onClose}>✕</button></div>
+        <div className="drawer-head"><b>سلة التسوق 🛒</b><button className="icon-btn" onClick={onClose}><M n="close" s={18} w={700} /></button></div>
         <div className="drawer-body">
           {!items ? <div className="centerload"><div className="spin" /></div>
-          : !items.length ? <div className="empty"><span className="e">🛒</span>سلتك فاضية — ابدأ التسوق!</div>
+          : !items.length ? <div className="empty-state"><span className="e">🛒</span><h4>سلتك فاضية — ابدأ التسوق!</h4></div>
           : Object.entries(groups).map(([sid, g]) => {
               const s = storeMap[+sid] || {};
               const sub = g.items.reduce((a, b) => a + priceOf(b) * b.qty, 0);
@@ -67,32 +67,32 @@ export default function CartDrawer({ open, onClose }) {
               const P = Math.min(100, Math.round((sub / freeMin) * 100));
               return <div key={sid} className="cgroup">
                 <div className="cgroup-t"><Img src={g.items[0].logo} fontSize="14px" /> {g.items[0].store_name}</div>
-                <div className="fship">
-                  <div className="bar"><i style={{ width: P + '%' }} /></div>
-                  <p>{free ? '🎉 التوصيل مجاني لهذا المحل' : `شحن مجاني عند ${fmt(freeMin)} — باقي ${fmt(Math.max(0, freeMin - sub))}`}</p>
+                <div className="threshold" style={{ marginBlockEnd: 0, marginBottom: 10 }}>
+                  <div className="bs"><i className="bf" style={{ width: P + '%' }} /></div>
+                  <div className="msg">{free ? '🎉 التوصيل مجاني لهذا المحل' : `شحن مجاني عند ${fmt(freeMin)} — باقي ${fmt(Math.max(0, freeMin - sub))}`}</div>
                 </div>
                 {g.items.map(it => (
                   <div key={it.id} className="citem">
                     <div className="img"><Img src={it.image} fontSize="23px" /></div>
                     <div className="c">
-                      <div className="n">{it.name}</div>
+                      <div className="nm">{it.name}</div>
                       {it.variant ? <div className="v">{it.variant}</div> : null}
-                      <div className="row">
-                        <div className="q">
-                          <button onClick={() => mut(() => api('/api/customer/cart/' + it.id, { method: 'PATCH', body: JSON.stringify({ qty: it.qty + 1 }) }))}>+</button>
+                      <div className="rowf" style={{ gap: 8, marginTop: 6 }}>
+                        <div className="qty" style={{ height: 34 }}>
+                          <button style={{ width: 30, height: 30 }} onClick={() => mut(() => api('/api/customer/cart/' + it.id, { method: 'PATCH', body: JSON.stringify({ qty: it.qty + 1 }) }))}><M n="add" s={14} w={700} /></button>
                           <b>{it.qty}</b>
-                          <button onClick={() => mut(() => api('/api/customer/cart/' + it.id, { method: 'PATCH', body: JSON.stringify({ qty: it.qty - 1 }) }))}>−</button>
+                          <button style={{ width: 30, height: 30 }} onClick={() => mut(() => api('/api/customer/cart/' + it.id, { method: 'PATCH', body: JSON.stringify({ qty: it.qty - 1 }) }))}><M n="remove" s={14} w={700} /></button>
                         </div>
                         <div className="p">{fmt(priceOf(it) * it.qty)}</div>
-                        <button className="del" onClick={() => mut(() => api('/api/customer/cart/' + it.id, { method: 'DELETE' }))}>حذف</button>
+                        <button className="x" onClick={() => mut(() => api('/api/customer/cart/' + it.id, { method: 'DELETE' }))} title="حذف"><M n="delete" s={15} w={500} /></button>
                       </div>
                     </div>
                   </div>
                 ))}
-                {coup ? <div className="coupon-tag">🎟️ كوبون {coup.code} — خصم {fmt(coup.discount)} <button onClick={() => setCoupons({ ...coupons, [sid]: null })}>✕</button></div> : (
-                  <div className="coupon-in">
+                {coup ? <div className="coupon-tag">🎟️ كوبون {coup.code} — خصم {fmt(coup.discount)} <button onClick={() => setCoupons({ ...coupons, [sid]: null })}><M n="close" s={13} /></button></div> : (
+                  <div className="coupon-row">
                     <input className="inp" placeholder="كود الكوبون (إن وجد)" value={codes[+sid] || ''} onChange={(e) => setCodes({ ...codes, [sid]: e.target.value })} />
-                    <button className="btn btn-o" disabled={busy[sid]} onClick={() => applyCoupon(+sid)}>فعّل</button>
+                    <button className="btn btn--outline btn--sm" disabled={busy[sid]} onClick={() => applyCoupon(+sid)}>فعّل</button>
                   </div>
                 )}
                 {couponErr[sid] ? <p style={{ color: 'var(--danger)', fontSize: 11.5, fontWeight: 700, marginBottom: 10 }}>{couponErr[sid]}</p> : null}
@@ -105,7 +105,7 @@ export default function CartDrawer({ open, onClose }) {
         {items && items.length ? (
           <div className="drawer-foot">
             <div className="tot-row grand"><span>الإجمالي</span><span>{fmt(total)}</span></div>
-            <button className="btn btn-sun btn-lg btn-block" style={{ marginTop: 10 }} onClick={() => { onClose(); nav('/checkout'); }}>إتمام الطلب ←</button>
+            <button className="btn btn--cta btn--lg btn--block" style={{ marginTop: 10 }} onClick={() => { onClose(); nav('/checkout'); }}>إتمام الطلب <M n="arrow_back" s={17} w={800} /></button>
             <div className="note" style={{ marginTop: 10 }}>💵 الدفع عند الاستلام · 🧾 يصلك {Object.keys(groups).length} طلب من {Object.keys(groups).length} محل برحلة واحدة</div>
           </div>
         ) : null}

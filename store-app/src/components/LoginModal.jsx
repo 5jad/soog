@@ -12,7 +12,7 @@ export default function LoginModal({ open, onClose }) {
   const [busy, setBusy] = useState(false);
 
   const F = (label, key, ph, type = 'text') => (
-    <div className="lf"><label>{label}</label>
+    <div className="field"><label>{label}</label>
       <input className="inp" type={type} placeholder={ph} value={f[key] || ''} onChange={(e) => setF({ ...f, [key]: e.target.value })} />
     </div>
   );
@@ -25,8 +25,8 @@ export default function LoginModal({ open, onClose }) {
 
   return (
     <Modal open={open} onClose={onClose}>
-      <h2 style={{ fontWeight: 900, marginBottom: 15 }}>دخول إلى زبون</h2>
-      <div className="tabs">
+      <h2 className="modal-title" style={{ marginBlockEnd: 16 }}>دخول إلى زبون</h2>
+      <div className="tabs" style={{ marginBlockEnd: 16 }}>
         {[['login', 'تسجيل دخول'], ['reg', 'حساب جديد']].map(([k, t]) => (
           <button key={k} className={tab === k ? 'on' : ''} onClick={() => { setTab(k); setSec(false); setErr(''); }}>{t}</button>
         ))}
@@ -34,16 +34,16 @@ export default function LoginModal({ open, onClose }) {
       {tab === 'login' && <>
         {F('رقم الهاتف', 'phone', '07701234567')}
         {F('كلمة المرور', 'pass', '••••••••', 'password')}
-        <button className="btn btn-p btn-lg btn-block" disabled={busy} onClick={() => run(() => api('/api/auth/login', { method: 'POST', body: JSON.stringify({ phone: f.phone, password: f.pass }) }))}>دخول</button>
+        <button className="btn btn--navy btn--lg btn--block" disabled={busy} onClick={() => run(() => api('/api/auth/login', { method: 'POST', body: JSON.stringify({ phone: f.phone, password: f.pass }) }))}>دخول</button>
       </>}
       {tab === 'reg' && <>
         {F('الاسم الكامل', 'name', 'اسمك')}
         {F('رقم الهاتف', 'phone', '07701234567')}
         {F('كلمة المرور', 'pass', '••••••••', 'password')}
-        {!sec && <button className="btn btn-sun btn-lg btn-block" disabled={busy} onClick={() => run(async () => { await api('/api/auth/request-otp', { method: 'POST', body: JSON.stringify({ phone: f.phone }) }); setSec(true); })}>أرسل لي رمز التحقق</button>}
+        {!sec && <button className="btn btn--cta btn--lg btn--block" disabled={busy} onClick={() => run(async () => { await api('/api/auth/request-otp', { method: 'POST', body: JSON.stringify({ phone: f.phone }) }); setSec(true); })}>أرسل لي رمز التحقق</button>}
         {sec && <>
           {F('رمز التحقق', 'code', '●●●●')}
-          <button className="btn btn-sun btn-lg btn-block" disabled={busy} onClick={() => run(() => api('/api/auth/register', { method: 'POST', body: JSON.stringify({ name: f.name, phone: f.phone, password: f.pass, code: f.code }) }))}>إنشاء الحساب</button>
+          <button className="btn btn--cta btn--lg btn--block" disabled={busy} onClick={() => run(() => api('/api/auth/register', { method: 'POST', body: JSON.stringify({ name: f.name, phone: f.phone, password: f.pass, code: f.code }) }))}>إنشاء الحساب</button>
         </>}
         <div className="note" style={{ marginTop: 10 }}>🎁 مكافأة دعوة: أنت 100 نقطة وصديقك 50 عند أول طلب.</div>
       </>}

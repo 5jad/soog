@@ -42,28 +42,32 @@ export default function ProductsPage({ mode }) {
   const fCount = f.colors.length + f.sizes.length + (f.min || f.max ? 1 : 0);
 
   return (
-    <section className="sect" style={{ paddingTop: 16 }}>
+    <section className="container section" style={{ paddingBlockStart: 12 }}>
       <div className="sect-head">
-        <button className="i-btn" onClick={() => nav(-1)}><M n="arrow_back_ios_new" s={16} w={600} /></button>
-        <h2>{mode !== 'search' ? <M n={mode === 'offers' ? 'local_fire_department' : 'grid_view'} s={18} c="var(--primary)" w={700} /> : <M n="search" s={18} c="var(--primary)" w={700} />} {title} <span style={{ color: 'var(--muted)', fontSize: 12, fontWeight: 700 }}>{prods ? `(${prods.length})` : ''}</span></h2>
-        {mode !== 'offers' && <button className={`btn btn-o btn-sm ${f.show ? 'on' : ''}`} style={{ marginInlineStart: 'auto' }} onClick={() => setF({ ...f, show: !f.show })}><M n="tune" s={15} w={600} />تصفية{fCount ? ` (${fCount})` : ''}</button>}
+        <button className="icon-btn" onClick={() => nav(-1)}><M n="arrow_back_ios_new" s={16} w={600} /></button>
+        <h2>{mode !== 'search' ? <M n={mode === 'offers' ? 'local_fire_department' : 'grid_view'} s={18} c="var(--primary)" w={700} /> : <M n="search" s={18} c="var(--primary)" w={700} />} {title} <span className="muted" style={{ fontSize: 12, fontWeight: 700 }}>{prods ? `(${prods.length})` : ''}</span></h2>
+        {mode !== 'offers' && <button className={`flt-btn ${f.show ? 'on' : ''}`} title="تصفية" onClick={() => setF({ ...f, show: !f.show })}><M n="tune" s={17} w={600} />{fCount ? <span className="fb">{fCount}</span> : null}</button>}
       </div>
-      <div className="cats-row" style={{ paddingInline: 0 }}>
-        {SORTS.map(([k, t]) => <span key={k} className={`chipg ${sort === k ? 'on' : ''}`} onClick={() => setSort(k)}>{t}</span>)}
+      <div className="grid-cats">
+        {SORTS.map(([k, t]) => <span key={k} className={`chip ${sort === k ? 'on' : ''}`} onClick={() => setSort(k)}>{t}</span>)}
       </div>
 
       {f.show && (
-        <div className="card" style={{ padding: 16, marginBottom: 14, marginTop: 6 }}>
-          <div className="sect-head" style={{ marginBottom: 4 }}><h2 style={{ fontSize: 14 }}>التصفية</h2><a onClick={() => setF({ colors: [], sizes: [], min: '', max: '', show: false })}>مسح الكل</a></div>
+        <div className="flt-panel card" style={{ marginBlock: 10 }}>
+          <div className="flt-hd">
+            <span className="flt-t">التصفية</span>
+            <button className="flt-clear" onClick={() => setF({ colors: [], sizes: [], min: '', max: '', show: false })}>مسح الكل</button>
+          </div>
           <div className="flt-lbl">الألوان</div>
           <div className="flt-wrap">
             {(meta.colors || []).map(c => <span key={c} className={`chipf ${f.colors.includes(c) ? 'on' : ''}`} onClick={() => setF({ ...f, colors: tgl(f.colors, c) })}>{c}</span>)}
           </div>
           <div className="flt-lbl">المقاسات</div>
           <div className="flt-wrap">
-            {(meta.sizes || []).map(c => <span key={c} className={`chipf chipsq ${f.sizes.includes(c) ? 'on' : ''}`} onClick={() => setF({ ...f, sizes: tgl(f.sizes, c) })}>{c}</span>)}
+            {(meta.sizes || []).map(c => <span key={c} className={`chipf min ${f.sizes.includes(c) ? 'on' : ''}`} onClick={() => setF({ ...f, sizes: tgl(f.sizes, c) })}>{c}</span>)}
           </div>
-          <div className="flt-price" style={{ marginTop: 10 }}>
+          <div className="flt-lbl">السعر</div>
+          <div className="flt-price">
             <input className="inp" type="number" placeholder="من سعر" value={f.min} onChange={(e) => setF({ ...f, min: e.target.value })} />
             <span style={{ color: 'var(--muted)' }}>—</span>
             <input className="inp" type="number" placeholder="إلى سعر" value={f.max} onChange={(e) => setF({ ...f, max: e.target.value })} />
@@ -72,10 +76,10 @@ export default function ProductsPage({ mode }) {
       )}
 
       {!prods ? <SkeGrid n={10} />
-        : prods.length ? <div className="grid" style={{ paddingInline: 0 }}>{prods.map(p => <ProductCard key={p.id} p={p} />)}</div>
+        : prods.length ? <div className="grid-products" style={{ marginBlockStart: 8 }}>{prods.map(p => <ProductCard key={p.id} p={p} />)}</div>
         : <Empty icon="🔍" msg="ما لقينا نتائج" sub="جرّب كلمة أقصر أو أزل التصفية"
             lottie="/animations/no_results.json"
-            action={<button className="btn btn-o btn-sm" style={{ marginTop: 14 }} onClick={() => { setSort('all'); nav('/prods'); }}>كل المنتجات</button>} />}
+            action={<button className="btn btn--outline btn--sm" style={{ marginTop: 14 }} onClick={() => { setSort('all'); nav('/prods'); }}>كل المنتجات</button>} />}
     </section>
   );
 }

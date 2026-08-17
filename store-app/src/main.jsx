@@ -5,7 +5,10 @@ import { AppProvider } from './ctx';
 import App from './App';
 import 'leaflet/dist/leaflet.css';
 import './styles/tokens.css';
-import './styles.css';
+import './styles/base.css';
+import './styles/layout.css';
+import './styles/components.css';
+import './styles/pages.css';
 
 // لا تعرض أبداً نسخة قديمة عند الرجوع للصفحة من ذاكرة المتصفح
 window.addEventListener('pageshow', (e) => {

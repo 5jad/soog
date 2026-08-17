@@ -2,7 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { api, timeAgo } from '../api';
 import { useApp } from '../ctx';
-import { Loader, Empty, useTitle } from '../ui';
+import { Loader, Empty, M, useTitle } from '../ui';
 
 export default function Notifications() {
   useTitle('الإشعارات');
@@ -41,14 +41,14 @@ export default function Notifications() {
     } catch (e) {}
   };
 
-  if (!token) return <div className="sect"><Empty icon="🔐" msg="سجّل دخولك للإشعارات"
-    action={<button className="btn btn-p" style={{ marginTop: 14 }} onClick={() => setLoginOpen(true)}>تسجيل الدخول</button>} /></div>;
+  if (!token) return <div className="container section"><Empty icon="🔐" msg="سجّل دخولك للإشعارات"
+    action={<button className="btn btn--navy" style={{ marginTop: 14 }} onClick={() => setLoginOpen(true)}>تسجيل الدخول</button>} /></div>;
   if (!list) return <Loader />;
 
   return (
-    <div className="sect" style={{ maxWidth: 600 }}>
-      <div className="sect-head"><h2><span className="ln" />🔔 الإشعارات</h2>
-        {list.some(n => !n.read_at) && <button className="btn btn-o btn-sm" onClick={markAll}>قراءة الكل</button>}</div>
+    <div className="container section" style={{ maxWidth: 600, paddingBlockStart: 12 }}>
+      <div className="sect-head"><h2><M n="notifications" s={19} c="var(--primary)" /> الإشعارات</h2>
+        {list.some(n => !n.read_at) && <button className="btn btn--outline btn--sm" onClick={markAll}>قراءة الكل</button>}</div>
       {!list.length && <Empty icon="🔕" msg="لا إشعارات — طلباتك وتتبعك سيظهر هنا" />}
       {list.map(n => (
         <div key={n.id} className={`card notif ${n.read_at ? '' : 'new'}`} onClick={() => open(n)} style={{ cursor: 'pointer' }}>

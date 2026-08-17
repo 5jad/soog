@@ -2,7 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { api, fmt, priceOf } from '../api';
 import { useApp } from '../ctx';
-import { Loader, Empty, LottiePlayer, useTitle } from '../ui';
+import { Loader, Empty, LottiePlayer, M, useTitle } from '../ui';
 
 export default function Checkout() {
   useTitle('إتمام الطلب');
@@ -34,12 +34,12 @@ export default function Checkout() {
   }, [token]);
 
   if (!token) {
-    return <div className="sect"><Empty icon="🔐" msg="أكمل طلبك يتطلب تسجيل دخول"
-      action={<button className="btn btn-p" style={{ marginTop: 14 }} onClick={() => setLoginOpen(true)}>تسجيل الدخول</button>} /></div>;
+    return <div className="container section"><Empty icon="🔐" msg="أكمل طلبك يتطلب تسجيل دخول"
+      action={<button className="btn btn--navy" style={{ marginTop: 14 }} onClick={() => setLoginOpen(true)}>تسجيل الدخول</button>} /></div>;
   }
   if (!cart) return <Loader />;
   if (!cart.length) {
-    return <div className="sect"><Empty icon="🛒" msg="سلتك فاضية" lottie="/animations/empty_state.json" action={<button className="btn btn-p" style={{ marginTop: 14 }} onClick={() => nav('/')}>تسوّق الآن</button>} /></div>;
+    return <div className="container section"><Empty icon="🛒" msg="سلتك فاضية" lottie="/animations/empty_cart.json" action={<button className="btn btn--cta" style={{ marginTop: 14 }} onClick={() => nav('/')}>تسوّق الآن</button>} /></div>;
   }
 
   const groups = {};
@@ -108,10 +108,9 @@ export default function Checkout() {
 
   if (step === 3) {
     return (
-      <div className="sect" style={{ maxWidth: 620 }}>
+      <div className="container section" style={{ maxWidth: 620 }}>
         <div className="card" style={{ padding: 34, textAlign: 'center' }}>
-          {/* confetti — once عند فتح شاشة النجاح */}
-          <div style={{ display: 'flex', justifyContent: 'center', marginBottom: 8 }}>
+          <div style={{ display: 'flex', justifyContent: 'center', marginBlockEnd: 8 }}>
             <LottiePlayer src="/animations/order_success.json" size={160} loop={false} />
           </div>
           <h2 style={{ fontWeight: 900, fontSize: 22 }}>تم استلام طلبك بنجاح!</h2>
@@ -119,15 +118,15 @@ export default function Checkout() {
             أرقام طلباتك: <b style={{ color: 'var(--primary)' }}>{created.map(c => c.code).join('، ')}</b><br />
             💵 الدفع عند الاستلام — سيتصل بك المحل لتأكيد الطلب وأرقام المندوبين تظهر في التتبع الحي.
           </div>
-          <button className="btn btn-p btn-lg" onClick={() => nav('/orders/' + created[0].id)}>📦 تابع طلبك وموقع المندوب</button>
+          <button className="btn btn--cta btn--lg" onClick={() => nav('/orders/' + created[0].id)}><M n="near_me" s={17} /> تابع طلبك وموقع المندوب</button>
         </div>
       </div>
     );
   }
 
   return (
-    <div className="sect" style={{ maxWidth: 860, marginTop: 22 }}>
-      <div className="sect-head"><h2><span className="ln" />🚚 إتمام الطلب</h2></div>
+    <div className="container section" style={{ maxWidth: 860, paddingBlockStart: 22 }}>
+      <div className="sect-head"><h2><M n="local_shipping" s={19} c="var(--primary)" /> إتمام الطلب</h2></div>
       <div className="steps">
         <div className={`step ${step >= 1 ? 'now' : 'done'} ${step > 1 ? 'done' : ''}`}><i>1</i><p>العنوان</p></div>
         <div className={`step ${step >= 2 ? 'now' : ''} ${step > 2 ? 'done' : ''}`}><i>2</i><p>المراجعة</p></div>
@@ -136,9 +135,9 @@ export default function Checkout() {
 
       {step === 1 && (
         <div className="card" style={{ padding: 20 }}>
-          <div style={{ fontWeight: 900, marginBottom: 12 }}>📍 عنوان التسليم</div>
+          <div className="flt-lbl" style={{ marginBlock: 0 }}>📍 عنوان التسليم</div>
           {addrs.map(a => (
-            <label key={a.id} className="card" style={{ display: 'flex', gap: 10, padding: 13, marginBottom: 8, cursor: 'pointer', borderColor: addrSel === a.id ? 'var(--primary)' : undefined }}>
+            <label key={a.id} className="card" style={{ display: 'flex', gap: 10, padding: 13, marginBlockEnd: 8, cursor: 'pointer', borderColor: addrSel === a.id ? 'var(--primary)' : undefined }}>
               <input type="radio" checked={addrSel === a.id} onChange={() => setAddrSel(a.id)} />
               <div style={{ fontSize: 13 }}>
                 <b style={{ color: 'var(--ink)' }}>{a.label || 'عنوان'}{a.is_default ? ' (رئيسي)' : ''}</b>
@@ -146,8 +145,9 @@ export default function Checkout() {
               </div>
             </label>
           ))}
-          <div className="lf" style={{ marginTop: 10 }}><label>أو أضف عنوان جديد</label>
-            <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap', marginBottom: 8 }}>
+          <div className="field" style={{ marginBlockStart: 10 }}>
+            <label>أو أضف عنوان جديد</label>
+            <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap', marginBlockEnd: 8 }}>
               <select className="inp" style={{ flex: '1 1 150px' }} value={newA.gov} onChange={(e) => setNewA({ ...newA, gov: e.target.value, dist: '' })}>
                 <option value="">المحافظة</option>
                 {govs.map(g => <option key={g.id} value={g.id}>{g.name}</option>)}
@@ -158,9 +158,9 @@ export default function Checkout() {
               </select>
             </div>
             <input className="inp" placeholder="التفاصيل: الشارع / علامة فارقة" value={newA.details} onChange={(e) => setNewA({ ...newA, details: e.target.value })} />
-            <button className="btn btn-o btn-sm" style={{ marginTop: 8 }} onClick={saveAddr}>+ حفظ واستخدام</button>
+            <button className="btn btn--outline btn--sm" style={{ marginTop: 8 }} onClick={saveAddr}><M n="add_location_alt" s={13} /> حفظ واستخدام</button>
           </div>
-          <button className="btn btn-p btn-lg btn-block" style={{ marginTop: 16 }} disabled={needAddr} onClick={() => setStep(2)}>التالي: مراجعة الطلب ←</button>
+          <button className="btn btn--navy btn--lg btn--block" style={{ marginTop: 16 }} disabled={needAddr} onClick={() => setStep(2)}>التالي: مراجعة الطلب ←</button>
         </div>
       )}
 
@@ -170,18 +170,20 @@ export default function Checkout() {
             const t = totals[sid];
             const s = g.items[0];
             return (
-              <div key={sid} className="card" style={{ padding: 18, marginBottom: 14 }}>
-                <div className="cgroup-t">🏬 {s.store_name}</div>
+              <div key={sid} className="card" style={{ padding: 18, marginBlockEnd: 14 }}>
+                <div className="cgroup-t"><M n="storefront" s={14} c="var(--muted)" /> {s.store_name}</div>
                 {g.items.map(it => (
                   <div key={it.id} className="citem">
-                    <div className="c"><div className="n">{it.name} × {it.qty}</div>{it.variant ? <div className="v">{it.variant}</div> : null}</div>
-                    <div className="p">{fmt(priceOf(it) * it.qty)}</div>
+                    {it.image ? <img className="img" src={it.image} alt="" /> : <div className="img"><M n="image" s={16} c="var(--muted)" /></div>}
+                    <div className="c"><div className="nm">{it.name} × {it.qty}</div>{it.variant ? <div className="v">{it.variant}</div> : null}</div>
+                    <div className="p"><b>{fmt(priceOf(it) * it.qty)}</b></div>
                   </div>
                 ))}
                 {!coupons[sid] && (
-                  <div className="coupon-in">
+                  <div className="coupon-row">
+                    <M n="confirmation_number" s={17} c="var(--accent)" />
                     <input className="inp" placeholder="كود كوبون لهذا المحل" value={codes[sid] || ''} onChange={(e) => setCodes({ ...codes, [sid]: e.target.value })} />
-                    <button className="btn btn-o" onClick={() => applyCoup(sid)}>فعّل</button>
+                    <button className="btn btn--outline" onClick={() => applyCoup(sid)}>فعّل</button>
                   </div>
                 )}
                 {coupons[sid] ? <div className="coupon-tag">🎟️ {coupons[sid].code} — خصم {fmt(coupons[sid].discount)} <button onClick={() => setCoupons({ ...coupons, [sid]: null })}>✕</button></div> : null}
@@ -189,22 +191,22 @@ export default function Checkout() {
                 {t.base ? <div className="tot-row" style={{ color: 'var(--success)' }}><span>خصم فوق 50 ألف 🎉</span><b>-{fmt(t.base)}</b></div> : null}
                 {t.coupD ? <div className="tot-row" style={{ color: 'var(--success)' }}><span>الكوبون</span><b>-{fmt(t.coupD)}</b></div> : null}
                 <div className="tot-row"><span>التوصيل</span><b>{t.fee ? fmt(t.fee) : 'مجاني ✓'}</b></div>
-                <div className="tot-row grand"><span>إجمالي المحل</span><span>{fmt(t.total)}</span></div>
+                <div className="tot-row grand"><span>إجمالي المحل</span><b>{fmt(t.total)}</b></div>
               </div>
             );
           })}
-          <div className="card" style={{ padding: 18, marginBottom: 14 }}>
-            <div className="sect-head" style={{ marginBottom: 8 }}><h2 style={{ fontSize: 14 }}>🎁 نقاط زبون</h2><span style={{ fontSize: 12, color: 'var(--muted)' }}>رصيدك: <b style={{ color: 'var(--primary)' }}>{pts.balance}</b> نقطة</span></div>
+          <div className="card" style={{ padding: 18, marginBlockEnd: 14 }}>
+            <div className="sect-head" style={{ marginBlockEnd: 8 }}><h2 style={{ fontSize: 14 }}>🎁 نقاط زبون</h2><span style={{ fontSize: 12, color: 'var(--muted)' }}>رصيدك: <b style={{ color: 'var(--primary)' }}>{pts.balance}</b> نقطة</span></div>
             <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
               <input className="inp" type="number" min="0" max={pts.balance} placeholder={`استبدل بهامش ${pts.rate} (كل ${pts.rate} = 1000 د.ع)`} value={redeem || ''} onChange={(e) => setRedeem(Math.max(0, Math.min(Number(e.target.value) || 0, pts.balance)))} />
-              <button className="btn btn-o" disabled={!redeem} onClick={() => setRedeem(Math.floor(redeem / pts.rate) * pts.rate)}>تثبيت</button>
+              <button className="btn btn--outline" disabled={!redeem} onClick={() => setRedeem(Math.floor(redeem / pts.rate) * pts.rate)}>تثبيت</button>
             </div>
             {redeem ? <div className="note" style={{ marginTop: 8 }}>الخصم: <b style={{ color: 'var(--success)' }}>{fmt(Math.floor(redeem / pts.rate) * 1000)}</b> — يُخصم من طلب المحل الأول.</div> : null}
           </div>
           <div className="card" style={{ padding: 18 }}>
-            <div className="tot-row grand" style={{ fontSize: 18 }}><span>الإجمالي الكلي</span><span>{fmt(grand)}</span></div>
+            <div className="tot-row grand" style={{ fontSize: 18 }}><span>الإجمالي الكلي</span><b>{fmt(grand)}</b></div>
             <div className="note" style={{ margin: '10px 0' }}>💵 الدفع عند الاستلام — {Object.keys(groups).length} طلب برحلة توصيل واحدة.</div>
-            <button className="btn btn-sun btn-lg btn-block" disabled={busy} onClick={place}>✅ تأكيد الطلب{redeem ? ` — ${fmt(Math.floor(redeem / pts.rate) * 1000)} خصم بالنقاط` : ''}</button>
+            <button className="btn btn--cta btn--lg btn--block" disabled={busy} onClick={place}><M n="check_circle" s={17} /> تأكيد الطلب{redeem ? ` — ${fmt(Math.floor(redeem / pts.rate) * 1000)} خصم بالنقاط` : ''}</button>
           </div>
         </div>
       )}

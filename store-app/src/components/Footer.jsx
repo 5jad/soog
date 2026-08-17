@@ -11,14 +11,14 @@ const COLS = [
 export default function Footer() {
   const nav = useNavigate();
   return (
-    <footer className="foot">
-      <div className="foot-in">
+    <footer className="footer">
+      <div className="container foot-in">
         <div className="foot-brand">
           <div className="foot-logo">
-            <span className="foot-b">ز</span>
+            <span className="brand-logo" style={{ boxShadow: 'var(--shadow-sm)' }}>ز</span>
             <div>
               <b>زبون</b>
-              <span>كل ما تتمناه بمكان واحد</span>
+              <div style={{ fontSize: 'var(--t-micro)', color: 'var(--muted)', fontWeight: 700 }}>كل ما تتمناه بمكان واحد</div>
             </div>
           </div>
           <p>تسوق من متاجر الكوت: ملابس، مكياج، ألعاب، إلكترونيات وأكثر. توصيل سريع 30–60 دقيقة وادفع كاش عند الاستلام.</p>
@@ -41,7 +41,7 @@ export default function Footer() {
           </div>
         ))}
       </div>
-      <div className="foot-bar">© 2026 زبون · الكوت ، واسط — جميع الحقوق محفوظة</div>
+      <div className="container foot-bar">© 2026 زبون · الكوت ، واسط — جميع الحقوق محفوظة</div>
     </footer>
   );
 }

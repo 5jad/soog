@@ -4,7 +4,7 @@ export function flyToCart(from, imgSrc) {
   if (!sink || !from) return;
   const to = sink.getBoundingClientRect();
   const el = document.createElement(imgSrc ? 'img' : 'span');
-  el.className = 'flyz';
+  el.className = 'fly';
   if (imgSrc) el.src = imgSrc;
   else el.textContent = '🛍️';
   const sx = from.left + from.width / 2;
@@ -22,7 +22,7 @@ export function flyToCart(from, imgSrc) {
 }
 
 export const srcRectOf = (el) => {
-  const card = el && el.closest ? el.closest('.pc, .deal-c') : null;
-  const box = card ? card.querySelector('.pc-img, .deal-img') : null;
+  const card = el && el.closest ? el.closest('.pcard, .dcard') : null;
+  const box = card ? card.querySelector('.pcard-img, .dcard-img') : null;
   return (box || el).getBoundingClientRect();
 };

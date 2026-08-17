@@ -2,7 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { api } from '../api';
 import { useApp } from '../ctx';
-import { Empty, Loader, useTitle } from '../ui';
+import { Empty, Loader, M, useTitle } from '../ui';
 
 export default function Account() {
   useTitle('حسابي');
@@ -22,8 +22,8 @@ export default function Account() {
     api('/api/customer/addresses').then(d => setAddrs(d.addresses || [])).catch(() => {});
   }, [token, tab]);
 
-  if (!token) return <div className="sect"><Empty icon="🔐" msg="سجّل دخولك لملفك الشخصي"
-    action={<button className="btn btn-p" style={{ marginTop: 14 }} onClick={() => setLoginOpen(true)}>تسجيل الدخول</button>} /></div>;
+  if (!token) return <div className="container section"><Empty icon="🔐" msg="سجّل دخولك لملفك الشخصي"
+    action={<button className="btn btn--navy" style={{ marginTop: 14 }} onClick={() => setLoginOpen(true)}>تسجيل الدخول</button>} /></div>;
   if (!me) return <Loader />;
 
   const saveAddr = async () => {
@@ -44,37 +44,36 @@ export default function Account() {
   };
 
   return (
-    <div className="sect" style={{ maxWidth: 680 }}>
-      <div className="grad-navy card-glow" style={{ padding: 24, borderRadius: 20, display: 'flex', alignItems: 'center', gap: 14, marginBottom: 16 }}>
+    <div className="container section" style={{ maxWidth: 680, paddingBlockStart: 12 }}>
+      <div className="promo-banner" style={{ padding: 24, display: 'flex', alignItems: 'center', gap: 14, marginBlockStart: 0 }}>
         <div className="acc-ava">{me.name ? me.name[0] : '👤'}</div>
         <div style={{ flex: 1 }}>
           <div style={{ fontWeight: 900, fontSize: 18 }}>{me.name}</div>
           <div style={{ fontSize: 13, opacity: .8 }}>{me.phone} {me.verified ? '• ✓ موثق' : '• غير موثق'}</div>
-          {pts && <div style={{ fontSize: 13, marginTop: 4 }}>🪙 <b>{pts.balance}</b> نقطة <button className="btn btn-o btn-sm" style={{ marginInlineStart: 8 }} onClick={() => nav('/points')}>استبدل 🎁</button></div>}
+          {pts && <div style={{ fontSize: 13, marginTop: 4 }}>🪙 <b>{pts.balance}</b> نقطة <button className="btn btn--outline btn--sm" style={{ marginInlineStart: 8 }} onClick={() => nav('/points')}>استبدل 🎁</button></div>}
         </div>
       </div>
 
-      <div className="tabs" style={{ marginBottom: 14 }}>
-        {['addrs', 'roles'].map(t => (
-          <button key={t} className={`tab ${tab === t ? 'on' : ''}`} onClick={() => setTab(t)}>{t === 'addrs' ? '📍 عناويني' : '🎛️ أدواري'}</button>
-        ))}
+      <div className="tabs" style={{ marginBlockEnd: 14 }}>
+        <button className={tab === 'addrs' ? 'on' : ''} onClick={() => setTab('addrs')}><M n="location_on" s={14} w={700} /> عناويني</button>
+        <button className={tab === 'roles' ? 'on' : ''} onClick={() => setTab('roles')}><M n="tune" s={14} w={700} /> أدواري</button>
       </div>
 
       {tab === 'addrs' && (
         <div className="card" style={{ padding: 18 }}>
           {(addrs || []).map(a => (
-            <div key={a.id} className="cc-item" style={{ alignItems: 'center' }}>
+            <div key={a.id} className="acc-item" style={{ alignItems: 'center', borderRadius: 'var(--radius-md)', padding: 'var(--space-3)' }}>
               <div style={{ flex: 1, fontSize: 13 }}>
                 <b style={{ color: 'var(--ink)' }}>{a.label || 'عنوان'}{a.is_default ? ' (رئيسي)' : ''}</b>
                 <div style={{ fontSize: 12, color: 'var(--muted)' }}>{a.address}</div>
               </div>
-              <button className="btn btn-o-err btn-sm" onClick={() => delAddr(a.id)}>حذف</button>
+              <button className="btn btn--danger btn--sm" onClick={() => delAddr(a.id)}>حذف</button>
             </div>
           ))}
           {(addrs || []).length === 0 && <Empty icon="📍" msg="لا عناوين بعد" />}
-          {!adding ? <button className="btn btn-o" style={{ marginTop: 12 }} onClick={() => setAdding(true)}>+ عنوان جديد</button> : (
+          {!adding ? <button className="btn btn--outline" style={{ marginTop: 12 }} onClick={() => setAdding(true)}><M n="add" s={15} /> عنوان جديد</button> : (
             <div style={{ marginTop: 12 }}>
-              <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap', marginBottom: 8 }}>
+              <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap', marginBlockEnd: 8 }}>
                 <select className="inp" style={{ flex: '1 1 150px' }} value={newA.gov} onChange={(e) => setNewA({ ...newA, gov: e.target.value, dist: '' })}>
                   <option value="">المحافظة</option>
                   {govs.map(g => <option key={g.id} value={g.id}>{g.name}</option>)}
@@ -85,9 +84,9 @@ export default function Account() {
                 </select>
               </div>
               <input className="inp" placeholder="التفاصيل: الشارع / علامة فارقة" value={newA.details} onChange={(e) => setNewA({ ...newA, details: e.target.value })} />
-              <div className="lf" style={{ marginTop: 8 }}>
-                <button className="btn btn-p" onClick={saveAddr}>حفظ</button>
-                <button className="btn btn-o" onClick={() => setAdding(false)}>إلغاء</button>
+              <div className="rowf" style={{ gap: 8, marginTop: 8 }}>
+                <button className="btn btn--navy" onClick={saveAddr}>حفظ</button>
+                <button className="btn btn--outline" onClick={() => setAdding(false)}>إلغاء</button>
               </div>
             </div>
           )}
@@ -96,25 +95,26 @@ export default function Account() {
 
       {tab === 'roles' && (
         <div className="card" style={{ padding: 18 }}>
-          <div style={{ fontWeight: 900, marginBottom: 10 }}>🎛️ مناطق المنصة</div>
+          <div className="flt-lbl" style={{ marginBlock: '0 10px' }}><M n="tune" s={15} c="var(--muted)" /> مناطق المنصة</div>
           {[
-            { p: '/vendor', t: '🧑‍💼 تاجر — إدارة متجرك', d: 'المنتجات، الطلبات، الكوبونات، الأداء', n: 'قريباً' },
-            { p: '/delivery', t: '🛵 مندوب — توصيل الطلبات', d: 'طلبات جديدة، خريطة حية، تقارير كاش', n: 'قريباً' },
-            { p: '/admin', t: '🛡️ إدارة المنصة', d: 'المستخدمون، المراجعات، الإعدادات', n: 'قريباً' },
+            { p: '/vendor', t: '🧑‍💼 تاجر — إدارة متجرك', d: 'المنتجات، الطلبات، الكوبونات، الأداء', n: 'قريباً', ic: 'storefront' },
+            { p: '/delivery', t: '🛵 مندوب — توصيل الطلبات', d: 'طلبات جديدة، خريطة حية، تقارير كاش', n: 'قريباً', ic: 'delivery_dining' },
+            { p: '/admin', t: '🛡️ إدارة المنصة', d: 'المستخدمون، المراجعات، الإعدادات', n: 'قريباً', ic: 'shield' },
           ].map(r => (
-            <Link key={r.p} to={r.p} className="cc-item" style={{ textDecoration: 'none' }}>
-              <div style={{ flex: 1, fontSize: 13 }}>
+            <Link key={r.p} to={r.p} className="acc-item" style={{ textDecoration: 'none', marginBlockEnd: 8, borderRadius: 'var(--radius-md)', padding: 'var(--space-3)' }}>
+              <span className="gi-ic"><M n={r.ic} s={19} /></span>
+              <div style={{ flex: 1 }}>
                 <b style={{ color: 'var(--ink)' }}>{r.t}</b>
                 <div style={{ fontSize: 12, color: 'var(--muted)' }}>{r.d}</div>
               </div>
-              <span className="pill pill-sky">{r.n}</span>
-              <span style={{ color: 'var(--primary)' }}>‹</span>
+              <span className="pill pill--sky">{r.n}</span>
+              <M n="chevron_left" s={18} c="var(--muted)" />
             </Link>
           ))}
         </div>
       )}
 
-      <button className="btn btn-o-err btn-lg btn-block" style={{ marginTop: 14 }} onClick={() => { logout(); nav('/'); }}>🚪 تسجيل الخروج</button>
+      <button className="btn btn--danger btn--lg btn--block" style={{ marginTop: 14 }} onClick={() => { logout(); nav('/'); }}><M n="logout" s={16} /> تسجيل الخروج</button>
     </div>
   );
 }

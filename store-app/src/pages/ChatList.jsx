@@ -2,9 +2,10 @@ import React, { useEffect, useRef, useState } from 'react';
 import { useSearchParams } from 'react-router-dom';
 import { api, timeAgo } from '../api';
 import { useApp } from '../ctx';
-import { Loader, Empty } from '../ui';
+import { Loader, Empty, M, useTitle } from '../ui';
 
 export default function ChatList() {
+  useTitle('المحادثات');
   const { token, notify, setLoginOpen } = useApp();
   const [sp, setSp] = useSearchParams();
   const [list, setList] = useState(null);
@@ -38,8 +39,8 @@ export default function ChatList() {
 
   useEffect(() => { box.current && box.current.scrollTop && (box.current.scrollTop = box.current.scrollHeight); }, [msgs]);
 
-  if (!token) return <div className="sect"><Empty icon="🔐" msg="سجّل دخولك للمحادثات"
-    action={<button className="btn btn-p" style={{ marginTop: 14 }} onClick={() => setLoginOpen(true)}>تسجيل الدخول</button>} /></div>;
+  if (!token) return <div className="container section"><Empty icon="🔐" msg="سجّل دخولك للمحادثات"
+    action={<button className="btn btn--navy" style={{ marginTop: 14 }} onClick={() => setLoginOpen(true)}>تسجيل الدخول</button>} /></div>;
   if (!list) return <Loader />;
 
   const send = async () => {
@@ -53,13 +54,13 @@ export default function ChatList() {
   };
 
   return (
-    <div className="sect" style={{ maxWidth: 680 }}>
-      <div className="sect-head"><h2><span className="ln" />💬 المحادثات</h2></div>
+    <div className="container section" style={{ maxWidth: 680, paddingBlockStart: 12 }}>
+      <div className="sect-head"><h2><M n="chat" s={19} c="var(--primary)" /> المحادثات</h2></div>
       {!list.length && <Empty icon="💬" msg="لا توجد محادثات بعد — تظهر تلقائياً عند تتبع طلبك" />}
       {cur ? (
-        <div className="card chat-box" style={{ marginBottom: 0, display: 'flex', flexDirection: 'column', height: 'calc(100dvh - 210px)', minHeight: 420 }}>
+        <div className="card chat-box" style={{ marginBlockEnd: 0, display: 'flex', flexDirection: 'column', height: 'calc(100dvh - 210px)', minHeight: 420 }}>
           <div className="chat-hd">
-            <button className="btn btn-o btn-sm" onClick={() => { setCur(null); setMsgs(null); }}>← القائمة</button>
+            <button className="btn btn--outline btn--sm" onClick={() => { setCur(null); setMsgs(null); }}>← القائمة</button>
             <b style={{ fontSize: 14 }}>🛵 {peer && (peer.courier_name || 'المندوب')}</b>
           </div>
           <div className="chat-msgs" ref={box}>
@@ -74,7 +75,7 @@ export default function ChatList() {
           </div>
           <div className="chat-in">
             <input className="inp" placeholder="اكتب رسالتك…" value={txt} onChange={e => setTxt(e.target.value)} onKeyDown={e => e.key === 'Enter' && send()} />
-            <button className="btn btn-p" onClick={send}>➤</button>
+            <button className="btn btn--navy" onClick={send} aria-label="إرسال"><M n="send" s={16} /></button>
           </div>
         </div>
       ) : (

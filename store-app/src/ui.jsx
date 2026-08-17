@@ -61,27 +61,27 @@ export const Stars = ({ n = 0, size = 15, color = 'var(--star)' }) => {
 
 /* علبة فراغ */
 export const Empty = ({ icon = '📭', msg, sub = '', action = null, lottie = null, lottieSize = 120 }) => (
-  <div className="empty">
+  <div className="empty-state">
     {lottie
       ? <LottiePlayer src={lottie} size={lottieSize} loop={false} />
       : <span className="e">{icon}</span>
     }
-    <div style={{ fontWeight: 800, fontSize: 15, color: 'var(--ink)' }}>{msg}</div>
-    {sub && <div style={{ fontSize: 12.5, marginTop: 5 }}>{sub}</div>}
+    <h4>{msg}</h4>
+    {sub && <p>{sub}</p>}
     {action}
   </div>
 );
 
 /* هيكل تحميل */
 export const SkeGrid = ({ n = 8 }) => (
-  <div className="grid">
+  <div className="grid-products">
     {Array.from({ length: n }).map((_, i) => (
-      <div key={i} className="sk"><i className="skimg" /><i className="skln w60" /><i className="skln w40" /><i className="skln w80" /></div>
+      <div key={i} className="sk"><i className="sk-img" /><i className="sk-line w60" /><i className="sk-line w40" /><i className="sk-line w80" /></div>
     ))}
   </div>
 );
 export const SkeRow = ({ n = 6 }) => (
-  <div className="skrow">{Array.from({ length: n }).map((_, i) => <i key={i} />)}</div>
+  <div className="sk-row">{Array.from({ length: n }).map((_, i) => <i key={i} />)}</div>
 );
 export const Loader = () => (
   <div className="centerload">
@@ -100,13 +100,18 @@ export const SectHead = ({ title, accent = 'var(--ink)', more, onMore }) => (
   </div>
 );
 
-/* مودال عام */
+/* مودال عام — زر الإغلاق ثابت في الزاوية (modal-x) */
 export const Modal = ({ open, onClose, children, lg = false }) => {
   if (!open) return null;
   return (
     <>
       <div className="overlay" onClick={onClose} />
-      <div className="modal"><div className={lg ? 'box lg' : 'box'}>{children}</div></div>
+      <div className="modal" onClick={onClose}>
+        <div className={`modal-box modal-box--rel ${lg ? 'modal-box--lg' : ''}`} onClick={(e) => e.stopPropagation()}>
+          <button className="modal-x" onClick={onClose} aria-label="إغلاق"><M n="close" s={16} w={700} /></button>
+          {children}
+        </div>
+      </div>
     </>
   );
 };
@@ -120,7 +125,7 @@ export const Sheet = ({ open, onClose, children }) => {
       <div style={{ position: 'fixed', inset: 0, zIndex: 105, display: 'flex', alignItems: 'flex-end', justifyContent: 'center' }}>
         <div className="sheet" style={{ width: 'min(560px,100vw)' }}>
           <div className="sheet-head"><b>{children.title || ''}</b>
-            <button className="i-btn" onClick={onClose}><M n="close" s={20} /></button></div>
+            <button className="icon-btn" onClick={onClose}><M n="close" s={20} /></button></div>
           {children.body}
         </div>
       </div>

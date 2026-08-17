@@ -30,3 +30,7 @@ zaboon-demo.apk
 store-app/node_modules/
 app/lib.zip
 app/.directory
+
+# أرتيفاكتات اختبار Playwright
+store-app/test-results/
+store-app/playwright-report/

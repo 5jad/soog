@@ -1,10 +1,10 @@
 import React, { useEffect, useState } from 'react';
 import { api, fmt, copy, timeAgo } from '../api';
 import { useApp } from '../ctx';
-import { Loader, Empty, useTitle } from '../ui';
+import { Loader, Empty, M, useTitle } from '../ui';
 
 const SEGS = [100, 20, 0, 50, 200, 30, 100, 20, 50, 30];
-const COLORS = ['var(--primary)', 'var(--primary-light)', 'var(--accent-light)', 'var(--wheel-indigo)', 'var(--cyan)', 'var(--wheel-purple)', 'var(--star)', 'var(--wheel-blue)', 'var(--wheel-sky)', 'var(--orange-soft)'];
+const COLORS = ['var(--primary)', 'var(--primary-light)', 'var(--accent-light)', 'var(--wheel-indigo)', 'var(--cyan)', 'var(--wheel-purple)', 'var(--star)', 'var(--wheel-blue)', 'var(--wheel-sky)', 'var(--gold)'];
 
 export default function Points() {
   useTitle('نقاطي');
@@ -23,9 +23,9 @@ export default function Points() {
       .catch(() => {});
   }, [token]);
 
-  if (!token) return <div className="sect"><Empty icon="🔐" msg="سجّل دخولك للنقاط"
-    action={<button className="btn btn-p" style={{ marginTop: 14 }} onClick={() => setLoginOpen(true)}>تسجيل الدخول</button>} /></div>;
-  if (!data) return <Loader />;
+  if (!token) return <div className="container section"><Empty icon="🔐" msg="سجّل دخولك للنقاط"
+    action={<button className="btn btn--navy" style={{ marginTop: 14 }} onClick={() => setLoginOpen(true)}>تسجيل الدخول</button>} /></div>;
+  if (!data || !spin) return <Loader />;
 
   const doSpin = async () => {
     if (busy || spin.used_today) return;
@@ -49,16 +49,16 @@ export default function Points() {
   };
 
   return (
-    <div className="sect" style={{ maxWidth: 760 }}>
-      <div className="grad-navy card-glow" style={{ padding: 26, textAlign: 'center', borderRadius: 20, marginBottom: 18 }}>
+    <div className="container section" style={{ maxWidth: 760, paddingBlockStart: 12 }}>
+      <div className="promo-banner" style={{ textAlign: 'center', marginBlockStart: 0 }}>
         <div style={{ fontSize: 12, letterSpacing: 1, opacity: .8 }}>رصيدك من النقاط</div>
         <div style={{ fontSize: 44, fontWeight: 900, margin: '4px 0' }}>{data.balance}</div>
         <div style={{ fontSize: 13, opacity: .85 }}>كل {data.rate} نقطة = 1000 د.ع خصم 🎉</div>
       </div>
 
-      <div className="card" style={{ padding: 20, marginBottom: 16 }}>
-        <div style={{ fontWeight: 900, marginBottom: 4 }}>🎡 عجلة الحظ اليومية</div>
-        <div style={{ fontSize: 12, color: 'var(--muted)', marginBottom: 16 }}>
+      <div className="card" style={{ padding: 20, marginBlock: 16 }}>
+        <div style={{ fontWeight: 900, marginBlockEnd: 4 }}>🎡 عجلة الحظ اليومية</div>
+        <div style={{ fontSize: 12, color: 'var(--muted)', marginBlockEnd: 16 }}>
           {spin.used_today ? `لعبت اليوم وكسبت ${spin.points_won_today || 0} نقطة — عد غداً!` : 'دورة واحدة مجانية كل يوم 🍀'}
         </div>
         <div style={{ display: 'flex', justifyContent: 'center', position: 'relative' }}>
@@ -71,25 +71,26 @@ export default function Points() {
             </div>
           </div>
         </div>
-        <button className="btn btn-sun btn-lg btn-block" style={{ marginTop: 16 }} disabled={spin.used_today || busy} onClick={doSpin}>
+        <button className="btn btn--cta btn--lg btn--block" style={{ marginTop: 16 }} disabled={spin.used_today || busy} onClick={doSpin}>
           {spin.used_today ? 'عد غداً 🌙' : busy ? 'جارٍ التدوير…' : 'التدوير 🎡'}
         </button>
         {win !== null && <div className="win-msg" style={{ marginTop: 10 }}>{win > 0 ? `🏆 مبروك! ربحت ${win} نقطة` : '😅 حظاً أوفر — حاول غداً'}</div>}
       </div>
 
-      <div className="card" style={{ padding: 20, marginBottom: 16 }}>
-        <div style={{ fontWeight: 900, marginBottom: 4 }}>🎁 ادعُ صديقاً</div>
-        <div style={{ fontSize: 12, color: 'var(--muted)', marginBottom: 12 }}>أنت تحصل {ref ? ref.points_referrer : 100} نقطة وصديقك {ref ? ref.points_new : 50} عند انضمامه بكودك!</div>
-        <div className="coupon-in">
+      <div className="card" style={{ padding: 20, marginBlockEnd: 16 }}>
+        <div style={{ fontWeight: 900, marginBlockEnd: 4 }}>🎁 ادعُ صديقاً</div>
+        <div style={{ fontSize: 12, color: 'var(--muted)', marginBlockEnd: 12 }}>أنت تحصل {ref ? ref.points_referrer : 100} نقطة وصديقك {ref ? ref.points_new : 50} عند انضمامه بكودك!</div>
+        <div className="coupon-row">
+          <M n="confirmation_number" s={17} c="var(--accent)" />
           <input className="inp" readOnly value={ref ? ref.code : '—'} />
-          <button className="btn btn-p" onClick={() => copy(ref ? ref.code : '', notify)}>نسخ الكود</button>
+          <button className="btn btn--navy" onClick={() => copy(ref ? ref.code : '') && notify('نُسخ الكود ✓', 'ok')}>نسخ الكود</button>
         </div>
       </div>
 
       <div className="card" style={{ padding: 18 }}>
-        <div className="sect-head" style={{ marginBottom: 8 }}><h2 style={{ fontSize: 14 }}>📜 سجل النقاط</h2></div>
+        <div className="flt-lbl" style={{ marginBlock: '0 8px' }}><M n="receipt_long" s={14} c="var(--muted)" /> سجل النقاط</div>
         {!(data.transactions || []).length ? <Empty icon="🪙" msg="لا حركات بعد" /> : data.transactions.map(t => (
-          <div key={t.id} className="cc-item">
+          <div key={t.id} style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '7px 0', borderBottom: '1px solid var(--line)' }}>
             <div style={{ flex: 1, fontSize: 13 }}>
               <b style={{ color: 'var(--ink)' }}>{t.note || t.type}</b>
               <div style={{ color: 'var(--muted)', fontSize: 11 }}>{timeAgo(t.created_at)}</div>

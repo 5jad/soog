@@ -5,7 +5,7 @@ import { Loader, Empty, M, useTitle } from '../ui';
 import Promo from '../components/Promo';
 import { ProductCard, StoreCard, DealCard, CatIcon, DOT } from '../components/Cards';
 
-const COVERS = ['linear-gradient(135deg,var(--primary-deep),var(--primary))', 'linear-gradient(135deg,var(--accent-light),var(--orange-soft))', 'linear-gradient(135deg,var(--success-deep),var(--success-light))', 'linear-gradient(135deg,var(--warning),var(--star))'];
+const COVERS = ['linear-gradient(135deg,var(--primary-deep),var(--primary))', 'linear-gradient(135deg,var(--accent-light),var(--accent))', 'linear-gradient(135deg,var(--success-deep),var(--success))', 'linear-gradient(135deg,var(--warning),var(--star))'];
 const SORTS = [['newest', 'الأحدث'], ['best', 'الأفضل تقييماً'], ['discount', 'الأكثر خصماً'], ['price_asc', 'السعر: من الأقل'], ['price_desc', 'السعر: من الأعلى']];
 
 export default function Home() {
@@ -111,39 +111,24 @@ export default function Home() {
   const fCount = (sort !== 'newest' ? 1 : 0) + (minP || maxP ? 1 : 0) + selColors.length + selSizes.length + (offerOnly ? 1 : 0);
   const sortLabel = (SORTS.find(s => s[0] === sort) || SORTS[0])[1];
 
-  /* شريط منتجات: صفحة = عمودان × صفّان */
-  const strip2 = (list, h) => {
-    const rows = Math.ceil(list.length / 2);
-    const pages = Math.ceil(rows / 2);
-    return (
-      <div className="strip" style={{ height: h }}>
-        {Array.from({ length: pages }).map((_, pi) => (
-          <div key={pi} className="s2p">
-            {[0, 1].map(r => list[pi * 4 + r * 2] ? (
-              <div key={r} className="s2r">
-                <ProductCard p={list[pi * 4 + r * 2]} />
-                {list[pi * 4 + r * 2 + 1] ? <ProductCard p={list[pi * 4 + r * 2 + 1]} /> : null}
-              </div>
-            ) : null)}
-          </div>
-        ))}
-      </div>
-    );
-  };
-
-  const gridX = (list) => (
-    <div className="grid">{list.map(p => <ProductCard key={p.id} p={p} />)}</div>
+  /* شريط منتجات: أول 8 بطاقات بعمودين — والبقية عبر «عرض الكل» */
+  const strip2 = (list) => (
+    <div className="grid-2col">{list.slice(0, 8).map(p => <ProductCard key={p.id} p={p} />)}</div>
   );
 
-  if (loading) return <div className="sect"><Loader /></div>;
+  const gridX = (list) => (
+    <div className="grid-products">{list.map(p => <ProductCard key={p.id} p={p} />)}</div>
+  );
+
+  if (loading) return <div className="container section"><Loader /></div>;
 
   return (
-    <div className="sect" style={{ paddingTop: 12 }}>
+    <div className="container section" style={{ paddingBlockStart: 4 }}>
       {/* الهيرو */}
       <Promo ads={ads} stores={stores} />
 
       {/* شريط الثقة */}
-      <div className="trust-row">
+      <div className="trust-row" style={{ marginBlockStart: 14 }}>
         <div className="trust-i"><span className="trust-ic"><M n="rocket_launch" s={16} w={700} /></span>توصيل سريع</div>
         <div className="trust-i"><span className="trust-ic"><M n="payments" s={16} w={700} /></span>الدفع عند الاستلام</div>
         <div className="trust-i"><span className="trust-ic"><M n="swap_horiz" s={16} w={700} /></span>استبدال خلال 5 أيام</div>
@@ -152,8 +137,8 @@ export default function Home() {
       {/* العروض */}
       {offers.length && !gridMode ? (
         <>
-          <div className="sst"><span className="sst-t">⚡ عروض اليوم</span></div>
-          <div className="strip" style={{ height: 196, paddingTop: 10 }}>
+          <div className="sect-head"><h2>⚡ عروض اليوم</h2></div>
+          <div className="strip">
             {offers.map((o, i) => <DealCard key={i} d={o} />)}
           </div>
         </>
@@ -162,9 +147,9 @@ export default function Home() {
       {/* المحلات المميزة */}
       {stores.length && !gridMode ? (
         <>
-          <div className="sst"><span className="sst-t">محلات مميزة</span></div>
-          <div className="strip st-strip">
-            {stores.map((s, i) => <StoreCard key={s.id} s={s} cover={COVERS[i % 4]} />)}
+          <div className="sect-head"><h2>محلات مميزة</h2></div>
+          <div className="strip">
+            {stores.map((s, i) => <StoreCard key={s.id} s={s} cover={COVERS[i % 4]} w={260} />)}
           </div>
         </>
       ) : null}
@@ -172,17 +157,18 @@ export default function Home() {
       {/* وضع الشبكة: بحث/فئة/فلاتر */}
       {gridMode ? (
         <>
-          <div className="sst">
-            <span className="sst-t">{q ? `نتائج البحث عن «${q}»` : selCat.id ? `${selCat.icon || ''} ${selCat.name}` : 'المنتجات'}</span>
+          <div className="sect-head">
+            <h2>{q ? `نتائج البحث عن «${q}»` : selCat.id ? `${selCat.icon || ''} ${selCat.name}` : 'المنتجات'}</h2>
+            {hasFilters && <span className="seeall" onClick={() => setFltOpen(true)}><M n="tune" s={13} w={800} />فلترة{fCount ? ` (${fCount})` : ''}</span>}
           </div>
           {hasFilters ? (
-            <div className="fatto-row">
-              {sort !== 'newest' ? <span className="fatto" onClick={() => { setSort('newest'); loadGrid(); }}>{sortLabel}<M n="close" s={13} w={700} /></span> : null}
-              {(minP || maxP) ? <span className="fatto" onClick={() => { setMinP(''); setMaxP(''); loadGrid(); }}>سعر: {minP || 0}-{maxP || '∞'}<M n="close" s={13} w={700} /></span> : null}
-              {selColors.map(c => <span key={c} className="fatto" onClick={() => { setSelColors(selColors.filter(x => x !== c)); loadGrid(); }}>لون: {c}<M n="close" s={13} w={700} /></span>)}
-              {selSizes.map(s => <span key={s} className="fatto" onClick={() => { setSelSizes(selSizes.filter(x => x !== s)); loadGrid(); }}>مقاس: {s}<M n="close" s={13} w={700} /></span>)}
-              {offerOnly ? <span className="fatto" onClick={() => { setOfferOnly(false); loadGrid(); }}>عروض فقط<M n="close" s={13} w={700} /></span> : null}
-              <span className="fatto err" onClick={clearAll}>مسح الكل</span>
+            <div className="flt-tags">
+              {sort !== 'newest' ? <span className="fatt" onClick={() => { setSort('newest'); loadGrid(); }}>{sortLabel}<M n="close" s={13} w={700} /></span> : null}
+              {(minP || maxP) ? <span className="fatt" onClick={() => { setMinP(''); setMaxP(''); loadGrid(); }}>سعر: {minP || 0}-{maxP || '∞'}<M n="close" s={13} w={700} /></span> : null}
+              {selColors.map(c => <span key={c} className="fatt" onClick={() => { setSelColors(selColors.filter(x => x !== c)); loadGrid(); }}>لون: {c}<M n="close" s={13} w={700} /></span>)}
+              {selSizes.map(s => <span key={s} className="fatt" onClick={() => { setSelSizes(selSizes.filter(x => x !== s)); loadGrid(); }}>مقاس: {s}<M n="close" s={13} w={700} /></span>)}
+              {offerOnly ? <span className="fatt" onClick={() => { setOfferOnly(false); loadGrid(); }}>عروض فقط<M n="close" s={13} w={700} /></span> : null}
+              <span className="fatt err" onClick={clearAll}>مسح الكل</span>
             </div>
           ) : null}
           {gridLoading ? <Loader /> : gridP.length ? gridX(gridP) : <Empty icon="📦" msg="ماكو منتجات مطابقة" sub="جرب كلمة أو فلترة أخرى" />}
@@ -192,25 +178,25 @@ export default function Home() {
           {/* الأكثر مبيعاً + عرض الكل */}
           {best.length ? (
             <>
-              <div className="sst">
-                <span className="sst-t">🔥 الأكثر مبيعاً</span>
+              <div className="sect-head">
+                <h2>🔥 الأكثر مبيعاً</h2>
                 <span className={`seeall ${expBest ? 'on' : ''}`} onClick={() => setExpBest(!expBest)}>
                   {expBest ? 'عرض أقل' : 'عرض الكل'}<M n={expBest ? 'keyboard_arrow_up' : 'keyboard_arrow_down'} s={15} w={700} />
                 </span>
               </div>
-              {expBest ? <div style={{ marginTop: 8 }}>{gridX(best)}</div> : <div className="g2">{strip2(best, 640)}</div>}
+              {expBest ? <div style={{ marginTop: 8 }}>{gridX(best)}</div> : strip2(best)}
             </>
           ) : null}
           {/* أشرطة الفئات + عرض الكل */}
           {cats.map(c => (catProds[c.id] || []).length ? (
             <div key={c.id}>
-              <div className="sst">
-                <span className="sst-t">{c.icon || '🛍️'} {c.name}</span>
+              <div className="sect-head">
+                <h2>{c.icon || '🛍️'} {c.name}</h2>
                 <span className={`seeall ${expCat && expCat.id === c.id ? 'on' : ''}`} onClick={() => setExpCat(expCat && expCat.id === c.id ? null : c)}>
                   {expCat && expCat.id === c.id ? 'عرض أقل' : 'عرض الكل'}<M n={expCat && expCat.id === c.id ? 'keyboard_arrow_up' : 'keyboard_arrow_down'} s={15} w={700} />
                 </span>
               </div>
-              {expCat && expCat.id === c.id ? <div style={{ marginTop: 8 }}>{gridX(catProds[c.id])}</div> : <div className="g2">{strip2(catProds[c.id], 640)}</div>}
+              {expCat && expCat.id === c.id ? <div style={{ marginTop: 8 }}>{gridX(catProds[c.id])}</div> : strip2(catProds[c.id])}
             </div>
           ) : null)}
         </>
@@ -225,7 +211,7 @@ export default function Home() {
               <div className="flt-hd">
                 <span className="flt-t">الفلترة</span>
                 <button className="flt-clear" onClick={() => { clearAll(); }}>مسح الكل</button>
-                <button className="i-btn" onClick={() => setFltOpen(false)} style={{ marginInlineStart: 4 }}><M n="close" s={20} /></button>
+                <button className="icon-btn" onClick={() => setFltOpen(false)} style={{ marginInlineStart: 4 }}><M n="close" s={20} /></button>
               </div>
               <div className="flt-lbl">الترتيب</div>
               <div className="flt-wrap">
@@ -245,7 +231,7 @@ export default function Home() {
                   <div className="flt-wrap">
                     {metaColors.map(c => (
                       <span key={c} className={`chipf ${selColors.includes(c) ? 'on' : ''}`} onClick={() => setSelColors(selColors.includes(c) ? selColors.filter(x => x !== c) : [...selColors, c])}>
-                        <span className="cd" style={{ background: DOT(c) }} />{c}
+                        <span style={{ width: 10, height: 10, borderRadius: '50%', background: DOT(c), border: '1px solid var(--line-strong)', display: 'inline-block' }} />{c}
                       </span>
                     ))}
                   </div>
@@ -256,7 +242,7 @@ export default function Home() {
                   <div className="flt-lbl">المقاس</div>
                   <div className="flt-wrap">
                     {metaSizes.map(s => (
-                      <span key={s} className={`chipf chipsq ${selSizes.includes(s) ? 'on' : ''}`} onClick={() => setSelSizes(selSizes.includes(s) ? selSizes.filter(x => x !== s) : [...selSizes, s])}>{s}</span>
+                      <span key={s} className={`chipf min ${selSizes.includes(s) ? 'on' : ''}`} onClick={() => setSelSizes(selSizes.includes(s) ? selSizes.filter(x => x !== s) : [...selSizes, s])}>{s}</span>
                     ))}
                   </div>
                 </>
@@ -266,7 +252,7 @@ export default function Home() {
                 <span>العروض والخصومات فقط</span>
                 <button className={`switch ${offerOnly ? 'on' : ''}`} onClick={() => setOfferOnly(!offerOnly)} />
               </div>
-              <button className="btn btn-lg btn-block" style={{ marginTop: 16 }} onClick={applyFlt}>عرض النتائج</button>
+              <button className="btn btn--cta btn--lg btn--block" style={{ marginTop: 16 }} onClick={applyFlt}>عرض النتائج</button>
             </div>
           </div>
         </>

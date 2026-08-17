@@ -44,13 +44,13 @@ export default function DeliveryDashboard() {
   }, [isDelivery]);
 
   if (!isDelivery) {
-    return <div className="sect">
+    return <div className="container section">
       <Empty icon="🛵" msg="هذه المنطقة للمندوبين فقط"
         sub={me ? 'حسابك مو مفعّل كمندوب — تواصل مع الإدارة' : 'سجّل دخولك بحساب المندوب أول'}
         action={<button className="btn" onClick={() => me ? nav('/') : setLoginOpen(true)}>{me ? 'عودة للمتجر' : 'دخول'}</button>} />
     </div>;
   }
-  if (loading) return <div className="sect"><Loader /></div>;
+  if (loading) return <div className="container section"><Loader /></div>;
 
   const toggleOnline = async () => {
     try {
@@ -88,13 +88,13 @@ export default function DeliveryDashboard() {
   };
 
   return (
-    <div className="sect">
+    <div className="container section" style={{ paddingBlockStart: 12 }}>
       <div className="dash-head">
         <div>
           <div className="dash-title">لوحة المندوب 🛵</div>
           <div className="dash-sub">{me.name} · اليوم: {stats ? stats.today_orders : 0} طلب ({stats ? stats.delivered : 0} مسلّم)</div>
         </div>
-        <button className={`btn btn-sm ${online ? 'btn-o' : ''}`} style={online ? {} : { background: 'linear-gradient(135deg, var(--success-deep), var(--success-light))', boxShadow: 'none' }} onClick={toggleOnline}>
+        <button className={`btn btn--sm ${online ? 'btn--outline' : ''}`} style={online ? {} : { background: 'linear-gradient(135deg, var(--success-deep), var(--success-light))', boxShadow: 'none' }} onClick={toggleOnline}>
           <span className="online-dot on" />{online ? 'متصل ✓' : 'فعّل الاتصال'}
         </button>
       </div>
@@ -106,14 +106,14 @@ export default function DeliveryDashboard() {
       </div>
 
       {!online && (
-        <div className="card trip-card" style={{ textAlign: 'center', borderColor: 'var(--line)' }}>
+        <div className="card" style={{ textAlign: 'center', padding: 20, marginBlockStart: 12 }}>
           <M n="sleep" s={26} c="var(--muted)" />
-          <div className="muted-l" style={{ marginTop: 6 }}>أنت غير متصل — شغّل الاتصال ليوصلك الطلبات الجاهزة</div>
+          <div className="muted" style={{ marginTop: 6 }}>أنت غير متصل — شغّل الاتصال ليوصلك الطلبات الجاهزة</div>
         </div>
       )}
 
       {online && (
-        <div className="tabs" style={{ margin: '14px 16px 4px' }}>
+        <div className="tabs" style={{ margin: '14px 0 4px' }}>
           <button className={tab === 'trip' ? 'on' : ''} onClick={() => setTab('trip')}><M n="route" s={17} />رحلتي</button>
           <button className={tab === 'available' ? 'on' : ''} onClick={() => setTab('available')}><M n="list_alt" s={17} />متاحة ({available.length})</button>
         </div>
@@ -128,11 +128,11 @@ export default function DeliveryDashboard() {
         available.length === 0
           ? <Empty icon="🕐" msg="لا طلبات جاهزة الآن" sub="ينزلون هنا لحظة ما يجهزوهم المتاجر" />
           : available.map(o => (
-            <div key={o.id} className="card ord-card">
+            <div key={o.id} className="card order-card" style={{ marginBlockEnd: 10 }}>
               <div className="ord-top">
                 <div>
-                  <b>#{o.code}</b> <span className="muted-l">· {o.store_name}</span>
-                  <div className="muted-l">{o.items_count ? `${o.items_count} منتج · ` : ''}{fmt(o.total)} · {o.user_name}</div>
+                  <b>#{o.code}</b> <span className="muted">· {o.store_name}</span>
+                  <div className="muted">{o.items_count ? `${o.items_count} منتج · ` : ''}{fmt(o.total)} · {o.user_name}</div>
                 </div>
                 <span className={cls('ready')}>جاهز</span>
               </div>
@@ -141,11 +141,11 @@ export default function DeliveryDashboard() {
                 <div className="mini-row"><span>الزبون</span><b>{o.user_address_label || o.address_text || '—'}</b></div>
                 <div className="mini-row" style={{ marginTop: 6 }}><span>هاتف الزبون</span><b dir="ltr">{o.user_phone || ''}</b></div>
                 {(o.store_lat && o.user_lat) && (
-                  <button className="btn btn-sm btn-o" style={{ marginTop: 10 }} onClick={() => openGmaps(`${o.store_lat},${o.store_lng}`, o.store_name)}>
+                  <button className="btn btn--outline btn--sm" style={{ marginTop: 10 }} onClick={() => openGmaps(`${o.store_lat},${o.store_lng}`, o.store_name)}>
                     <M n="map" s={16} />المسار للزبون
                   </button>
                 )}
-                <button className="btn btn-sm btn-sun" style={{ marginTop: 10 }} disabled={busy === o.id} onClick={() => accept(o.id)}>
+                <button className="btn btn--cta btn--sm" style={{ marginTop: 10 }} disabled={busy === o.id} onClick={() => accept(o.id)}>
                   <M n="check_circle" s={16} />استلم الطلب
                 </button>
               </div>
@@ -154,11 +154,11 @@ export default function DeliveryDashboard() {
       )}
 
       {wallet && wallet.reports && (
-        <div className="card" style={{ margin: '14px 16px 0', padding: 14 }}>
+        <div className="card" style={{ marginBlockStart: 14, padding: 14 }}>
           <div className="card-h">تقارير الكاش اليومية</div>
-          {wallet.reports.length === 0 ? <div className="muted-l" style={{ marginTop: 8 }}>لا تقارير بعد</div> : wallet.reports.slice(0, 5).map(r => (
+          {wallet.reports.length === 0 ? <div className="muted" style={{ marginTop: 8 }}>لا تقارير بعد</div> : wallet.reports.slice(0, 5).map(r => (
             <div key={r.id} className="mini-row" style={{ padding: '7px 0', borderBottom: '1px solid var(--line)' }}>
-              <span><M n="payments" s={15} c="var(--success)" /> تقرير {r.receipt_no || ''} <small className="muted-l">({timeAgo(r.created_at)})</small></span>
+              <span><M n="payments" s={15} c="var(--success)" /> تقرير {r.receipt_no || ''} <small className="muted">({timeAgo(r.created_at)})</small></span>
               <b style={{ color: 'var(--success)' }}>+{fmt(r.net)}</b>
             </div>
           ))}
@@ -173,18 +173,18 @@ function TripCard({ trip, pickup, delivered, openGmaps }) {
   const userCoord = trip.user_lat ? `${trip.user_lat},${trip.user_lng}` : null;
   const picked = !!trip.picked_at;
   return (
-    <div className="card trip-card grad-navy card-glow">
+    <div className="card trip-card">
       <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
         <span className="online-dot on" style={{ display: 'inline-block' }} />
         <div>
           <b style={{ fontSize: 16 }}>رحلة نشطة — #{trip.code}</b>
-          <div className="muted-l" style={{ color: 'rgba(255,255,255,.75)' }}>{trip.items.length} منتج · {fmt(trip.total)}</div>
+          <div style={{ color: 'rgba(255,255,255,.75)', fontSize: 12 }}>{trip.items.length} منتج · {fmt(trip.total)}</div>
         </div>
       </div>
 
       {trip.orders && trip.orders.length > 0 && (
         <div style={{ marginTop: 10, background: 'rgba(255,255,255,.1)', borderRadius: 12, padding: 10 }}>
-          <div className="muted-l" style={{ color: 'rgba(255,255,255,.8)' }}>طلبات الرحلة ({trip.orders.length})</div>
+          <div style={{ color: 'rgba(255,255,255,.8)', fontSize: 12 }}>طلبات الرحلة ({trip.orders.length})</div>
           {trip.orders.map(o => (
             <div key={o.id} className="mini-row" style={{ color: '#fff', paddingTop: 6, fontSize: 12 }}>
               <span>#{o.code} — {o.store_name}</span><span>{fmt(o.total)}</span>
@@ -200,7 +200,7 @@ function TripCard({ trip, pickup, delivered, openGmaps }) {
             <b style={{ color: '#fff' }}>{trip.store_name}</b>
             <div style={{ color: 'rgba(255,255,255,.75)', fontSize: 12 }}>{trip.store_address}</div>
           </div>
-          {storeCoord && <button className="btn btn-sm" style={{ background: 'rgba(255,255,255,.18)', boxShadow: 'none', minHeight: 36 }} onClick={() => openGmaps(storeCoord, trip.store_name)}><M n="map" s={15} /></button>}
+          {storeCoord && <button className="btn btn--sm" style={{ background: 'rgba(255,255,255,.18)', boxShadow: 'none', minHeight: 36 }} onClick={() => openGmaps(storeCoord, trip.store_name)}><M n="map" s={15} /></button>}
         </div>
         <div className="trip-line" />
         <div className="trip-stop">
@@ -209,15 +209,15 @@ function TripCard({ trip, pickup, delivered, openGmaps }) {
             <b style={{ color: '#fff' }}>{trip.user_name}</b>
             <div style={{ color: 'rgba(255,255,255,.75)', fontSize: 12 }}>{trip.user_address_label || trip.address_text || ''} · <span dir="ltr">{trip.user_phone}</span></div>
           </div>
-          {userCoord && <button className="btn btn-sm" style={{ background: 'rgba(255,255,255,.18)', boxShadow: 'none', minHeight: 36 }} onClick={() => openGmaps(userCoord, trip.user_name)}><M n="map" s={15} /></button>}
+          {userCoord && <button className="btn btn--sm" style={{ background: 'rgba(255,255,255,.18)', boxShadow: 'none', minHeight: 36 }} onClick={() => openGmaps(userCoord, trip.user_name)}><M n="map" s={15} /></button>}
         </div>
       </div>
 
       <div className="two-col" style={{ marginTop: 16 }}>
         {!picked
-          ? <button className="btn btn-sun btn-sm" onClick={pickup}><M n="storefront" s={16} />استلمت من المحل ✓</button>
+          ? <button className="btn btn--cta btn--sm" onClick={pickup}><M n="storefront" s={16} />استلمت من المحل ✓</button>
           : <span className="c-chip st-delivered" style={{ justifySelf: 'center' }}><M n="check" s={14} />استلمته من المحل</span>}
-        <button className="btn btn-sm" style={{ background: 'rgba(255,255,255,.18)', boxShadow: 'none' }} onClick={delivered}>
+        <button className="btn btn--sm" style={{ background: 'rgba(255,255,255,.18)', boxShadow: 'none' }} onClick={delivered}>
           <M n="done_all" s={16} />سلمت الطلب 🎉
         </button>
       </div>

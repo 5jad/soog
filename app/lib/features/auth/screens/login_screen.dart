@@ -1,6 +1,5 @@
 import 'dart:async';
 import 'dart:typed_data';
-import 'dart:ui' as ui;
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:image_picker/image_picker.dart';
@@ -10,6 +9,7 @@ import 'package:zaboon/core/api/api.dart';
 import 'package:zaboon/core/theme/zaboon_design_system.dart';
 import 'package:zaboon/core/widgets/crop.dart';
 import 'package:zaboon/core/widgets/lottie_box.dart';
+import 'package:zaboon/core/widgets/terms_sheet.dart';
 import 'package:zaboon/core/widgets/widgets.dart';
 import 'package:zaboon/core/routing/shell.dart';
 import 'package:zaboon/features/shop/screens/map_screen.dart';
@@ -17,12 +17,10 @@ import 'package:zaboon/features/shop/screens/map_screen.dart';
 enum AuthMode { login, register }
 
 /// صفحة الدخول/التسجيل — كارد صلب فوق كحلي الهوية (بلا زجاج: قرار حرج).
-/// فاصل تبويبي واضح، حقول بسماكة 48، عداد إعادة إرسال، وأدوات التطوير
-/// مخفية خلف صفارة حتى لا تلوّث الانطباع الأول.
-/// [onGuest] يفعّل زر «تصفح بدون حساب» — يمرره الـ Shell فقط.
+/// فاصل تبويبي واضح، حقول بسماكة 48، عداد إعادة إرسال، ورابط «شروط الاستخدام»
+/// تحت الزر — الزبون يشوف الشروط قبل ما يوافق.
 class LoginScreen extends StatefulWidget {
-  final VoidCallback? onGuest;
-  const LoginScreen({super.key, this.onGuest});
+  const LoginScreen({super.key});
   @override
   State<LoginScreen> createState() => _LoginScreenState();
 }
@@ -30,7 +28,6 @@ class LoginScreen extends StatefulWidget {
 class _LoginScreenState extends State<LoginScreen> {
   AuthMode mode = AuthMode.login;
   bool loading = false;
-  bool devOpen = false;
 
   final phone = TextEditingController();
   final password = TextEditingController();
@@ -404,17 +401,7 @@ class _LoginScreenState extends State<LoginScreen> {
     );
   }
 
-  // ── أدوات التطوير — مخفية خلف الصفارة (Bottom Sheet زجاجي = مسموح للـ Chrome) ──
-  void _toggleDev() {
-    final appbarH = AppMetrics.appBarH;
-    showModalBottomSheet<void>(
-      context: context,
-      backgroundColor: Colors.transparent,
-      isScrollControlled: true,
-      builder: (_) => _DevSheet(height: appbarH),
-    );
-  }
-
+  // ── أدوات التطوير — محذوفة نهائياً: لا عناوين سيرفر ولا حسابات تجربة في الإنتاج ──
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -435,34 +422,10 @@ class _LoginScreenState extends State<LoginScreen> {
                       _buildHeader(),
                       const SizedBox(height: 28),
                       _buildCard(),
-                      // الضيف: تصفح كامل بلا حساب — الدخول يطلب عند الدفع/المفضلة
-                      if (widget.onGuest != null)
-                        TextButton.icon(
-                          onPressed: widget.onGuest,
-                          icon: const Icon(Icons.visibility_outlined,
-                              color: Colors.white70, size: 18),
-                          label: Text(
-                            'تصفح بدون حساب',
-                            style: AppType.style(12.5,
-                                color: Colors.white70,
-                                weight: FontWeight.w700),
-                          ),
-                        ),
                       const SizedBox(height: 16),
                       _buildFooter(),
                     ],
                   ),
-                ),
-              ),
-              // صفارة أدوات التطوير — لا تلوّث الواجهة الإنتاجية
-              Positioned(
-                top: 8,
-                left: 8,
-                child: IconButton(
-                  onPressed: _toggleDev,
-                  tooltip: 'أدوات التطوير',
-                  icon: const Icon(Icons.settings_outlined,
-                      color: Colors.white70, size: 20),
                 ),
               ),
             ],
@@ -900,9 +863,27 @@ class _LoginScreenState extends State<LoginScreen> {
 
   Widget _buildFooter() {
     return Column(children: [
-      Text(
-        'بالضغط على المتابعة فأنت توافق على شروط الاستخدام',
-        style: AppType.style(11, color: Colors.white.withValues(alpha: 0.55)),
+      Text.rich(
+        TextSpan(
+          style: AppType.style(11, color: Colors.white.withValues(alpha: 0.55)),
+          children: [
+            const TextSpan(text: 'بالضغط على المتابعة فأنت توافق على '),
+            WidgetSpan(
+              alignment: PlaceholderAlignment.middle,
+              child: GestureDetector(
+                onTap: () => showTermsSheet(context),
+                child: Text(
+                  'شروط الاستخدام',
+                  style: AppType.style(11,
+                      color: Colors.white,
+                      weight: FontWeight.w800,
+                      decoration: TextDecoration.underline),
+                ),
+              ),
+            ),
+            const TextSpan(text: ' — اضغط لقراءتها'),
+          ],
+        ),
         textAlign: TextAlign.center,
       ),
       const SizedBox(height: 6),
@@ -1001,110 +982,6 @@ class _Field extends StatelessWidget {
           borderSide: const BorderSide(color: AppColors.primary, width: 1.6),
         ),
       ),
-    );
-  }
-}
-
-/// أدوات التطوير — زجاجية (Sheet = Chrome): عنوان الخادم + حسابات التجربة
-class _DevSheet extends StatelessWidget {
-  final double height;
-  const _DevSheet({required this.height});
-
-  @override
-  Widget build(BuildContext context) {
-    final ctrl = TextEditingController(text: Api.base);
-    return ClipRRect(
-      borderRadius: const BorderRadius.vertical(top: Radius.circular(26)),
-      child: BackdropFilter(
-        filter: ui.ImageFilter.blur(
-          sigmaX: AppGlass.blurHeavy,
-          sigmaY: AppGlass.blurHeavy,
-        ),
-        child: Container(
-          width: double.infinity,
-          padding: const EdgeInsets.all(20),
-          decoration: const BoxDecoration(
-            color: AppGlass.fillNavDark,
-            borderRadius: BorderRadius.vertical(top: Radius.circular(26)),
-          ),
-          child: SafeArea(
-            child: SingleChildScrollView(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.stretch,
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  Container(
-                    width: 44,
-                    height: 4,
-                    margin: const EdgeInsets.only(bottom: 16),
-                    decoration: BoxDecoration(
-                      color: Colors.white38,
-                      borderRadius: BorderRadius.circular(2),
-                    ),
-                  ),
-                  Text('أدوات التطوير',
-                      style: AppType.style(16,
-                          color: Colors.white, weight: FontWeight.w700)),
-                  const SizedBox(height: 12),
-                  TextField(
-                    controller: ctrl,
-                    keyboardType: TextInputType.url,
-                    style: const TextStyle(color: Colors.white),
-                    cursorColor: AppColors.accent,
-                    decoration: InputDecoration(
-                      hintText: 'https://اسم-النفق.trycloudflare.com',
-                      hintStyle: TextStyle(
-                          color: Colors.white.withValues(alpha: 0.5)),
-                      prefixIcon:
-                          const Icon(Icons.dns_rounded, color: Colors.white70, size: 20),
-                      filled: true,
-                      fillColor: Colors.white.withValues(alpha: 0.1),
-                      border: OutlineInputBorder(
-                        borderRadius: BorderRadius.circular(14),
-                        borderSide: BorderSide.none,
-                      ),
-                    ),
-                  ),
-                  const SizedBox(height: 12),
-                  SolidBtn(
-                    label: 'حفظ العنوان',
-                    onTap: () async {
-                      final u = ctrl.text.trim();
-                      if (u.isNotEmpty) await Api.setBase(u);
-                      if (context.mounted) {
-                        Navigator.pop(context);
-                        toast(context, 'تم الحفظ ✓ — جرب الدخول');
-                      }
-                    },
-                  ),
-                  const SizedBox(height: 20),
-                  Text('حسابات تجريبية',
-                      style: AppType.style(13,
-                          color: Colors.white70, weight: FontWeight.w700)),
-                  const SizedBox(height: 6),
-                  _trialRow('زبون', '000000000200 · 123456'),
-                  _trialRow('تاجر', '000000000100 · 123456'),
-                  _trialRow('مندوب', '000000000300 · 123456'),
-                  _trialRow('أدمن', '07900000000 · admin123'),
-                ],
-              ),
-            ),
-          ),
-        ),
-      ),
-    );
-  }
-
-  Widget _trialRow(String role, String creds) {
-    return Padding(
-      padding: const EdgeInsets.only(bottom: 4),
-      child: Row(children: [
-        Text('$role: ',
-            style: AppType.style(12,
-                color: const Color(0xFF9EC5EB), weight: FontWeight.w700)),
-        Text(creds,
-            style: AppType.style(12, color: Colors.white70)),
-      ]),
     );
   }
 }

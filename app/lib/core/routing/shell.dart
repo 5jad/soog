@@ -19,7 +19,6 @@ class Shell extends StatefulWidget {
 
 class _ShellState extends State<Shell> {
   bool _ready = false;
-  bool _guestMode = false; // ضيف: تصفح بدون حساب — الدخول عند الطلب/الإشعارات
   String _role = 'customer';
 
   @override
@@ -56,13 +55,9 @@ class _ShellState extends State<Shell> {
   Widget build(BuildContext context) {
     if (!_ready) return const _SplashScreen();
 
-    // بدون حساب: ضيف يتصفح (سلة محلية) أو شاشة الدخول
+    // بدون حساب: شاشة الدخول — التطبيق يتطلب حساباً حقيقياً
     if (!Api.logged) {
-      return _guestMode
-          ? CustomerShell(roles: const ['customer'])
-          : LoginScreen(
-              onGuest: () => setState(() => _guestMode = true),
-            );
+      return const LoginScreen();
     }
 
     if (_role == 'vendor') return VendorShell(onExit: _logout);

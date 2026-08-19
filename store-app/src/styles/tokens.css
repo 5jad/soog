@@ -72,19 +72,23 @@
   --scrim: rgba(11, 27, 54, .5); /* طبقة تغطية النوافذ */
 
   /* ═══ 5. ألوان الحالات والشارات ═══ */
-  --badge-sold-bg: var(--danger);
+  --badge-sold-bg: #0A1120;   /* داكن — نفس شارة «نفد» بالتطبيق */
   --badge-sold-fg: var(--white);
-  --badge-disc-bg: var(--accent);
+  --badge-disc-bg: var(--danger); /* أحمر — نفس شارة «خصم» بالتطبيق */
   --badge-disc-fg: var(--white);
   --badge-new-bg: var(--success);
   --badge-new-fg: var(--white);
-  --st-new: #3B82F6;          /* جديدة */
-  --st-pending: #F59E0B;      /* قيد التحضير */
-  --st-ready: #1789A6;        /* جاهز */
-  --st-delivering: #8B5CF6;   /* بالتوصيل */
-  --st-delivered: #1F9D55;    /* تم التسليم */
-  --st-cancelled: #6B7280;    /* ملغي */
-  --st-returned: #D92D20;     /* مرتجع */
+  --st-new: #B45309;          /* طلب جديد — نفس خريطة التطبيق (warning) */
+  --st-pending: #B45309;      /* قيد الانتظار — warning */
+  --st-accepted: #12294E;     /* مقبول — primary */
+  --st-preparing: #12294E;    /* قيد التجهيز — primary */
+  --st-ready: #1789A6;        /* جاهز — cyan */
+  --st-picked: #4A6FA5;       /* بالتوصيل — primaryLight */
+  --st-delivering: #4A6FA5;   /* بالتوصيل — primaryLight */
+  --st-delivered: #1F9D55;    /* تم التسليم — success */
+  --st-cancelled: #D92D20;    /* ملغي — danger */
+  --st-rejected: #D92D20;     /* مرفوض — danger */
+  --st-returned: #5C6570;     /* مرتجع — muted */
 
   /* ═══ 6. التدرجات ═══ */
   --grad-primary: linear-gradient(135deg, var(--primary-deep) 0%, var(--primary) 55%, var(--primary-light) 130%);
@@ -128,8 +132,8 @@
   --measure: 62ch;
 
   /* ═══ 9. الخطوط ═══ */
-  --f-ui: 'Cairo', 'Segoe UI', system-ui, sans-serif;
-  --f-disp: 'El Messiri', 'Cairo', sans-serif;
+  --f-ui: 'IBM Plex Sans Arabic', 'Segoe UI', system-ui, sans-serif;
+  --f-disp: 'El Messiri', 'IBM Plex Sans Arabic', sans-serif;
 
   /* ═══ 10. الزوايا ═══ */
   --r-xs: 6px;
@@ -138,6 +142,8 @@
   --r-lg: 20px;
   --r-xl: 28px;
   --r-pill: 999px;
+  --r-card: 16px;   /* زاوية بطاقات المنتج والمتجر — نفس التطبيق */
+  --r-img: 12px;    /* زاوية صورة المنتج داخل البطاقة — نفس التطبيق */
 
   /* ═══ 11. الظلال (3 مستويات) ═══ */
   --sh-xs: 0 1px 2px rgba(18, 41, 78, .05);
@@ -164,7 +170,7 @@
   --badge-size: 20px;          /* عدّاد السلة */
 
   /* أبعاد بطاقتي المنتج والمتجر */
-  --prod-ratio: 4 / 3;         /* نسبة الصورة بالبطاقة */
+  --prod-ratio: 3 / 4;         /* نسبة الصورة طولية — نفس بطاقة التطبيق */
   --store-cover-h: 96px;       /* غلاف بطاقة المتجر (موبايل) */
   --store-logo: 56px;          /* شعار المتجر المتداخل */
 
@@ -215,7 +221,6 @@
   :root {
     --fs-base: 0.928rem;           /* 14 → 14.8px */
     --sp-u: 4px;                   /* تبقى وحدة قياس ثابتة */
-    --prod-ratio: 4 / 3;
     --store-cover-h: 128px;        /* غلاف أكبر بالديسكتوب */
     --store-logo: 64px;
   }

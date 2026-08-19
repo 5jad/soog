@@ -7,12 +7,14 @@ import AppBottomNav from './components/AppBottomNav.vue';
 import AppFooter from './components/AppFooter.vue';
 import CartDrawer from './components/CartDrawer.vue';
 import LoginModal from './components/LoginModal.vue';
+import FloatingCartFab from './components/FloatingCartFab.vue';
 
-const { loadMe, refreshCartCount, toasts } = useApp();
+const { loadMe, refreshCartCount, refreshFavsCount, toasts } = useApp();
 
 onMounted(async () => {
   await loadMe();
   refreshCartCount();
+  refreshFavsCount();
 });
 </script>
 
@@ -26,6 +28,7 @@ onMounted(async () => {
     </main>
     <AppFooter />
     <AppBottomNav />
+    <FloatingCartFab />
 
     <!-- التوست -->
     <div class="toasts">

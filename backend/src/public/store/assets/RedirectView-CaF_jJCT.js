@@ -1,0 +1,1 @@
+import{o as s,d as r,e as a,c as n}from"./index-woGkLlTp.js";const l={class:"loader-block",style:{"min-height":"50vh"}},i={__name:"RedirectView",props:{url:{type:String,default:"/admin"}},setup(o){const t=o;return s(()=>{window.location.href=t.url}),(c,e)=>(n(),r("div",l,[...e[0]||(e[0]=[a("div",{class:"loader"},null,-1)])]))}};export{i as default};

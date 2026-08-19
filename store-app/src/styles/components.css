@@ -41,20 +41,21 @@
 .btn-danger { background: var(--danger); color: var(--white); }
 .btn-danger:hover { background: var(--danger); filter: brightness(.94); }
 
-/* زر دائري للإضافة */
+/* زر الجمع — مربع كحلي صغير مثل التطبيق (بدل الدائرة البرتقالية) */
 .fab-add {
-  width: var(--icon-btn); height: var(--icon-btn);
-  border-radius: 50%;
+  width: 32px; height: 32px;
+  border-radius: 10px;
   display: grid; place-items: center;
-  background: var(--accent);
+  background: var(--primary);
   color: var(--white);
-  box-shadow: var(--sh-accent);
-  transition: transform var(--t-base) var(--ease-spring), background var(--t-fast) var(--ease);
+  border: none; cursor: pointer;
+  flex-shrink: 0;
+  transition: transform var(--t-fast) var(--ease), background var(--t-fast) var(--ease);
 }
-.fab-add .msm { font-size: 22px; }
-.fab-add:hover { transform: scale(1.08); }
-.fab-add:active { transform: scale(.95); }
-.fab-add.added { background: var(--success); }
+.fab-add .msm { font-size: 19px; }
+.fab-add:hover { background: var(--primary-deep); }
+.fab-add:active { transform: scale(.92); }
+.fab-add.off { background: var(--line-strong); cursor: not-allowed; }
 
 /* ═══ الحقول ═══ */
 .field { display: flex; flex-direction: column; gap: var(--sp-2); }
@@ -91,12 +92,12 @@
 .search-pill input { flex: 1; border: none; outline: none; background: none; min-width: 0; }
 .search-pill .btn { flex-shrink: 0; }
 
-/* ═══ بطاقة المنتج ═══ */
+/* ═══ بطاقة المنتج ═══
+   مثل بوكس التطبيق: صورة مدورة بدون حد خارجي + تفاصيل تحت */
 .prod-card {
   position: relative;
   background: var(--surface);
-  border: 1px solid var(--line);
-  border-radius: var(--r-lg);
+  border-radius: var(--r-card);
   overflow: hidden;
   display: flex;
   flex-direction: column;
@@ -105,6 +106,7 @@
 .prod-card .img-wrap {
   position: relative;
   aspect-ratio: var(--prod-ratio);
+  border-radius: var(--r-img);
   background: var(--img-ph);
   overflow: hidden;
 }
@@ -116,64 +118,79 @@
 }
 .prod-card:hover img { transform: scale(1.05); }
 .prod-card .img-emoji { position: absolute; inset: 0; display: grid; place-items: center; font-size: var(--fs-4xl); }
-.prod-card .badges { position: absolute; inset-block-start: var(--sp-2); inset-inline-start: var(--sp-2); display: flex; flex-direction: column; gap: var(--sp-1); }
-.prod-card:hover { transform: var(--hover-raise); box-shadow: var(--sh-hover); border-color: transparent; }
-@media (hover: none) { .prod-card:hover { transform: none; box-shadow: none; border-color: var(--line); } }
+.prod-card .badges { position: absolute; inset-block-start: 8px; inset-inline-start: 8px; display: flex; flex-direction: column; gap: 5px; z-index: 1; }
+.prod-card:hover { transform: var(--hover-raise); box-shadow: var(--sh-hover); }
+@media (hover: none) { .prod-card:hover { transform: none; box-shadow: none; } }
 
-.prod-body { padding: var(--sp-3); display: flex; flex-direction: column; flex: 1; gap: var(--sp-1); }
+.prod-body { padding: var(--sp-2) var(--sp-1) 0; display: flex; flex-direction: column; flex: 1; gap: 3px; }
 .prod-store {
-  display: flex; align-items: center; gap: var(--sp-1);
   font-size: var(--fs-2xs);
-  font-weight: 700;
-  color: var(--muted);
-  min-height: 18px;
+  font-weight: 800;
+  color: var(--primary);
 }
-.prod-store .store-avatar { width: 14px; height: 14px; border-radius: 50%; object-fit: cover; flex-shrink: 0; }
-.prod-name { font-weight: 700; font-size: var(--fs-sm); line-height: var(--lh-tight); min-height: calc(2 * 1.25em); }
+.prod-name { font-weight: 800; font-size: var(--fs-sm); line-height: 1.25; }
+.prod-name.l1 { min-height: 1.25em; }
+.prod-name.l2 { min-height: calc(2 * 1.25em); }
 .prod-name .name-link { color: inherit; display: block; }
 .prod-name .name-link:hover { color: var(--accent); }
-.prod-bottom { margin-block-start: auto; display: flex; align-items: center; justify-content: space-between; gap: var(--sp-2); padding-block-start: var(--sp-2); }
-.prod-price { display: flex; flex-direction: column; }
-.prod-price .now { font-size: var(--fs-md); font-weight: 800; color: var(--primary); line-height: 1.2; }
-.prod-price .old { font-size: var(--fs-2xs); color: var(--muted); text-decoration: line-through; }
 
-/* ═══ بطاقة المتجر ═══ */
+/* نقاط ألوان المتغيرات (مثل شي إن) */
+.prod-dots { display: flex; align-items: center; gap: 3px; min-height: 10px; }
+.pdot { width: 10px; height: 10px; border-radius: 50%; border: 1px solid rgba(0, 0, 0, .14); flex-shrink: 0; }
+.dots-more { font-size: var(--fs-2xs); font-weight: 800; color: var(--muted); }
+
+/* سعر العرض المشطوب فوق صف السعر */
+.prod-old { font-size: var(--fs-2xs); color: var(--muted); text-decoration: line-through; }
+
+.prod-bottom { margin-block-start: auto; display: flex; align-items: center; justify-content: space-between; gap: var(--sp-2); padding-block-start: var(--sp-1); }
+.prod-bottom .now { font-size: var(--fs-md); font-weight: 900; color: var(--ink); line-height: 1.2; }
+
+/* ═══ بطاقة المتجر — البطاقة المصغرة بتصميم التطبيق ═══ */
 .store-card {
-  background: var(--surface);
-  border: 1px solid var(--line);
-  border-radius: var(--r-lg);
+  aspect-ratio: 1.1 / 1;
+  border-radius: var(--r-card);
   overflow: hidden;
-  transition: transform var(--t-base) var(--ease), box-shadow var(--t-base) var(--ease), border-color var(--t-base) var(--ease);
   cursor: pointer;
+  box-shadow: var(--sh-sm);
+  transition: transform var(--t-base) var(--ease), box-shadow var(--t-base) var(--ease);
 }
-.store-card:hover { transform: var(--hover-raise); box-shadow: var(--sh-hover); border-color: transparent; }
+.store-card:hover { transform: var(--hover-raise); box-shadow: var(--sh-hover); }
 @media (hover: none) { .store-card:hover { transform: none; box-shadow: none; } }
-.store-cover {
-  height: var(--store-cover-h);
-  background: linear-gradient(135deg, var(--primary-deep), var(--primary-light));
-  position: relative;
-  overflow: hidden;
-}
-.store-cover img { width: 100%; height: 100%; object-fit: cover; }
-.store-cover::after { content: ''; position: absolute; inset: 0; background: linear-gradient(180deg, transparent 30%, rgba(11,27,54,.35)); }
+.store-cover { position: relative; width: 100%; height: 100%; background: var(--grad-primary); }
+.store-cover > img { width: 100%; height: 100%; object-fit: cover; display: block; }
+.cover-scrim { position: absolute; inset: 0; background: linear-gradient(180deg, transparent 34%, rgba(10, 17, 32, .7)); }
 .store-logo {
-  width: var(--store-logo); height: var(--store-logo);
-  border-radius: var(--r-md);
-  border: 3px solid var(--surface);
+  position: absolute;
+  inset-block-start: 8px;
+  inset-inline-start: 8px;
+  width: 34px; height: 34px;
+  border-radius: 10px;
+  border: 1.5px solid var(--surface);
   background: var(--surface);
   overflow: hidden;
-  margin-block-start: calc(var(--store-logo) / -2);
-  margin-inline-start: var(--sp-3);
-  position: relative;
-  z-index: 1;
   box-shadow: var(--sh-sm);
-  flex-shrink: 0;
 }
 .store-logo img { width: 100%; height: 100%; object-fit: cover; }
-.store-logo .emoji { width: 100%; height: 100%; display: grid; place-items: center; font-size: calc(var(--store-logo) * .55); }
-.store-info { padding: var(--sp-3) var(--sp-3) var(--sp-4); }
-.store-name { font-family: var(--f-disp); font-weight: 700; font-size: var(--fs-md); }
-.store-meta { display: flex; align-items: center; gap: var(--sp-2); margin-block-start: var(--sp-1); font-size: var(--fs-xs); color: var(--muted); flex-wrap: wrap; }
+.store-logo .emoji { width: 100%; height: 100%; display: grid; place-items: center; font-size: 17px; }
+.cover-info {
+  position: absolute;
+  inset-block-end: 8px;
+  inset-inline: 9px;
+  color: var(--white);
+  min-width: 0;
+}
+.store-name { font-weight: 900; font-size: var(--fs-sm); line-height: 1.3; }
+.cover-meta { display: flex; align-items: center; gap: 4px; margin-block-start: 1px; font-size: var(--fs-2xs); }
+.cover-meta .stars { color: var(--star); }
+.cover-meta .stars .num { color: rgba(255, 255, 255, .95); font-weight: 800; font-size: inherit; }
+.cover-meta .stars .msm { font-size: 12px; }
+.cover-meta .reviews { color: rgba(255, 255, 255, .85); font-weight: 600; }
+@media (min-width: 1024px) {
+  .store-logo { width: 44px; height: 44px; border-radius: 12px; inset-block-start: 10px; inset-inline-start: 10px; }
+  .store-logo .emoji { font-size: 22px; }
+  .cover-info { inset-block-end: 10px; inset-inline: 12px; }
+  .store-name { font-size: var(--fs-md); }
+}
 .store-open { display: inline-flex; align-items: center; gap: 4px; font-weight: 800; font-size: var(--fs-2xs); padding: 2px 8px; border-radius: var(--r-pill); }
 .store-open.yes { background: rgba(31, 157, 85, .12); color: var(--success-deep); }
 .store-open.no { background: var(--bg-soft); color: var(--muted); }
@@ -188,13 +205,17 @@
 /* شارات حالة الطلب */
 .st-pill { display: inline-flex; align-items: center; gap: 5px; padding: 4px 12px; border-radius: var(--r-pill); font-size: var(--fs-xs); font-weight: 800; background: var(--bg-soft); color: var(--muted); }
 .st-pill .dot { width: 7px; height: 7px; border-radius: 50%; background: currentColor; }
-.st-new { background: rgba(59, 130, 246, .12); color: var(--st-new); }
-.st-pending { background: rgba(245, 158, 11, .14); color: var(--st-pending); }
+.st-new { background: rgba(180, 83, 9, .12); color: var(--st-new); }
+.st-pending { background: rgba(180, 83, 9, .14); color: var(--st-pending); }
+.st-accepted { background: rgba(18, 41, 78, .12); color: var(--st-accepted); }
+.st-preparing { background: rgba(18, 41, 78, .12); color: var(--st-preparing); }
 .st-ready { background: rgba(23, 137, 166, .12); color: var(--st-ready); }
-.st-delivering { background: rgba(139, 92, 246, .12); color: var(--st-delivering); }
+.st-picked { background: rgba(74, 111, 165, .12); color: var(--st-picked); }
+.st-delivering { background: rgba(74, 111, 165, .12); color: var(--st-delivering); }
 .st-delivered { background: rgba(31, 157, 85, .12); color: var(--st-delivered); }
-.st-cancelled { background: var(--bg-soft); color: var(--st-cancelled); }
-.st-returned { background: rgba(217, 45, 32, .12); color: var(--st-returned); }
+.st-cancelled { background: rgba(217, 45, 32, .12); color: var(--st-cancelled); }
+.st-rejected { background: rgba(217, 45, 32, .12); color: var(--st-rejected); }
+.st-returned { background: rgba(92, 101, 112, .12); color: var(--st-returned); }
 
 /* تقييم نجوم */
 .stars { display: inline-flex; align-items: center; gap: 1px; color: var(--star); }
@@ -374,6 +395,16 @@
 .fav-btn.on { color: var(--danger); }
 .fav-btn.on .msm { font-variation-settings: 'FILL' 1; }
 .fav-btn:active { transform: scale(.9); }
+/* قلب بطاقة المفضلة — أسفل يمين الصورة وبكيس أبيض صلب مثل التطبيق */
+.prod-card .card-fav {
+  inset-block-start: auto;
+  inset-inline-start: auto;
+  inset-block-end: 8px;
+  inset-inline-end: 8px;
+  width: 34px; height: 34px;
+  background: var(--surface);
+  box-shadow: var(--sh-sm);
+}
 
 /* تبويبات */
 .tabs { display: flex; gap: var(--sp-2); overflow-x: auto; scrollbar-width: none; border-block-end: 1px solid var(--line); margin-block-end: var(--sp-5); }

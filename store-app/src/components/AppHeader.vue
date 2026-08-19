@@ -3,9 +3,8 @@
 import { ref, computed } from 'vue';
 import { useRouter } from 'vue-router';
 import { useApp } from '../state';
-import { api } from '../api';
 
-const { state, toast } = useApp();
+const { state } = useApp();
 const router = useRouter();
 
 const q = ref('');
@@ -18,20 +17,6 @@ const doSearch = () => {
   if (!t) return;
   router.push({ path: '/search', query: { q: t } });
   searching.value = false;
-};
-
-const openCart = () => {
-  if (!state.user) { toast('سجّل دخول أولاً لفتح السلة'); state.loginOpen = true; return; }
-  state.cartDrawer = true;
-  refreshCount();
-};
-
-/* تحديث العداد مع فتح السلة */
-const refreshCount = async () => {
-  try {
-    const d = await api('/api/customer/cart');
-    state.cartCount = d.items.reduce((a, b) => a + Number(b.qty || 0), 0);
-  } catch (_) {}
 };
 
 const go = (path) => router.push(path);
@@ -56,8 +41,8 @@ const go = (path) => router.push(path);
       <!-- تنقل ديسكتوب (≥1024) -->
       <nav class="nav-links desktop-only">
         <RouterLink class="nav-link" to="/" exact-active-class="router-link-exact-active">الرئيسية</RouterLink>
-        <RouterLink class="nav-link" to="/offers">العروض</RouterLink>
         <RouterLink class="nav-link" to="/stores">المتاجر</RouterLink>
+        <RouterLink class="nav-link" to="/search">بحث وفئات</RouterLink>
         <RouterLink class="nav-link" to="/fav">المفضلة</RouterLink>
       </nav>
 
@@ -71,14 +56,17 @@ const go = (path) => router.push(path);
         <button v-if="!isLogged" class="btn-login mobile-hidden" @click="state.loginOpen = true">
           <span class="msm" style="font-size:18px">person</span> دخول
         </button>
-        <RouterLink v-else class="icon-btn mobile-hidden" to="/account" aria-label="حسابي">
+        <RouterLink v-if="isLogged" class="icon-btn" to="/notifications" aria-label="الإشعارات">
+          <span class="msm">notifications</span>
+        </RouterLink>
+        <RouterLink class="icon-btn" to="/account" aria-label="حسابي">
           <span class="msm">person</span>
         </RouterLink>
 
-        <button class="icon-btn" aria-label="السلة" @click="openCart">
+        <RouterLink class="icon-btn cart-desktop" to="/cart" aria-label="السلة">
           <span class="msm">shopping_bag</span>
           <span v-if="state.cartCount > 0" class="header-badge num">{{ state.cartCount }}</span>
-        </button>
+        </RouterLink>
       </div>
     </div>
 
@@ -97,5 +85,8 @@ const go = (path) => router.push(path);
 @media (min-width: 1024px) { .search-desktop { max-width: 420px; } }
 .search-toggle { display: grid; }
 @media (min-width: 768px) { .search-toggle { display: none; } }
+/* السلة عنصر الديسكتوب فقط — الجوال يستخدم الزر العائم مثل التطبيق */
+.cart-desktop { display: none; }
+@media (min-width: 1024px) { .cart-desktop { display: grid; } }
 .header .header-in { gap: var(--sp-2); }
 </style>

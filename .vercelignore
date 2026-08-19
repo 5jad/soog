@@ -1,0 +1,11 @@
+app/
+infra/
+store-app/
+backend/node_modules/
+backend/.env
+backend/.env.local
+/landing/
+/admin-dashboard/
+/store-app-html/
+/zaboon-*.apk
+*.log

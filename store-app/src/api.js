@@ -63,12 +63,15 @@ export const emojiOf = (p) => {
   return '📦';
 };
 
+/* حالات الطلب — نفس أسماء وملصقات التطبيق (statusLabel) */
 export const STAT = {
-  new: ['جديدة', 'st-new'], pending: ['قيد التحضير', 'st-pending'], ready: ['جاهزة', 'st-ready'],
-  delivering: ['بالتوصيل', 'st-delivering'], delivered: ['تم التسليم', 'st-delivered'],
-  cancelled: ['ملغاة', 'st-cancelled'], returned: ['مرتجعة', 'st-returned'],
+  new: ['طلب جديد 🆕', 'st-new'], pending: ['قيد الانتظار', 'st-pending'], accepted: ['مقبول', 'st-accepted'],
+  preparing: ['قيد التجهيز', 'st-preparing'], ready: ['جاهز للاستلام', 'st-ready'],
+  picked: ['بالتوصيل', 'st-picked'], delivering: ['بالتوصيل', 'st-delivering'],
+  delivered: ['تم التوصيل ✅', 'st-delivered'], cancelled: ['ملغي', 'st-cancelled'],
+  rejected: ['مرفوض ✗', 'st-rejected'], returned: ['مرتجع', 'st-returned'],
 };
-export const STAT_ORDER = ['new', 'pending', 'ready', 'delivering', 'delivered'];
+export const STAT_ORDER = ['new', 'pending', 'accepted', 'preparing', 'ready', 'picked', 'delivering', 'delivered'];
 export const st = (s) => STAT[s] || [s, ''];
 
 export const timeAgo = (iso) => {

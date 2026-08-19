@@ -1,23 +1,48 @@
 <script setup>
-/* ═══ بطاقة المنتج الموحدة — كل شبكات المنتجات تستخدمها ═══
-   options: home (أيقونة الإيموجي أكبر)، category، favorites (مع زر إزالة) */
+/* ═══ بطاقة المنتج الموحدة — بنفس تصميم ProdCard بالتطبيق ═══
+   home: اسم بسطر + نقاط المتغيرات + سعر ink (بلا اسم متجر)
+   category: اسم المتجر + اسم بسطرين + سعر أكبر (بلا نقاط)
+   favorites: كـ home + اسم المتجر + قلب أسفل الصورة */
 import { computed } from 'vue';
 import { useApp } from '../state';
 import { api, S, fmt, priceOf, pct, emojiOf, isRaw } from '../api';
 
 const props = defineProps({
   p: { type: Object, required: true },
-  variant: { type: String, default: 'default' },   /* home | category | favorites */
+  variant: { type: String, default: 'home' },   /* home | category | favorites */
   showStore: { type: Boolean, default: true },
 });
 const emit = defineEmits(['remove-fav', 'added']);
 
-const { state, toast, bumpCart, refreshCartCount } = useApp();
+const { state, toast, bumpCart, refreshCartCount, bumpFavs } = useApp();
 
 const img = computed(() => S(props.p.image || props.p.cover));
 const emoji = computed(() => (!img.value || isRaw(img.value)) ? emojiOf(props.p) : '');
 const off = computed(() => pct(props.p));
 const sold = computed(() => props.p?.stock === 0 || props.p?.is_available === false);
+
+const isHome = computed(() => props.variant === 'home');
+const isFav = computed(() => props.variant === 'favorites');
+const isCat = computed(() => !isHome.value && !isFav.value);
+/* نقاط ألوان المتغيرات (مثل شي إن) — home/favorites فقط */
+const dots = computed(() => {
+  const vs = props.p.variants || [];
+  const out = [];
+  for (const v of vs) {
+    const c = dotColor(v?.color || v?.name);
+    if (!out.includes(c)) out.push(c);
+  }
+  return out.slice(0, 4);
+});
+const dotsMore = computed(() => {
+  const vs = props.p.variants || [];
+  const out = [];
+  for (const v of vs) {
+    const c = dotColor(v?.color || v?.name);
+    if (!out.includes(c)) out.push(c);
+  }
+  return out.length > 4 ? out.length - 4 : 0;
+});
 
 const addToCart = async (e) => {
   e.stopPropagation();
@@ -44,10 +69,12 @@ const toggleFav = async (e) => {
     if (props.p.fav) {
       await api(`/api/customer/favorites/${props.p.id}`, { method: 'DELETE' });
       props.p.fav = false;
+      bumpFavs(-1);
       emit('remove-fav');
     } else {
       await api('/api/customer/favorites', { method: 'POST', body: JSON.stringify({ product_id: props.p.id }) });
       props.p.fav = true;
+      bumpFavs(1);
       toast('أُضيف للمفضلة');
     }
   } catch (e2) { toast(e2.message, false); }
@@ -65,25 +92,48 @@ const toggleFav = async (e) => {
         <span v-if="off > 0" class="badge badge-disc">خصم {{ off }}%</span>
         <span v-if="sold" class="badge badge-sold">نفد</span>
       </div>
-      <button class="fav-btn" :class="{ on: p.fav }" :aria-label="p.fav ? 'إزالة من المفضلة' : 'إضافة للمفضلة'" @click="toggleFav">
+      <button v-if="isFav" class="fav-btn card-fav" :class="{ on: p.fav }" :aria-label="p.fav ? 'إزالة من المفضلة' : 'إضافة للمفضلة'" @click="toggleFav">
         <span class="msm">favorite</span>
       </button>
     </div>
     <div class="prod-body">
-      <div v-if="showStore && p.store_name" class="prod-store">
-        <img v-if="S(p.store_logo) && !isRaw(p.store_logo)" class="store-avatar" :src="S(p.store_logo)" alt="" />
-        <span class="ellipsis">{{ p.store_name }}</span>
+      <span v-if="showStore && !isHome && p.store_name" class="prod-store ellipsis">{{ p.store_name }}</span>
+      <h3 class="prod-name" :class="isCat ? 'l2' : 'l1'">
+        <RouterLink :to="`/product/${p.id}`" class="name-link">{{ p.name }}</RouterLink>
+      </h3>
+      <div v-if="(isHome || isFav) && dots.length" class="prod-dots">
+        <span v-for="(c, i) in dots" :key="i" class="pdot" :style="{ background: c }"></span>
+        <span v-if="dotsMore" class="dots-more">+{{ dotsMore }}</span>
       </div>
-      <h3 class="prod-name clamp-2"><RouterLink :to="`/product/${p.id}`" class="name-link">{{ p.name }}</RouterLink></h3>
+      <span v-if="off > 0" class="prod-old num">{{ fmt(p.price) }}</span>
       <div class="prod-bottom">
-        <div class="prod-price">
-          <span class="now num">{{ fmt(priceOf(p)) }}</span>
-          <span v-if="off > 0" class="old">{{ fmt(p.price) }}</span>
-        </div>
-        <button class="fab-add" :class="{ added: sold }" :aria-label="'إضافة للسلة'" @click="addToCart">
+        <span class="now num">{{ fmt(priceOf(p)) }}</span>
+        <button class="fab-add" :class="{ off: sold }" :disabled="sold" :aria-label="'إضافة للسلة'" @click="addToCart">
           <span class="msm">{{ sold ? 'block' : 'add' }}</span>
         </button>
       </div>
     </div>
   </article>
 </template>
+
+<script>
+/* لون تقريبي لأسماء الألوان العربية الشائعة — نفس خريطة التطبيق */
+function dotColor(name) {
+  const n = String(name || '').toLowerCase().trim();
+  const map = {
+    'أحمر': '#E7352B', 'احمر': '#E7352B', 'red': '#E7352B',
+    'أزرق': '#2453CB', 'ازرق': '#2453CB', 'blue': '#2453CB',
+    'أسود': '#202126', 'اسود': '#202126', 'black': '#202126',
+    'أبيض': '#F5F5F5', 'ابيض': '#F5F5F5', 'white': '#F5F5F5',
+    'أخضر': '#1E8A4C', 'اخضر': '#1E8A4C', 'green': '#1E8A4C',
+    'أصفر': '#F2C513', 'اصفر': '#F2C513', 'yellow': '#F2C513',
+    'بنفسجي': '#7C3AED', 'بنفسجية': '#7C3AED', 'purple': '#7C3AED',
+    'وردي': '#F472B6', 'وردية': '#F472B6', 'pink': '#F472B6',
+    'رمادي': '#9CA3AF', 'رمادية': '#9CA3AF', 'grey': '#9CA3AF',
+    'بني': '#7C4A23', 'بنية': '#7C4A23', 'brown': '#7C4A23',
+    'برتقالي': '#F97316', 'برتقالية': '#F97316', 'orange': '#F97316',
+  };
+  for (const k in map) { if (n.includes(k)) return map[k]; }
+  return '#D9DEE7';
+}
+</script>

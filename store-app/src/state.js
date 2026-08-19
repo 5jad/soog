@@ -8,9 +8,10 @@ import { api, TOKEN_KEY, S } from './api';
 const state = reactive({
   user: null,
   cartCount: 0,
+  favsCount: 0,          // عداد المفضلة — شارة تبويب المفضلة
   loginOpen: false,
   cartDrawer: false,
-  searchOpen: false,       // بحث الجوال: سطر إضافي بالهيدر
+  searchOpen: false,     // بحث الجوال: سطر إضافي بالهيدر
   searchText: '',
 });
 
@@ -58,6 +59,17 @@ const refreshCartCount = async () => {
 /* عداد السلة بعد أي تغيير (إضافة/إزالة/دخول) */
 const bumpCart = (n) => { state.cartCount = Math.max(0, state.cartCount + (Number(n) || 0)); };
 
+/* عداد المفضلة — يُجلب عند الإقلاع ويُحدَّث على أي إضافة/إزالة */
+const refreshFavsCount = async () => {
+  const t = localStorage.getItem(TOKEN_KEY);
+  if (!t) { state.favsCount = 0; return; }
+  try {
+    const d = await api('/api/customer/favorites');
+    state.favsCount = (d.products || []).length;
+  } catch (_) {}
+};
+const bumpFavs = (n) => { state.favsCount = Math.max(0, state.favsCount + (Number(n) || 0)); };
+
 export function useApp() {
   return {
     state,           /* حي مباشر — المكونات تعدّل نوافذ UI منه */
@@ -68,6 +80,8 @@ export function useApp() {
     logout,
     refreshCartCount,
     bumpCart,
+    refreshFavsCount,
+    bumpFavs,
     closeAll() { state.loginOpen = false; state.cartDrawer = false; },
   };
 }

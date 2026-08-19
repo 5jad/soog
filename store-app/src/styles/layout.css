@@ -160,6 +160,21 @@
   transition: color var(--t-fast) var(--ease);
 }
 .bn-item .msm { font-size: 24px; transition: transform var(--t-base) var(--ease-spring); }
+.bn-badge {
+  position: absolute;
+  inset-block-start: 4px;
+  inset-inline-start: calc(50% + 10px);
+  min-width: var(--badge-size); height: var(--badge-size);
+  padding-inline: 5px;
+  border-radius: var(--r-pill);
+  background: var(--accent);
+  color: var(--white);
+  font-size: var(--fs-2xs);
+  font-weight: 800;
+  display: grid; place-items: center;
+  border: 2px solid var(--surface);
+  line-height: 1;
+}
 .bn-item.router-link-exact-active { color: var(--accent); }
 .bn-item.router-link-exact-active .msm { transform: translateY(-2px) scale(1.12); }
 .bn-item.router-link-exact-active::before {
@@ -210,12 +225,18 @@
   .footer-in { grid-template-columns: 2fr 1fr 1fr 1fr; }
 }
 @media (min-width: 1024px) { .footer { margin-block-start: var(--sp-12); } }
+/* مثل التطبيق: لا فوتر على الجوال — يظهر من الديسكتوب */
+@media (max-width: 1023.98px) { .footer { display: none; } }
 
 /* ═══ الشبكات ═══ */
 .products-grid {
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(var(--prod-min), 1fr));
   gap: var(--grid-gap);
+}
+/* مثل التطبيق: عمودان ثابتان على الجوال حتى بالشاشات الضيقة */
+@media (max-width: 639.98px) {
+  .products-grid { grid-template-columns: repeat(2, 1fr); }
 }
 @media (min-width: 640px) { .products-grid { gap: var(--sp-4); } }
 @media (min-width: 1024px) { .products-grid { gap: var(--sp-5); } }
@@ -228,7 +249,95 @@
 @media (min-width: 768px) { .stores-grid { grid-template-columns: repeat(auto-fill, minmax(210px, 1fr)); } }
 @media (min-width: 1024px) { .stores-grid { grid-template-columns: repeat(auto-fill, minmax(240px, 1fr)); gap: var(--sp-5); } }
 
-/* الأقسام بالرئيسية */
+/* شريط «محلات مميزة» بالرئيسية — موبايل: تمرير أفقي مثل التطبيق · ≥640: شبكة */
+.store-strip {
+  display: flex;
+  gap: var(--sp-3);
+  overflow-x: auto;
+  scrollbar-width: none;
+  margin-inline: calc(-1 * var(--sp-4));
+  padding-inline: var(--sp-4);
+  padding-block: var(--sp-1) 4px;
+  scroll-snap-type: x proximity;
+}
+.store-strip::-webkit-scrollbar { display: none; }
+.store-strip .store-card { flex: 0 0 210px; scroll-snap-align: start; }
+@media (min-width: 640px) {
+  .store-strip {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+    gap: var(--grid-gap);
+    margin-inline: 0;
+    padding-inline: 0;
+    overflow: visible;
+  }
+  .store-strip .store-card { flex: none; }
+}
+
+/* ═══ شريط الإطلالات — بطاقات أفقية مثل التطبيق (224×128) ═══ */
+.outfit-strip {
+  display: flex;
+  gap: var(--sp-3);
+  overflow-x: auto;
+  scrollbar-width: none;
+  margin-inline: calc(-1 * var(--sp-4));
+  padding-inline: var(--sp-4);
+  padding-block: var(--sp-1) 4px;
+  scroll-snap-type: x proximity;
+}
+.outfit-strip::-webkit-scrollbar { display: none; }
+.outfit-strip .outfit-card { scroll-snap-align: start; }
+/* ديسكتوب: شبكة بدل التمرير — يبقى الموقع بمزاياه */
+@media (min-width: 1024px) {
+  .outfit-strip {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(224px, 1fr));
+    margin-inline: 0;
+    padding-inline: 0;
+    overflow: visible;
+  }
+  .outfit-strip .outfit-card { width: 100%; }
+}
+
+/* ═══ شريط «جديدنا» — صفحتان × صفان مثل prodStrip بالتطبيق ═══ */
+.prod-strip-2 {
+  display: flex;
+  overflow-x: auto;
+  scrollbar-width: none;
+  margin-inline: calc(-1 * var(--sp-4));
+  padding-inline: var(--sp-4);
+  padding-block: var(--sp-1) 4px;
+  scroll-snap-type: x proximity;
+}
+.prod-strip-2::-webkit-scrollbar { display: none; }
+.ps2-page {
+  flex: 1 0 100%;
+  scroll-snap-align: start;
+  display: flex;
+  flex-wrap: wrap;
+  align-content: flex-start;
+}
+.ps2-cell {
+  flex: 0 0 50%;
+  aspect-ratio: .55;          /* نفس نسبة شبكة التطبيق بالضبط */
+  display: flex;
+}
+.ps2-cell .prod-card { width: 100%; height: 100%; }
+/* ديسكتوب: شبكة عادية بكل المنتجات الجديدة */
+@media (min-width: 1024px) {
+  .prod-strip-2 {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: var(--grid-gap);
+    margin-inline: 0;
+    padding-inline: 0;
+    overflow: visible;
+  }
+  .ps2-page { display: contents; }
+  .ps2-cell { aspect-ratio: auto; }
+}
+
+/* ═══ الأقسام بالرئيسية ═══ */
 .section { margin-block-start: var(--sp-8); }
 .section-head { display: flex; align-items: baseline; justify-content: space-between; gap: var(--sp-3); margin-block-end: var(--sp-4); }
 .section-head h2 { font-size: var(--fs-2xl); }
@@ -311,3 +420,118 @@
 .page-head { margin-block-end: var(--sp-5); }
 .page-head h1 { font-size: var(--fs-3xl); font-weight: 800; }
 .page-head .sub { color: var(--muted); margin-block-start: var(--sp-1); font-size: var(--fs-sm); }
+
+/* ═══ صفحة بحث وفئات — تجميع حسب الفئة ═══ */
+.cat-block { margin-block-start: var(--sp-7); }
+.cat-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--sp-3);
+  margin-block-end: var(--sp-4);
+}
+.cat-head h2 { display: flex; align-items: center; gap: var(--sp-2); font-size: var(--fs-xl); }
+.cat-head h2 small { color: var(--muted); font-size: var(--fs-sm); font-weight: 700; }
+.cat-icon {
+  width: 34px; height: 34px;
+  display: grid; place-items: center;
+  border-radius: 10px;
+  background: var(--bg-blue-soft);
+  font-size: var(--fs-lg);
+  flex-shrink: 0;
+}
+.viewall-btn {
+  display: inline-flex; align-items: center; gap: 2px;
+  white-space: nowrap;
+  padding: var(--sp-1) var(--sp-3);
+  border-radius: var(--r-pill);
+  border: 1.5px solid var(--primary-light);
+  background: none;
+  color: var(--primary);
+  font-weight: 800;
+  font-size: var(--fs-xs);
+  cursor: pointer;
+  transition: all var(--t-fast) var(--ease);
+}
+.viewall-btn .msm { font-size: 17px; }
+.viewall-btn:hover { background: var(--bg-blue-soft); }
+.viewall-btn.on { background: var(--primary); border-color: var(--primary); color: var(--white); }
+
+/* شبكة الفئة: الصفّين بالمعاينة — 2 عمود موبايل / 4 ديسكتوب */
+.cat-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: var(--grid-gap);
+}
+@media (min-width: 640px) { .cat-grid { grid-template-columns: repeat(4, 1fr); gap: var(--sp-4); } }
+@media (min-width: 1024px) { .cat-grid { gap: var(--sp-5); } }
+
+/* عداد الفلاتر النشطة على زر الفلتر */
+.filter-count {
+  min-width: 18px; height: 18px;
+  padding-inline: 4px;
+  border-radius: var(--r-pill);
+  background: var(--accent);
+  color: var(--white);
+  font-size: var(--fs-2xs);
+  font-weight: 800;
+  display: grid; place-items: center;
+  line-height: 1;
+}
+
+/* زر مسح الكل (روابط نصية داخل لوحات الفلترة) */
+.text-link {
+  background: none; border: none; cursor: pointer;
+  color: var(--primary);
+  font-weight: 700;
+  font-size: var(--fs-xs);
+  padding: 0;
+}
+.text-link:hover { text-decoration: underline; }
+
+/* مسح بحث داخل search-pill */
+.clear-x {
+  width: 26px; height: 26px;
+  border-radius: 50%;
+  border: none;
+  background: var(--line);
+  color: var(--muted);
+  display: grid; place-items: center;
+  cursor: pointer;
+  flex-shrink: 0;
+}
+.clear-x .msm { font-size: 16px; color: var(--muted); }
+
+/* مفتاح تبديل «مفتوح الآن فقط» */
+.toggle {
+  display: inline-flex; align-items: center; gap: var(--sp-2);
+  font-weight: 700; font-size: var(--fs-sm);
+  cursor: pointer;
+  user-select: none;
+}
+.toggle input { position: absolute; opacity: 0; pointer-events: none; }
+.toggle .track {
+  width: 42px; height: 24px;
+  border-radius: var(--r-pill);
+  background: var(--line-strong);
+  position: relative;
+  transition: background var(--t-fast) var(--ease);
+  flex-shrink: 0;
+}
+.toggle .thumb {
+  position: absolute;
+  inset-block-start: 3px; inset-inline-start: 3px;
+  width: 18px; height: 18px;
+  border-radius: 50%;
+  background: var(--white);
+  box-shadow: var(--sh-sm);
+  transition: transform var(--t-fast) var(--ease-spring);
+}
+.toggle.on { color: var(--primary); }
+.toggle.on .track { background: var(--primary); }
+.toggle.on .thumb { transform: translateX(18px); }
+[dir='rtl'] .toggle.on .thumb { transform: translateX(-18px); }
+
+/* ظهور/اختفاء لوحات الفلترة */
+.fade-down-enter-active, .fade-down-leave-active { transition: opacity var(--t-base) var(--ease), transform var(--t-base) var(--ease); }
+.fade-down-enter-from, .fade-down-leave-to { opacity: 0; transform: translateY(-6px); }

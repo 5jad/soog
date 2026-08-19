@@ -11,21 +11,57 @@
   border-radius: var(--r-xl);
   overflow: hidden;
   position: relative;
-  aspect-ratio: 1 / 1;
-  max-height: 560px;
+  aspect-ratio: 3 / 4;
 }
-.prod-gallery img { width: 100%; height: 100%; object-fit: cover; }
+.gallery-slide { position: absolute; inset: 0; opacity: 0; transition: opacity var(--t-slow) var(--ease-out); }
+.gallery-slide.on { opacity: 1; z-index: 1; }
+.gallery-slide img { width: 100%; height: 100%; object-fit: cover; display: block; user-select: none; }
 .prod-gallery .emoji-big { position: absolute; inset: 0; display: grid; place-items: center; font-size: 120px; }
-.prod-gallery .badges { position: absolute; inset-block-start: var(--sp-3); inset-inline-start: var(--sp-3); z-index: 1; display: flex; flex-direction: column; gap: var(--sp-1); }
+.prod-gallery .badges { position: absolute; inset-block-start: var(--sp-3); inset-inline-start: var(--sp-3); z-index: 2; display: flex; flex-direction: column; gap: var(--sp-1); }
+.gallery-dots { position: absolute; inset-block-end: var(--sp-3); left: 50%; transform: translateX(-50%); z-index: 2; display: flex; gap: 6px; }
+.gallery-dots .gd {
+  width: 7px; height: 7px;
+  border-radius: var(--r-pill);
+  background: var(--white);
+  opacity: .45;
+  border: none; padding: 0; cursor: pointer;
+  transition: width var(--t-base) var(--ease), opacity var(--t-base) var(--ease);
+}
+.gallery-dots .gd.on { width: 17px; opacity: 1; }
+
+/* لمّة المتجر فوق العنوان — مثل التطبيق */
+.prod-store-line {
+  display: flex; align-items: center; gap: 4px;
+  margin-block-end: var(--sp-2);
+  font-size: var(--fs-xs);
+  font-weight: 800;
+  color: var(--primary);
+  min-width: 0;
+}
+.prod-store-line .msm { font-size: 16px; flex-shrink: 0; }
+.prod-store-line .store-rate { display: inline-flex; align-items: center; gap: 1px; color: var(--ink); margin-inline-start: 6px; }
 
 .prod-head-line { display: flex; align-items: flex-start; justify-content: space-between; gap: var(--sp-3); }
 .prod-title { font-size: var(--fs-2xl); font-weight: 800; }
 .prod-sub { color: var(--muted); font-size: var(--fs-sm); margin-block-start: var(--sp-1); }
 
 .price-line { display: flex; align-items: baseline; gap: var(--sp-3); flex-wrap: wrap; }
-.price-line .now { font-size: var(--fs-3xl); font-weight: 800; color: var(--primary); }
+.price-line .now { font-size: var(--fs-3xl); font-weight: 900; color: var(--ink); }
 .price-line .old { font-size: var(--fs-lg); color: var(--muted); text-decoration: line-through; }
-.price-line .save { background: var(--accent); color: var(--white); font-size: var(--fs-xs); font-weight: 800; padding: 4px 12px; border-radius: var(--r-pill); }
+.price-line .badge-disc { border-radius: 10px; box-shadow: 0 3px 8px rgba(217, 45, 32, .35); }
+.saved { display: block; color: var(--success-deep); font-weight: 800; font-size: var(--fs-xs); margin-block-start: var(--sp-1); }
+
+/* حبة حالة المخزون — «● متوفر الآن» / «● نفد المخزون» */
+.stock-pill {
+  display: inline-flex; align-items: center; gap: 6px;
+  padding: 4px 12px;
+  border-radius: var(--r-pill);
+  font-weight: 800;
+  font-size: var(--fs-2xs);
+}
+.stock-pill .dot { width: 7px; height: 7px; border-radius: 50%; background: currentColor; }
+.stock-pill.yes { background: rgba(31, 157, 85, .12); color: var(--success-deep); }
+.stock-pill.no { background: var(--danger-light); color: var(--danger); }
 
 .store-chip {
   display: flex; align-items: center; gap: var(--sp-3);
@@ -48,7 +84,7 @@
 
 @media (min-width: 1024px) {
   .prod-page { grid-template-columns: 1fr 1.2fr; align-items: start; }
-  .prod-gallery { position: sticky; inset-block-start: calc(var(--header-h) + var(--sp-5)); }
+  .prod-gallery { position: sticky; inset-block-start: calc(var(--header-h) + var(--sp-5)); aspect-ratio: auto; height: min(72vh, 620px); }
 }
 
 /* ═══ السلة ═══ */

@@ -1,7 +1,8 @@
 <script setup>
 /* ═══ نافذة الدخول/التسجيل — موبايل: ورقة · ديسكتوب: مركزية ═══
-   التسجيل: رقم → مشاركة تلغرام → رمز من البوت → الاسم + كلمة المرور */
-import { ref, nextTick } from 'vue';
+   التسجيل نموذج واحد بكل التفاصيل ظاهرة: الأدوار + الرقم + الاسم + الباس
+   + شريط تحقق تلغرام + الرمز — بدل الخطوات المخفية */
+import { ref, onUnmounted } from 'vue';
 import { useRouter } from 'vue-router';
 import { useApp } from '../state';
 import { api, norm } from '../api';
@@ -17,22 +18,23 @@ const role = ref('customer');
 const busy = ref(false);
 const err = ref('');
 
-/* خطوات التسجيل عبر تلغرام */
-const regStep = ref(0);             /* 0=نموذج 1=شارك مع البوت 2=كود+اسم+باس */
+/* تحقق التسجيل عبر تلغرام */
+const regStarted = ref(false);      /* دزّينا register-start وفتحنا البوت */
+const regVerified = ref(false);     /* البوت أكد الرقم */
 const regToken = ref('');
 const regBot = ref('');
 const regCode = ref('');
-const regPwd = ref('');
-const regName = ref('');
 const pollTimer = ref(null);
 
 const close = () => { closeAll(); resetReg(); };
 
 const resetReg = () => {
-  regStep.value = 0; regToken.value = ''; regBot.value = ''; regCode.value = ''; regPwd.value = ''; regName.value = '';
+  regStarted.value = false; regVerified.value = false; regToken.value = ''; regBot.value = ''; regCode.value = '';
   if (pollTimer.value) { clearInterval(pollTimer.value); pollTimer.value = null; }
   err.value = '';
 };
+
+onUnmounted(() => { if (pollTimer.value) clearInterval(pollTimer.value); });
 
 const doLogin = async () => {
   err.value = '';
@@ -56,7 +58,7 @@ const startReg = async () => {
   try {
     const d = await api('/api/auth/register-start', { method: 'POST', body: JSON.stringify({ phone: norm(phone.value), role: role.value }) });
     regToken.value = d.token; regBot.value = d.bot_username;
-    regStep.value = 1;
+    regStarted.value = true;
     window.open(`https://t.me/${d.bot_username}?start=${d.token}`, '_blank');
     pollTimer.value = setInterval(pollReg, 2500);
   } catch (e) { err.value = e.message; }
@@ -68,25 +70,27 @@ const pollReg = async () => {
     const d = await api(`/api/telegram/register-status?token=${regToken.value}`);
     if (d.status === 'verified') {
       if (pollTimer.value) { clearInterval(pollTimer.value); pollTimer.value = null; }
-      regStep.value = 2;
+      regVerified.value = true;
       toast('تم التحقق من رقمك — أكمل البيانات');
+      err.value = '';
     } else if (d.status === 'expired' || d.status === 'invalid') {
       if (pollTimer.value) { clearInterval(pollTimer.value); pollTimer.value = null; }
-      regStep.value = 0;
-      err.value = 'انتهت مهلة التحقق — أعد المحاولة';
+      regStarted.value = false;
+      err.value = 'انتهت مهلة التحقق — ابدأ من جديد';
     }
   } catch (_) { /* انقطاع — يكمل */ }
 };
 
 const confirmReg = async () => {
   err.value = '';
+  if (!regVerified.value) { err.value = 'انتظر حتى يتحقق رقمك عبر تلغرام'; return; }
   if (!regCode.value) { err.value = 'أدخل الرمز من محادثة البوت'; return; }
-  if (regName.value.trim().length < 3) { err.value = 'الاسم قصير جداً'; return; }
-  if (regPwd.value.length < 6) { err.value = 'كلمة المرور 6 أحرف كحد أدنى'; return; }
+  if (name.value.trim().length < 3) { err.value = 'الاسم قصير جداً'; return; }
+  if (password.value.length < 6) { err.value = 'كلمة المرور 6 أحرف كحد أدنى'; return; }
   busy.value = true;
   try {
     await api('/api/auth/register-code', { method: 'POST', body: JSON.stringify({ token: regToken.value, code: regCode.value }) });
-    const d = await api('/api/auth/register-confirm', { method: 'POST', body: JSON.stringify({ token: regToken.value, name: regName.value.trim(), password: regPwd.value }) });
+    const d = await api('/api/auth/register-confirm', { method: 'POST', body: JSON.stringify({ token: regToken.value, name: name.value.trim(), password: password.value }) });
     setToken(d.token);
     await loadMe();
     refreshCartCount();
@@ -96,6 +100,9 @@ const confirmReg = async () => {
   } catch (e) { err.value = e.message; }
   busy.value = false;
 };
+
+/* زر التسجيل الوحيد: قبل التحقق يبدأ، بعده ينشئ الحساب */
+const submitReg = () => (regStarted.value ? confirmReg() : startReg());
 
 const switchTab = (t) => { tab.value = t; err.value = ''; };
 </script>
@@ -135,60 +142,62 @@ const switchTab = (t) => { tab.value = t; err.value = ''; };
               </p>
             </form>
 
-            <!-- ═══ تسجيل ═══ -->
-            <form v-else class="flex-col gap-4" @submit.prevent="regStep === 0 ? startReg() : confirmReg()">
-              <template v-if="regStep === 0">
-                <div class="field">
-                  <label>نوع الحساب</label>
-                  <div class="flex gap-2" style="flex-wrap:wrap">
-                    <button type="button" class="chip" :class="{ active: role === 'customer' }" @click="role = 'customer'">👤 زبون</button>
-                    <button type="button" class="chip" :class="{ active: role === 'vendor' }" @click="role = 'vendor'">🏪 تاجر</button>
+            <!-- ═══ تسجيل — نموذج واحد بكل التفاصيل ظاهرة ═══ -->
+            <form v-else class="flex-col gap-4" @submit.prevent="submitReg">
+              <div class="field">
+                <label>نوع الحساب</label>
+                <div class="flex gap-2" style="flex-wrap:wrap">
+                  <button type="button" class="chip" :class="{ active: role === 'customer' }" @click="role = 'customer'">👤 زبون</button>
+                  <button type="button" class="chip" :class="{ active: role === 'vendor' }" @click="role = 'vendor'">🏪 تاجر</button>
+                </div>
+              </div>
+              <div class="field">
+                <label>رقم الهاتف</label>
+                <input v-model="phone" class="input" inputmode="tel" placeholder="07XXXXXXXXX" maxlength="15" :disabled="regStarted" />
+                <span class="hint">تأكد إن رقمك مربوط بالبوت أول مرة</span>
+              </div>
+              <div class="field">
+                <label>الاسم</label>
+                <input v-model="name" class="input" placeholder="اسمك الكامل" maxlength="60" />
+              </div>
+              <div class="field">
+                <label>كلمة المرور</label>
+                <input v-model="password" class="input" type="password" placeholder="6 أحرف كحد أدنى" />
+              </div>
+
+              <!-- شريط تحقق تلغرام -->
+              <div v-if="!regVerified" class="panel panel-pad" style="background:var(--bg-blue-soft);border-radius:var(--r-md)">
+                <div class="flex gap-2" style="align-items:center">
+                  <span class="msm" style="color:var(--info)">telegram</span>
+                  <div>
+                    <b class="text-sm">تحقق برقمك عبر تلغرام</b>
+                    <p class="text-xs text-muted">افتح البوت وشارك رقمك — وبعدها اكتب الرمز اللي يوصلك</p>
                   </div>
                 </div>
-                <div class="field">
-                  <label>رقم الهاتف</label>
-                  <input v-model="phone" class="input" inputmode="tel" placeholder="07XXXXXXXXX" maxlength="15" />
-                  <span class="hint">أرسلنا رمز تحقق برسالة تلغرام — تأكد إن رقمك مربوط بالبوت أول مرة</span>
-                </div>
-                <p v-if="err" class="err text-danger" style="font-weight:700;font-size:var(--fs-sm)">{{ err }}</p>
-                <button class="btn btn-primary btn-lg btn-block" type="submit" :disabled="busy">{{ busy ? '…' : 'بدء التحقق' }}</button>
-              </template>
-
-              <template v-else-if="regStep === 1">
-                <div class="empty">
-                  <span class="msm" style="color:var(--info)">telegram</span>
-                  <h3>افتح تلغرام وشارك رقمك</h3>
-                  <p>ضغطنا فتحنا البوت لك — اضغط Start وارسل رقمك حتى يتحقق منه</p>
+                <template v-if="regStarted">
+                  <div class="flex gap-2" style="align-items:center;margin-block:var(--sp-3)">
+                    <div class="loader"></div>
+                    <span class="text-sm text-muted">بنتظر التحقق…</span>
+                  </div>
                   <a class="btn btn-soft btn-md" :href="`https://t.me/${regBot}?start=${regToken}`" target="_blank">
                     <span class="msm">send</span> افتح البوت مرة ثانية
                   </a>
-                  <div class="flex gap-2">
-                    <div class="loader"></div>
-                    <span class="text-sm text-muted">بانتظار التحقق…</span>
-                  </div>
-                  <button type="button" class="btn btn-ghost btn-sm" @click="resetReg; regStep = 0">إلغاء والعودة</button>
-                </div>
-              </template>
+                </template>
+                <button v-else type="button" class="btn btn-soft btn-md" style="margin-block-start:var(--sp-3)" @click="startReg">ابدأ التحقق عبر تلغرام</button>
+              </div>
+              <div v-else class="panel panel-pad text-sm" style="background:var(--bg-blue-soft);border-radius:var(--r-md)">
+                ✅ تحقق الرقم من البوت — اكتب الرمز اللي دزّه لك وكمّل بياناتك
+              </div>
 
-              <template v-else>
-                <p class="text-sm" style="background:var(--bg-blue-soft);padding:var(--sp-3);border-radius:var(--r-md)">
-                  ✅ تحقّق الرقم. الرومة كتبه البوت لك بمحادثة تلغرام — انسخه هنا وكمّل بياناتك
-                </p>
-                <div class="field">
-                  <label>الرمز من تلغرام</label>
-                  <input v-model="regCode" class="input" placeholder="الرمز من محادثة البوت" inputmode="numeric" />
-                </div>
-                <div class="field">
-                  <label>الاسم</label>
-                  <input v-model="regName" class="input" placeholder="اسمك الكامل" maxlength="60" />
-                </div>
-                <div class="field">
-                  <label>كلمة المرور</label>
-                  <input v-model="regPwd" class="input" type="password" placeholder="6 أحرف كحد أدنى" />
-                </div>
-                <p v-if="err" class="err text-danger" style="font-weight:700;font-size:var(--fs-sm)">{{ err }}</p>
-                <button class="btn btn-accent btn-lg btn-block" type="submit" :disabled="busy">{{ busy ? '…' : 'إنشاء الحساب' }}</button>
-              </template>
+              <div class="field">
+                <label>الرمز من تلغرام</label>
+                <input v-model="regCode" class="input" placeholder="الرمز من محادثة البوت" inputmode="numeric" :disabled="!regVerified" />
+              </div>
+
+              <p v-if="err" class="err text-danger" style="font-weight:700;font-size:var(--fs-sm)">{{ err }}</p>
+              <button class="btn btn-accent btn-lg btn-block" type="submit" :disabled="busy || (regStarted && !regVerified)">
+                {{ busy ? '…' : (regStarted ? 'إنشاء الحساب' : 'ابدأ التحقق') }}
+              </button>
             </form>
           </div>
         </div>

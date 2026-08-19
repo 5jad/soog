@@ -28,12 +28,6 @@
         <RouterLink to="/points">نقاطي</RouterLink>
         <RouterLink to="/fav">المفضلة</RouterLink>
       </div>
-      <div class="footer-col">
-        <h4>الأدوار</h4>
-        <RouterLink to="/vendor">لوحة التاجر</RouterLink>
-        <RouterLink to="/delivery">لوحة المندوب</RouterLink>
-        <a href="/admin" target="_blank">لوحة الأدمن</a>
-      </div>
     </div>
     <div class="footer-bottom">زبون © 2026 — كل الحقوق محفوظة</div>
   </footer>

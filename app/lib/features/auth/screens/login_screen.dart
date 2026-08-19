@@ -1,13 +1,10 @@
 import 'dart:async';
-import 'dart:typed_data';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
-import 'package:image_picker/image_picker.dart';
 import 'package:latlong2/latlong.dart';
 import 'package:url_launcher/url_launcher.dart';
 import 'package:zaboon/core/api/api.dart';
 import 'package:zaboon/core/theme/zaboon_design_system.dart';
-import 'package:zaboon/core/widgets/crop.dart';
 import 'package:zaboon/core/widgets/lottie_box.dart';
 import 'package:zaboon/core/widgets/terms_sheet.dart';
 import 'package:zaboon/core/widgets/widgets.dart';
@@ -41,7 +38,6 @@ class _LoginScreenState extends State<LoginScreen> {
   final storeDesc = TextEditingController();
   final storePhone = TextEditingController();
   final storeAddress = TextEditingController();
-  String? storeIdCard; // رابط صورة البطاقة الوطنية (إلزامي)
   String? storeLogo; // شعار المتجر (اختياري)
   String? storeCover; // صورة الغلاف (اختياري)
   int? selCat;
@@ -57,7 +53,6 @@ class _LoginScreenState extends State<LoginScreen> {
   int regStage = 0;
   String regRole = 'customer'; // نوع الحساب: زبون / تاجر / مندوب
   String? regToken;
-  Map<String, dynamic>? _regAcc; // نتيجة register-confirm — يحفظها للتاجر لإنشاء المتجر
   String? regBot;
   bool regCodeReady = false; // البوت طابق الرقم ودز الرمز
   Timer? _regPoll;
@@ -104,7 +99,6 @@ class _LoginScreenState extends State<LoginScreen> {
       if (regRole == 'vendor') {
          if (storeName.text.trim().length < 3) return toast(context, 'أدخل اسم متجرك', error: true);
          if (selCat == null) return toast(context, 'اختر قسم المتجر', error: true);
-         if (storeIdCard == null || storeIdCard!.isEmpty) return toast(context, 'ارفع صورة بطاقتك الوطنية — إلزامية للتوثيق', error: true);
       }
       return _regStart();
     } else {
@@ -194,14 +188,12 @@ class _LoginScreenState extends State<LoginScreen> {
     storeDesc.clear();
     storePhone.clear();
     storeAddress.clear();
-    storeIdCard = null;
     storeLogo = null;
     storeCover = null;
     selCat = null;
     selDist = null;
     slat = null;
     slng = null;
-    _regAcc = null;
     
   }
 
@@ -269,11 +261,6 @@ class _LoginScreenState extends State<LoginScreen> {
           if (storeLogo != null && storeLogo!.isNotEmpty) 'logo': storeLogo,
           if (storeCover != null && storeCover!.isNotEmpty) 'cover': storeCover,
         });
-        await Api.post('/api/vendor/store/documents', {
-          'type': 'national_id',
-          'title': 'البطاقة الوطنية',
-          'file_url': storeIdCard,
-        });
         toast(context, 'انطلق متجرك — بانتظار توثيق الأدمن ⏳');
       }
       if (mounted) {
@@ -311,86 +298,6 @@ class _LoginScreenState extends State<LoginScreen> {
           ..addAll(dists);
       });
     } catch (_) {}
-  }
-
-  // رفع صورة (كاميرا/معرض) مع قصّ اختياري — للبطاقة والشعار والغلاف
-  Future<void> _pickAndUpload(
-    ImageSource src,
-    String title,
-    double aspect,
-    ValueChanged<String> onUrl, {
-    bool crop = false,
-  }) async {
-    try {
-      final f = await ImagePicker().pickImage(
-        source: src,
-        imageQuality: 85,
-        maxWidth: 1600,
-      );
-      if (f == null) return;
-      Uint8List bytes = await f.readAsBytes();
-      if (crop) {
-        final cropped = await cropImage(
-          context,
-          bytes,
-          aspect: aspect,
-          title: title,
-        );
-        if (cropped == null) return;
-        bytes = cropped;
-      }
-      final urls = await Api.uploadBytes([bytes]);
-      if (urls.isNotEmpty && mounted) {
-        onUrl(urls.first);
-        toast(context, 'انضافت الصورة ✓');
-      }
-    } catch (_) {
-      if (mounted) toast(context, 'تعذر رفع الصورة', error: true);
-    }
-  }
-
-  Future<void> _regSubmitStore() async {
-    final acc = _regAcc;
-    if (acc == null) return _resetReg();
-    if (storeName.text.trim().length < 3) return toast(context, 'أدخل اسم متجرك', error: true);
-    if (selCat == null) return toast(context, 'اختر قسم المتجر', error: true);
-    if (storeIdCard == null || storeIdCard!.isEmpty)
-      return toast(context, 'ارفع صورة بطاقتك الوطنية — إلزامية للتوثيق', error: true);
-    setState(() => loading = true);
-    try {
-      final t = acc['token'] as String?;
-      if (t == null) return _resetReg();
-      await Api.saveToken(t); // المتجر يحتاج توك التاجر
-      await Api.post('/api/vendor/store', {
-        'name': storeName.text.trim(),
-        'description': storeDesc.text.trim(),
-        'phone': storePhone.text.trim(),
-        'address': storeAddress.text.trim(),
-        if (selCat != null) 'category_id': selCat,
-        if (selDist != null) 'district_id': selDist,
-        if (slat != null) 'lat': slat,
-        if (slng != null) 'lng': slng,
-        if (storeLogo != null && storeLogo!.isNotEmpty) 'logo': storeLogo,
-        if (storeCover != null && storeCover!.isNotEmpty) 'cover': storeCover,
-      });
-      // البطاقة الوطنية — تُرفع كوثيقة توثيق للمراجعة
-      await Api.post('/api/vendor/store/documents', {
-        'type': 'national_id',
-        'title': 'البطاقة الوطنية',
-        'file_url': storeIdCard,
-      });
-      if (!mounted) return;
-      toast(context, 'انطلق متجرك — بانتظار توثيق الأدمن ⏳');
-      await _onSuccess(acc);
-    } on ApiException catch (e) {
-      if (!mounted) return;
-      toast(context, e.message, error: true);
-    } catch (_) {
-      if (!mounted) return;
-      toast(context, 'تعذر الاتصال بالخادم', error: true);
-    } finally {
-      if (mounted) setState(() => loading = false);
-    }
   }
 
   Future<void> _onSuccess(dynamic d) async {
@@ -707,94 +614,6 @@ class _LoginScreenState extends State<LoginScreen> {
                   ),
                 ],
           onChanged: (v) => setState(() => selCat = v),
-        ),
-        const SizedBox(height: 12),
-        Row(
-          children: [
-            Expanded(
-              child: Text(
-                'صورة البطاقة الوطنية 🪪',
-                style: AppType.style(13, color: AppColors.ink, weight: FontWeight.w800),
-              ),
-            ),
-            if (storeIdCard != null) ...[
-              Container(
-                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
-                decoration: BoxDecoration(
-                  color: AppColors.success.withValues(alpha: 0.12),
-                  borderRadius: BorderRadius.circular(8),
-                ),
-                child: Text('تم الرفع ✓',
-                    style: AppType.style(11, color: AppColors.success, weight: FontWeight.w700)),
-              ),
-              IconButton(
-                onPressed: () => setState(() => storeIdCard = null),
-                icon: const Icon(Icons.close, size: 16, color: AppColors.muted),
-                visualDensity: VisualDensity.compact,
-                tooltip: 'إزالة',
-              ),
-            ],
-          ],
-        ),
-        const SizedBox(height: 8),
-        SizedBox(
-          height: 120,
-          width: double.infinity,
-          child: ClipRRect(
-            borderRadius: BorderRadius.circular(14),
-            child: Stack(
-              fit: StackFit.expand,
-              children: [
-                productImageBox(storeIdCard, base: Api.base),
-                if (storeIdCard == null)
-                  Container(
-                    decoration: const BoxDecoration(
-                      gradient: LinearGradient(colors: [Color(0xFFF1F0EC), Color(0xFFE8E6E0)]),
-                    ),
-                    alignment: Alignment.center,
-                    child: Column(
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        const Icon(Icons.badge_outlined, size: 30, color: AppColors.muted),
-                        const SizedBox(height: 6),
-                        Text('لم تُرفع بعد',
-                            style: AppType.style(12, color: AppColors.muted, weight: FontWeight.w700)),
-                      ],
-                    ),
-                  ),
-              ],
-            ),
-          ),
-        ),
-        const SizedBox(height: 8),
-        Row(
-          children: [
-            Expanded(
-              child: OutlinedButton.icon(
-                onPressed: () => _pickAndUpload(
-                  ImageSource.camera,
-                  'التقاط البطاقة 📷',
-                  1.586,
-                  (u) => setState(() => storeIdCard = u),
-                ),
-                icon: const Icon(Icons.photo_camera_outlined, size: 17),
-                label: const Text('كاميرا'),
-              ),
-            ),
-            const SizedBox(width: 10),
-            Expanded(
-              child: OutlinedButton.icon(
-                onPressed: () => _pickAndUpload(
-                  ImageSource.gallery,
-                  'اختيار من المعرض 🖼',
-                  1.586,
-                  (u) => setState(() => storeIdCard = u),
-                ),
-                icon: const Icon(Icons.photo_library_outlined, size: 17),
-                label: const Text('من المعرض'),
-              ),
-            ),
-          ],
         ),
       ],
 

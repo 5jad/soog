@@ -2,7 +2,7 @@
 /* ═══ نافذة الدخول/التسجيل — موبايل: ورقة · ديسكتوب: مركزية ═══
    التسجيل نموذج واحد بكل التفاصيل ظاهرة: الأدوار + الرقم + الاسم + الباس
    + شريط تحقق تلغرام + الرمز — بدل الخطوات المخفية */
-import { ref, onUnmounted } from 'vue';
+import { ref, onMounted, onUnmounted } from 'vue';
 import { useRouter } from 'vue-router';
 import { useApp } from '../state';
 import { api, norm } from '../api';
@@ -18,6 +18,18 @@ const role = ref('customer');
 const busy = ref(false);
 const err = ref('');
 
+/* تفاصيل التاجر — تظهر عند اختيار 🏪 تاجر */
+const storeName = ref('');
+const storeCat = ref('');
+const storeDesc = ref('');
+const storeAddr = ref('');
+const storeDist = ref('');
+const cats = ref([]);
+const districts = ref([]);
+
+/* كود الدعوة — للزبون فقط */
+const referral = ref('');
+
 /* تحقق التسجيل عبر تلغرام */
 const regStarted = ref(false);      /* دزّينا register-start وفتحنا البوت */
 const regVerified = ref(false);     /* البوت أكد الرقم */
@@ -30,11 +42,23 @@ const close = () => { closeAll(); resetReg(); };
 
 const resetReg = () => {
   regStarted.value = false; regVerified.value = false; regToken.value = ''; regBot.value = ''; regCode.value = '';
+  referral.value = ''; storeName.value = ''; storeCat.value = ''; storeDesc.value = ''; storeAddr.value = ''; storeDist.value = '';
   if (pollTimer.value) { clearInterval(pollTimer.value); pollTimer.value = null; }
   err.value = '';
 };
 
 onUnmounted(() => { if (pollTimer.value) clearInterval(pollTimer.value); });
+
+/* قوائم الأقسام والنواحي — تجلب مرة وحدة لملء نموذج التاجر */
+onMounted(async () => {
+  try {
+    const c = await api('/api/categories');
+    cats.value = c.categories || [];
+    const g = await api('/api/governorates');
+    const govs = g.governorates || [];
+    districts.value = govs.flatMap((x) => (x.districts || []).map((d) => d));
+  } catch (_) {}
+});
 
 const doLogin = async () => {
   err.value = '';
@@ -87,14 +111,37 @@ const confirmReg = async () => {
   if (!regCode.value) { err.value = 'أدخل الرمز من محادثة البوت'; return; }
   if (name.value.trim().length < 3) { err.value = 'الاسم قصير جداً'; return; }
   if (password.value.length < 6) { err.value = 'كلمة المرور 6 أحرف كحد أدنى'; return; }
+  if (role.value === 'vendor') {
+    if (storeName.value.trim().length < 3) { err.value = 'أدخل اسم متجرك'; return; }
+    if (!storeCat.value) { err.value = 'اختر قسم المتجر'; return; }
+  }
   busy.value = true;
   try {
     await api('/api/auth/register-code', { method: 'POST', body: JSON.stringify({ token: regToken.value, code: regCode.value }) });
-    const d = await api('/api/auth/register-confirm', { method: 'POST', body: JSON.stringify({ token: regToken.value, name: name.value.trim(), password: password.value }) });
+    const d = await api('/api/auth/register-confirm', { method: 'POST', body: JSON.stringify({
+      token: regToken.value, name: name.value.trim(), password: password.value,
+      ...(role.value === 'customer' ? { referral: referral.value.trim() } : {}),
+    }) });
     setToken(d.token);
     await loadMe();
     refreshCartCount();
-    toast(role.value === 'vendor' ? `أهلاً ${d.user.name} — أكمل إنشاء متجرك 🏪` : `أهلاً ${d.user.name} — تم إنشاء حسابك 🎉`);
+    if (role.value === 'vendor' && d.user) {
+      try {
+        await api('/api/vendor/store', { method: 'POST', body: JSON.stringify({
+          name: storeName.value.trim(),
+          category_id: Number(storeCat.value),
+          description: storeDesc.value.trim(),
+          address: storeAddr.value.trim(),
+          ...(storeDist.value ? { district_id: Number(storeDist.value) } : {}),
+          phone: norm(phone.value),
+        }) });
+        toast('انطلق متجرك — بانتظار توثيق الأدمن ⏳');
+      } catch (e) {
+        toast('أُنشئ حسابك — بس المتجر ما انفتح: ' + e.message, true);
+      }
+    } else {
+      toast(`أهلاً ${d.user.name} — تم إنشاء حسابك 🎉`);
+    }
     close();
     if (role.value === 'vendor' && d.user) router.push('/vendor');
   } catch (e) { err.value = e.message; }
@@ -163,6 +210,22 @@ const switchTab = (t) => { tab.value = t; err.value = ''; };
               <div class="field">
                 <label>كلمة المرور</label>
                 <input v-model="password" class="input" type="password" placeholder="6 أحرف كحد أدنى" />
+              </div>
+
+              <!-- بيانات المتجر — تظهر عند اختيار تاجر -->
+              <div v-if="role === 'vendor'" class="panel panel-pad flex-col gap-3" style="background:var(--bg-blue-soft);border-radius:var(--r-md)">
+                <b class="text-sm">بيانات متجرك 🏪</b>
+                <div class="field"><label>اسم المحل *</label><input v-model="storeName" class="input" maxlength="60" placeholder="مثل: أزياء الكوت" /></div>
+                <div class="field"><label>قسم المتجر *</label><select v-model="storeCat" class="select"><option value="">اختر…</option><option v-for="c in cats" :key="c.id" :value="c.id">{{ c.name }}</option></select></div>
+                <div class="field"><label>الوصف</label><textarea v-model="storeDesc" class="textarea" rows="2" placeholder="شنو يقدم متجرك؟"></textarea></div>
+                <div class="field"><label>العنوان</label><input v-model="storeAddr" class="input" placeholder="منطقة / شارع" /></div>
+                <div class="field"><label>الناحية</label><select v-model="storeDist" class="select"><option value="">اختر…</option><option v-for="d in districts" :key="d.id" :value="d.id">{{ d.name }}</option></select></div>
+              </div>
+
+              <!-- كود الدعوة — للزبون فقط -->
+              <div v-if="role === 'customer'" class="field">
+                <label>كود الدعوة (اختياري)</label>
+                <input v-model="referral" class="input" placeholder="كود صديقك — تاخذ نقاط ترحيب" maxlength="20" />
               </div>
 
               <!-- شريط تحقق تلغرام -->

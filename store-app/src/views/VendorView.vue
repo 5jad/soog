@@ -30,23 +30,30 @@ const withdrawAmount = ref('');
 const storeForm = ref({ name: '', description: '', delivery_fee: '', free_delivery_min: '' });
 const storeEdit = ref(false);
 
+/* تاجر جديد بلا متجر — نموذج إنشاء المحل */
+const createForm = ref({ name: '', category_id: '', description: '', phone: '', address: '' });
+const createBusy = ref(false);
+
 const loadAll = async () => {
   if (!state.user) return;
+  loading.value = true;
   try {
-    const [st0, stt, or, pr, wl, wk, cp] = await Promise.all([
-      api('/api/vendor/store'), api('/api/vendor/stats'), api('/api/vendor/orders'),
+    const st0 = await api('/api/vendor/store');
+    store.value = st0.store || st0;
+    vacay.value = !!store.value?.on_vacation;
+    storeForm.value = { name: store.value?.name || '', description: store.value?.description || '', delivery_fee: store.value?.delivery_fee ?? '', free_delivery_min: store.value?.free_delivery_min ?? '' };
+    if (!store.value) { loading.value = false; return; } /* ماكو محل — يظهر نموذج الإنشاء */
+    const [stt, or, pr, wl, wk, cp] = await Promise.all([
+      api('/api/vendor/stats'), api('/api/vendor/orders'),
       api('/api/vendor/products'), api('/api/vendor/wallet'),
       api('/api/vendor/week-earnings').catch(() => ({})), api('/api/vendor/coupons').catch(() => ({})),
     ]);
-    store.value = st0.store || st0;
     stats.value = stt.stats || stt;
     orders.value = or.orders || or || [];
     products.value = pr.products || pr || [];
     wallet.value = wl.wallet || wl;
     week.value = wk.week_earnings || [];
     coupons.value = cp.coupons || [];
-    vacay.value = !!store.value?.on_vacation;
-    storeForm.value = { name: store.value?.name || '', description: store.value?.description || '', delivery_fee: store.value?.delivery_fee ?? '', free_delivery_min: store.value?.free_delivery_min ?? '' };
   } catch (e) { toast(e.message, false); }
   loading.value = false;
 };
@@ -57,6 +64,22 @@ onMounted(async () => {
 
 const filteredOrders = computed(() => orders.value.filter((o) => statusFilter.value === 'all' || o.status === statusFilter.value));
 const totalEarn = computed(() => stats.value?.total_earnings || 0);
+
+const createStore = async () => {
+  const f = createForm.value;
+  if (f.name.trim().length < 3) { toast('أدخل اسم متجرك', false); return; }
+  if (!f.category_id) { toast('اختر قسم المتجر', false); return; }
+  createBusy.value = true;
+  try {
+    await api('/api/vendor/store', { method: 'POST', body: JSON.stringify({
+      name: f.name.trim(), category_id: Number(f.category_id), description: f.description.trim(),
+      phone: f.phone.trim(), address: f.address.trim(),
+    }) });
+    toast('انطلق متجرك — بانتظار توثيق الأدمن ⏳');
+    await loadAll();
+  } catch (e) { toast(e.message, false); }
+  createBusy.value = false;
+};
 
 const setStatus = async (o, status) => {
   try {
@@ -178,6 +201,24 @@ const imgOf = (p) => S(p.image);
     </div>
 
     <template v-else>
+      <!-- ═══ تاجر جديد بلا متجر — أنشئ متجرك ═══ -->
+      <div v-if="!store" class="panel panel-pad flex-col gap-3" style="max-width:560px;margin-inline:auto">
+        <span style="font-size:38px;text-align:center">🏪</span>
+        <h2 class="h3" style="text-align:center">أنشئ متجرك</h2>
+        <p class="text-sm text-muted" style="text-align:center">خطوة وحدة وتفتح محلّك على زبون — بعدها تكمل كل شي من لوحة التاجر</p>
+        <div class="grid gap-3" style="grid-template-columns:1fr 1fr">
+          <div class="field"><label>اسم المتجر *</label><input v-model="createForm.name" class="input" maxlength="60" placeholder="مثل: أزياء الكوت" /></div>
+          <div class="field"><label>القسم *</label><select v-model="createForm.category_id" class="select"><option value="">اختر…</option><option v-for="c in cats" :key="c.id" :value="c.id">{{ c.name }}</option></select></div>
+        </div>
+        <div class="field"><label>الوصف</label><textarea v-model="createForm.description" class="textarea" rows="2" placeholder="شنو يقدم متجرك؟"></textarea></div>
+        <div class="grid gap-3" style="grid-template-columns:1fr 1fr">
+          <div class="field"><label>الهاتف</label><input v-model="createForm.phone" class="input" inputmode="tel" placeholder="07XXXXXXXXX" maxlength="15" /></div>
+          <div class="field"><label>العنوان</label><input v-model="createForm.address" class="input" placeholder="منطقة / شارع" /></div>
+        </div>
+        <button class="btn btn-primary btn-lg btn-block" :disabled="createBusy" @click="createStore">{{ createBusy ? '…' : 'أنشئ متجري' }}</button>
+      </div>
+
+      <div v-else>
       <!-- شريط المتجر / الإجازة -->
       <div class="flex gap-3 wrap" style="margin-block-end:var(--sp-5)">
         <div class="panel panel-pad flex-1 flex between gap-3" style="flex-wrap:wrap">
@@ -396,6 +437,7 @@ const imgOf = (p) => S(p.image);
             </tbody>
           </table>
         </div>
+      </div>
       </div>
     </template>
   </div>

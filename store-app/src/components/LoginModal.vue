@@ -90,7 +90,7 @@ const confirmReg = async () => {
     setToken(d.token);
     await loadMe();
     refreshCartCount();
-    toast(`أهلاً ${d.user.name} — تم إنشاء حسابك 🎉`);
+    toast(role.value === 'vendor' ? `أهلاً ${d.user.name} — أكمل إنشاء متجرك 🏪` : `أهلاً ${d.user.name} — تم إنشاء حسابك 🎉`);
     close();
     if (role.value === 'vendor' && d.user) router.push('/vendor');
   } catch (e) { err.value = e.message; }

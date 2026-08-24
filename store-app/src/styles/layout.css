@@ -10,7 +10,7 @@
   .shell main { padding-block-start: calc(var(--header-h) + var(--sp-6)); }
 }
 @media (min-width: 1024px) {
-  .shell main { padding-block-start: calc(var(--header-h) + var(--sp-7)); }
+  .shell main { padding-block-start: var(--header-h); } /* ديسكتوب: المحتوى يبدي مباشرة تحت الهيدر — بلا فراغ */
 }
 /* مساحة أسفل الصفحات للشريط السفلي (موبايل/آيباد) */
 .shell .with-botnav { padding-block-end: calc(var(--bottomnav-h) + var(--sp-6)); }

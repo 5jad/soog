@@ -30,12 +30,15 @@
   --spu: 4px;                 /* وحدة التباعد (شبكة 4pt) */
   --target-min: 44px;         /* أصغر هدف تفاعلي (لمس/ماوس) */
 
-  /* ═══ 2. الألوان الأساسية ─ قاعدة 60/30/10 ─ هوية «زهرة اللوتس» ═══ */
-  /* اللوتس: وردي ناعم ebd0d2 · وردي دافئ d47376 · بنفسجي مائي 966487 · كحلي حبر 23273e */
-  /* Primary (60%) — «البنفسجي المائي» — لون العلامة الوحيد */
-  --primary: #966487;
-  --primary-deep: #23273E;    /* أغمق: الكحلي الحبر — ترويسات/ضغط/هوفر داكن */
-  --primary-light: #B18CA4;   /* أفتح: روابط/حدود هوفر */
+  /* ═══ 2. الألوان الأساسية ─ قاعدة 60/30/10 ─ هوية «زهرة اللوتس» ═══
+     التوزيع: كحلي الحبر = الهيكل والأزرار الرئيسية (ثبات وفخامة)
+              بنفسجي مائي = الروابط والأيقونات والتحديد (ثانوي)
+              وردي دافئ = الشراء والتحويل حصرياً (10%)
+              وردي فاتح ebd0d2 = الحدود والخلفيات الناعمة */
+  /* Primary (60%) — «كحلي الحبر» */
+  --primary: #23273E;
+  --primary-deep: #161927;    /* أغمق: فوتر/ضغط/هوفر داكن */
+  --primary-light: #966487;   /* البنفسجي المائي — روابط/حدود هوفر/أيقونات */
 
   /* Accent (10%) — «الوردي الدافئ» — حصري للشراء والتحويل */
   --accent: #D47376;
@@ -82,24 +85,24 @@
   --badge-new-fg: var(--white);
   --st-new: #B45309;          /* طلب جديد — نفس خريطة التطبيق (warning) */
   --st-pending: #B45309;      /* قيد الانتظار — warning */
-  --st-accepted: #966487;     /* مقبول — primary */
-  --st-preparing: #966487;    /* قيد التجهيز — primary */
+  --st-accepted: #23273E;     /* مقبول — primary */
+  --st-preparing: #23273E;    /* قيد التجهيز — primary */
   --st-ready: #1789A6;        /* جاهز — cyan */
-  --st-picked: #B18CA4;       /* بالتوصيل — primaryLight */
-  --st-delivering: #B18CA4;   /* بالتوصيل — primaryLight */
+  --st-picked: #966487;       /* بالتوصيل — primaryLight */
+  --st-delivering: #966487;   /* بالتوصيل — primaryLight */
   --st-delivered: #1F9D55;    /* تم التسليم — success */
   --st-cancelled: #D92D20;    /* ملغي — danger */
   --st-rejected: #D92D20;     /* مرفوض — danger */
   --st-returned: #6B5F68;     /* مرتجع — muted */
 
   /* ═══ 6. التدرجات ═══ */
-  --grad-primary: linear-gradient(135deg, var(--primary-deep) 0%, var(--primary) 55%, var(--accent) 130%);
+  --grad-primary: linear-gradient(135deg, var(--primary-deep) 0%, var(--primary) 45%, var(--primary-light) 115%);
   --grad-accent: linear-gradient(135deg, var(--accent) 0%, var(--accent-light) 100%);
   --grad-hero: radial-gradient(90rem 32rem at 85% -10%, rgba(150, 100, 135, .5) 0%, transparent 60%),
                radial-gradient(50rem 26rem at 0% 110%, rgba(212, 115, 118, .28) 0%, transparent 55%),
-               linear-gradient(140deg, var(--primary-deep) 0%, #3A3153 60%, var(--primary-deep) 100%);
+               linear-gradient(140deg, var(--primary-deep) 0%, #2E2A45 60%, var(--primary-deep) 100%);
   --grad-gold: linear-gradient(135deg, #F8E7A2, var(--gold));
-  --grad-lotus: linear-gradient(135deg, var(--accent) 0%, var(--primary) 100%); /* بتلات اللوتس */
+  --grad-lotus: linear-gradient(135deg, var(--accent) 0%, var(--primary-light) 100%); /* بتلات اللوتس */
 
   /* ═══ 7. سلم المسافات (شبكة 4pt) ═══ */
   --sp-1: calc(var(--spu) * 1);   /* 4  */
@@ -212,8 +215,63 @@
   /* ═══ 18. حالات التفاعل ═══ */
   --hover-raise: -3px;
   --active-press: 1;
-  --focus-ring: 0 0 0 3px rgba(150, 100, 135, .22);
+  --focus-ring: 0 0 0 3px rgba(35, 39, 62, .2);
   --focus-ring-accent: 0 0 0 3px rgba(212, 115, 118, .3);
+}
+
+/* ═══════════ الوضع الليلي ─ لوتس على كحلي عميق ═══════════
+   نفس العائلة: خلفيات كحلية داكنة، نصوص وردية فاتحة، أزرار بنفسجي مائي،
+   ووردي أفتح للشراء — نفس الروح بإضاءة منخفضة */
+html.dark {
+  --primary: #966487;         /* البنفسجي المائي يصير لون الأزرار */
+  --primary-deep: #10131F;
+  --primary-light: #C9A6BC;   /* ماوف — روابط وأيقونات */
+
+  --accent: #E08B8E;          /* وردي أفتح للإضاءة المنخفضة */
+  --accent-deep: #F3BABC;     /* نص accent على الداكن = أفتح */
+  --accent-light: #E8A0A2;
+
+  --ink: #F2E9EC;             /* نص فاتح بمسحة ورد */
+  --bg: #131629;              /* كحلي ليلي عميق */
+  --surface: #1C2038;
+  --muted: #A396A5;
+  --line: #2C3049;
+  --line-strong: #3D4263;
+
+  --bg-soft: #191D33;
+  --bg-blue-soft: #2B2440;    /* (الاسم تاريخي) — التحويم البنفسجي الداكن */
+  --bg-map: #1A1E33;
+  --img-ph: #232842;
+  --blush: #4A3D4C;           /* نسخة ليلية خافتة للوردة */
+  --scrim: rgba(0, 0, 0, .65);
+
+  --badge-sold-bg: #0C0F1C;
+  --danger-light: rgba(217, 45, 32, .16);
+  --info: #C9A6BC;
+  --star: #E5C158;
+  --gold: #E5C158;
+
+  --st-accepted: #C9A6BC;
+  --st-preparing: #C9A6BC;
+  --st-picked: #D9BCCD;
+  --st-delivering: #D9BCCD;
+  --st-returned: #A396A5;
+
+  --grad-hero: radial-gradient(90rem 32rem at 85% -10%, rgba(150, 100, 135, .35) 0%, transparent 60%),
+               radial-gradient(50rem 26rem at 0% 110%, rgba(212, 115, 118, .2) 0%, transparent 55%),
+               linear-gradient(140deg, #10131F 0%, #23273E 60%, #10131F 100%);
+
+  --sh-xs: 0 1px 2px rgba(0, 0, 0, .3);
+  --sh-sm: 0 2px 10px rgba(0, 0, 0, .35);
+  --sh-md: 0 8px 24px rgba(0, 0, 0, .4);
+  --sh-lg: 0 18px 44px rgba(0, 0, 0, .5);
+  --sh-hover: 0 14px 34px rgba(224, 139, 142, .14);
+
+  --glass-bg: rgba(19, 22, 41, .78);
+  --glass-line: rgba(255, 255, 255, .07);
+
+  --focus-ring: 0 0 0 3px rgba(201, 166, 188, .35);
+  --focus-ring-accent: 0 0 0 3px rgba(224, 139, 142, .35);
 }
 
 /* ═══ 19. قواعد رفع المقياس ─ تكبير النص/التباعد عند الشاشات الأوسع ═══

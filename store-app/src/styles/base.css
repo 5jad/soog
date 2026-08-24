@@ -115,6 +115,10 @@ h1, h2, h3, h4 { font-family: var(--f-disp); line-height: var(--lh-tight); font-
   transform: translateX(-100%);
 }
 @keyframes shimmer { to { transform: translateX(100%); } }
+/* بالوضع الليلي اللمعة البيضاء القوية تصير وخضة — نخففها */
+html.dark .skeleton::after {
+  background: linear-gradient(90deg, transparent, rgba(255, 255, 255, .07), transparent);
+}
 
 /* فقاعات التوست */
 .toasts {

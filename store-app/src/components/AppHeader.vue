@@ -3,12 +3,16 @@
 import { ref, computed } from 'vue';
 import { useRouter } from 'vue-router';
 import { useApp } from '../state';
+import { getTheme, toggleTheme } from '../theme';
 
 const { state } = useApp();
 const router = useRouter();
 
 const q = ref('');
 const searching = ref(false);   /* بحث الجوال: مؤجل — صفحة /search هي المرجع */
+const dark = ref(getTheme() === 'dark');
+
+const flipTheme = () => { dark.value = toggleTheme() === 'dark'; };
 
 const isLogged = computed(() => !!state.user);
 
@@ -58,6 +62,9 @@ const go = (path) => router.push(path);
 
       <!-- أفعال اليمين -->
       <div class="flex gap-2" style="margin-inline-start:auto">
+        <button class="icon-btn" :aria-label="dark ? 'الوضع النهاري' : 'الوضع الليلي'" @click="flipTheme">
+          <span class="msm">{{ dark ? 'light_mode' : 'dark_mode' }}</span>
+        </button>
         <RouterLink v-if="panelLink" class="btn btn-soft btn-sm panel-chip mobile-hidden" :to="panelLink.path" :target="state.user.role === 'admin' ? '_blank' : undefined">
           <span class="msm">{{ panelLink.icon }}</span> {{ panelLink.label }}
         </RouterLink>

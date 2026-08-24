@@ -13,7 +13,7 @@ export const getTheme = () => {
 export const applyTheme = (t) => {
   document.documentElement.classList.toggle('dark', t === 'dark');
   const meta = document.querySelector('meta[name="theme-color"]');
-  if (meta) meta.setAttribute('content', t === 'dark' ? '#131629' : '#23273E');
+  if (meta) meta.setAttribute('content', t === 'dark' ? '#14172A' : '#23273E');
 };
 
 export const setTheme = (t) => {

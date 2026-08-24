@@ -184,7 +184,7 @@
 
 /* ═══ الفوتر ═══ */
 .footer {
-  background: var(--primary-deep);
+  background: var(--ink);   /* عزل كحلي — طبقة الإطار الموحّد */
   color: rgba(255, 255, 255, .72);
   margin-block-start: var(--sp-10);
 }

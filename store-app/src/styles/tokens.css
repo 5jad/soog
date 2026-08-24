@@ -30,28 +30,31 @@
   --spu: 4px;                 /* وحدة التباعد (شبكة 4pt) */
   --target-min: 44px;         /* أصغر هدف تفاعلي (لمس/ماوس) */
 
-  /* ═══ 2. الألوان الأساسية ─ قاعدة 60/30/10 ─ هوية «زهرة اللوتس» ═══
-     التوزيع: كحلي الحبر = الهيكل والأزرار الرئيسية (ثبات وفخامة)
-              بنفسجي مائي = الروابط والأيقونات والتحديد (ثانوي)
-              وردي دافئ = الشراء والتحويل حصرياً (10%)
-              وردي فاتح ebd0d2 = الحدود والخلفيات الناعمة */
-  /* Primary (60%) — «كحلي الحبر» */
-  --primary: #23273E;
-  --primary-deep: #161927;    /* أغمق: فوتر/ضغط/هوفر داكن */
-  --primary-light: #966487;   /* البنفسجي المائي — روابط/حدود هوفر/أيقونات */
+  /* ═══ 2. هوية «زهرة اللوتس» — منطق البتلة الثلاثي ═══
+     1) أساس أحادي (80%): عائلة وردية وحدة بتدرجاتها — مو ألوان كثيرة
+     2) نقطة ذهبية وحدة (<10%): قلب الزهرة — جذب العين لمكان واحد
+     3) عزل غامق: الكحلي خلفية تُنير الورد — ما يأخذ مساحة داخل المحتوى */
+  /* الأساس الأحادي — سلم الوردة */
+  --rose-100: #F4C9D8;        /* طرف البتلة الداخلي — حدود/تحويمات/خلفيات ناعمة */
+  --rose-500: #D45B8A;        /* منتصف البتلة — اللون التفاعلي الأساسي */
+  --rose-800: #8B3A62;        /* قاعدة البتلة — هوفر/ضغط/نصوص مؤكدة */
 
-  /* Accent (10%) — «الوردي الدافئ» — حصري للشراء والتحويل */
-  --accent: #D47376;
-  --accent-deep: #B85A5E;     /* نص accent على خلفية فاتحة */
-  --accent-light: #E08B8E;    /* طرف التدرج */
+  --primary: var(--rose-500);
+  --primary-deep: var(--rose-800);
+  --primary-light: var(--rose-100);
 
-  /* Neutral (30%) — محايد دافئ بمسحة الورد */
-  --ink: #23273E;             /* النص الأساسي — كحلي الحبر */
-  --bg: #FBF7F7;              /* خلفية الصفحات — أبيض بمسحة الورد */
-  --surface: #FFFFFF;         /* أسطح البطاقات والحقول */
-  --muted: #6B5F68;           /* النص الثانوي */
-  --line: #F0E3E5;            /* الحدود العامة — من ebd0d2 */
-  --line-strong: #DECDD0;     /* حدود أقوى/سكرولبار */
+  /* القلب الذهبي — حصري لزر الشراء/التحويل */
+  --accent: #E5B84B;
+  --accent-deep: #B8862B;     /* هوفر الذهبي */
+  --accent-light: #F0CE74;
+
+  /* العزل الغامق — النصوص وطبقات الخلفية الداكنة */
+  --ink: #23273E;             /* كحلي الحبر — نصوص */
+  --bg: #FDF6F8;              /* خلفية بمسحة الوردة الفاتحة */
+  --surface: #FFFFFF;
+  --muted: #7A6B74;
+  --line: #F2DCE4;
+  --line-strong: #E3C3CE;
   --white: #FFFFFF;
   --black: #000000;
 
@@ -63,21 +66,21 @@
   --warning-light: #F59E0B;
   --danger: #D92D20;          /* خصم/أخطاء/حذف/شارة «نفد» */
   --danger-light: #FBE7E8;    /* بمسحة الورد — منسجم مع الهوية */
-  --info: #966487;            /* الحالة المعلوماتية بلون العلامة */
-  --star: #D4A537;            /* التقييمات — ذهبي دافئ */
+  --info: #8B3A62;            /* الحالة المعلوماتية — rose-800 */
+  --star: #E5B84B;            /* التقييمات — ذهب القلب */
   --cyan: #1789A6;            /* حالة «جاهز للتوصيل» */
   --gold: #D4AF37;            /* كوبونات/نقاط ذهبية */
 
   /* ═══ 4. الأسطح الناعمة والخلفيات ═══ */
-  --bg-soft: #F7EFF0;
-  --bg-blue-soft: #F5E9EB;    /* (الاسم تاريخي) — الوردية الناعمة للتحديد/الهوفر */
-  --bg-map: #EFE7E9;
-  --img-ph: #F3E9EA;          /* خلفية الصور أثناء التحميل */
-  --blush: #EBD0D2;           /* الوردة الأصلية من هوية اللوتس — حدود وشارات ناعمة */
+  --bg-soft: #FAF0F4;
+  --bg-blue-soft: #FBEAF1;    /* (الاسم تاريخي) — تحويم/تحديد بلمسة الوردة */
+  --bg-map: #F0E4E9;
+  --img-ph: #F6E7ED;
+  --blush: var(--rose-100);   /* الوردة الفاتحة — توكن مرجعي */
   --scrim: rgba(35, 39, 62, .55); /* طبقة تغطية النوافذ — كحلي الحبر */
 
   /* ═══ 5. ألوان الحالات والشارات ═══ */
-  --badge-sold-bg: #23273E;   /* داكن — كحلي الحبر */
+  --badge-sold-bg: #23273E;   /* عزل كحلي لشارة نفد */   /* داكن — كحلي الحبر */
   --badge-sold-fg: var(--white);
   --badge-disc-bg: var(--danger); /* أحمر — نفس شارة «خصم» بالتطبيق */
   --badge-disc-fg: var(--white);
@@ -85,24 +88,24 @@
   --badge-new-fg: var(--white);
   --st-new: #B45309;          /* طلب جديد — نفس خريطة التطبيق (warning) */
   --st-pending: #B45309;      /* قيد الانتظار — warning */
-  --st-accepted: #23273E;     /* مقبول — primary */
-  --st-preparing: #23273E;    /* قيد التجهيز — primary */
+  --st-accepted: #8B3A62;     /* مقبول — rose-800 */
+  --st-preparing: #8B3A62;    /* قيد التجهيز — rose-800 */
   --st-ready: #1789A6;        /* جاهز — cyan */
-  --st-picked: #966487;       /* بالتوصيل — primaryLight */
-  --st-delivering: #966487;   /* بالتوصيل — primaryLight */
+  --st-picked: #D45B8A;       /* بالتوصيل — rose-500 */
+  --st-delivering: #D45B8A;   /* بالتوصيل — rose-500 */
   --st-delivered: #1F9D55;    /* تم التسليم — success */
   --st-cancelled: #D92D20;    /* ملغي — danger */
   --st-rejected: #D92D20;     /* مرفوض — danger */
-  --st-returned: #6B5F68;     /* مرتجع — muted */
+  --st-returned: #7A6B74;     /* مرتجع — muted */
 
   /* ═══ 6. التدرجات ═══ */
-  --grad-primary: linear-gradient(135deg, var(--primary-deep) 0%, var(--primary) 45%, var(--primary-light) 115%);
+  --grad-primary: linear-gradient(135deg, var(--rose-800) 0%, var(--rose-500) 55%, var(--rose-100) 135%);
   --grad-accent: linear-gradient(135deg, var(--accent) 0%, var(--accent-light) 100%);
-  --grad-hero: radial-gradient(90rem 32rem at 85% -10%, rgba(150, 100, 135, .5) 0%, transparent 60%),
-               radial-gradient(50rem 26rem at 0% 110%, rgba(212, 115, 118, .28) 0%, transparent 55%),
-               linear-gradient(140deg, var(--primary-deep) 0%, #2E2A45 60%, var(--primary-deep) 100%);
+  --grad-hero: radial-gradient(90rem 32rem at 85% -10%, rgba(212, 91, 138, .45) 0%, transparent 60%),
+               radial-gradient(50rem 26rem at 0% 110%, rgba(229, 184, 75, .2) 0%, transparent 55%),
+               linear-gradient(140deg, #161927 0%, #23273E 60%, #161927 100%); /* عزل كحلي يُنير الورد */
   --grad-gold: linear-gradient(135deg, #F8E7A2, var(--gold));
-  --grad-lotus: linear-gradient(135deg, var(--accent) 0%, var(--primary-light) 100%); /* بتلات اللوتس */
+  --grad-lotus: linear-gradient(135deg, var(--rose-800) 0%, var(--rose-500) 60%, var(--accent) 135%); /* البتلة وقلبها */
 
   /* ═══ 7. سلم المسافات (شبكة 4pt) ═══ */
   --sp-1: calc(var(--spu) * 1);   /* 4  */
@@ -152,12 +155,12 @@
   --r-img: 14px;    /* زاوية صورة المنتج داخل البطاقة */
 
   /* ═══ 11. الظلال (3 مستويات) — معتمة بكحلي الحبر بمسحة وردية ═══ */
-  --sh-xs: 0 1px 2px rgba(35, 39, 62, .05);
-  --sh-sm: 0 2px 10px rgba(150, 100, 135, .08);
-  --sh-md: 0 8px 24px rgba(150, 100, 135, .11);
+  --sh-xs: 0 1px 2px rgba(139, 58, 98, .06);
+  --sh-sm: 0 2px 10px rgba(212, 91, 138, .09);
+  --sh-md: 0 8px 24px rgba(212, 91, 138, .12);
   --sh-lg: 0 18px 44px rgba(35, 39, 62, .14);
-  --sh-hover: 0 14px 34px rgba(212, 115, 118, .16);
-  --sh-accent: 0 8px 20px rgba(212, 115, 118, .38);
+  --sh-hover: 0 14px 34px rgba(212, 91, 138, .18);
+  --sh-accent: 0 8px 20px rgba(229, 184, 75, .4);   /* هالة القلب الذهبي */
 
   /* ═══ 12. الزجاجية (هيدر/نوافذ/شرائح ثابتة) ═══ */
   --glass-bg: rgba(255, 255, 255, .82);
@@ -215,63 +218,62 @@
   /* ═══ 18. حالات التفاعل ═══ */
   --hover-raise: -3px;
   --active-press: 1;
-  --focus-ring: 0 0 0 3px rgba(35, 39, 62, .2);
-  --focus-ring-accent: 0 0 0 3px rgba(212, 115, 118, .3);
+  --focus-ring: 0 0 0 3px rgba(212, 91, 138, .25);
+  --focus-ring-accent: 0 0 0 3px rgba(229, 184, 75, .35);
 }
 
-/* ═══════════ الوضع الليلي ─ لوتس على كحلي عميق ═══════════
-   نفس العائلة: خلفيات كحلية داكنة، نصوص وردية فاتحة، أزرار بنفسجي مائي،
-   ووردي أفتح للشراء — نفس الروح بإضاءة منخفضة */
+/* ═══════════ الوضع الليلي ─ العزل الكحلي يُنير اللوتس ═══════════
+   خلفية كحلية عميقة (طبقة العزل) والوردة فوقها تنور — نفس منطق الزهرة بالماء */
 html.dark {
-  --primary: #966487;         /* البنفسجي المائي يصير لون الأزرار */
-  --primary-deep: #10131F;
-  --primary-light: #C9A6BC;   /* ماوف — روابط وأيقونات */
+  --primary: #D45B8A;         /* البتلة المتوسطة — أزرار وتفاعل */
+  --primary-deep: #B0487A;
+  --primary-light: #E8A7C0;   /* وردة فاتحة — روابط وأيقونات تنور بالليل */
 
-  --accent: #E08B8E;          /* وردي أفتح للإضاءة المنخفضة */
-  --accent-deep: #F3BABC;     /* نص accent على الداكن = أفتح */
-  --accent-light: #E8A0A2;
+  --accent: #EDC25C;          /* القلب الذهبي أسطع بإضاءة منخفضة */
+  --accent-deep: #F4D68A;
+  --accent-light: #F0CE74;
 
-  --ink: #F2E9EC;             /* نص فاتح بمسحة ورد */
-  --bg: #131629;              /* كحلي ليلي عميق */
-  --surface: #1C2038;
-  --muted: #A396A5;
+  --ink: #F4E9EE;             /* نص فاتح بمسحة ورد */
+  --bg: #14172A;              /* العزل الكحلي العميق */
+  --surface: #1E2236;
+  --muted: #A896A3;
   --line: #2C3049;
   --line-strong: #3D4263;
 
   --bg-soft: #191D33;
-  --bg-blue-soft: #2B2440;    /* (الاسم تاريخي) — التحويم البنفسجي الداكن */
+  --bg-blue-soft: #322740;    /* تحويم بنفسجي-وردي داكن */
   --bg-map: #1A1E33;
   --img-ph: #232842;
-  --blush: #4A3D4C;           /* نسخة ليلية خافتة للوردة */
+  --blush: #4A3542;           /* نسخة ليلية خافتة للوردة */
   --scrim: rgba(0, 0, 0, .65);
 
   --badge-sold-bg: #0C0F1C;
   --danger-light: rgba(217, 45, 32, .16);
-  --info: #C9A6BC;
-  --star: #E5C158;
+  --info: #E8A7C0;
+  --star: #EDC25C;
   --gold: #E5C158;
 
-  --st-accepted: #C9A6BC;
-  --st-preparing: #C9A6BC;
-  --st-picked: #D9BCCD;
-  --st-delivering: #D9BCCD;
-  --st-returned: #A396A5;
+  --st-accepted: #E8A7C0;
+  --st-preparing: #E8A7C0;
+  --st-picked: #F0C3D6;
+  --st-delivering: #F0C3D6;
+  --st-returned: #A896A3;
 
-  --grad-hero: radial-gradient(90rem 32rem at 85% -10%, rgba(150, 100, 135, .35) 0%, transparent 60%),
-               radial-gradient(50rem 26rem at 0% 110%, rgba(212, 115, 118, .2) 0%, transparent 55%),
-               linear-gradient(140deg, #10131F 0%, #23273E 60%, #10131F 100%);
+  --grad-hero: radial-gradient(90rem 32rem at 85% -10%, rgba(212, 91, 138, .3) 0%, transparent 60%),
+               radial-gradient(50rem 26rem at 0% 110%, rgba(229, 184, 75, .16) 0%, transparent 55%),
+               linear-gradient(140deg, #10131F 0%, #1C2038 60%, #10131F 100%);
 
   --sh-xs: 0 1px 2px rgba(0, 0, 0, .3);
   --sh-sm: 0 2px 10px rgba(0, 0, 0, .35);
   --sh-md: 0 8px 24px rgba(0, 0, 0, .4);
   --sh-lg: 0 18px 44px rgba(0, 0, 0, .5);
-  --sh-hover: 0 14px 34px rgba(224, 139, 142, .14);
+  --sh-hover: 0 14px 34px rgba(212, 91, 138, .2);
 
-  --glass-bg: rgba(19, 22, 41, .78);
+  --glass-bg: rgba(20, 23, 42, .78);
   --glass-line: rgba(255, 255, 255, .07);
 
-  --focus-ring: 0 0 0 3px rgba(201, 166, 188, .35);
-  --focus-ring-accent: 0 0 0 3px rgba(224, 139, 142, .35);
+  --focus-ring: 0 0 0 3px rgba(232, 167, 192, .35);
+  --focus-ring-accent: 0 0 0 3px rgba(237, 194, 92, .35);
 }
 
 /* ═══ 19. قواعد رفع المقياس ─ تكبير النص/التباعد عند الشاشات الأوسع ═══

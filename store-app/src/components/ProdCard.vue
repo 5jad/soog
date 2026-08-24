@@ -102,11 +102,14 @@ const toggleFav = async (e) => {
       <h3 class="prod-name" :class="isCat ? 'l2' : 'l1'">
         <RouterLink :to="`/product/${p.id}`" class="name-link">{{ p.name }}</RouterLink>
       </h3>
-      <div v-if="(isHome || isFav) && dots.length" class="prod-dots">
-        <span v-for="(c, i) in dots" :key="i" class="pdot" :style="{ background: c }"></span>
-        <span v-if="dotsMore" class="dots-more">+{{ dotsMore }}</span>
+      <!-- صفوف محجوزة دائماً — كل البوكسات بنفس المقاس سواء فيها نقاط/خصم أو لا -->
+      <div class="prod-dots">
+        <template v-if="(isHome || isFav) && dots.length">
+          <span v-for="(c, i) in dots" :key="i" class="pdot" :style="{ background: c }"></span>
+          <span v-if="dotsMore" class="dots-more">+{{ dotsMore }}</span>
+        </template>
       </div>
-      <span v-if="off > 0" class="prod-old num">{{ fmt(p.price) }}</span>
+      <span class="prod-old num" :class="{ empty: !(off > 0) }">{{ off > 0 ? fmt(p.price) : '\u00A0' }}</span>
       <div class="prod-bottom">
         <span class="now num">{{ fmt(priceOf(p)) }}</span>
         <button class="fab-add" :class="{ off: sold }" :disabled="sold" :aria-label="'إضافة للسلة'" @click="addToCart">
@@ -135,6 +138,6 @@ function dotColor(name) {
     'برتقالي': '#F97316', 'برتقالية': '#F97316', 'orange': '#F97316',
   };
   for (const k in map) { if (n.includes(k)) return map[k]; }
-  return '#E3D5D8';
+  return '#F4C9D8';
 }
 </script>

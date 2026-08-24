@@ -7,6 +7,7 @@
 import 'dotenv/config';
 import pg from 'pg';
 import sharp from 'sharp';
+import crypto from 'crypto';
 
 const { Pool } = pg;
 const pool = new Pool({
@@ -14,6 +15,18 @@ const pool = new Pool({
   ssl: process.env.PGSSL === 'false' || !process.env.DATABASE_URL?.includes('neon') ? false : { rejectUnauthorized: false },
 });
 const q = (t, p) => pool.query(t, p);
+
+/* تخزين الصورة بالقاعدة وإرجاع رابط — بدل data-URI حتى ما تتضخم صفحات الـ HTML
+   (نفس آلية /uploads/:name بالسيرفر: ملف القرص أولاً ثم جدول uploaded_images بكاش سنة) */
+async function storeImg(buf) {
+  const name = `demo_${Date.now()}_${crypto.randomBytes(6).toString('hex')}.jpg`;
+  await q(
+    `INSERT INTO uploaded_images (name, bytes, mime) VALUES ($1,$2,'image/jpeg')
+     ON CONFLICT (name) DO UPDATE SET bytes=EXCLUDED.bytes`,
+    [name, buf],
+  );
+  return `/uploads/${name}`;
+}
 
 // ── توليد الصور ─────────────────────────────────────────────
 const F = 'Noto Sans Arabic';
@@ -36,16 +49,16 @@ async function img({ w, h, c1, c2, title = '', sub = '', big = '' }) {
   return sharp(Buffer.from(parts.join(''))).jpeg({ quality: 72 }).toBuffer();
 }
 
-const uri = (buf) => `data:image/jpeg;base64,${buf.toString('base64')}`;
+/* (حذفت uri — الصور تنخزن عبر storeImg بروابط) */
 
 // لوغو متجر مربع: حرف أول الاسم بدون البادئة
 async function logoImg(name, [c1, c2]) {
   const letter = name.replace('[وهمي] ', '').trim().charAt(0);
-  return uri(await img({ w: 320, h: 320, c1, c2, big: letter }));
+  return storeImg(await img({ w: 320, h: 320, c1, c2, big: letter }));
 }
 // غلاف متجر عريض
 async function coverImg(name, tagline, [c1, c2]) {
-  return uri(await img({ w: 1280, h: 420, c1, c2, title: name.replace('[وهمي] ', ''), sub: tagline }));
+  return storeImg(await img({ w: 1280, h: 420, c1, c2, title: name.replace('[وهمي] ', ''), sub: tagline }));
 }
 
 // ═══ أيقونات أقسام مرسومة SVG — librsvg ما يرندر الإيموجي الملون فنرسم رموز بيضاء بسيطة ═══
@@ -89,7 +102,7 @@ async function prodImg(name, [c1, c2], iconKey, variant = 0) {
       <text x="300" y="655" font-family="${F}" font-weight="700" font-size="${name.length > 22 ? 26 : 32}" text-anchor="middle" fill="#ffffff">${name.slice(0, 30)}</text>
     </svg>`,
   );
-  return uri(await sharp(buf).composite([{ input: deco }]).jpeg({ quality: 72 }).toBuffer());
+  return storeImg(await sharp(buf).composite([{ input: deco }]).jpeg({ quality: 72 }).toBuffer());
 }
 // بانر إعلان — أيقونة القسم كبيرة يمين والنص يسار
 async function adImg(title, sub, [c1, c2], iconKey) {
@@ -103,13 +116,13 @@ async function adImg(title, sub, [c1, c2], iconKey) {
       <text x="700" y="285" font-family="${F}" font-size="38" text-anchor="start" direction="rtl" fill="#ffffff" opacity="0.85">${esc(sub)}</text>
     </svg>`,
   );
-  return uri(await sharp(buf).composite([{ input: deco }]).jpeg({ quality: 72 }).toBuffer());
+  return storeImg(await sharp(buf).composite([{ input: deco }]).jpeg({ quality: 72 }).toBuffer());
 }
 
 // ── البيانات ────────────────────────────────────────────────
 const PALETTES = [
-  ['#23273E', '#966487'], ['#966487', '#D47376'], ['#3A3153', '#B18CA4'], ['#23273E', '#D47376'],
-  ['#8A5578', '#D47376'], ['#413A5C', '#B18CA4'], ['#966487', '#E08B8E'], ['#2E2A45', '#D47376'],
+  ['#8B3A62', '#D45B8A'], ['#D45B8A', '#F4C9D8'], ['#23273E', '#8B3A62'], ['#8B3A62', '#E5B84B'],
+  ['#B0487A', '#F4C9D8'], ['#4A2140', '#D45B8A'], ['#D45B8A', '#23273E'], ['#8B3A62', '#E0A93E'],
 ];
 
 // [اسم، وسم، قسم، إيموجي، [منتجات: اسم وسعر]]
@@ -161,6 +174,9 @@ const REVIEW_TEXTS = [
 const REVIEWERS = ['أبو حسين', 'زينب م.', 'مصطفى الكردي', 'نور الهدى', 'عمار س.', 'رحاف أحمد'];
 
 // ── التنفيذ ─────────────────────────────────────────────────
+/* تنظيف صور الديمو القديمة من التشغيلات السابقة — حتى ما تتراكم اليتيمة */
+await q(`DELETE FROM uploaded_images WHERE name LIKE 'demo_%'`);
+
 const govs = await q(`SELECT id FROM governorates ORDER BY sort LIMIT 1`);
 if (!govs.rows.length) { console.error('✗ ماكو محافظات — شغّل seed.js الأساسي أول'); process.exit(1); }
 const govId = govs.rows[0].id;

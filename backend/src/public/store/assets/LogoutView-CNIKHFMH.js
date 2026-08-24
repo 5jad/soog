@@ -1,1 +1,0 @@
-import{o as a,d as r,e as l,w as n,u as c,c as u}from"./index-aJxNlhBm.js";const d={class:"loader-block",style:{"min-height":"50vh"}},m={__name:"LogoutView",setup(p){const{logout:o,toast:s}=n(),t=c();return a(()=>{o(),s("خرجت من حسابك — خلّصت التصفح"),t.replace("/")}),(i,e)=>(u(),r("div",d,[...e[0]||(e[0]=[l("div",{class:"loader"},null,-1)])]))}};export{m as default};

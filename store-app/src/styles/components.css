@@ -33,7 +33,7 @@
 .btn-primary { background: var(--primary); color: var(--white); }
 .btn-primary:hover { background: var(--primary-deep); box-shadow: var(--sh-sm); }
 
-.btn-accent { background: var(--accent); color: var(--white); }
+.btn-accent { background: var(--accent); color: var(--ink); }  /* القلب الذهبي — نقطة الجذب الوحيدة */
 .btn-accent:hover { background: var(--accent-deep); box-shadow: var(--sh-accent); }
 
 .btn-outline { border: 2px solid var(--line-strong); color: var(--primary); background: var(--surface); }
@@ -42,7 +42,7 @@
 .btn-ghost { color: var(--primary); background: transparent; }
 .btn-ghost:hover { background: var(--bg-blue-soft); }
 
-.btn-soft { background: var(--bg-blue-soft); color: var(--primary); }
+.btn-soft { background: var(--rose-100); color: var(--rose-800); }
 .btn-soft:hover { background: var(--primary); color: var(--white); }
 
 .btn-danger { background: var(--danger); color: var(--white); }
@@ -140,21 +140,30 @@
 .prod-store {
   font-size: var(--fs-2xs);
   font-weight: 800;
-  color: var(--primary);
+  color: var(--primary-deep);
 }
+/* ═══ مقاس موحّد لكل بوكس المنتج ═══
+   الاسم سطران ثابتان بقصّ — والصفوف الاختيارية (نقاط/سعر قديم) محجوزة دائماً
+   حتى تطلع كل البطاقات بنفس الارتفاع سواء كان فيها خصم ومتغيرات أو لا */
 .prod-name { font-weight: 800; font-size: var(--fs-sm); line-height: 1.25; }
-.prod-name.l1 { min-height: 1.25em; }
-.prod-name.l2 { min-height: calc(2 * 1.25em); }
-.prod-name .name-link { color: inherit; display: block; }
-.prod-name .name-link:hover { color: var(--accent); }
+.prod-name.l1, .prod-name.l2 {
+  min-height: calc(2 * 1.25em);
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+.prod-name .name-link { color: inherit; }
+.prod-name .name-link:hover { color: var(--rose-800); }
 
-/* نقاط ألوان المتغيرات (مثل شي إن) */
-.prod-dots { display: flex; align-items: center; gap: 3px; min-height: 10px; }
+/* نقاط ألوان المتغيرات (مثل شي إن) — الصف محجوز حتى بلا متغيرات */
+.prod-dots { display: flex; align-items: center; gap: 3px; min-height: 12px; }
 .pdot { width: 10px; height: 10px; border-radius: 50%; border: 1px solid rgba(0, 0, 0, .14); flex-shrink: 0; }
 .dots-more { font-size: var(--fs-2xs); font-weight: 800; color: var(--muted); }
 
-/* سعر العرض المشطوب فوق صف السعر */
-.prod-old { font-size: var(--fs-2xs); color: var(--muted); text-decoration: line-through; }
+/* سعر العرض المشطوب — صف محجوز، مخفي بصرياً بلا خصم */
+.prod-old { font-size: var(--fs-2xs); color: var(--muted); text-decoration: line-through; min-height: 1.3em; }
+.prod-old.empty { visibility: hidden; }
 
 .prod-bottom { margin-block-start: auto; display: flex; align-items: center; justify-content: space-between; gap: var(--sp-2); padding-block-start: var(--sp-1); }
 .prod-bottom .now { font-size: var(--fs-md); font-weight: 900; color: var(--ink); line-height: 1.2; }
@@ -221,8 +230,8 @@
 .st-pill .dot { width: 7px; height: 7px; border-radius: 50%; background: currentColor; }
 .st-new { background: rgba(180, 83, 9, .12); color: var(--st-new); }
 .st-pending { background: rgba(180, 83, 9, .14); color: var(--st-pending); }
-.st-accepted { background: rgba(150, 100, 135, .14); color: var(--st-accepted); }
-.st-preparing { background: rgba(150, 100, 135, .14); color: var(--st-preparing); }
+.st-accepted { background: rgba(212, 91, 138, .14); color: var(--st-accepted); }
+.st-preparing { background: rgba(212, 91, 138, .14); color: var(--st-preparing); }
 .st-ready { background: rgba(23, 137, 166, .12); color: var(--st-ready); }
 .st-picked { background: rgba(177, 140, 164, .16); color: var(--st-picked); }
 .st-delivering { background: rgba(177, 140, 164, .16); color: var(--st-delivering); }

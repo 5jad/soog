@@ -255,7 +255,7 @@ const toggleFav = async () => {
   padding: 14px;
   border: none;
   border-radius: 16px;
-  background: linear-gradient(135deg, #23273E 0%, #966487 100%);
+  background: linear-gradient(135deg, #8B3A62 0%, #D45B8A 100%);
   color: var(--white);
   font-size: var(--fs-base);
   font-weight: 900;
@@ -264,14 +264,14 @@ const toggleFav = async () => {
   transition: transform var(--t-fast) var(--ease), box-shadow var(--t-fast) var(--ease);
 }
 .bfit .msm { font-size: 18px; }
-.bfit:hover { transform: translateY(-1px); box-shadow: 0 8px 20px rgba(212, 115, 118, .3); }
+.bfit:hover { transform: translateY(-1px); box-shadow: 0 8px 20px rgba(139, 58, 98, .3); }
 .bfit:active { transform: scale(.98); }
 
 /* معاينة الإطلالة — نفس تنسيق التطبيق */
 .outfit-preview {
   padding: 12px;
   background: #F7EFF0;
-  border: 1px solid rgba(150, 100, 135, .3);
+  border: 1px solid rgba(139, 58, 98, .3);
   border-radius: 16px;
   cursor: pointer;
   transition: transform var(--t-fast) var(--ease), box-shadow var(--t-fast) var(--ease);

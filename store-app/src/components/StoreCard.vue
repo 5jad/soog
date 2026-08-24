@@ -10,7 +10,7 @@ const props = defineProps({ s: { type: Object, required: true } });
 const router = useRouter();
 
 /* ألوان الغلاف المتناوبة — نفس ألوان التطبيق الأربعة */
-const covers = ['#23273E', '#D47376', '#966487', '#1789A6'];
+const covers = ['#8B3A62', '#D45B8A', '#23273E', '#1789A6'];
 
 const hasCover = computed(() => { const v = S(props.s.cover); return !!(v && !isRaw(v)); });
 const cover = computed(() => S(props.s.cover));
@@ -19,7 +19,7 @@ const logoEmoji = computed(() => (!logo.value || isRaw(logo.value)) ? (props.s.c
 const grad = computed(() => {
   const id = Number(props.s.id) || 0;
   const c = covers[Math.abs(id) % covers.length];
-  return `linear-gradient(135deg, ${c}, #B18CA4)`;
+  return `linear-gradient(135deg, ${c}, #F4C9D8)`;
 });
 </script>
 

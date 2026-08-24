@@ -69,7 +69,7 @@ const updateMap = () => {
   // المسار المسجل
   if (pathLine) { pathLine.remove(); pathLine = null; }
   if (t.value.path?.length > 1) {
-    pathLine = leaflet.polyline(t.value.path.map((p) => [p.lat, p.lng]), { color: '#F2560F', weight: 4, opacity: .7 }).addTo(map);
+    pathLine = leaflet.polyline(t.value.path.map((p) => [p.lat, p.lng]), { color: '#D47376', weight: 4, opacity: .7 }).addTo(map);
     pts.push(...t.value.path.map((p) => [p.lat, p.lng]));
   }
   if (pts.length) map.fitBounds(pts, { padding: [50, 50] });

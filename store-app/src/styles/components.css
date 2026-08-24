@@ -221,11 +221,11 @@
 .st-pill .dot { width: 7px; height: 7px; border-radius: 50%; background: currentColor; }
 .st-new { background: rgba(180, 83, 9, .12); color: var(--st-new); }
 .st-pending { background: rgba(180, 83, 9, .14); color: var(--st-pending); }
-.st-accepted { background: rgba(18, 41, 78, .12); color: var(--st-accepted); }
-.st-preparing { background: rgba(18, 41, 78, .12); color: var(--st-preparing); }
+.st-accepted { background: rgba(150, 100, 135, .14); color: var(--st-accepted); }
+.st-preparing { background: rgba(150, 100, 135, .14); color: var(--st-preparing); }
 .st-ready { background: rgba(23, 137, 166, .12); color: var(--st-ready); }
-.st-picked { background: rgba(74, 111, 165, .12); color: var(--st-picked); }
-.st-delivering { background: rgba(74, 111, 165, .12); color: var(--st-delivering); }
+.st-picked { background: rgba(177, 140, 164, .16); color: var(--st-picked); }
+.st-delivering { background: rgba(177, 140, 164, .16); color: var(--st-delivering); }
 .st-delivered { background: rgba(31, 157, 85, .12); color: var(--st-delivered); }
 .st-cancelled { background: rgba(217, 45, 32, .12); color: var(--st-cancelled); }
 .st-rejected { background: rgba(217, 45, 32, .12); color: var(--st-rejected); }

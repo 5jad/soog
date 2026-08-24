@@ -30,24 +30,25 @@
   --spu: 4px;                 /* وحدة التباعد (شبكة 4pt) */
   --target-min: 44px;         /* أصغر هدف تفاعلي (لمس/ماوس) */
 
-  /* ═══ 2. الألوان الأساسية ─ قاعدة 60/30/10 ═══ */
-  /* Primary (60%) — «الكحلي الليلي» — لون العلامة الوحيد */
-  --primary: #12294E;
-  --primary-deep: #0B1B36;    /* أغمق: ترويسات/ضغط/هوفر داكن */
-  --primary-light: #4A6FA5;   /* أفتح: روابط/حدود هوفر */
+  /* ═══ 2. الألوان الأساسية ─ قاعدة 60/30/10 ─ هوية «زهرة اللوتس» ═══ */
+  /* اللوتس: وردي ناعم ebd0d2 · وردي دافئ d47376 · بنفسجي مائي 966487 · كحلي حبر 23273e */
+  /* Primary (60%) — «البنفسجي المائي» — لون العلامة الوحيد */
+  --primary: #966487;
+  --primary-deep: #23273E;    /* أغمق: الكحلي الحبر — ترويسات/ضغط/هوفر داكن */
+  --primary-light: #B18CA4;   /* أفتح: روابط/حدود هوفر */
 
-  /* Accent (10%) — «برتقالي الغروب» — حصري للشراء والتحويل */
-  --accent: #F2560F;
-  --accent-deep: #C2410C;     /* نص accent على خلفية فاتحة */
-  --accent-light: #F97316;    /* طرف التدرج */
+  /* Accent (10%) — «الوردي الدافئ» — حصري للشراء والتحويل */
+  --accent: #D47376;
+  --accent-deep: #B85A5E;     /* نص accent على خلفية فاتحة */
+  --accent-light: #E08B8E;    /* طرف التدرج */
 
-  /* Neutral (30%) */
-  --ink: #171D26;             /* النص الأساسي */
-  --bg: #FAFAF7;              /* خلفية الصفحات الدافئة */
+  /* Neutral (30%) — محايد دافئ بمسحة الورد */
+  --ink: #23273E;             /* النص الأساسي — كحلي الحبر */
+  --bg: #FBF7F7;              /* خلفية الصفحات — أبيض بمسحة الورد */
   --surface: #FFFFFF;         /* أسطح البطاقات والحقول */
-  --muted: #5C6570;           /* النص الثانوي */
-  --line: #E7E9EC;            /* الحدود العامة */
-  --line-strong: #D1D5DB;     /* حدود أقوى/سكرولبار */
+  --muted: #6B5F68;           /* النص الثانوي */
+  --line: #F0E3E5;            /* الحدود العامة — من ebd0d2 */
+  --line-strong: #DECDD0;     /* حدود أقوى/سكرولبار */
   --white: #FFFFFF;
   --black: #000000;
 
@@ -58,21 +59,22 @@
   --warning: #B45309;
   --warning-light: #F59E0B;
   --danger: #D92D20;          /* خصم/أخطاء/حذف/شارة «نفد» */
-  --danger-light: #FEE4E2;
-  --info: #0284C7;
-  --star: #F5A623;            /* التقييمات */
+  --danger-light: #FBE7E8;    /* بمسحة الورد — منسجم مع الهوية */
+  --info: #966487;            /* الحالة المعلوماتية بلون العلامة */
+  --star: #D4A537;            /* التقييمات — ذهبي دافئ */
   --cyan: #1789A6;            /* حالة «جاهز للتوصيل» */
   --gold: #D4AF37;            /* كوبونات/نقاط ذهبية */
 
   /* ═══ 4. الأسطح الناعمة والخلفيات ═══ */
-  --bg-soft: #F3F4F6;
-  --bg-blue-soft: #EEF3FB;
-  --bg-map: #E8ECF1;
-  --img-ph: #EEF1F5;          /* خلفية الصور أثناء التحميل */
-  --scrim: rgba(11, 27, 54, .5); /* طبقة تغطية النوافذ */
+  --bg-soft: #F7EFF0;
+  --bg-blue-soft: #F5E9EB;    /* (الاسم تاريخي) — الوردية الناعمة للتحديد/الهوفر */
+  --bg-map: #EFE7E9;
+  --img-ph: #F3E9EA;          /* خلفية الصور أثناء التحميل */
+  --blush: #EBD0D2;           /* الوردة الأصلية من هوية اللوتس — حدود وشارات ناعمة */
+  --scrim: rgba(35, 39, 62, .55); /* طبقة تغطية النوافذ — كحلي الحبر */
 
   /* ═══ 5. ألوان الحالات والشارات ═══ */
-  --badge-sold-bg: #0A1120;   /* داكن — نفس شارة «نفد» بالتطبيق */
+  --badge-sold-bg: #23273E;   /* داكن — كحلي الحبر */
   --badge-sold-fg: var(--white);
   --badge-disc-bg: var(--danger); /* أحمر — نفس شارة «خصم» بالتطبيق */
   --badge-disc-fg: var(--white);
@@ -80,23 +82,24 @@
   --badge-new-fg: var(--white);
   --st-new: #B45309;          /* طلب جديد — نفس خريطة التطبيق (warning) */
   --st-pending: #B45309;      /* قيد الانتظار — warning */
-  --st-accepted: #12294E;     /* مقبول — primary */
-  --st-preparing: #12294E;    /* قيد التجهيز — primary */
+  --st-accepted: #966487;     /* مقبول — primary */
+  --st-preparing: #966487;    /* قيد التجهيز — primary */
   --st-ready: #1789A6;        /* جاهز — cyan */
-  --st-picked: #4A6FA5;       /* بالتوصيل — primaryLight */
-  --st-delivering: #4A6FA5;   /* بالتوصيل — primaryLight */
+  --st-picked: #B18CA4;       /* بالتوصيل — primaryLight */
+  --st-delivering: #B18CA4;   /* بالتوصيل — primaryLight */
   --st-delivered: #1F9D55;    /* تم التسليم — success */
   --st-cancelled: #D92D20;    /* ملغي — danger */
   --st-rejected: #D92D20;     /* مرفوض — danger */
-  --st-returned: #5C6570;     /* مرتجع — muted */
+  --st-returned: #6B5F68;     /* مرتجع — muted */
 
   /* ═══ 6. التدرجات ═══ */
-  --grad-primary: linear-gradient(135deg, var(--primary-deep) 0%, var(--primary) 55%, var(--primary-light) 130%);
+  --grad-primary: linear-gradient(135deg, var(--primary-deep) 0%, var(--primary) 55%, var(--accent) 130%);
   --grad-accent: linear-gradient(135deg, var(--accent) 0%, var(--accent-light) 100%);
-  --grad-hero: radial-gradient(90rem 32rem at 85% -10%, rgba(74, 111, 165, .45) 0%, transparent 60%),
-               radial-gradient(50rem 26rem at 0% 110%, rgba(242, 86, 15, .22) 0%, transparent 55%),
-               linear-gradient(140deg, var(--primary-deep) 0%, var(--primary) 60%, var(--primary-deep) 100%);
+  --grad-hero: radial-gradient(90rem 32rem at 85% -10%, rgba(150, 100, 135, .5) 0%, transparent 60%),
+               radial-gradient(50rem 26rem at 0% 110%, rgba(212, 115, 118, .28) 0%, transparent 55%),
+               linear-gradient(140deg, var(--primary-deep) 0%, #3A3153 60%, var(--primary-deep) 100%);
   --grad-gold: linear-gradient(135deg, #F8E7A2, var(--gold));
+  --grad-lotus: linear-gradient(135deg, var(--accent) 0%, var(--primary) 100%); /* بتلات اللوتس */
 
   /* ═══ 7. سلم المسافات (شبكة 4pt) ═══ */
   --sp-1: calc(var(--spu) * 1);   /* 4  */
@@ -135,23 +138,23 @@
   --f-ui: 'IBM Plex Sans Arabic', 'Segoe UI', system-ui, sans-serif;
   --f-disp: 'El Messiri', 'IBM Plex Sans Arabic', sans-serif;
 
-  /* ═══ 10. الزوايا ═══ */
-  --r-xs: 6px;
-  --r-sm: 10px;
-  --r-md: 14px;
-  --r-lg: 20px;
-  --r-xl: 28px;
+  /* ═══ 10. الزوايا ─ نعومة البتلات: أوفر قليلاً ═══ */
+  --r-xs: 8px;
+  --r-sm: 12px;
+  --r-md: 16px;
+  --r-lg: 22px;
+  --r-xl: 30px;
   --r-pill: 999px;
-  --r-card: 16px;   /* زاوية بطاقات المنتج والمتجر — نفس التطبيق */
-  --r-img: 12px;    /* زاوية صورة المنتج داخل البطاقة — نفس التطبيق */
+  --r-card: 18px;   /* زاوية بطاقات المنتج والمتجر */
+  --r-img: 14px;    /* زاوية صورة المنتج داخل البطاقة */
 
-  /* ═══ 11. الظلال (3 مستويات) ═══ */
-  --sh-xs: 0 1px 2px rgba(18, 41, 78, .05);
-  --sh-sm: 0 2px 10px rgba(18, 41, 78, .06);
-  --sh-md: 0 8px 24px rgba(18, 41, 78, .09);
-  --sh-lg: 0 18px 44px rgba(18, 41, 78, .14);
-  --sh-hover: 0 14px 34px rgba(18, 41, 78, .13);
-  --sh-accent: 0 8px 20px rgba(242, 86, 15, .35);
+  /* ═══ 11. الظلال (3 مستويات) — معتمة بكحلي الحبر بمسحة وردية ═══ */
+  --sh-xs: 0 1px 2px rgba(35, 39, 62, .05);
+  --sh-sm: 0 2px 10px rgba(150, 100, 135, .08);
+  --sh-md: 0 8px 24px rgba(150, 100, 135, .11);
+  --sh-lg: 0 18px 44px rgba(35, 39, 62, .14);
+  --sh-hover: 0 14px 34px rgba(212, 115, 118, .16);
+  --sh-accent: 0 8px 20px rgba(212, 115, 118, .38);
 
   /* ═══ 12. الزجاجية (هيدر/نوافذ/شرائح ثابتة) ═══ */
   --glass-bg: rgba(255, 255, 255, .82);
@@ -209,8 +212,8 @@
   /* ═══ 18. حالات التفاعل ═══ */
   --hover-raise: -3px;
   --active-press: 1;
-  --focus-ring: 0 0 0 3px rgba(18, 41, 78, .18);
-  --focus-ring-accent: 0 0 0 3px rgba(242, 86, 15, .28);
+  --focus-ring: 0 0 0 3px rgba(150, 100, 135, .22);
+  --focus-ring-accent: 0 0 0 3px rgba(212, 115, 118, .3);
 }
 
 /* ═══ 19. قواعد رفع المقياس ─ تكبير النص/التباعد عند الشاشات الأوسع ═══

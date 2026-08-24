@@ -135,6 +135,6 @@ function dotColor(name) {
     'برتقالي': '#F97316', 'برتقالية': '#F97316', 'orange': '#F97316',
   };
   for (const k in map) { if (n.includes(k)) return map[k]; }
-  return '#D9DEE7';
+  return '#E3D5D8';
 }
 </script>

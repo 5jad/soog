@@ -49,7 +49,7 @@ const open = () => {
   display: grid; place-items: center;
   background: var(--primary);
   color: var(--white);
-  box-shadow: 0 6px 16px rgba(18, 41, 78, .3);
+  box-shadow: 0 6px 16px rgba(35, 39, 62, .3);
   transition: transform var(--t-fast) var(--ease), box-shadow var(--t-fast) var(--ease);
   transform: scale(1);
 }

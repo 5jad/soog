@@ -215,7 +215,7 @@ const qColor = (v) => (Number(v) >= 80 ? 'var(--success)' : Number(v) >= 60 ? 'v
   border-radius: 18px;
   position: relative;
 }
-.slot-card.seed { border-color: rgba(18, 41, 78, .5); border-width: 1.5px; }
+.slot-card.seed { border-color: rgba(150, 100, 135, .5); border-width: 1.5px; }
 .slot-card > img { width: 64px; height: 64px; border-radius: 14px; object-fit: cover; background: var(--img-ph); flex-shrink: 0; }
 .pk-emoji { width: 64px; height: 64px; border-radius: 14px; background: var(--img-ph); display: grid; place-items: center; font-size: var(--fs-2xl); flex-shrink: 0; }
 
@@ -230,7 +230,7 @@ const qColor = (v) => (Number(v) >= 80 ? 'var(--success)' : Number(v) >= 60 ? 'v
   margin-inline-start: 6px;
   padding: 2px 8px;
   border-radius: 8px;
-  background: rgba(18, 41, 78, .08);
+  background: rgba(150, 100, 135, .1);
   color: var(--primary);
   font-size: 9.5px;
   font-weight: 800;

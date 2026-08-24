@@ -255,23 +255,23 @@ const toggleFav = async () => {
   padding: 14px;
   border: none;
   border-radius: 16px;
-  background: linear-gradient(135deg, #12294E 0%, #1D4ED8 100%);
+  background: linear-gradient(135deg, #23273E 0%, #966487 100%);
   color: var(--white);
   font-size: var(--fs-base);
   font-weight: 900;
   cursor: pointer;
-  box-shadow: 0 5px 14px rgba(18, 41, 78, .3);
+  box-shadow: 0 5px 14px rgba(35, 39, 62, .3);
   transition: transform var(--t-fast) var(--ease), box-shadow var(--t-fast) var(--ease);
 }
 .bfit .msm { font-size: 18px; }
-.bfit:hover { transform: translateY(-1px); box-shadow: 0 8px 20px rgba(18, 41, 78, .35); }
+.bfit:hover { transform: translateY(-1px); box-shadow: 0 8px 20px rgba(212, 115, 118, .3); }
 .bfit:active { transform: scale(.98); }
 
 /* معاينة الإطلالة — نفس تنسيق التطبيق */
 .outfit-preview {
   padding: 12px;
-  background: #F2F7FF;
-  border: 1px solid rgba(18, 41, 78, .25);
+  background: #F7EFF0;
+  border: 1px solid rgba(150, 100, 135, .3);
   border-radius: 16px;
   cursor: pointer;
   transition: transform var(--t-fast) var(--ease), box-shadow var(--t-fast) var(--ease);

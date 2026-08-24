@@ -48,9 +48,9 @@ const dismiss = () => {
   margin: 8px 16px 0;
   padding: 12px 14px;
   border-radius: 16px;
-  background: linear-gradient(135deg, #12294e, #161f38);
+  background: linear-gradient(135deg, #23273E, #3A3153);
   color: var(--white);
-  box-shadow: 0 5px 14px rgba(45, 105, 255, 0.3);
+  box-shadow: 0 5px 14px rgba(212, 115, 118, 0.35);
 }
 .vb-txt { flex: 1; min-width: 0; }
 .vb-txt b { display: block; font-size: 13px; }

@@ -371,7 +371,7 @@ const imgOf = (p) => S(p.image);
           </button>
           <button class="btn btn-ghost btn-md" @click="setTab('coupons')"><span class="msm">confirmation_number</span> إدارة الكوبونات</button>
         </div>
-        <div v-if="newProd" class="panel panel-pad flex-col gap-3" style="margin-block-end:var(--sp-4)">
+        <div v-if="newProd" class="panel panel-pad flex-col gap-3" style="margin-block-end:var(--sp-4);max-width:860px">
           <div class="grid gap-3" style="grid-template-columns:1fr 1fr">
             <div class="field"><label>اسم المنتج *</label><input v-model="prodForm.name" class="input" /></div>
             <div class="field"><label>السعر (د.ع) *</label><input v-model="prodForm.price" class="input" inputmode="numeric" /></div>
@@ -487,7 +487,7 @@ const imgOf = (p) => S(p.image);
           </RouterLink>
         </div>
 
-        <div v-if="storeEdit" class="panel panel-pad flex-col gap-3" style="margin-block-end:var(--sp-4)">
+        <div v-if="storeEdit" class="panel panel-pad flex-col gap-3" style="margin-block-end:var(--sp-4);max-width:720px">
           <h2 class="h3">تعديل بيانات المتجر</h2>
           <div class="field"><label>الاسم</label><input v-model="storeForm.name" class="input" /></div>
           <div class="field"><label>الوصف</label><textarea v-model="storeForm.description" class="textarea" rows="2"></textarea></div>

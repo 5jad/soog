@@ -127,6 +127,7 @@ const oneLine = (v) => String(v || '').replace(/\n/g, ' ').slice(0, 90);
 .store-hero { background: var(--surface); border: 1px solid var(--line); border-radius: var(--r-xl); overflow: hidden; box-shadow: var(--sh-sm); }
 .sh-cover { height: 150px; position: relative; }
 @media (min-width: 768px) { .sh-cover { height: 220px; } }
+@media (min-width: 1440px) { .sh-cover { height: 300px; } } /* بعرض الشاشة الكامل الغلاف يحتاج ارتفاع أكبر */
 .sh-cover img { width: 100%; height: 100%; object-fit: cover; }
 .sh-cover-fallback { width: 100%; height: 100%; background: var(--grad-primary); display: grid; place-items: center; font-family: var(--f-disp); font-size: 64px; color: rgba(255,255,255,.85); }
 .sh-info { display: flex; gap: var(--sp-3); padding: 0 var(--sp-4) var(--sp-4); align-items: flex-end; }

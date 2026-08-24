@@ -83,13 +83,14 @@
 .desc { white-space: pre-line; color: var(--ink); font-size: var(--fs-base); line-height: var(--lh); }
 
 @media (min-width: 1024px) {
-  .prod-page { grid-template-columns: 1fr 1.2fr; align-items: start; }
-  .prod-gallery { position: sticky; inset-block-start: calc(var(--header-h) + var(--sp-5)); aspect-ratio: auto; height: min(72vh, 620px); }
+  /* صفحة المنتج محتوىها قراءة/صورة — عرض مريح موسّط حتى ما تتمطي على الشاشات الواسعة */
+  .prod-page { grid-template-columns: 1fr 1.2fr; align-items: start; max-width: 1240px; margin-inline: auto; }
+  .prod-gallery { position: sticky; inset-block-start: calc(var(--header-h) + var(--sp-3)); aspect-ratio: auto; height: min(72vh, 560px); }
 }
 
 /* ═══ السلة ═══ */
 .cart-layout { display: grid; gap: var(--sp-6); align-items: start; }
-@media (min-width: 1024px) { .cart-layout { grid-template-columns: 1fr 380px; } }
+@media (min-width: 1024px) { .cart-layout { grid-template-columns: 1fr 380px; max-width: 1240px; margin-inline: auto; } }
 
 /* توست للتخفيض بالدفع */
 .coupon-line { display: flex; gap: var(--sp-2); }

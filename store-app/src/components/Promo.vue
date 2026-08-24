@@ -83,7 +83,8 @@ const go = (a) => { if (a && a.link_url && a.link_url.startsWith('/')) router.pu
   box-shadow: var(--sh-md);
 }
 @media (min-width: 768px) { .ad-stage { height: 220px; } }
-@media (min-width: 1024px) { .ad-stage { height: 260px; } }
+@media (min-width: 1024px) { .ad-stage { height: 300px; } }
+@media (min-width: 1440px) { .ad-stage { height: 380px; } } /* بعرض الشاشة الكامل البانر يحتاج ارتفاع أكبر حتى ما يصير شريط ممطوط */
 .ad-slide {
   position: absolute; inset: 0;
   opacity: 0;

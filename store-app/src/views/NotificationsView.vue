@@ -4,6 +4,7 @@ import { ref, onMounted } from 'vue';
 import { useRouter } from 'vue-router';
 import { useApp } from '../state';
 import { api, timeAgo } from '../api';
+import EmptyState from '../components/EmptyState.vue';
 
 const { state, toast } = useApp();
 const router = useRouter();
@@ -47,11 +48,7 @@ const icn = (t) => t === 'order' ? 'receipt_long' : t === 'points' ? 'stars' : t
       <h3>سجّل دخول أولاً</h3>
       <button class="btn btn-primary btn-md" @click="state.loginOpen = true">دخول / إنشاء حساب</button>
     </div>
-    <div v-else-if="!notifications.length" class="empty">
-      <span class="msm">notifications_off</span>
-      <h3>ماكو إشعارات</h3>
-      <p>ولّي إشعارات الطلبات والنقاط كلها تجي هنا</p>
-    </div>
+    <EmptyState v-else-if="!notifications.length" icon="🔔" title="ماكو إشعارات" sub="ولّي إشعارات الطلبات والنقاط كلها تجي هنا" />
     <div v-else class="flex-col gap-3" style="max-width:760px">
       <div v-for="n in notifications" :key="n.id" class="row-item" :class="{ unread: !n.read }" @click="open(n)">
         <div class="ic" :class="ic(n.type)"><span class="msm">{{ icn(n.type) }}</span></div>

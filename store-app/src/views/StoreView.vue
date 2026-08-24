@@ -4,6 +4,7 @@ import { ref, computed, onMounted, watch } from 'vue';
 import { useRoute, useRouter } from 'vue-router';
 import { api, S, fmt, isRaw, num, timeAgo } from '../api';
 import ProdCard from '../components/ProdCard.vue';
+import EmptyState from '../components/EmptyState.vue';
 
 const route = useRoute();
 const router = useRouter();
@@ -98,11 +99,7 @@ const oneLine = (v) => String(v || '').replace(/\n/g, ' ').slice(0, 90);
         <div v-if="products.length" class="products-grid">
           <ProdCard v-for="p in products" :key="p.id" :p="p" :show-store="false" variant="category" />
         </div>
-        <div v-else class="empty">
-          <span class="msm">inventory_2</span>
-          <h3>ماكو منتجات بالحالي</h3>
-          <p>رجع بعدين — المتجر يضيف منتجات كل فترة</p>
-        </div>
+        <EmptyState v-else icon="📦" title="ماكو منتجات بالحالي" sub="رجع بعدين — المتجر يضيف منتجات كل فترة" />
       </div>
 
       <div v-else class="flex-col gap-3">

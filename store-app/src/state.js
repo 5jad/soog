@@ -13,7 +13,11 @@ const state = reactive({
   cartDrawer: false,
   searchOpen: false,     // بحث الجوال: سطر إضافي بالهيدر
   searchText: '',
+  cartPop: 0,            // عداد انفجار «أُضيف للسلة» — CartPop يراقبه
 });
+
+/* انفجار إضافة السلة — تشغيل مرة واحدة لكل إضافة */
+export const cartPop = () => { state.cartPop += 1; };
 
 const toasts = reactive([]);
 
@@ -82,6 +86,7 @@ export function useApp() {
     bumpCart,
     refreshFavsCount,
     bumpFavs,
+    cartPop,
     closeAll() { state.loginOpen = false; state.cartDrawer = false; },
   };
 }

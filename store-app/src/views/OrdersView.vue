@@ -1,9 +1,12 @@
 <script setup>
 /* ═══ طلباتي — بطاقات الطلبات مع الحالة والإجراءات ═══ */
-import { ref, onMounted } from 'vue';
+import { ref, onMounted, onBeforeUnmount } from 'vue';
 import { useRouter } from 'vue-router';
 import { useApp } from '../state';
 import { api, S, fmt, st, fmtDate, isRaw } from '../api';
+import { usePullRefresh } from '../composables/useGestures';
+import EmptyState from '../components/EmptyState.vue';
+import StateLoader from '../components/StateLoader.vue';
 
 const { state, toast } = useApp();
 const router = useRouter();
@@ -11,13 +14,20 @@ const router = useRouter();
 const orders = ref([]);
 const loading = ref(true);
 
-onMounted(async () => {
+const load = async () => {
   if (!state.user) { loading.value = false; return; }
+  loading.value = true;
   try {
     const d = await api('/api/customer/orders');
     orders.value = d.orders || d || [];
   } catch (_) { orders.value = []; }
   loading.value = false;
+};
+
+onMounted(() => {
+  load();
+  const stopPull = usePullRefresh(load);   /* سحب للأسفل يحدّث */
+  onBeforeUnmount(() => stopPull?.());
 });
 
 const itemsOf = (o) => o.items || [];
@@ -35,18 +45,13 @@ const cancel = async (o) => {
   <div class="container-narrow">
     <div class="page-head"><h1>طلباتي</h1><p class="sub">تابع طلباتك وتوصيلها</p></div>
 
-    <div v-if="loading" class="loader-block"><div class="loader"></div></div>
+    <div v-if="loading && !orders.length" class="loader-block"><StateLoader /></div>
     <div v-else-if="!state.user" class="empty">
       <span class="msm">lock</span>
       <h3>سجّل دخول أولاً</h3>
       <button class="btn btn-primary btn-md" @click="state.loginOpen = true">دخول / إنشاء حساب</button>
     </div>
-    <div v-else-if="!orders.length" class="empty">
-      <span class="msm">receipt_long</span>
-      <h3>ماكو طلبات بعد</h3>
-      <p>أول طلبك وبصير بالبيج هذا مباشرة</p>
-      <button class="btn btn-accent btn-md" @click="router.push('/stores')">تسوق الآن</button>
-    </div>
+<EmptyState v-else-if="!orders.length" icon="🧾" title="ماكو طلبات بعد" sub="أول طلبك وبصير بالبيج هذا مباشرة" />
 
     <div v-else class="flex-col gap-4" style="max-width:860px">
       <article v-for="o in orders" :key="o.id" class="order-card">

@@ -14,7 +14,7 @@ const props = defineProps({
 });
 const emit = defineEmits(['remove-fav', 'added']);
 
-const { state, toast, bumpCart, refreshCartCount, bumpFavs } = useApp();
+const { state, toast, bumpCart, refreshCartCount, bumpFavs, cartPop } = useApp();
 
 const img = computed(() => S(props.p.image || props.p.cover));
 const emoji = computed(() => (!img.value || isRaw(img.value)) ? emojiOf(props.p) : '');
@@ -56,6 +56,7 @@ const addToCart = async (e) => {
     if (d.count !== undefined) state.cartCount = d.count;
     else bumpCart(1);
     toast('أُضيف للسلة');
+    cartPop();
     emit('added');
   } catch (e2) {
     toast(e2.message, false);

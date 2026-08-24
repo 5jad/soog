@@ -7,6 +7,7 @@ import { useRoute } from 'vue-router';
 import { api } from '../api';
 import { loadCategories } from '../state';
 import ProdCard from '../components/ProdCard.vue';
+import EmptyState from '../components/EmptyState.vue';
 
 const route = useRoute();
 const products = ref([]);
@@ -180,11 +181,7 @@ const clearFilters = () => { sort.value = 'new'; minP.value = ''; maxP.value = '
       <div v-else-if="products.length" class="products-grid">
         <ProdCard v-for="p in products" :key="p.id" :p="p" variant="category" />
       </div>
-      <div v-else class="empty">
-        <span class="msm">search_off</span>
-        <h3>ماكو نتائج</h3>
-        <p>جرب كلمات أخرى أو أزل الفلاتر</p>
-      </div>
+      <EmptyState v-else lottie="no_results" icon="🔍" title="ماكو نتائج" sub="جرب كلمات أخرى أو أزل الفلاتر" />
     </template>
 
     <!-- التصنيفات: كل فئة بصفّين + عرض الكل -->
@@ -210,11 +207,7 @@ const clearFilters = () => { sort.value = 'new'; minP.value = ''; maxP.value = '
             />
           </div>
         </section>
-        <div v-if="!groups.length" class="empty">
-          <span class="msm">storefront</span>
-          <h3>ماكو منتجات بعد</h3>
-          <p>لحظة — المتاجر تسجّل منتجاتها هسه</p>
-        </div>
+        <EmptyState v-if="!groups.length" icon="📦" title="ماكو منتجات بعد" sub="لحظة — المتاجر تسجّل منتجاتها هسه" />
       </template>
     </template>
   </div>

@@ -3,6 +3,7 @@
 import { ref, onMounted } from 'vue';
 import { useApp } from '../state';
 import { api, fmt, timeAgo, copy } from '../api';
+import EmptyState from '../components/EmptyState.vue';
 
 const { state, toast } = useApp();
 
@@ -67,10 +68,7 @@ const copyCode = async () => {
       <!-- السجل -->
       <section class="panel panel-pad">
         <h2 class="h3" style="margin-block-end:var(--sp-3)">سجل النقاط</h2>
-        <div v-if="!transactions.length" class="empty" style="padding:var(--sp-6)">
-          <span class="msm">receipt_long</span>
-          <p>أول طلب يعني أول نقاط — سجل دخول وتسوق</p>
-        </div>
+        <EmptyState v-if="!transactions.length" icon="🌟" title="سجل النقاط فاضي" sub="أول طلب يعني أول نقاط — سجل دخول وتسوق" />
         <div v-else class="flex-col gap-2">
           <div v-for="tr in transactions" :key="tr.id" class="info-row">
             <span class="k"><span class="msm">{{ tr.points > 0 ? 'add_circle' : 'remove_circle' }}</span> {{ tr.note || 'نقاط' }} <small style="color:var(--line-strong)">· {{ timeAgo(tr.created_at) }}</small></span>

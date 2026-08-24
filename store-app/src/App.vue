@@ -8,6 +8,8 @@ import AppFooter from './components/AppFooter.vue';
 import CartDrawer from './components/CartDrawer.vue';
 import LoginModal from './components/LoginModal.vue';
 import FloatingCartFab from './components/FloatingCartFab.vue';
+import CartPop from './components/CartPop.vue';
+import VersionBanner from './components/VersionBanner.vue';
 
 const { loadMe, refreshCartCount, refreshFavsCount, toasts } = useApp();
 
@@ -27,6 +29,7 @@ onMounted(async () => {
       </div>
     </main>
     <AppFooter />
+    <VersionBanner />
     <AppBottomNav />
     <FloatingCartFab />
 
@@ -41,6 +44,7 @@ onMounted(async () => {
     </div>
 
     <CartDrawer />
+    <CartPop />
     <LoginModal />
   </div>
 </template>

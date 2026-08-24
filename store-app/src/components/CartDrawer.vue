@@ -1,9 +1,12 @@
 <script setup>
 /* ═══ دراور السلة — موبايل: ورقة تصعد من تحت · ديسكتوب: من الجانب ═══ */
-import { ref, computed, onMounted } from 'vue';
+import { ref, computed, onMounted, onBeforeUnmount } from 'vue';
 import { useRouter } from 'vue-router';
 import { useApp } from '../state';
 import { api, S, fmt, priceOf, isRaw, emojiOf } from '../api';
+import { bindDismissDrag } from '../composables/useGestures';
+import EmptyState from './EmptyState.vue';
+import StateLoader from './StateLoader.vue';
 
 const { state, toast, refreshCartCount } = useApp();
 const router = useRouter();
@@ -52,6 +55,13 @@ const remove = async (it) => {
 
 const close = () => { state.cartDrawer = false; };
 const checkout = () => { close(); router.push('/checkout'); };
+
+/* سحب للأسفل على اللوحة يقفل الدروار (مثل الموبايل) */
+const panelEl = ref(null);
+onMounted(() => {
+  const stop = bindDismissDrag(panelEl.value, { onClose: close });
+  onBeforeUnmount(() => stop?.());
+});
 </script>
 
 <template>
@@ -59,20 +69,16 @@ const checkout = () => { close(); router.push('/checkout'); };
     <Transition name="fade">
       <div v-if="state.cartDrawer" class="drawer-mask" @click.self="close">
         <div class="scrim"></div>
-        <aside class="drawer-panel">
+        <aside ref="panelEl" class="drawer-panel">
+          <div class="grab-handle" aria-hidden="true"></div>
           <div class="drawer-head">
             <h3>سلة التسوق <small class="num" style="color:var(--muted)">({{ count }})</small></h3>
             <button class="modal-close" aria-label="إغلاق" @click="close"><span class="msm">close</span></button>
           </div>
 
           <div class="drawer-body">
-            <div v-if="loading" class="loader-block"><div class="loader"></div></div>
-            <div v-else-if="!items.length" class="empty">
-              <span class="msm">shopping_bag</span>
-              <h3>سلتك فاضية</h3>
-              <p>زر المتاجر واختار ما يعجبك — التوصيل يستغرق 30–60 دقيقة</p>
-              <button class="btn btn-primary btn-md" @click="close; router.push('/stores')">تسوق الآن</button>
-            </div>
+            <div v-if="loading" class="loader-block" style="padding:var(--sp-6)"><StateLoader :width="54" :height="54" /></div>
+            <EmptyState v-else-if="!items.length" icon="🛍️" title="سلتك فاضية" sub="زر المتاجر واختار ما يعجبك — التوصيل يستغرق 30–60 دقيقة" action="تسوق الآن" @act="close; router.push('/stores')" />
             <template v-else>
               <div v-for="it in items" :key="it.id" class="line-item">
                 <div class="th">

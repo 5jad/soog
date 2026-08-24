@@ -2,10 +2,12 @@
 /* ═══ نافذة الدخول/التسجيل — موبايل: ورقة · ديسكتوب: مركزية ═══
    التسجيل نموذج واحد بكل التفاصيل ظاهرة: الأدوار + الرقم + الاسم + الباس
    + شريط تحقق تلغرام + الرمز — بدل الخطوات المخفية */
-import { ref, onMounted, onUnmounted } from 'vue';
+import { ref, watch, onMounted, onUnmounted } from 'vue';
 import { useRouter } from 'vue-router';
 import { useApp } from '../state';
 import { api, norm } from '../api';
+import { bindDismissDrag } from '../composables/useGestures';
+import LottieBox from './LottieBox.vue';
 
 const { state, toast, setToken, loadMe, refreshCartCount, closeAll } = useApp();
 const router = useRouter();
@@ -60,6 +62,18 @@ onMounted(async () => {
   } catch (_) {}
 });
 
+/* سحب للأسفل على اللوحة يقفل النافذة — يُربط كل مرة تفتح */
+const panelEl = ref(null);
+let stopDismiss = null;
+watch(() => state.loginOpen, (open) => {
+  if (open) {
+    requestAnimationFrame(() => { stopDismiss = bindDismissDrag(panelEl.value, { onClose: close }); });
+  } else {
+    stopDismiss?.(); stopDismiss = null;
+  }
+});
+onUnmounted(() => stopDismiss?.());
+
 const doLogin = async () => {
   err.value = '';
   if (!norm(phone.value) || !password.value) { err.value = 'أدخل الرقم وكلمة المرور'; return; }
@@ -71,6 +85,10 @@ const doLogin = async () => {
     refreshCartCount();
     toast(`أهلاً ${d.user.name || 'بك'} 👋`);
     close();
+    /* كل حساب يروح لصفحته: تاجر → لوحته، مندوب → لوحته، أدمن → اللوحة الخارجية */
+    if (d.user?.role === 'vendor') router.push('/vendor');
+    else if (d.user?.role === 'delivery') router.push('/delivery');
+    else if (d.user?.role === 'admin') router.push('/admin');
   } catch (e) { err.value = e.message; }
   busy.value = false;
 };
@@ -158,7 +176,8 @@ const switchTab = (t) => { tab.value = t; err.value = ''; };
   <Teleport to="body">
     <Transition name="fade">
       <div v-if="state.loginOpen" class="modal-mask" @click.self="close">
-        <div class="modal-panel">
+        <div ref="panelEl" class="modal-panel">
+          <div class="grab-handle" style="margin-block-start:8px" aria-hidden="true"></div>
           <div class="modal-head">
             <h3>{{ tab === 'login' ? 'تسجيل الدخول' : 'حساب جديد' }}</h3>
             <button class="modal-close" aria-label="إغلاق" @click="close"><span class="msm">close</span></button>
@@ -239,7 +258,7 @@ const switchTab = (t) => { tab.value = t; err.value = ''; };
                 </div>
                 <template v-if="regStarted">
                   <div class="flex gap-2" style="align-items:center;margin-block:var(--sp-3)">
-                    <div class="loader"></div>
+                    <LottieBox asset-key="main_loader" :loop="true" :width="44" :height="44" fallback="🛵" />
                     <span class="text-sm text-muted">بنتظر التحقق…</span>
                   </div>
                   <a class="btn btn-soft btn-md" :href="`https://t.me/${regBot}?start=${regToken}`" target="_blank">
@@ -248,8 +267,9 @@ const switchTab = (t) => { tab.value = t; err.value = ''; };
                 </template>
                 <button v-else type="button" class="btn btn-soft btn-md" style="margin-block-start:var(--sp-3)" @click="startReg">ابدأ التحقق عبر تلغرام</button>
               </div>
-              <div v-else class="panel panel-pad text-sm" style="background:var(--bg-blue-soft);border-radius:var(--r-md)">
-                ✅ تحقق الرقم من البوت — اكتب الرمز اللي دزّه لك وكمّل بياناتك
+              <div v-else class="panel panel-pad text-sm" style="background:var(--bg-blue-soft);border-radius:var(--r-md);display:flex;gap:10px;align-items:center">
+                <LottieBox asset-key="order_success" :width="52" :height="52" fallback="✅" />
+                <span>تحقق الرقم من البوت — اكتب الرمز اللي دزّه لك وكمّل بياناتك</span>
               </div>
 
               <div class="field">

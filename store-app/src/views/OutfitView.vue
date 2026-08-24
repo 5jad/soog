@@ -6,6 +6,7 @@ import { ref, computed, onMounted } from 'vue';
 import { useRoute, useRouter } from 'vue-router';
 import { useApp } from '../state';
 import { api, S, fmt, isRaw, emojiOf } from '../api';
+import EmptyState from '../components/EmptyState.vue';
 
 const route = useRoute();
 const router = useRouter();
@@ -183,12 +184,7 @@ const qColor = (v) => (Number(v) >= 80 ? 'var(--success)' : Number(v) >= 60 ? 'v
       </div>
     </template>
 
-    <div v-else class="empty">
-      <span class="msm">sentiment_dissatisfied</span>
-      <h3>تعذر تحميل الإطلالة</h3>
-      <p>جرب مرة ثانية أو اختر قطعة أخرى</p>
-      <button class="btn btn-primary btn-md" @click="router.back()">رجوع</button>
-    </div>
+    <EmptyState v-else icon="😕" title="تعذر تحميل الإطلالة" sub="جرب مرة ثانية أو اختر قطعة أخرى" action="رجوع" @act="router.back()" />
   </div>
 </template>
 

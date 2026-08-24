@@ -1,10 +1,39 @@
 <script setup>
 /* ═══ لوحة التاجر — إحصائيات + طلبات + منتجات + محفظة + متجر ═══ */
-import { ref, computed, onMounted } from 'vue';
+import { ref, computed, onMounted, onBeforeUnmount, watch } from 'vue';
+import { useRoute, useRouter } from 'vue-router';
 import { useApp } from '../state';
 import { api, fmt, st, S, isRaw, num, timeAgo } from '../api';
+import { bindSwipeTabs } from '../composables/useGestures';
+import EmptyState from '../components/EmptyState.vue';
+import StateLoader from '../components/StateLoader.vue';
 
 const { state, toast, refreshCartCount } = useApp();
+const route = useRoute();
+const router = useRouter();
+
+/* تبديل التبويب + تزامن الـ URL مع الشريط السفلي */
+const setTab = (t) => {
+  tab.value = t;
+  router.replace({ path: '/vendor', query: { tab: t } });
+};
+
+/* سحب أفقي فوق محتوى اللوحة يبدّل بين الصفحات */
+const pagesEl = ref(null);
+const swipeTab = (d) => {
+  const i = TAB_KEYS.indexOf(tab.value);
+  setTab(TAB_KEYS[(i + d + TAB_KEYS.length) % TAB_KEYS.length]);
+};
+
+/* عنوان الصفحة — كل قسم عنوانه الخاص (مثل الموبايل) */
+const headTitle = computed(() => ({ orders: 'الطلبات', products: 'منتجاتي', store: 'متجري', wallet: 'المحفظة والسحب', coupons: 'الكوبونات', week: 'أرباح الأسبوع' }[tab.value] || 'لوحة التاجر'));
+const headSub = computed(() => ({ orders: 'استقبل طلبات متجرك وجهّزها', products: 'أضف وعدّل منتجات متجرك', store: store.value?.name || 'بيانات متجرك', wallet: 'رصيدك وسحبك وأرباحك', coupons: 'خصومات توزعها على زبونك', week: 'توزيع أرباحك يوم بيوم' }[tab.value] || ''));
+
+/* تبويبات اللوحة تطابق query — الشريط السفلي يوصل بـ /vendor?tab=… */
+const TAB_KEYS = ['orders', 'products', 'store', 'coupons', 'wallet', 'week'];
+watch(() => route.query.tab, (v) => {
+  if (v && TAB_KEYS.includes(v)) tab.value = v;
+}, { immediate: true });
 
 const tab = ref('orders');
 const store = ref(null);
@@ -58,6 +87,9 @@ const loadAll = async () => {
   loading.value = false;
 };
 onMounted(async () => {
+  const stopSw = bindSwipeTabs(pagesEl.value, { onPrev: () => swipeTab(-1), onNext: () => swipeTab(1) });
+  onBeforeUnmount(() => stopSw?.());
+  if (!route.query.tab) router.replace({ path: '/vendor', query: { tab: tab.value } }); /* توحيد الـ URL مع الشريط السفلي */
   try { const c = await api('/api/categories'); cats.value = c.categories || []; } catch (_) {}
   loadAll();
 });
@@ -116,13 +148,19 @@ const addProduct = async () => {
   if (!f.name.trim() || !f.price || !f.category_id) { toast('أكمل اسم المنتج والسعر والتصنيف', false); return; }
   busy.value = true;
   try {
-    const d = await api('/api/vendor/products', { method: 'POST', body: JSON.stringify({ name: f.name.trim(), price: Number(f.price), category_id: Number(f.category_id), description: f.description.trim() }) });
+    const d = await api('/api/vendor/products', { method: 'POST', body: JSON.stringify({ name: f.name.trim(), price: Number(f.price), category_id: Number(f.category_id), description: f.description.trim(), images: prodImgs.value }) });
     products.value.unshift(d.product);
     newProd.value = false;
     prodForm.value = { name: '', price: '', category_id: '', description: '' };
+    prodImgs.value = [];
     toast('أُضيف المنتج');
   } catch (e) { toast(e.message, false); }
   busy.value = false;
+};
+
+/* فتح نموذج التعديل — نطبع نسخة مع مصفوفة صور مضمونة */
+const openEdit = (p) => {
+  editProd.value = { ...p, images: Array.isArray(p.images) ? [...p.images] : [] };
 };
 
 const saveProduct = async () => {
@@ -131,6 +169,7 @@ const saveProduct = async () => {
   try {
     const d = await api(`/api/vendor/products/${editProd.value.id}`, { method: 'PATCH', body: JSON.stringify({
       name: editProd.value.name, price: Number(editProd.value.price), description: editProd.value.description || '',
+      images: editProd.value.images || [],
     }) });
     const i = products.value.findIndex((x) => x.id === editProd.value.id);
     if (i > -1) products.value[i] = d.product;
@@ -138,6 +177,60 @@ const saveProduct = async () => {
     toast('حُدّث المنتج');
   } catch (e) { toast(e.message, false); }
   busy.value = false;
+};
+
+/* ═══ صور المنتج — رفع متعدد (حتى 8) بنفس مسار تطبيق الموبايل ═══ */
+const MAX_IMGS = 8;
+const prodImgs = ref([]);      /* صور النموذج الجديد */
+const imgBusy = ref(false);
+const imgInput = ref(null);    /* input[type=file] مخفي */
+let imgTarget = 'new';         /* وين تنضاف الصور: new | edit */
+
+/* ضغط الصورة بالمتصفح قبل الرفع — أقصى 1200px بجودة 82% */
+const compressImg = (file) => new Promise((resolve, reject) => {
+  const url = URL.createObjectURL(file);
+  const img = new Image();
+  img.onload = () => {
+    const k = Math.min(1, 1200 / Math.max(img.width, img.height));
+    const c = document.createElement('canvas');
+    c.width = Math.max(1, Math.round(img.width * k));
+    c.height = Math.max(1, Math.round(img.height * k));
+    c.getContext('2d').drawImage(img, 0, 0, c.width, c.height);
+    URL.revokeObjectURL(url);
+    resolve(c.toDataURL('image/jpeg', 0.82));
+  };
+  img.onerror = () => { URL.revokeObjectURL(url); reject(new Error('صورة غير صالحة')); };
+  img.src = url;
+});
+
+const imgsList = () => (imgTarget === 'edit' ? editProd.value?.images ?? [] : prodImgs.value);
+
+const pickImages = (target) => {
+  if (imgBusy.value) return;
+  imgTarget = target;
+  imgInput.value?.click();
+};
+
+const onImagesPicked = async (e) => {
+  const files = [...(e.target.files || [])];
+  e.target.value = '';
+  if (!files.length) return;
+  const room = MAX_IMGS - imgsList().length;
+  if (room <= 0) { toast(`أكثر ${MAX_IMGS} صور للمنتج`, false); return; }
+  if (files.length > room) toast(`المكان يكفي ${room} صور بس — الباقي تجاهلناه`, false);
+  imgBusy.value = true;
+  try {
+    const dataUris = [];
+    for (const f of files.slice(0, room)) dataUris.push(await compressImg(f));
+    const d = await api('/api/uploads/upload', { method: 'POST', body: JSON.stringify({ files: dataUris }) });
+    imgsList().push(...(d.urls || []));
+    toast('انضافت الصور ✓');
+  } catch (err) { toast(err.message, false); }
+  imgBusy.value = false;
+};
+
+const removeImage = (target, i) => {
+  (target === 'edit' ? editProd.value?.images : prodImgs.value)?.splice(i, 1);
 };
 
 const removeProduct = async (p) => {
@@ -191,9 +284,9 @@ const imgOf = (p) => S(p.image);
 
 <template>
   <div class="container-narrow">
-    <div class="page-head"><h1>لوحة التاجر</h1><p class="sub">{{ store?.name || 'متجرك' }}</p></div>
+    <div class="page-head"><h1>{{ headTitle }}</h1><p class="sub">{{ headSub || store?.name }}</p></div>
 
-    <div v-if="loading" class="loader-block"><div class="loader"></div></div>
+    <div v-if="loading" class="loader-block"><StateLoader /></div>
     <div v-else-if="!state.user" class="empty">
       <span class="msm">lock</span>
       <h3>سجّل دخول بحساب تاجر</h3>
@@ -218,100 +311,66 @@ const imgOf = (p) => S(p.image);
         <button class="btn btn-primary btn-lg btn-block" :disabled="createBusy" @click="createStore">{{ createBusy ? '…' : 'أنشئ متجري' }}</button>
       </div>
 
-      <div v-else>
-      <!-- شريط المتجر / الإجازة -->
-      <div class="flex gap-3 wrap" style="margin-block-end:var(--sp-5)">
-        <div class="panel panel-pad flex-1 flex between gap-3" style="flex-wrap:wrap">
-          <div>
-            <b style="font-size:var(--fs-lg)">{{ store?.name }}</b>
-            <p class="text-xs text-muted">{{ store?.status === 'approved' ? '✅ متجر موثق ونشط' : '⏳ بانتظار توثيق الأدمن' }}</p>
-          </div>
-          <button class="btn btn-outline btn-sm" @click="storeEdit = !storeEdit">تعديل المتجر</button>
-          <button class="btn" :class="vacay ? 'btn-accent btn-sm' : 'btn-ghost btn-sm'" @click="toggleVacay">
-            {{ vacay ? 'رجّع المتجر للعمل' : 'ويا إجازة' }}
-          </button>
+      <div v-else ref="pagesEl">
+      <!-- ═══ الصفحة: الطلبات ═══ -->
+      <template v-if="tab === 'orders'">
+        <!-- الإحصائيات — ملخص سريع بصفحة الطلبات -->
+        <div v-if="stats" class="stat-grid" style="margin-block-end:var(--sp-5)">
+          <div class="stat"><span class="msm">receipt_long</span><span class="n num">{{ stats.orders_total ?? orders.length }}</span><span class="l">إجمالي الطلبات</span></div>
+          <div class="stat"><span class="msm">trending_up</span><span class="n num">{{ fmt(totalEarn) }}</span><span class="l">إجمالي الأرباح</span></div>
+          <div class="stat"><span class="msm">inventory_2</span><span class="n num">{{ products.length }}</span><span class="l">المنتجات</span></div>
+          <div class="stat"><span class="msm">local_fire_department</span><span class="n num">{{ stats.offers_active ?? products.filter((p) => p.has_offer).length }}</span><span class="l">عروض مفعلة</span></div>
         </div>
-        <div class="wallet-card">
-          <div class="l">💰 المحفظة</div>
-          <div class="n num">{{ fmt(wallet?.balance || 0) }}</div>
-          <div class="l">أرباح اليوم: {{ fmt(wallet?.today || 0) }} · معلقة: {{ fmt(wallet?.pending || 0) }}</div>
-        </div>
-      </div>
 
-      <div v-if="storeEdit" class="panel panel-pad flex-col gap-3" style="margin-block-end:var(--sp-5)">
-        <h2 class="h3">تعديل بيانات المتجر</h2>
-        <div class="field"><label>الاسم</label><input v-model="storeForm.name" class="input" /></div>
-        <div class="field"><label>الوصف</label><textarea v-model="storeForm.description" class="textarea" rows="2"></textarea></div>
-        <div class="grid gap-3" style="grid-template-columns:1fr 1fr">
-          <div class="field"><label>سعر التوصيل (د.ع)</label><input v-model="storeForm.delivery_fee" class="input" inputmode="numeric" /></div>
-          <div class="field"><label>توصيل مجاني فوق (د.ع)</label><input v-model="storeForm.free_delivery_min" class="input" inputmode="numeric" /></div>
-        </div>
-        <button class="btn btn-primary btn-md" :disabled="busy" @click="saveStore">حفظ</button>
-      </div>
-
-      <!-- الإحصائيات -->
-      <div v-if="stats" class="stat-grid" style="margin-block-end:var(--sp-5)">
-        <div class="stat"><span class="msm">receipt_long</span><span class="n num">{{ stats.orders_total ?? orders.length }}</span><span class="l">إجمالي الطلبات</span></div>
-        <div class="stat"><span class="msm">trending_up</span><span class="n num">{{ fmt(totalEarn) }}</span><span class="l">إجمالي الأرباح</span></div>
-        <div class="stat"><span class="msm">inventory_2</span><span class="n num">{{ products.length }}</span><span class="l">المنتجات</span></div>
-        <div class="stat"><span class="msm">local_fire_department</span><span class="n num">{{ stats.offers_active ?? products.filter((p) => p.has_offer).length }}</span><span class="l">عروض مفعلة</span></div>
-      </div>
-
-      <!-- التبويبات -->
-      <div class="tabs">
-        <button class="tab" :class="{ active: tab === 'orders' }" @click="tab = 'orders'">الطلبات</button>
-        <button class="tab" :class="{ active: tab === 'products' }" @click="tab = 'products'">المنتجات</button>
-        <button class="tab" :class="{ active: tab === 'coupons' }" @click="tab = 'coupons'">الكوبونات</button>
-        <button class="tab" :class="{ active: tab === 'wallet' }" @click="tab = 'wallet'">المحفظة والسحب</button>
-        <button class="tab" :class="{ active: tab === 'week' }" @click="tab = 'week'">أرباح الأسبوع</button>
-      </div>
-
-      <!-- ═══ الطلبات ═══ -->
-      <div v-if="tab === 'orders'" class="flex-col gap-3">
-        <div class="filter-row">
+        <div class="filter-row" style="margin-block-end:var(--sp-3)">
           <button class="chip" :class="{ active: statusFilter === 'all' }" @click="statusFilter = 'all'">الكل</button>
           <button v-for="s in ['new','pending','ready','delivering','delivered','cancelled']" :key="s" class="chip" :class="{ active: statusFilter === s }" @click="statusFilter = s">{{ st(s)[0] }}</button>
         </div>
-        <div v-if="!filteredOrders.length" class="empty"><span class="msm">inbox</span><h3>ماكو طلبات</h3><p>تصلك الطلبات جديدة هنا فور وصولها</p></div>
-        <article v-for="o in filteredOrders" :key="o.id" class="order-card">
-          <div class="order-head">
-            <div class="flex-col gap-1">
-              <span class="num">{{ o.code }}</span>
-              <span class="date">{{ timeAgo(o.created_at) }} · {{ o.items?.length || 0 }} عناصر</span>
-            </div>
-            <div class="flex gap-2 wrap" style="align-items:center">
-              <span class="num" style="font-weight:800">{{ fmt(o.total) }}</span>
-              <span class="st-pill" :class="st(o.status)[1]"><span class="dot"></span>{{ st(o.status)[0] }}</span>
-            </div>
-          </div>
-          <div class="order-body">
-            <div v-if="o.address_text" class="text-xs text-muted" style="margin-block-end:var(--sp-2)">📍 {{ o.address_text }}</div>
-            <div v-for="it in (o.items || [])" :key="it.id" class="line-item" style="padding-block:var(--sp-2)">
-              <div class="th" style="width:48px;height:48px"><span class="emoji" :style="it.name">{{ it.name.slice(0,1) }}</span></div>
-              <div class="meta">
-                <span class="name">{{ it.name }} <small v-if="it.variant" class="variant">({{ it.variant }})</small></span>
-                <div class="prow"><span class="price num">{{ fmt(it.price) }}</span><span class="text-xs text-muted">× {{ it.qty }}</span></div>
+        <div class="flex-col gap-3">
+          <EmptyState v-if="!filteredOrders.length" icon="📥" title="ماكو طلبات" sub="تصلك الطلبات جديدة هنا فور وصولها" />
+          <article v-for="o in filteredOrders" :key="o.id" class="order-card">
+            <div class="order-head">
+              <div class="flex-col gap-1">
+                <span class="num">{{ o.code }}</span>
+                <span class="date">{{ timeAgo(o.created_at) }} · {{ o.items?.length || 0 }} عناصر</span>
+              </div>
+              <div class="flex gap-2 wrap" style="align-items:center">
+                <span class="num" style="font-weight:800">{{ fmt(o.total) }}</span>
+                <span class="st-pill" :class="st(o.status)[1]"><span class="dot"></span>{{ st(o.status)[0] }}</span>
               </div>
             </div>
-          </div>
-          <div class="order-foot" style="flex-wrap:wrap">
-            <span class="text-xs text-muted">👤 {{ o.user_name }} · {{ o.phone ? o.phone : '' }}</span>
-            <div class="order-actions">
-              <button v-if="o.status === 'new'" class="btn btn-primary btn-sm" @click="setStatus(o, 'pending')">قبول الطلب</button>
-              <button v-if="o.status === 'pending'" class="btn btn-primary btn-sm" @click="setStatus(o, 'ready')">جهّز الطلب</button>
-              <button v-if="o.status === 'ready'" class="btn btn-soft btn-sm" disabled>بانتظار المندوب</button>
-              <button v-if="o.status === 'delivering'" class="btn btn-ghost btn-sm" disabled>بالتوصيل…</button>
-              <button v-if="['new','pending'].includes(o.status)" class="btn btn-ghost btn-sm text-danger" @click="setStatus(o, 'cancelled')">إلغاء</button>
+            <div class="order-body">
+              <div v-if="o.address_text" class="text-xs text-muted" style="margin-block-end:var(--sp-2)">📍 {{ o.address_text }}</div>
+              <div v-for="it in (o.items || [])" :key="it.id" class="line-item" style="padding-block:var(--sp-2)">
+                <div class="th" style="width:48px;height:48px"><span class="emoji" :style="it.name">{{ it.name.slice(0,1) }}</span></div>
+                <div class="meta">
+                  <span class="name">{{ it.name }} <small v-if="it.variant" class="variant">({{ it.variant }})</small></span>
+                  <div class="prow"><span class="price num">{{ fmt(it.price) }}</span><span class="text-xs text-muted">× {{ it.qty }}</span></div>
+                </div>
+              </div>
             </div>
-          </div>
-        </article>
-      </div>
+            <div class="order-foot" style="flex-wrap:wrap">
+              <span class="text-xs text-muted">👤 {{ o.user_name }} · {{ o.phone ? o.phone : '' }}</span>
+              <div class="order-actions">
+                <button v-if="o.status === 'new'" class="btn btn-primary btn-sm" @click="setStatus(o, 'pending')">قبول الطلب</button>
+                <button v-if="o.status === 'pending'" class="btn btn-primary btn-sm" @click="setStatus(o, 'ready')">جهّز الطلب</button>
+                <button v-if="o.status === 'ready'" class="btn btn-soft btn-sm" disabled>بانتظار المندوب</button>
+                <button v-if="o.status === 'delivering'" class="btn btn-ghost btn-sm" disabled>بالتوصيل…</button>
+                <button v-if="['new','pending'].includes(o.status)" class="btn btn-ghost btn-sm text-danger" @click="setStatus(o, 'cancelled')">إلغاء</button>
+              </div>
+            </div>
+          </article>
+        </div>
+      </template>
 
-      <!-- ═══ المنتجات ═══ -->
-      <div v-if="tab === 'products'">
-        <button class="btn btn-accent btn-md" style="margin-block-end:var(--sp-4)" @click="newProd = !newProd">
-          <span class="msm">add</span> {{ newProd ? 'إغلاق' : 'منتج جديد' }}
-        </button>
+      <!-- ═══ الصفحة: المنتجات ═══ -->
+      <template v-else-if="tab === 'products'">
+        <div class="flex gap-2 wrap" style="margin-block-end:var(--sp-4)">
+          <button class="btn btn-accent btn-md" @click="newProd = !newProd">
+            <span class="msm">add</span> {{ newProd ? 'إغلاق' : 'منتج جديد' }}
+          </button>
+          <button class="btn btn-ghost btn-md" @click="setTab('coupons')"><span class="msm">confirmation_number</span> إدارة الكوبونات</button>
+        </div>
         <div v-if="newProd" class="panel panel-pad flex-col gap-3" style="margin-block-end:var(--sp-4)">
           <div class="grid gap-3" style="grid-template-columns:1fr 1fr">
             <div class="field"><label>اسم المنتج *</label><input v-model="prodForm.name" class="input" /></div>
@@ -322,10 +381,24 @@ const imgOf = (p) => S(p.image);
             <select v-model="prodForm.category_id" class="select"><option value="">اختر…</option><option v-for="c in cats" :key="c.id" :value="c.id">{{ c.name }}</option></select>
           </div>
           <div class="field"><label>الوصف</label><textarea v-model="prodForm.description" class="textarea" rows="2"></textarea></div>
+          <!-- ═══ صور المنتج (حتى 8) ═══ -->
+          <div class="field">
+            <label>الصور <span class="hint">({{ prodImgs.length }}/8) — اختياري، أول صورة تصير الغلاف</span></label>
+            <div class="img-strip">
+              <div v-for="(u, i) in prodImgs" :key="u" class="img-chip">
+                <img :src="S(u)" alt="" />
+                <button type="button" class="chip-x" aria-label="حذف الصورة" @click="removeImage('new', i)">×</button>
+              </div>
+              <button v-if="prodImgs.length < 8" type="button" class="add-img" :disabled="imgBusy" @click="pickImages('new')">
+                <span class="msm">{{ imgBusy ? 'progress_activity' : 'add_a_photo' }}</span>
+                <small>{{ imgBusy ? 'جاري الرفع…' : 'أضف صور' }}</small>
+              </button>
+            </div>
+          </div>
           <button class="btn btn-primary btn-md" :disabled="busy" @click="addProduct">إضافة</button>
         </div>
 
-        <div v-if="!products.length" class="empty"><span class="msm">inventory_2</span><h3>ماكو منتجات</h3><p>أضف أول منتج لمتجرك</p></div>
+        <EmptyState v-if="!products.length" icon="📦" title="ماكو منتجات" sub="أضف أول منتج لمتجرك" />
         <div v-else class="table-wrap">
           <table class="dash">
             <thead><tr><th>المنتج</th><th>السعر</th><th>المخزون</th><th>العرض</th><th>حالة</th><th></th></tr></thead>
@@ -354,7 +427,7 @@ const imgOf = (p) => S(p.image);
                 <td><span class="badge" :class="p.is_available ? 'badge-new' : 'badge-sold'">{{ p.is_available ? 'متاح' : 'موقوف' }}</span></td>
                 <td>
                   <div class="flex gap-1">
-                    <button class="x" aria-label="تعديل" @click="editProd = { ...p }"><span class="msm" style="font-size:18px">edit</span></button>
+                    <button class="x" aria-label="تعديل" @click="openEdit(p)"><span class="msm" style="font-size:18px">edit</span></button>
                     <button class="x" aria-label="حذف" @click="removeProduct(p)"><span class="msm" style="font-size:18px">delete</span></button>
                   </div>
                 </td>
@@ -371,58 +444,115 @@ const imgOf = (p) => S(p.image);
               <div class="field"><label>الاسم</label><input v-model="editProd.name" class="input" /></div>
               <div class="field"><label>السعر</label><input v-model="editProd.price" class="input" inputmode="numeric" /></div>
               <div class="field"><label>الوصف</label><textarea v-model="editProd.description" class="textarea" rows="3"></textarea></div>
+              <!-- ═══ صور المنتج (حتى 8) ═══ -->
+              <div class="field">
+                <label>الصور <span class="hint">({{ editProd.images.length }}/8)</span></label>
+                <div class="img-strip">
+                  <div v-for="(u, i) in editProd.images" :key="u" class="img-chip">
+                    <img :src="S(u)" alt="" />
+                    <button type="button" class="chip-x" aria-label="حذف الصورة" @click="removeImage('edit', i)">×</button>
+                  </div>
+                  <button v-if="editProd.images.length < 8" type="button" class="add-img" :disabled="imgBusy" @click="pickImages('edit')">
+                    <span class="msm">{{ imgBusy ? 'progress_activity' : 'add_a_photo' }}</span>
+                    <small>{{ imgBusy ? 'جاري الرفع…' : 'أضف صور' }}</small>
+                  </button>
+                </div>
+              </div>
               <button class="btn btn-primary btn-lg btn-block" :disabled="busy" @click="saveProduct">حفظ التعديلات</button>
             </div>
           </div>
         </div>
-      </div>
 
-      <!-- ═══ الكوبونات ═══ -->
-      <div v-if="tab === 'coupons'" class="flex-col gap-4">
-        <div class="panel panel-pad flex-col gap-3">
-          <h2 class="h3">كوبون جديد</h2>
-          <div class="grid gap-3" style="grid-template-columns:repeat(auto-fit,minmax(140px,1fr))">
-            <div class="field"><label>الكود</label><input v-model="couponForm.code" class="input" placeholder="SAVE10" /></div>
-            <div class="field"><label>نسبة %</label><input v-model="couponForm.percent" class="input" inputmode="numeric" /></div>
-            <div class="field"><label>مبلغ ثابت</label><input v-model="couponForm.flat" class="input" inputmode="numeric" /></div>
-            <div class="field"><label>الحد الأدنى</label><input v-model="couponForm.min_total" class="input" inputmode="numeric" /></div>
-            <div class="field"><label>الانتهاء</label><input v-model="couponForm.expires_at" class="input" type="date" /></div>
-          </div>
-          <button class="btn btn-primary btn-md" @click="addCoupon">إنشاء الكوبون</button>
-        </div>
-        <div v-if="coupons.length" class="flex-col gap-2">
-          <div v-for="c in coupons" :key="c.id" class="panel panel-pad flex between gap-3" style="padding:var(--sp-3) var(--sp-4)">
-            <div class="flex gap-3" style="align-items:center">
-              <span class="badge" style="background:rgba(212,175,55,.16);color:var(--gold);font-size:var(--fs-sm)">{{ c.code }}</span>
-              <span class="text-sm">{{ c.percent ? c.percent + '%' : fmt(c.flat) }} خصم</span>
-              <span class="text-xs text-muted">أدنى {{ fmt(c.min_total) }} <template v-if="c.expires_at">· حتى {{ c.expires_at.slice(0, 10) }}</template></span>
+        <!-- input ملف مخفي — يخدم نموذجي الإضافة والتعديل -->
+        <input ref="imgInput" type="file" accept="image/*" multiple hidden @change="onImagesPicked" />
+      </template>
+
+      <!-- ═══ الصفحة: متجري ═══ -->
+      <template v-else-if="tab === 'store'">
+        <div class="panel panel-pad flex-col gap-3" style="margin-block-end:var(--sp-4)">
+          <div class="flex between gap-3" style="flex-wrap:wrap">
+            <div>
+              <b style="font-size:var(--fs-lg)">{{ store?.name }}</b>
+              <p class="text-xs text-muted">{{ store?.status === 'approved' ? '✅ متجر موثق ونشط' : '⏳ بانتظار توثيق الأدمن' }}</p>
             </div>
-            <button class="x" aria-label="حذف" @click="delCoupon(c)"><span class="msm">delete</span></button>
+            <div class="flex gap-2 wrap">
+              <button class="btn btn-outline btn-sm" @click="storeEdit = !storeEdit">تعديل المتجر</button>
+              <button class="btn" :class="vacay ? 'btn-accent btn-sm' : 'btn-ghost btn-sm'" @click="toggleVacay">
+                {{ vacay ? 'رجّع المتجر للعمل' : 'ويا إجازة' }}
+              </button>
+            </div>
+          </div>
+          <RouterLink v-if="store?.id" class="btn btn-ghost btn-md" :to="`/stores/${store.id}`">
+            شوف متجرك بعيون الزبون 👀
+          </RouterLink>
+        </div>
+
+        <div v-if="storeEdit" class="panel panel-pad flex-col gap-3" style="margin-block-end:var(--sp-4)">
+          <h2 class="h3">تعديل بيانات المتجر</h2>
+          <div class="field"><label>الاسم</label><input v-model="storeForm.name" class="input" /></div>
+          <div class="field"><label>الوصف</label><textarea v-model="storeForm.description" class="textarea" rows="2"></textarea></div>
+          <div class="grid gap-3" style="grid-template-columns:1fr 1fr">
+            <div class="field"><label>سعر التوصيل (د.ع)</label><input v-model="storeForm.delivery_fee" class="input" inputmode="numeric" /></div>
+            <div class="field"><label>توصيل مجاني فوق (د.ع)</label><input v-model="storeForm.free_delivery_min" class="input" inputmode="numeric" /></div>
+          </div>
+          <button class="btn btn-primary btn-md" :disabled="busy" @click="saveStore">حفظ</button>
+        </div>
+      </template>
+
+      <!-- ═══ الصفحة: المحفظة ═══ -->
+      <template v-else-if="tab === 'wallet'">
+        <div class="flex-col gap-4" style="max-width:560px">
+          <div class="wallet-card">
+            <div class="l">💰 الرصيد المتاح للسحب</div>
+            <div class="n num">{{ fmt(wallet?.balance || 0) }}</div>
+            <div class="l">أرباح اليوم: {{ fmt(wallet?.today || 0) }} · معلقة: {{ fmt(wallet?.pending || 0) }}</div>
+          </div>
+          <div class="panel panel-pad flex gap-2">
+            <input v-model="withdrawAmount" class="input" inputmode="numeric" placeholder="المبلغ (5,000 فما فوق)" />
+            <button class="btn btn-accent btn-md" @click="withdraw">سحب</button>
+          </div>
+          <button class="btn btn-ghost btn-md" @click="setTab('week')"><span class="msm">bar_chart</span> أرباح الأسبوع</button>
+          <div v-if="(wallet?.reports || []).length" class="flex-col gap-2">
+            <div v-for="r in wallet.reports" :key="r.id" class="info-row">
+              <span class="k">تقرير كاش {{ r.receipt_no || '' }} · {{ timeAgo(r.created_at) }}</span>
+              <span class="v num">{{ fmt(r.net) }}</span>
+            </div>
           </div>
         </div>
-      </div>
+      </template>
 
-      <!-- ═══ المحفظة ═══ -->
-      <div v-if="tab === 'wallet'" class="flex-col gap-4" style="max-width:560px">
-        <div class="wallet-card">
-          <div class="l">الرصيد المتاح للسحب</div>
-          <div class="n num">{{ fmt(wallet?.balance || 0) }}</div>
-        </div>
-        <div class="panel panel-pad flex gap-2">
-          <input v-model="withdrawAmount" class="input" inputmode="numeric" placeholder="المبلغ (5,000 فما فوق)" />
-          <button class="btn btn-accent btn-md" @click="withdraw">سحب</button>
-        </div>
-        <div v-if="(wallet?.reports || []).length" class="flex-col gap-2">
-          <div v-for="r in wallet.reports" :key="r.id" class="info-row">
-            <span class="k">تقرير كاش {{ r.receipt_no || '' }} · {{ timeAgo(r.created_at) }}</span>
-            <span class="v num">{{ fmt(r.net) }}</span>
+      <!-- ═══ الصفحة: الكوبونات ═══ -->
+      <template v-else-if="tab === 'coupons'">
+        <button class="btn btn-ghost btn-sm" style="margin-block-end:var(--sp-4)" @click="setTab('products')"><span class="msm">arrow_forward</span> رجوع للمنتجات</button>
+        <div class="flex-col gap-4">
+          <div class="panel panel-pad flex-col gap-3">
+            <h2 class="h3">كوبون جديد</h2>
+            <div class="grid gap-3" style="grid-template-columns:repeat(auto-fit,minmax(140px,1fr))">
+              <div class="field"><label>الكود</label><input v-model="couponForm.code" class="input" placeholder="SAVE10" /></div>
+              <div class="field"><label>نسبة %</label><input v-model="couponForm.percent" class="input" inputmode="numeric" /></div>
+              <div class="field"><label>مبلغ ثابت</label><input v-model="couponForm.flat" class="input" inputmode="numeric" /></div>
+              <div class="field"><label>الحد الأدنى</label><input v-model="couponForm.min_total" class="input" inputmode="numeric" /></div>
+              <div class="field"><label>الانتهاء</label><input v-model="couponForm.expires_at" class="input" type="date" /></div>
+            </div>
+            <button class="btn btn-primary btn-md" @click="addCoupon">إنشاء الكوبون</button>
+          </div>
+          <div v-if="coupons.length" class="flex-col gap-2">
+            <div v-for="c in coupons" :key="c.id" class="panel panel-pad flex between gap-3" style="padding:var(--sp-3) var(--sp-4)">
+              <div class="flex gap-3" style="align-items:center">
+                <span class="badge" style="background:rgba(212,175,55,.16);color:var(--gold);font-size:var(--fs-sm)">{{ c.code }}</span>
+                <span class="text-sm">{{ c.percent ? c.percent + '%' : fmt(c.flat) }} خصم</span>
+                <span class="text-xs text-muted">أدنى {{ fmt(c.min_total) }} <template v-if="c.expires_at">· حتى {{ c.expires_at.slice(0, 10) }}</template></span>
+              </div>
+              <button class="x" aria-label="حذف" @click="delCoupon(c)"><span class="msm">delete</span></button>
+            </div>
           </div>
         </div>
-      </div>
+      </template>
 
-      <!-- ═══ أرباح الأسبوع ═══ -->
-      <div v-if="tab === 'week'">
-        <div v-if="!week.length" class="empty"><span class="msm">bar_chart</span><h3>ماكو بيانات بعد</h3></div>
+      <!-- ═══ الصفحة: أرباح الأسبوع ═══ -->
+      <template v-else-if="tab === 'week'">
+        <button class="btn btn-ghost btn-sm" style="margin-block-end:var(--sp-4)" @click="setTab('wallet')"><span class="msm">arrow_forward</span> رجوع للمحفظة</button>
+        <EmptyState v-if="!week.length" icon="📊" title="ماكو بيانات بعد" />
         <div v-else class="table-wrap">
           <table class="dash">
             <thead><tr><th>اليوم</th><th>الطلبات</th><th>الإيرادات</th><th>التوصيل</th><th>صافي</th></tr></thead>
@@ -437,7 +567,7 @@ const imgOf = (p) => S(p.image);
             </tbody>
           </table>
         </div>
-      </div>
+      </template>
       </div>
     </template>
   </div>

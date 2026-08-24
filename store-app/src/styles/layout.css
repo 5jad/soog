@@ -61,14 +61,6 @@
   padding-inline: var(--sp-4);
   transition: border-color var(--t-fast) var(--ease), box-shadow var(--t-fast) var(--ease), background var(--t-fast) var(--ease);
 }
-.header-search.mobile {
-  display: none;
-  margin-inline: var(--sp-4);
-  margin-block-end: var(--sp-3);
-}
-@media (max-width: 767.98px) {
-  .header-search.mobile { display: flex; }
-}
 .header-search:focus-within {
   border-color: var(--primary-light);
   background: var(--surface);
@@ -262,7 +254,9 @@
   padding-inline: var(--sp-4);
   padding-block: var(--sp-1) 4px;
   scroll-snap-type: x proximity;
+  cursor: grab;
 }
+.store-strip:active { cursor: grabbing; }
 .store-strip::-webkit-scrollbar { display: none; }
 .store-strip .store-card { flex: 0 0 210px; scroll-snap-align: start; }
 @media (min-width: 640px) {
@@ -311,8 +305,37 @@
   padding-inline: var(--sp-4);
   padding-block: var(--sp-1) 4px;
   scroll-snap-type: x proximity;
+  cursor: grab;
 }
+.prod-strip-2:active { cursor: grabbing; }
 .prod-strip-2::-webkit-scrollbar { display: none; }
+
+/* ═══ أسهم الشرائط + السحب بالماوس (أقراص/موبايل عريض) ═══ */
+.strip-wrap { position: relative; }
+.strip-arrow {
+  position: absolute;
+  inset-block-start: 50%;
+  translate: 0 -50%;
+  z-index: 2;
+  width: 38px; height: 38px;
+  border-radius: 50%;
+  display: none;
+  place-items: center;
+  background: var(--surface, #fff);
+  color: var(--ink, #111);
+  box-shadow: var(--sh-md, 0 8px 20px rgba(18,41,78,.12));
+  transition: transform var(--t-fast) var(--ease), box-shadow var(--t-fast) var(--ease), background var(--t-fast) var(--ease);
+}
+.strip-arrow:hover { background: var(--primary); color: var(--white); box-shadow: var(--sh-hover); }
+.strip-arrow:active { transform: translateY(-50%) scale(.92); }
+.strip-arrow.prev { inset-inline-start: -6px; }
+.strip-arrow.next { inset-inline-end: -6px; }
+@media (min-width: 640px) and (max-width: 1023px) { .strip-arrow { display: grid; } }
+
+/* الشرائط تبقى قابلة للسحب بالماوس */
+.outfit-strip { cursor: grab; }
+.outfit-strip:active { cursor: grabbing; }
+.tabs { touch-action: pan-y; }
 .ps2-page {
   flex: 1 0 100%;
   scroll-snap-align: start;

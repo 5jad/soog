@@ -6,6 +6,7 @@ import { useRoute } from 'vue-router';
 import { api } from '../api';
 import { loadCategories } from '../state';
 import ProdCard from '../components/ProdCard.vue';
+import EmptyState from '../components/EmptyState.vue';
 
 const route = useRoute();
 const mode = computed(() => route.meta.mode || 'all');
@@ -137,11 +138,7 @@ const toggleColor = (c) => {
         <div v-else-if="products.length" class="products-grid">
           <ProdCard v-for="p in products" :key="p.id" :p="p" :variant="mode" />
         </div>
-        <div v-else class="empty">
-          <span class="msm">search_off</span>
-          <h3>ماكو نتائج</h3>
-          <p>جرب كلمات أخرى أو أزل الفلاتر</p>
-        </div>
+        <EmptyState v-else lottie="no_results" icon="🔍" title="ماكو نتائج" sub="جرب كلمات أخرى أو أزل الفلاتر" />
       </div>
     </div>
   </div>

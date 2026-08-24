@@ -4,6 +4,9 @@ import { ref, computed, onMounted } from 'vue';
 import { useRouter } from 'vue-router';
 import { useApp } from '../state';
 import { api, S, fmt, priceOf, isRaw } from '../api';
+import LottieBox from '../components/LottieBox.vue';
+import EmptyState from '../components/EmptyState.vue';
+import StateLoader from '../components/StateLoader.vue';
 
 const { state, toast, refreshCartCount } = useApp();
 const router = useRouter();
@@ -23,6 +26,7 @@ const addrForm = ref({ label: '', governorate_id: '', district_id: '', details: 
 const note = ref('');
 const couponCode = ref('');
 const usePoints = ref(false);
+const done = ref(0);   /* عدد الطلبات المنفذة — يفتح شاشة النجاح */
 
 const fee = ref(0);
 const feeFallback = ref(false);
@@ -135,8 +139,7 @@ const submitAll = async () => {
       if (created === 1) await loadCart(); /* أول أمر: الباقي خرج من السلة لاحقاً */
     }
     refreshCartCount();
-    toast(`تم إنشاء ${created} طلب بنجاح 🎉`);
-    router.push('/orders');
+    done.value = created;   /* شاشة النجاح بدل التوست */
   } catch (e) {
     toast(e.message, false);
     if (e.message?.includes('verify')) toast('أكّد رقمك عبر تلغرام أولاً', false);
@@ -145,17 +148,29 @@ const submitAll = async () => {
 };
 
 /* ❯ إضافة عنوان جديد */
+/* إحداثيات الجهاز إن سمح المستخدم — تُستخدم بحساب التوصيل بالمسافة والتتبع الحي */
+const getCoords = () => new Promise((resolve) => {
+  if (!navigator.geolocation) return resolve(null);
+  navigator.geolocation.getCurrentPosition(
+    (pos) => resolve({ lat: pos.coords.latitude, lng: pos.coords.longitude }),
+    () => resolve(null),
+    { timeout: 6000, maximumAge: 300000 },
+  );
+});
+
 const addAddress = async () => {
   const f = addrForm.value;
   if (!f.label.trim() || !f.governorate_id || !f.district_id || !f.details.trim()) {
     toast('أكمل حقول العنوان الجديد', false);
     throw new Error('ناقص');
   }
+  const c = await getCoords();
   const d = await api('/api/customer/addresses', { method: 'POST', body: JSON.stringify({
     label: f.label.trim(),
     governorate_id: Number(f.governorate_id),
     district_id: Number(f.district_id),
     details: f.details.trim(),
+    ...(c ? { lat: c.lat, lng: c.lng } : {}),
   }) });
   addresses.value.unshift(d.address || d);
   addressId.value = d.address?.id ?? addresses.value[0]?.id;
@@ -169,7 +184,17 @@ const num2 = (n) => Number(n).toLocaleString('ar-IQ');
   <div class="container-narrow">
     <div class="page-head"><h1>إتمام الطلب</h1><p class="sub">راجع كل شي وسوّي الطلب — دفع كاش عند الاستلام</p></div>
 
-    <div v-if="loading" class="loader-block"><div class="loader"></div></div>
+    <!-- ═══ شاشة نجاح الطلب — مثل التطبيق (كونفيتي + خلفية خضراء) ═══ -->
+    <div v-if="done > 0" class="flex-col gap-3" style="max-width:480px;margin-inline:auto;text-align:center;padding-block:var(--sp-8)">
+      <LottieBox asset-key="order_success" :width="150" :height="150" fallback="✅" />
+      <h1 class="h2" style="color:var(--success-deep)">انطلق طلبك بنجاح 🎉</h1>
+      <p class="text-sm text-muted">أرسلنا {{ done }} {{ done === 1 ? 'طلب' : 'طلبات' }} — مندوبنا براسلك</p>
+      <p class="text-xs text-muted">السلة انصفّرت بعد الطلب — أرقام الطلبات وتتبّع التوصيل من «طلباتي»</p>
+      <button class="btn btn-primary btn-lg btn-block" @click="router.push('/orders')">📦 شوف طلباتي</button>
+      <button class="btn btn-ghost" style="margin-top:4px" @click="router.push('/')">عودة للتسوق</button>
+    </div>
+
+    <div v-if="loading" class="loader-block"><StateLoader /></div>
 
     <div v-else-if="!state.user" class="empty">
       <span class="msm">lock</span>

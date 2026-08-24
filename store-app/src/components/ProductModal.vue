@@ -7,7 +7,7 @@ import { api, S, fmt, priceOf, pct, emojiOf, isRaw } from '../api';
 
 const props = defineProps({ productId: { type: Number, default: null } });
 const emit = defineEmits(['close']);
-const { state, toast } = useApp();
+const { state, toast, cartPop } = useApp();
 const router = useRouter();
 
 const p = ref(null);
@@ -33,6 +33,7 @@ const add = async () => {
     const d = await api('/api/customer/cart', { method: 'POST', body: JSON.stringify({ product_id: p.value.id, qty: 1 }) });
     if (d.count !== undefined) state.cartCount = d.count;
     toast('أُضيف للسلة');
+    cartPop();
   } catch (e) { toast(e.message, false); }
   busy.value = false;
 };

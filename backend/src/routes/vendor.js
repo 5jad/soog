@@ -271,7 +271,11 @@ r.patch('/products/:id', async (req, res) => {
           : b[k]);
       sets.push(`${k}=$${pp.length}`);
     }
-  if (sets.length) await q(`UPDATE products SET ${sets.join(', ')} WHERE id=$1`, [...pp, p.id]);
+  if (sets.length) await q(`UPDATE products SET ${sets.join(', ')} WHERE id=$${pp.length + 1}`, [...pp, p.id]);
+  // مزامنة الغلاف مع الصور — إذا انحذف الغلاف من المصفوفة يصير أول صورة هو الغلاف
+  if (b.images !== undefined && Array.isArray(b.images) && b.images.length && !b.images.includes(p.image)) {
+    await q(`UPDATE products SET image=$2 WHERE id=$1`, [p.id, b.images[0]]);
+  }
   // العرض: offer_price/offer_percent أو has_offer=false يلغي العرض
   if (b.has_offer !== undefined || b.offer_price !== undefined) {
     const px = Number(b.offer_price);

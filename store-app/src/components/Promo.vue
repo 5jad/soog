@@ -3,7 +3,7 @@
    سلايد بعرض كامل + نقاط مؤشر + تنقل تلقائي كل 4 ثوانٍ.
    الصورة تغطي البانر، وبدونها يسقط تدرج كحلي (أو bg_gradient من الأدمن).
    النص أسفل اليمين: عنوان + سطر + اسم المتجر فوق طبقة داكنة. */
-import { ref, onMounted, onUnmounted } from 'vue';
+import { ref, computed, onMounted, onUnmounted } from 'vue';
 import { useRouter } from 'vue-router';
 import { api, S, isRaw } from '../api';
 
@@ -11,6 +11,15 @@ const router = useRouter();
 const ads = ref([]);
 const page = ref(0);
 let timer = null;
+
+/* الإعلان الافتراضي — مثل التطبيق تماماً: بدون إعلانات فعالة
+   يظهر بانر «تسوق في الشهر الفضيل» حتى لا تبقى المساحة فاضية */
+const fallbackAd = {
+  id: -1,
+  title: '🌙 تسوق في الشهر الفضيل',
+  subtitle: 'لرجالك ونسائك وأطفالك — خصومات على كل الطلبيات',
+  store_name: 'زبون · الكوت',
+};
 
 onMounted(async () => {
   try {
@@ -25,35 +34,37 @@ onMounted(async () => {
 });
 onUnmounted(() => { if (timer) clearInterval(timer); });
 
+const showAds = computed(() => ads.value.length ? ads.value : [fallbackAd]);
+const displayed = () => showAds.value;
+const cur = computed(() => displayed()[Math.min(page.value, displayed().length - 1)]);
+
 const imgOk = (a) => { const v = S(a.image); return !!(v && !isRaw(v)); };
-const fallback = (a) => a.bg_gradient
-  ? `linear-gradient(135deg, ${(a.bg_gradient || '').split(',')[0]?.trim() || 'var(--primary-deep)'}, ${(a.bg_gradient || '').split(',')[1]?.trim() || 'var(--primary)'})`
-  : 'var(--grad-primary)';
-const go = (a) => { if (a.link_url && a.link_url.startsWith('/')) router.push(a.link_url); };
+
+const go = (a) => { if (a && a.link_url && a.link_url.startsWith('/')) router.push(a.link_url); };
 </script>
 
 <template>
-  <div v-if="ads.length" class="ad-carousel">
+  <div class="ad-carousel">
     <div class="ad-stage">
       <div
-        v-for="(a, i) in ads" :key="a.id"
+        v-for="(a, i) in displayed()" :key="a.id"
         class="ad-slide" :class="{ on: i === page }"
-        :style="imgOk(a) ? {} : { background: fallback(a) }"
+        :style="imgOk(a) ? {} : { background: 'var(--grad-primary)' }"
         @click="go(a)"
       >
         <img v-if="imgOk(a)" :src="S(a.image)" :alt="a.headline || a.store_name" loading="lazy" />
         <div class="ad-scrim"></div>
         <div class="ad-info">
           <span v-if="a.tag" class="ad-tag">{{ a.tag }}</span>
-          <h3>{{ a.headline || a.store_name }}</h3>
-          <p v-if="a.subline">{{ a.subline }}</p>
+          <h3>{{ a.title || a.headline || a.store_name }}</h3>
+          <p v-if="a.subtitle || a.subline">{{ a.subtitle || a.subline }}</p>
           <small v-if="a.store_name">{{ a.store_name }}</small>
         </div>
       </div>
     </div>
-    <div v-if="ads.length > 1" class="ad-dots">
+    <div v-if="displayed().length > 1" class="ad-dots">
       <button
-        v-for="(a, i) in ads" :key="a.id"
+        v-for="(a, i) in displayed()" :key="a.id"
         class="ad-dot" :class="{ on: i === page }"
         :aria-label="'إعلان ' + (i + 1)"
         @click="page = i"

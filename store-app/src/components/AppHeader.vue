@@ -1,5 +1,5 @@
 <script setup>
-/* ═══ هيدر متجاوب: موبايل = شعار + بحث منسدل + سلة · ديسكتوب = شعار + تنقل + بحث + سلة ═══ */
+/* ═══ هيدر متجاوب: موبايل = شعار + تنقل + سلة · ديسكتوب = شعار + تنقل + بحث + سلة ═══ */
 import { ref, computed } from 'vue';
 import { useRouter } from 'vue-router';
 import { useApp } from '../state';
@@ -8,9 +8,19 @@ const { state } = useApp();
 const router = useRouter();
 
 const q = ref('');
-const searching = ref(false);   /* بحث الجوال: سطر إضافي */
+const searching = ref(false);   /* بحث الجوال: مؤجل — صفحة /search هي المرجع */
 
 const isLogged = computed(() => !!state.user);
+
+/* كل حساب يشوف مدخل لوحته المخصصة بالهيدر مباشرة */
+const panelLink = computed(() => {
+  if (!state.user) return null;
+  const r = state.user.role;
+  if (r === 'vendor') return { label: 'لوحة التاجر', icon: 'storefront', path: '/vendor' };
+  if (r === 'delivery') return { label: 'لوحة المندوب', icon: 'directions_bike', path: '/delivery' };
+  if (r === 'admin') return { label: 'لوحة الأدمن', icon: 'admin_panel_settings', path: '/admin' };
+  return null;
+});
 
 const doSearch = () => {
   const t = q.value.trim();
@@ -28,7 +38,7 @@ const go = (path) => router.push(path);
       <!-- الشعار -->
       <RouterLink to="/" class="logo tap" aria-label="زبون">
         <span class="logo-mark">ز</span>
-        <span class="logo-text">زبون<small>WASIT</small></span>
+        <span class="logo-text">زبون</span>
       </RouterLink>
 
       <!-- بحث ديسكتوب/آيباد (≥768) -->
@@ -48,11 +58,9 @@ const go = (path) => router.push(path);
 
       <!-- أفعال اليمين -->
       <div class="flex gap-2" style="margin-inline-start:auto">
-        <!-- فتح بحث الجوال -->
-        <button class="icon-btn search-toggle" aria-label="بحث" @click="searching = !searching">
-          <span class="msm">{{ searching ? 'close' : 'search' }}</span>
-        </button>
-
+        <RouterLink v-if="panelLink" class="btn btn-soft btn-sm panel-chip mobile-hidden" :to="panelLink.path" :target="state.user.role === 'admin' ? '_blank' : undefined">
+          <span class="msm">{{ panelLink.icon }}</span> {{ panelLink.label }}
+        </RouterLink>
         <button v-if="!isLogged" class="btn-login mobile-hidden" @click="state.loginOpen = true">
           <span class="msm" style="font-size:18px">person</span> دخول
         </button>
@@ -69,13 +77,6 @@ const go = (path) => router.push(path);
         </RouterLink>
       </div>
     </div>
-
-    <!-- بحث الجوال (سطر ثانٍ) -->
-    <form v-if="searching" class="header-search mobile" @submit.prevent="doSearch">
-      <span class="msm">search</span>
-      <input v-model="q" type="search" placeholder="ابحث عن منتج…" autofocus />
-      <span v-if="q" class="msm" style="cursor:pointer" @click="q = ''">close</span>
-    </form>
   </header>
 </template>
 
@@ -83,9 +84,7 @@ const go = (path) => router.push(path);
 .search-desktop { display: none; }
 @media (min-width: 768px) { .search-desktop { display: flex; max-width: 340px; } }
 @media (min-width: 1024px) { .search-desktop { max-width: 420px; } }
-.search-toggle { display: grid; }
-@media (min-width: 768px) { .search-toggle { display: none; } }
-/* السلة عنصر الديسكتوب فقط — الجوال يستخدم الزر العائم مثل التطبيق */
+/* السلة عنصر الديسكتوب فقط — الجوال يستخدم زر السلة بالشريط السفلي */
 .cart-desktop { display: none; }
 @media (min-width: 1024px) { .cart-desktop { display: grid; } }
 .header .header-in { gap: var(--sp-2); }

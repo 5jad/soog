@@ -4,6 +4,8 @@ import { ref, computed, onMounted } from 'vue';
 import { useRouter } from 'vue-router';
 import { useApp } from '../state';
 import { api, S, fmt, priceOf, isRaw, emojiOf } from '../api';
+import EmptyState from '../components/EmptyState.vue';
+import StateLoader from '../components/StateLoader.vue';
 
 const { state, toast, refreshCartCount } = useApp();
 const router = useRouter();
@@ -59,7 +61,7 @@ const emojiIt = (it) => (!imgOf(it) || isRaw(it.image)) ? emojiOf(it) : '';
   <div class="container-narrow">
     <div class="page-head"><h1>سلة التسوق</h1><p class="sub">راجع طلباتك قبل إتمام الطلب</p></div>
 
-    <div v-if="loading" class="loader-block"><div class="loader"></div></div>
+    <div v-if="loading" class="loader-block"><StateLoader /></div>
 
     <div v-else-if="!state.user" class="empty">
       <span class="msm">lock</span>
@@ -67,12 +69,7 @@ const emojiIt = (it) => (!imgOf(it) || isRaw(it.image)) ? emojiOf(it) : '';
       <button class="btn btn-primary btn-md" @click="state.loginOpen = true">دخول / إنشاء حساب</button>
     </div>
 
-    <div v-else-if="!items.length" class="empty">
-      <span class="msm">shopping_bag</span>
-      <h3>سلتك فاضية</h3>
-      <p>زر المتاجر واختار ما يعجبك — التوصيل يستغرق 30–60 دقيقة</p>
-      <button class="btn btn-accent btn-md" @click="router.push('/stores')">تسوق الآن</button>
-    </div>
+    <EmptyState v-else-if="!items.length" icon="🛍️" title="سلتك فاضية" sub="زر المتاجر واختار ما يعجبك — التوصيل يستغرق 30–60 دقيقة" action="تسوق الآن" @act="router.push('/stores')" />
 
     <div v-else class="cart-layout">
       <!-- العناصر مجمعة بالمحلات -->

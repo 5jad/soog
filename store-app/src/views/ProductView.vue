@@ -8,7 +8,7 @@ import ProdCard from '../components/ProdCard.vue';
 
 const route = useRoute();
 const router = useRouter();
-const { state, toast, refreshCartCount } = useApp();
+const { state, toast, refreshCartCount, cartPop } = useApp();
 
 const p = ref(null);
 const loading = ref(true);
@@ -68,6 +68,7 @@ const addToCart = async () => {
     if (d.count !== undefined) state.cartCount = d.count;
     else refreshCartCount();
     toast('أُضيف للسلة ✓');
+    cartPop();
   } catch (e) { toast(e.message, false); }
   busy.value = false;
 };

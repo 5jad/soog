@@ -5,6 +5,7 @@ import { useApp } from '../state';
 import { api } from '../api';
 import ProdCard from '../components/ProdCard.vue';
 import StoreCard from '../components/StoreCard.vue';
+import EmptyState from '../components/EmptyState.vue';
 
 const { state, toast } = useApp();
 
@@ -44,11 +45,7 @@ const onRemoveFav = (p) => { products.value = products.value.filter((x) => x.id 
         <div v-if="products.length" class="products-grid">
           <ProdCard v-for="p in products" :key="p.id" :p="p" variant="favorites" @remove-fav="onRemoveFav" />
         </div>
-        <div v-else class="empty">
-          <span class="msm">favorite_border</span>
-          <h3>ماكو منتجات مفضلة بعد</h3>
-          <p>اضغط ♥ على أي منتج وبيه يجي هنا</p>
-        </div>
+        <EmptyState v-else icon="❤️" title="ماكو منتجات مفضلة بعد" sub="اضغط ♥ على أي منتج وبيه يجي هنا" />
       </div>
 
       <div v-else>

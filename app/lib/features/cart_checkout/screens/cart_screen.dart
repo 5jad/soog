@@ -341,10 +341,46 @@ class _CartScreenState extends State<CartScreen> {
                       MaterialPageRoute(builder: (_) => const PickMapScreen()),
                     );
                     if (p == null || !context.mounted) return;
-                    addressCtrl.text =
-                        '📍 موقع محدد (${p.latitude.toStringAsFixed(6)}, ${p.longitude.toStringAsFixed(6)})';
-                    if (mounted)
-                      Navigator.pop(context, (addressCtrl.text, null, null));
+                    // ═══ الموقع المحدد ينحفظ عنواناً بإحداثياته — حتى يشتغل
+                    // حساب التوصيل بالمسافة والتتبع الحي للمندوب على الخريطة ═══
+                    final label = '📍 موقع محدد';
+                    final details =
+                        '${p.latitude.toStringAsFixed(6)}, ${p.longitude.toStringAsFixed(6)}';
+                    // إعادة استخدام نفس النقطة المحفوظة سابقاً (ضمن ~30م) بدل تكرار العناوين
+                    for (final a in addresses) {
+                      final alat = (a['lat'] as num?)?.toDouble();
+                      final alng = (a['lng'] as num?)?.toDouble();
+                      if (alat == null || alng == null) continue;
+                      if ((alat - p.latitude).abs() < 0.0003 &&
+                          (alng - p.longitude).abs() < 0.0003) {
+                        if (!mounted) return;
+                        Navigator.pop(context, (
+                          '$label — $details',
+                          (a['id'] as num).toInt(),
+                          null,
+                        ));
+                        return;
+                      }
+                    }
+                    try {
+                      final d = await Api.post('/api/customer/addresses', {
+                        'label': label,
+                        'details': details,
+                        'lat': p.latitude,
+                        'lng': p.longitude,
+                      });
+                      final a = d['address'] ?? d;
+                      if (mounted)
+                        Navigator.pop(context, (
+                          '$label — $details',
+                          (a['id'] as num).toInt(),
+                          null,
+                        ));
+                    } catch (_) {
+                      // فشل الحفظ — نكمل بالنص فقط (التوصيل بحد أدنى والتتبع بلا نقطة)
+                      if (mounted)
+                        Navigator.pop(context, ('$label — $details', null, null));
+                    }
                   },
                   icon: const Icon(Icons.location_on_outlined, size: 20),
                   label: const Text(

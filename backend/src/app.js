@@ -10,7 +10,10 @@ import { ensureDb } from './bootstrap.js';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const PUBLIC_DIR = path.join(__dirname, 'public');
-const ADMIN_DIST = fs.existsSync(path.join(PUBLIC_DIR, 'admin')) ? path.join(PUBLIC_DIR, 'admin')
+// لوحة الأدمن: النسخة المقدَّمة بـ backend/public/admin أولاً، ثم src/public، ثم مصدر الجذر (محلي)
+const ADMIN_DIST = fs.existsSync(path.join(__dirname, '../public/admin'))
+  ? path.join(__dirname, '../public/admin')
+  : fs.existsSync(path.join(PUBLIC_DIR, 'admin')) ? path.join(PUBLIC_DIR, 'admin')
   : path.join(__dirname, '../../admin-dashboard');
 const LANDING_DIST = fs.existsSync(path.join(PUBLIC_DIR, 'landing')) ? path.join(PUBLIC_DIR, 'landing')
   : path.join(__dirname, '../../landing');

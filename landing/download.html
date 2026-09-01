@@ -1,0 +1,223 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="description" content="تحميل تطبيق زبون - APK لأجهزة أندرويد - منصة التجارة الإلكترونية الأولى في واسط (الكوت)">
+<title>تحميل تطبيق زبون | Zaboon App Download</title>
+<style>
+  :root{
+    --primary:#12294E; --deep:#0B1B36; --sky:#7FA3CC; --cyan:#1789A6;
+    --accent:#F2560F; --accentDeep:#C2410C; --ink:#171D26; --bg:#FAFAF7;
+    --text:#171D26; --muted:#5C6570; --line:#E7E9EC; --success:#1F9D55;
+    --white:#fff;
+    --shadow:0 10px 30px rgba(18,41,78,.08);
+    --radius:20px;
+  }
+  *{margin:0;padding:0;box-sizing:border-box}
+  html{scroll-behavior:smooth}
+  body{font-family:'Tajawal','Segoe UI',Tahoma,'Noto Kufi Arabic',sans-serif;background:var(--bg);color:var(--text);line-height:1.7}
+  img{max-width:100%}
+  .wrap{max-width:1120px;margin:0 auto;padding:0 20px}
+
+  /* ═══ الهيدر ═══ */
+  header{background:rgba(255,255,255,.92);position:sticky;top:0;z-index:50;border-bottom:1px solid var(--line)}
+  .nav{display:flex;align-items:center;justify-content:space-between;height:68px}
+  .brand{display:flex;align-items:center;gap:10px;font-weight:900;font-size:22px;color:var(--deep)}
+  .brand .dot{width:38px;height:38px;border-radius:12px;background:linear-gradient(135deg,var(--deep),var(--primary));color:#fff;display:grid;place-items:center;font-size:20px;box-shadow:var(--shadow)}
+  .nav-links{display:flex;gap:26px;align-items:center}
+  .nav-links a{text-decoration:none;color:var(--muted);font-weight:700;font-size:14.5px;transition:.2s}
+  .nav-links a:hover{color:var(--primary)}
+  .btn{display:inline-flex;align-items:center;gap:8px;background:linear-gradient(135deg,var(--primary),var(--sky));color:#fff;font-weight:900;padding:12px 26px;border-radius:14px;text-decoration:none;box-shadow:0 8px 20px rgba(18,41,78,.35);transition:.25s;border:none;cursor:pointer;font-size:15px}
+  .btn:hover{transform:translateY(-2px);box-shadow:0 12px 26px rgba(18,41,78,.45)}
+  .btn.sun{background:linear-gradient(135deg,var(--accent),#F97316);box-shadow:0 8px 20px rgba(242,86,15,.35)}
+  .btn.sun:hover{box-shadow:0 12px 26px rgba(242,86,15,.45)}
+  .btn.ghost{background:#fff;color:var(--deep);box-shadow:inset 0 0 0 2px var(--line);border:none}
+  .btn.ghost:hover{box-shadow:inset 0 0 0 2px var(--primary),0 8px 20px rgba(18,41,78,.15)}
+  .btn small{font-weight:400;opacity:.85}
+
+  /* ═══ منطقة التحميل ═══ */
+  .download-hero{
+    background:linear-gradient(150deg,var(--deep) 0%,var(--primary) 55%,#4A6FA5 130%);
+    color:#fff;padding:100px 0 60px;
+    position:relative;overflow:hidden
+  }
+  .download-hero::before{
+    content:'';position:absolute;inset:0;background:radial-gradient(circle at 85% 20%,rgba(127,163,204,.25),transparent 45%),radial-gradient(circle at 10% 90%,rgba(242,86,15,.25),transparent 40%)
+  }
+  .download-hero .wrap{position:relative;display:grid;grid-template-columns:1.1fr .9fr;gap:48px;align-items:center}
+  .download-hero h1{font-size:46px;font-weight:900;line-height:1.3;margin-bottom:18px}
+  .download-hero h1 span{color:#F97316}
+  .download-hero p{font-size:17px;color:rgba(255,255,255,.88);max-width:520px;margin-bottom:28px}
+  .download-hero .btn-download{
+    background:linear-gradient(135deg,var(--accent),#F97316);
+    box-shadow:0 8px 20px rgba(242,86,15,.35)
+  }
+  .download-hero .btn-download:hover{box-shadow:0 12px 26px rgba(242,86,15,.45)}
+  .download-hero .features{
+    display:flex;gap:14px;flex-wrap:wrap
+  }
+  .download-hero .feature{
+    background:rgba(255,255,255,.1);
+    border:1px solid rgba(255,255,255,.2);
+    border-radius:12px;padding:12px 18px;min-width:200px
+  }
+  .download-hero .feature .ic{flex:0 0 32px;width:32px;height:32px;border-radius:10px;display:grid;place-items:center;font-size:18px}
+  .download-hero .feature h4{font-size:14px;font-weight:700;margin:4px 0 0}
+  .download-hero .feature p{font-size:12px;opacity:.8;margin-top:4px}
+
+  /* ═══ البطاقات التقنية ═══ */
+  .tech-specs{background:#fff;padding:60px 0}
+  .tech-specs .wrap{max-width:800px;margin:0 auto}
+  .tech-specs h2{text-align:center;font-size:32px;font-weight:900;color:var(--deep);margin-bottom:24px}
+  .tech-specs .spec-item{display:flex;justify-content:space-between;margin-bottom:16px;padding-bottom:16px;border-bottom:1px solid var(--line)}
+  .tech-specs .spec-item:last-child{border-bottom:none;margin-bottom:0;padding-bottom:0}
+  .tech-specs .spec-label{color:var(--muted);font-size:14px}
+  .tech-specs .spec-value{color:var(--primary);font-weight:800;font-size:15px}
+
+  /* ═══ خطوات التحميل ═══ */
+  .download-steps{padding:60px 0;background:#FAFAF7}
+  .download-steps .wrap{max-width:800px;margin:0 auto}
+  .download-steps h2{text-align:center;font-size:32px;font-weight:900;color:var(--deep);margin-bottom:40px}
+  .step-download{
+    background:#fff;border:1px solid var(--line);border-radius:var(--radius);padding:32px;margin-bottom:24px;transition:.25s
+  }
+  .step-download:hover{box-shadow:var(--shadow)}
+  .step-download .n{width:44px;height:44px;border-radius:50%;background:linear-gradient(135deg,var(--accent),#F97316);display:grid;place-items:center;font-weight:900;font-size:18px;margin:0 auto 16px}
+  .step-download h3{font-size:18px;font-weight:900;text-align:center;margin-bottom:8px}
+  .step-download p{font-size:14px;color:var(--muted);text-align:center;margin-bottom:16px}
+  .step-download .btn{display:block;width:100%;text-align:center;padding:14px;border-radius:var(--radius)}
+
+  /* ═══ footer ═══ */
+  .footer-download{
+    background:var(--ink);color:rgba(255,255,255,.7);padding:40px 0 28px
+  }
+  .footer-download .wrap{display:flex;justify-content:space-between;align-items:center;gap:20px;flex-wrap:wrap}
+  .footer-download .brand{color:#fff}
+  .footer-download small{font-size:12.5px}
+  .footer-download .socials{display:flex;gap:10px}
+  .footer-download .socials a{width:38px;height:38px;border-radius:11px;background:rgba(255,255,255,.1);display:grid;place-items:center;color:#fff;text-decoration:none;font-size:16px;transition:.2s}
+  .footer-download .socials a:hover{background:var(--primary);transform:translateY(-2px)}
+
+  @media(max-width:860px){
+    .download-hero{padding:60px 0 40px}
+    .download-hero .wrap{grid-template-columns:1fr;text-align:center}
+    .download-hero h1{font-size:34px}
+    .download-hero .features{justify-content:center}
+    .tech-specs .spec-item{flex-direction:column;align-items:flex-start;gap:8px}
+    .footer-download .socials{justify-content:center}
+  }
+</style>
+</head>
+<body>
+
+<!-- ═══ الهيدر ═══ -->
+<header>
+  <div class="wrap nav">
+    <div class="brand"><span class="dot">🛍️</span> زبون</div>
+    <nav class="nav-links">
+      <a href="/">الرئيسية</a>
+      <a href="#features">المميزات</a>
+      <a href="#download">التحميل</a>
+    </nav>
+    <a class="btn sun" href="/download">⬇ تحميل التطبيق</a>
+  </div>
+</header>
+
+<!-- ═══ منطقة التحميل ═══ -->
+<section class="download-hero">
+  <div class="wrap">
+    <div>
+      <h1>حمل تطبيق <span>زبون</span> الآن</h1>
+      <p>التطبيق مجاني بالكامل. جهز هاتفك واستمتع بجميع خدمات متاجر مدينتك بيدك.</p>
+      <div class="features">
+        <div class="feature"><div class="ic sun">📦</div><h4>تحميل مباشر</h4><p>APK حجم 61 ميجابايت يدعم أندرويد 8 فأعلى</p></div>
+        <div class="feature"><div class="ic cyan">🔒</div><h4>مضمون وآمن</h4><p>الفيروسات مجنوبة والتطبيق موثق</p></div>
+        <div class="feature"><div class="ic blue">📱</div><h4>توافق كامل</h4><p>يعمل على جميع أجهزة أندرويد والحواسب اللوحي</p></div>
+      </div>
+      <a class="btn btn-download" href="./downloads/zaboon-app.apk">⬇ تحميل APK مباشر</a>
+    </div>
+    <div class="phone">
+      <div class="phone-frame">
+        <div class="phone-screen">
+          <img src="/site/assets/screen_home.webp" alt="الشاشة الرئيسية لتطبيق زبون">
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ═══ المواصفات التقنية ═══ -->
+<section class="tech-specs">
+  <div class="wrap">
+    <h2>مواصفات التطبيق التقنية</h2>
+    <div class="spec-item">
+      <span class="spec-label">اسم التطبيق</span>
+      <span class="spec-value">زبون</span>
+    </div>
+    <div class="spec-item">
+      <span class="spec-label">الحجم</span>
+      <span class="spec-value">61 MB</span>
+    </div>
+    <div class="spec-item">
+      <span class="spec-label">نظام التشغيل</span>
+      <span class="spec-value">أندرويد 8.0 فأعلى</span>
+    </div>
+    <div class="spec-item">
+      <span class="spec-label">النوع</span>
+      <span class="spec-value">تجارة إلكترونية / سوق متعدد البائعين</span>
+    </div>
+    <div class="spec-item">
+      <span class="spec-label">طريقة الدفع</span>
+      <span class="spec-value">كاش عند الاستلام</span>
+    </div>
+    <div class="spec-item">
+      <span class="spec-label">الدعم</span>
+      <span class="spec-value">واسط / الكوت والمناطق المحيطة</span>
+    </div>
+  </div>
+</section>
+
+<!-- ═══ خطوات التحميل ═══ -->
+<section class="download-steps">
+  <div class="wrap">
+    <h2>خطوات التحميل والتثبيت</h2>
+    <div class="step-download">
+      <div class="n">1</div>
+      <h3>تحميل الملف</h3>
+      <p>اضغط على زر التحميل أعلاه لتحميل ملف APK بحجم 61 ميجابايت.</p>
+      <a class="btn" href="/files/zaboon-app.apk">تحميل APK</a>
+    </div>
+    <div class="step-download">
+      <div class="n">2</div>
+      <h3>تفعيل المصادر المجهولة</h3>
+      <p>بعد التحميل، ادخل على إعدادات الهاتف واضغط على "السماح بالتثبيت من المصادر المجهولة" أو "Unknown Sources".</p>
+    </div>
+    <div class="step-download">
+      <div class="n">3</div>
+      <h3>تثبيت التطبيق</h3>
+      <p>انقر على الملف المحمّل واضغط "تثبيت". قد يتطلب الأمر الموافقة على الأذونات اللازمة (موقع، ملفات، اتصال).</p>
+    </div>
+    <div class="step-download">
+      <div class="n">4</div>
+      <h3>الافتتاح والاستخدام</h3>
+      <p>بعد التثبيت، افتح التطبيق وسجّل دخولك أو أنشئ حساباً جديداً لتبدأ بالتسوق من متاجر مدينتك.</p>
+    </div>
+  </div>
+</section>
+
+<!-- ═══ footer ═══ -->
+<footer class="footer-download">
+  <div class="wrap">
+    <div class="brand"><span class="dot">🛍️</span> زبون — منصة متاجر الكوت</div>
+    <small>© 2026 منصة زبون · واسط · جميع الحقوق محفوظة</small>
+    <div class="socials">
+      <a href="#" title="فيسبوك">📘</a>
+      <a href="#" title="إنستغرام">📸</a>
+      <a href="#" title="واتساب">💬</a>
+    </div>
+  </div>
+</footer>
+
+</body>
+</html>

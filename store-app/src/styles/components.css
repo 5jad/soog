@@ -42,7 +42,7 @@
 .btn-ghost { color: var(--primary); background: transparent; }
 .btn-ghost:hover { background: var(--bg-blue-soft); }
 
-.btn-soft { background: var(--rose-100); color: var(--rose-800); }
+.btn-soft { background: var(--primary-light); color: var(--primary); }
 .btn-soft:hover { background: var(--primary); color: var(--white); }
 
 .btn-danger { background: var(--danger); color: var(--white); }
@@ -154,7 +154,7 @@
   overflow: hidden;
 }
 .prod-name .name-link { color: inherit; }
-.prod-name .name-link:hover { color: var(--rose-800); }
+.prod-name .name-link:hover { color: var(--primary); }
 
 /* نقاط ألوان المتغيرات (مثل شي إن) — الصف محجوز حتى بلا متغيرات */
 .prod-dots { display: flex; align-items: center; gap: 3px; min-height: 12px; }

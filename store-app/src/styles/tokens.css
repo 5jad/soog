@@ -34,23 +34,19 @@
      1) أساس أحادي (80%): عائلة وردية وحدة بتدرجاتها — مو ألوان كثيرة
      2) نقطة ذهبية وحدة (<10%): قلب الزهرة — جذب العين لمكان واحد
      3) عزل غامق: الكحلي خلفية تُنير الورد — ما يأخذ مساحة داخل المحتوى */
-  /* الأساس الأحادي — سلم الوردة */
-  --rose-100: #F4C9D8;        /* طرف البتلة الداخلي — حدود/تحويمات/خلفيات ناعمة */
-  --rose-500: #D45B8A;        /* منتصف البتلة — اللون التفاعلي الأساسي */
-  --rose-800: #8B3A62;        /* قاعدة البتلة — هوفر/ضغط/نصوص مؤكدة */
-
-  --primary: var(--rose-500);
-  --primary-deep: var(--rose-800);
-  --primary-light: var(--rose-100);
+  /* الأساس الأحادي — الكحلي الموحَّد */
+  --primary: #12294E;          /* الكحلي الليلي — الأساسي الموحَّد (60%) */
+  --primary-deep: #0B1B36;     /* أعمق — تدرجات/حالات مضغوطة */
+  --primary-light: #4A6FA5;    /* فاتح — ثانوي محايد */
 
   /* القلب الذهبي — حصري لزر الشراء/التحويل */
-  --accent: #E5B84B;
-  --accent-deep: #B8862B;     /* هوفر الذهبي */
-  --accent-light: #F0CE74;
+  --accent: #F2560F;           /* البرتقالي الشمسي — CTA purchase exclusive */
+  --accent-deep: #C2410C;      /* البرتقالي الغامق — هوفر */
+  --accent-light: #F97316;     /* البرتقالي亮度 —-hover state */
 
   /* العزل الغامق — النصوص وطبقات الخلفية الداكنة */
-  --ink: #23273E;             /* كحلي الحبر — نصوص */
-  --bg: #FDF6F8;              /* خلفية بمسحة الوردة الفاتحة */
+  --ink: #171D26;             /* كحلي الحبر — نصوص */
+  --bg: #FAFAF7;              /* خلفية دافئة - موحّدة */
   --surface: #FFFFFF;
   --muted: #7A6B74;
   --line: #F2DCE4;
@@ -76,7 +72,7 @@
   --bg-blue-soft: #FBEAF1;    /* (الاسم تاريخي) — تحويم/تحديد بلمسة الوردة */
   --bg-map: #F0E4E9;
   --img-ph: #F6E7ED;
-  --blush: var(--rose-100);   /* الوردة الفاتحة — توكن مرجعي */
+  --blush: var(--primary-light);   /* الكحلي الفاتح — توكن مرجعي */
   --scrim: rgba(35, 39, 62, .55); /* طبقة تغطية النوافذ — كحلي الحبر */
 
   /* ═══ 5. ألوان الحالات والشارات ═══ */
@@ -99,13 +95,13 @@
   --st-returned: #7A6B74;     /* مرتجع — muted */
 
   /* ═══ 6. التدرجات ═══ */
-  --grad-primary: linear-gradient(135deg, var(--rose-800) 0%, var(--rose-500) 55%, var(--rose-100) 135%);
+  --grad-primary: linear-gradient(135deg, var(--primary-deep) 0%, var(--primary) 55%, var(--primary-light) 135%);
   --grad-accent: linear-gradient(135deg, var(--accent) 0%, var(--accent-light) 100%);
   --grad-hero: radial-gradient(90rem 32rem at 85% -10%, rgba(212, 91, 138, .45) 0%, transparent 60%),
                radial-gradient(50rem 26rem at 0% 110%, rgba(229, 184, 75, .2) 0%, transparent 55%),
                linear-gradient(140deg, #161927 0%, #23273E 60%, #161927 100%); /* عزل كحلي يُنير الورد */
   --grad-gold: linear-gradient(135deg, #F8E7A2, var(--gold));
-  --grad-lotus: linear-gradient(135deg, var(--rose-800) 0%, var(--rose-500) 60%, var(--accent) 135%); /* البتلة وقلبها */
+  --grad-lotus: linear-gradient(135deg, var(--primary-deep) 0%, var(--primary) 60%, var(--accent) 135%); /* البتلة وقلبها */
 
   /* ═══ 7. سلم المسافات (شبكة 4pt) ═══ */
   --sp-1: calc(var(--spu) * 1);   /* 4  */
@@ -225,15 +221,15 @@
 /* ═══════════ الوضع الليلي ─ العزل الكحلي يُنير اللوتس ═══════════
    خلفية كحلية عميقة (طبقة العزل) والوردة فوقها تنور — نفس منطق الزهرة بالماء */
 html.dark {
-  --primary: #D45B8A;         /* البتلة المتوسطة — أزرار وتفاعل */
-  --primary-deep: #B0487A;
+  --primary: #4A6FA5;         /* الكحلي الفاتح — أزرار وتفاعل */
+  --primary-deep: #12294E;    /* الكحلي الأصلي — للخلفيات والتمييز */
   --primary-light: #E8A7C0;   /* وردة فاتحة — روابط وأيقونات تنور بالليل */
 
-  --accent: #EDC25C;          /* القلب الذهبي أسطع بإضاءة منخفضة */
-  --accent-deep: #F4D68A;
-  --accent-light: #F0CE74;
+  --accent: #F2560F;          /* البرتقالي الشمسي — CTA (نفس الألوان النهارية) */
+  --accent-deep: #C2410C;
+  --accent-light: #F97316;
 
-  --ink: #F4E9EE;             /* نص فاتح بمسحة ورد */
+  --ink: #F4E9EE;             /* نص فاتح */
   --bg: #14172A;              /* العزل الكحلي العميق */
   --surface: #1E2236;
   --muted: #A896A3;
@@ -241,10 +237,10 @@ html.dark {
   --line-strong: #3D4263;
 
   --bg-soft: #191D33;
-  --bg-blue-soft: #322740;    /* تحويم بنفسجي-وردي داكن */
+  --bg-blue-soft: #322740;    /* تحويم داكن */
   --bg-map: #1A1E33;
   --img-ph: #232842;
-  --blush: #4A3542;           /* نسخة ليلية خافتة للوردة */
+  --blush: #4A3542;
   --scrim: rgba(0, 0, 0, .65);
 
   --badge-sold-bg: #0C0F1C;
@@ -259,8 +255,8 @@ html.dark {
   --st-delivering: #F0C3D6;
   --st-returned: #A896A3;
 
-  --grad-hero: radial-gradient(90rem 32rem at 85% -10%, rgba(212, 91, 138, .3) 0%, transparent 60%),
-               radial-gradient(50rem 26rem at 0% 110%, rgba(229, 184, 75, .16) 0%, transparent 55%),
+  --grad-hero: radial-gradient(90rem 32rem at 85% -10%, rgba(74, 111, 165, .3) 0%, transparent 60%),
+               radial-gradient(50rem 26rem at 0% 110%, rgba(242, 86, 15, .16) 0%, transparent 55%),
                linear-gradient(140deg, #10131F 0%, #1C2038 60%, #10131F 100%);
 
   --sh-xs: 0 1px 2px rgba(0, 0, 0, .3);

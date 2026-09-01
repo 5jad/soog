@@ -62,7 +62,7 @@
   --warning-light: #F59E0B;
   --danger: #D92D20;          /* خصم/أخطاء/حذف/شارة «نفد» */
   --danger-light: #FBE7E8;    /* بمسحة الورد — منسجم مع الهوية */
-  --info: #8B3A62;            /* الحالة المعلوماتية — rose-800 */
+  --info: #8B3A62;            /* الحالة المعلوماتية — لون ميداني */
   --star: #E5B84B;            /* التقييمات — ذهب القلب */
   --cyan: #1789A6;            /* حالة «جاهز للتوصيل» */
   --gold: #D4AF37;            /* كوبونات/نقاط ذهبية */
@@ -84,11 +84,11 @@
   --badge-new-fg: var(--white);
   --st-new: #B45309;          /* طلب جديد — نفس خريطة التطبيق (warning) */
   --st-pending: #B45309;      /* قيد الانتظار — warning */
-  --st-accepted: #8B3A62;     /* مقبول — rose-800 */
-  --st-preparing: #8B3A62;    /* قيد التجهيز — rose-800 */
+  --st-accepted: #8B3A62;     /* مقبول — لون ميداني */
+  --st-preparing: #8B3A62;    /* قيد التجهيز — لون ميداني */
   --st-ready: #1789A6;        /* جاهز — cyan */
-  --st-picked: #D45B8A;       /* بالتوصيل — rose-500 */
-  --st-delivering: #D45B8A;   /* بالتوصيل — rose-500 */
+  --st-picked: #D45B8A;       /* بالتوصيل — لون ميداني */
+  --st-delivering: #D45B8A;   /* بالتوصيل — لون ميداني */
   --st-delivered: #1F9D55;    /* تم التسليم — success */
   --st-cancelled: #D92D20;    /* ملغي — danger */
   --st-rejected: #D92D20;     /* مرفوض — danger */

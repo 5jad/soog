@@ -2189,17 +2189,6 @@ class _StoreTabState extends State<_StoreTab> {
                                             overflow: TextOverflow.ellipsis,
                                           ),
                                         ),
-                                        if (s['verified'] == true ||
-                                            s['verified'] == 1)
-                                          const Padding(
-                                            padding: EdgeInsets.only(right: 4),
-                                            child: Icon(
-                                              Icons.verified_rounded,
-                                              size: 16,
-                                              color: AppColors.primaryLight,
-                                            ),
-                                          ),
-                                      ],
                                     ),
                                     const SizedBox(height: 2),
                                     Text(
@@ -2256,16 +2245,7 @@ class _StoreTabState extends State<_StoreTab> {
                                   overflow: TextOverflow.ellipsis,
                                 ),
                               ),
-                              if (s['verified'] == true || s['verified'] == 1)
-                                const Padding(
-                                  padding: EdgeInsets.only(right: 4),
-                                  child: Icon(
-                                    Icons.verified_rounded,
-                                    size: 16,
-                                    color: AppColors.primaryLight,
-                                  ),
-                                ),
-                            ],
+                                                          ],
                           ),
                           Text(
                             '${s['category_name'] ?? ''} · ${s['district_name'] ?? ''}',

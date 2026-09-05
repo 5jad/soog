@@ -690,8 +690,6 @@ class _StoresScreenState extends State<StoresScreen> {
                           overflow: TextOverflow.ellipsis,
                         ),
                       ),
-                      if (s.verified) const SizedBox(width: 3),
-                      if (s.verified) const VerifiedTag(),
                     ],
                   ),
                   const SizedBox(height: 2),

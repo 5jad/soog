@@ -263,18 +263,7 @@ class _StoreScreenState extends State<StoreScreen> {
                                               overflow: TextOverflow.ellipsis,
                                             ),
                                           ),
-                                          if (s['verified'] == true ||
-                                              s['verified'] == 1)
-                                            const Padding(
-                                              padding: EdgeInsets.only(
-                                                right: 5,
-                                              ),
-                                              child: Icon(
-                                                Icons.verified_rounded,
-                                                size: 17,
-                                                color: AppColors.primaryLight,
-                                              ),
-                                            ),
+                                          ],
                                         ],
                                       ),
                                       Text(
@@ -313,7 +302,7 @@ class _StoreScreenState extends State<StoreScreen> {
                                               ),
                                             ),
                                             Text(
-                                              '  ·  ${s['verified'] == true || s['verified'] == 1 ? 'متجر موثوق' : 'محل محلي'}',
+                                              '  ·  محل محلي',
                                               style: AppType.style(
                                                 10.5,
                                                 color: Colors.white.withOpacity(

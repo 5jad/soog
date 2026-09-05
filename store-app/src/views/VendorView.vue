@@ -473,7 +473,7 @@ const imgOf = (p) => S(p.image);
           <div class="flex between gap-3" style="flex-wrap:wrap">
             <div>
               <b style="font-size:var(--fs-lg)">{{ store?.name }}</b>
-              <p class="text-xs text-muted">{{ store?.status === 'approved' ? '✅ متجر موثق ونشط' : '⏳ بانتظار توثيق الأدمن' }}</p>
+              <!-- verification status removed -->
             </div>
             <div class="flex gap-2 wrap">
               <button class="btn btn-outline btn-sm" @click="storeEdit = !storeEdit">تعديل المتجر</button>

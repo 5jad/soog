@@ -403,8 +403,8 @@ r.patch('/documents/:id', async (req, res) => {
     [status, req.user.id, reason, d.id]);
   const s = await one('SELECT * FROM stores WHERE id=$1', [d.store_id]);
   if (status === 'approved') {
-    const all = await one(`SELECT count(*)::int AS n FROM store_documents WHERE store_id=$1 AND status='approved'`, [d.store_id]);
-    if (all.n >= 3) await q(`UPDATE stores SET verified=true WHERE id=$1`, [d.store_id]);
+    // تم إلغاء تفعيل التوثيق التلقائي - المتجر يبقى غير موثق
+    const _ = await one(`SELECT count(*)::int AS n FROM store_documents WHERE store_id=$1 AND status='approved'`, [d.store_id]);
   }
   await audit(req.user.id, 'document_' + status, 'store_document', d.id, d, { status, reason });
   await q(`INSERT INTO notifications (user_id, type, title, body) VALUES ($1,'store',$2,$3)`, [s.owner_id, `مستند ${d.title}: ${status === 'approved' ? 'مقبول ✓' : 'مرفوض ✗'}`, reason || '']);

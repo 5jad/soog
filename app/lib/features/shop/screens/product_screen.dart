@@ -680,14 +680,7 @@ class _ProductScreenState extends State<ProductScreen> {
                                           overflow: TextOverflow.ellipsis,
                                         ),
                                       ),
-                                      if (store['verified'] == true) ...[
-                                        const SizedBox(width: 5),
-                                        const Icon(
-                                          Icons.verified_rounded,
-                                          size: 15,
-                                          color: AppColors.primary,
-                                        ),
-                                      ],
+                                      
                                     ],
                                   ),
                                   const SizedBox(height: 4),

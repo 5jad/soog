@@ -67,7 +67,7 @@ const oneLine = (v) => String(v || '').replace(/\n/g, ' ').slice(0, 90);
               <span class="text-muted">·</span>
               <span class="text-muted">{{ store.district_name }} · {{ store.governorate_name }}</span>
               <span class="store-open" :class="open ? 'yes' : 'no'"><span class="dot"></span>{{ openLabel }}</span>
-              <span v-if="store.verified" class="badge badge-new" style="background:rgba(212,175,55,.18);color:var(--gold)">✓ موثق</span>
+              <!-- verification badge removed -->
             </div>
             <p v-if="store.description" class="sh-desc">{{ oneLine(store.description) }}</p>
             <div class="sh-extra">

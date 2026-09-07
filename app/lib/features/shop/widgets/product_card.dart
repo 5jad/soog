@@ -61,7 +61,7 @@ class ProdCardOptions {
     this.offerSize = 8.5,
     this.alwaysOfferGap = false,
     this.priceSize = 12.5,
-    this.priceColor = AppColors.ink,
+    this.priceColor = AppColors.accent,
     this.addWidth = 26,
     this.addRadius = 8,
     this.addIconSize = 16,
